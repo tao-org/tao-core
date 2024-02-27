@@ -724,6 +724,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
             jt.setRemoteCommand(cmd);
             jt.setArgs(argsList);
+
+            setJobId(jt, job.getId());
+            setTaskId(jt, task.getId());
+
             taskProvider.update(task);
             logger.finest(String.format("Task %s: %s%s %s",
                     taskName,
@@ -835,6 +839,24 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             JobTemplateExtension job = (JobTemplateExtension) jt;
             if (job.hasAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE)) {
                 job.setAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE, host);
+            }
+        }
+    }
+
+    private void setJobId(JobTemplate jt, Long id) throws DrmaaException {
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(DrmaaJobExtensions.JOB_ID)) {
+                job.setAttribute(DrmaaJobExtensions.JOB_ID, id);
+            }
+        }
+    }
+
+    private void setTaskId(JobTemplate jt, Long id) throws DrmaaException {
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(DrmaaJobExtensions.TASK_ID)) {
+                job.setAttribute(DrmaaJobExtensions.TASK_ID, id);
             }
         }
     }
