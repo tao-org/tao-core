@@ -620,26 +620,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     node.setActive(false);
                                     nodeProvider.update(node);
                                     nodes.remove(h);
-                                    return;
-                                }
-                                /*final List<ExecutionTask> tasks = taskProvider.listByHost(h);
-                                boolean isNodeWithoutTasks = (tasks == null || tasks.isEmpty());
-                                final LocalDateTime time = nodeRuntime.getNextKeepAlive();
-                                final LocalDateTime now = LocalDateTime.now();
-                                boolean canReadNodeInfo = true;
-                                if (isNodeWithoutTasks) {
-                                    if (nodeRuntime.getLastUpdatedTimeMilliseconds() > 0) {
-                                        // the node has been updated at least one time
-                                        ConfigurationProvider cfgManager = ConfigurationManager.getInstance();
-                                        String value = cfgManager.getValue(IDLE_NODE_POLLING_INTERVAL_KEY);
-                                        int pollingInterval = (value == null) ? POLLING_NODE_WITHOUT_TASKS_SECONDS : Integer.parseInt(value);
-                                        long elapsedTimeInSeconds = (System.currentTimeMillis() - nodeRuntime.getLastUpdatedTimeMilliseconds()) / 1000;
-                                        if (elapsedTimeInSeconds < pollingInterval) {
-                                            canReadNodeInfo = false;
-                                        }
-                                    }
-                                }*/
-                                //if (canReadNodeInfo) {
+                                } else {
                                     RuntimeInfo runtimeInfo = null;
                                     try {
                                         runtimeInfo = readNodeRuntimeInfo(nodeRuntime.getNode());
@@ -660,7 +641,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                                    nodeRuntime.node.getId(),
                                                    JsonMapper.instance().writeValueAsString(runtimeInfo),
                                                    false);
-                                //}
+                                }
                             }
                         } catch (Exception exception) {
                             logger.log(Level.SEVERE, "Cannot update node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
