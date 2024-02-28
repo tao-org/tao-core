@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.UserProvider;
 import ro.cs.tao.persistence.repository.GroupRepository;
@@ -546,7 +547,8 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
 
     @Override
     public void createWorkspaces(User user, Consumer<Repository> rootFunctor) {
-        List<RepositoryType> repoTypes =  Arrays.stream(ConfigurationManager.getInstance()
+        final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
+        List<RepositoryType> repoTypes =  Arrays.stream(cfgProvider
                                                               .getValue("workspaces.default", "local")
                                                               .toUpperCase()
                                                               .split(","))
@@ -564,10 +566,11 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
                                               .collect(Collectors.toMap(p -> p.getKey().replace("workspace.", ""),
                                                                         UserPreference::getValue));
                     }
-                    final boolean useUserName = ConfigurationManager.getInstance().getBooleanValue("aws.use.username.as.root");
+                    final boolean useUserName = cfgProvider.getBooleanValue("aws.use.username.as.root");
                     Repository repository = useUserName
                                             ? RepositoryFactory.createDefault(type, user.getId(), user.getUsername(), dbParams)
                                             : RepositoryFactory.createDefault(type, user.getId(), dbParams);
+                    repository.setPersistentStorage(type.name().equalsIgnoreCase(cfgProvider.getValue("workspaces.default.persistent", "local")));
                     repositoryJPARepository.save(repository);
                     if (rootFunctor != null) {
                         rootFunctor.accept(repository);
