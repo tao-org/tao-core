@@ -332,13 +332,7 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public List<Long> getUserJobs(String userId) {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-            return this.queue.stream().filter(t -> t.getKeyTwo().equals(userId)).map(Tuple::getKeyOne).collect(Collectors.toList());
-        } finally {
-            lock.unlock();
-        }
+        return this.queue.stream().filter(t -> t.getKeyTwo().equals(userId)).map(Tuple::getKeyOne).collect(Collectors.toList());
     }
 
     /**
@@ -346,17 +340,11 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public Map<String, List<Long>> getUserQueues() {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-            return this.queue.stream()
-                             .collect(Collectors.groupingBy(Tuple::getKeyTwo,
-                                                            Collectors.collectingAndThen(Collectors.toList(),
-                                                                                         list -> list.stream().map(Tuple::getKeyOne)
-                                                                                                     .collect(Collectors.toList()))));
-        } finally {
-            lock.unlock();
-        }
+        return this.queue.stream()
+                         .collect(Collectors.groupingBy(Tuple::getKeyTwo,
+                                                        Collectors.collectingAndThen(Collectors.toList(),
+                                                                                     list -> list.stream().map(Tuple::getKeyOne)
+                                                                                                 .collect(Collectors.toList()))));
     }
 
     /**
@@ -364,13 +352,7 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public Queue<Tuple<Long, String>> getAllJobs() {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-            return new ArrayDeque<>(this.queue);
-        } finally {
-            lock.unlock();
-        }
+        return new ArrayDeque<>(this.queue);
     }
 
     /**
@@ -441,12 +423,6 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public boolean hasMoreJobs(String userId) {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-            return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(userId));
-        } finally {
-            lock.unlock();
-        }
+        return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(userId));
     }
 }
