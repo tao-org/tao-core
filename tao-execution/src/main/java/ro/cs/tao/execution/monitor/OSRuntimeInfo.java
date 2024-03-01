@@ -339,13 +339,13 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                                 message = message.replace("MemAvailable:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
                                 runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KB.value());
-                                //break;
+                                runtimeInfo.setMemoryUnit(MemoryUnit.KB);
                             } else if (message.startsWith("/dev/mapper/centos-home") ||
                                        message.contains(mountPointOne) || message.contains(mountPointTwo)) {
                                 List<String> values = Arrays.stream(message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ")).filter(v -> !v.isEmpty()).collect(Collectors.toList());
                                 runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values.get(0)) / MemoryUnit.MB.value());
                                 runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values.get(1)) / MemoryUnit.MB.value());
-                                //break;
+                                runtimeInfo.setDiskUnit(MemoryUnit.MB);
                             } else if (message.contains("load average")) {
                                 int idx = message.indexOf("load average");
                                 String value = message.substring(idx + 14, message.indexOf(",", idx));
