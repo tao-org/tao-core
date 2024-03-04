@@ -62,6 +62,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -817,6 +818,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     ? "\""
                     : ""
                 : "\"";
+        // before joining the arguments, check replace double quoted arguments with single quotes
+        argsList.replaceAll(new UnaryOperator<String>() {
+            @Override
+            public String apply(String arg) {
+                return arg.replace("\"", "'");
+            }
+        });
         final String singleArg = quoteChar + String.join(" ", argsList) + quoteChar;
         argsList.clear();
         argsList.add("-c");
