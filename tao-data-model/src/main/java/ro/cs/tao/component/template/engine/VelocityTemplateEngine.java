@@ -33,7 +33,6 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Apache Velocity template engine.
@@ -102,7 +101,7 @@ public class VelocityTemplateEngine extends TemplateEngine {
         try {
             // Velocity can handle only one parameter per line
             // If the template contains concatenation of parameters, we need to replace them with actual values
-            String contents = template.getContents();
+            /*String contents = template.getContents();
             String[] lines = contents.split("\n");
             for (int i = 0; i < lines.length; i++) {
                 int idx = lines[i].indexOf('$');
@@ -114,7 +113,7 @@ public class VelocityTemplateEngine extends TemplateEngine {
                     }
                 }
             }
-            template.setContents(String.join("\n", lines), false);
+            template.setContents(String.join("\n", lines), false);*/
             org.apache.velocity.Template veloTemplate = createTemplate(template);
             VelocityContext veloContext = new VelocityContext();
             for (String key : parameters.keySet()) {
