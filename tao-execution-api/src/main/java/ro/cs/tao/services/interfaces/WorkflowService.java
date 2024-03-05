@@ -22,6 +22,7 @@ import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.execution.ExecutionJobInfo;
 import ro.cs.tao.services.model.execution.ExecutionTaskInfo;
 import ro.cs.tao.services.model.workflow.WorkflowInfo;
@@ -30,6 +31,8 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.Status;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -319,4 +322,19 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @param id    The workflow identifier
      */
     void deleteWorkflowImage(long id);
+
+    /**
+     * Imports the definition of a workflow from the given input stream.
+     * @param source    The input stream
+     * @throws IOException
+     * @throws SerializationException
+     */
+    WorkflowDescriptor importWorkflow(InputStream source) throws IOException, SerializationException, PersistenceException;
+
+    /**
+     * Exports the definition of a workflow in JSON
+     * @param descriptor    The workflow to be exported
+     * @throws SerializationException
+     */
+    String exportWorkflow(WorkflowDescriptor descriptor) throws SerializationException;
 }

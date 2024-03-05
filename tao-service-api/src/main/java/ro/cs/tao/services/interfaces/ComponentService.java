@@ -22,6 +22,8 @@ import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.component.ProcessingComponentInfo;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -37,8 +39,18 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      */
     List<String> getAvailableConstraints();
 
+    /**
+     * Retrieves all the processing components
+     */
     List<ProcessingComponentInfo> getProcessingComponents();
 
+    /**
+     * Retrieves a page of processing components
+     * @param pageNumber    The page number
+     * @param pageSize      The page size
+     * @param sort          The sort direction
+     * @return
+     */
     List<ProcessingComponentInfo> getProcessingComponents(int pageNumber, int pageSize, Sort sort);
 
     /**
@@ -47,6 +59,10 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      */
     List<ProcessingComponentInfo> getUserProcessingComponents(String userId);
 
+    /**
+     * Retrieves the information for all the components except the ones with the given ids.
+     * @param ids   The component identifiers to exclude
+     */
     List<ProcessingComponentInfo> getOtherComponents(Set<String> ids);
 
     /**
@@ -55,6 +71,9 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      */
     List<ProcessingComponentInfo> getUserScriptComponents(String userId);
 
+    /**
+     * Retrieves all the tags associated to components
+     */
     List<Tag> getComponentTags();
 
     /**
@@ -73,4 +92,16 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      */
     String exportTo(MediaType mediaType, ProcessingComponent component) throws SerializationException;
 
+    /**
+     * Imports the definition of a component from a stream source.
+     * @param source    The input stream source
+     * @throws IOException
+     */
+    ProcessingComponent importComponent(InputStream source) throws IOException, SerializationException;
+
+    /**
+     * Exports the definition of a component as a JSON
+     * @param component The component to be exported
+     */
+    String exportComponent(ProcessingComponent component) throws SerializationException;
 }
