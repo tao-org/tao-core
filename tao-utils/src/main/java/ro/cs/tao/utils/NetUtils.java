@@ -416,12 +416,12 @@ public class NetUtils {
     }
 
     public static String getResponseAsString(String url) throws IOException {
-        return getResponseAsString(url, null);
+        return getResponseAsString(url, null, null);
     }
 
-    public static String getResponseAsString(String url, Credentials credentials) throws IOException {
+    public static String getResponseAsString(String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
         String result = null;
-        try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
+        try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials, parameters)) {
             switch (response.getStatusLine().getStatusCode()) {
                 case 200:
                     result = EntityUtils.toString(response.getEntity());
@@ -435,6 +435,10 @@ public class NetUtils {
             }
         }
         return result;
+    }
+
+    public static String getResponseAsString(String url, List<NameValuePair> parameters) throws IOException {
+        return getResponseAsString(url, null, parameters);
     }
 
     public static NetStreamResponse getResponseAsStream(String url) throws IOException {
