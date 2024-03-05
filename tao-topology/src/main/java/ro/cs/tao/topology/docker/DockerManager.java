@@ -1,11 +1,16 @@
 package ro.cs.tao.topology.docker;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerInstance;
 import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.docker.ContainerVisibility;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.persistence.ContainerInstanceProvider;
@@ -17,6 +22,7 @@ import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.topology.TopologyManager;
+import ro.cs.tao.utils.NetUtils;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.*;
@@ -75,6 +81,10 @@ public class DockerManager {
 
     public static List<Container> getAvailableDockerImages() {
         return instance.listAvailableDockerImages();
+    }
+
+    public static List<Container> listDockerHubImages(String filter) throws IOException {
+        return instance.listFromDockerHub(filter);
     }
 
     public static Container getDockerImage(String name) {
@@ -137,6 +147,40 @@ public class DockerManager {
             dbContainers.retainAll(containers);
         }
         return dbContainers;
+    }
+
+    private List<Container> listFromDockerHub(String filter) throws IOException {
+        List<Container> results = null;
+        final String strUrl = ConfigurationManager.getInstance().getValue("docker.hub.search.url",
+                                                                          "https://hub.docker.com/api/content/v1/products/search");
+        final List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("q", filter));
+        params.add(new BasicNameValuePair("source", "community"));
+        params.add(new BasicNameValuePair("page", "1"));
+        params.add(new BasicNameValuePair("page_size", "100"));
+        final String result = NetUtils.getResponseAsString(strUrl, params);
+        final ObjectReader reader = new ObjectMapper().readerFor(DockerHubResponse.class);
+        DockerHubResponse response = reader.readValue(result);
+        if (response != null && response.getCount() > 0) {
+            results = new ArrayList<>();
+            final List<DockerHubRecord> summaries = response.getSummaries();
+            Container container;
+            for (DockerHubRecord record : summaries) {
+                container = new Container();
+                container.setId(StringUtilities.isNullOrEmpty(record.getId())
+                                ? record.getName()
+                                : record.getId());
+                container.setName(record.getName());
+                container.setDescription(record.getShortDescription());
+                if (!StringUtilities.isNullOrEmpty(record.getSource())) {
+                    container.setTag(record.getSource());
+                }
+                container.setType(ContainerType.DOCKER);
+                container.setVisibility(ContainerVisibility.PRIVATE);
+                results.add(container);
+            }
+        }
+        return results;
     }
 
     private Container get(String name) {
