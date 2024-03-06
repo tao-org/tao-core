@@ -67,6 +67,7 @@ public class FileUtilities {
     }};
     private static final DecimalFormat UNIT_FORMAT = new DecimalFormat("#,##0.#");
     private static final Pattern URI_PATTERN = Pattern.compile("\\w+:\\/{2,3}[A-Za-z0-9._/]+");
+    private static final Pattern PATH_PATTERN = Pattern.compile("^/(.*)*");
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static String getExtension(Path path) {
@@ -110,6 +111,10 @@ public class FileUtilities {
 
     public static boolean isURI(String path) {
         return URI_PATTERN.matcher(path).find();
+    }
+
+    public static boolean isPath(String value) {
+        return PATH_PATTERN.matcher(value).find();
     }
 
     public static Path toPath(String path) {
