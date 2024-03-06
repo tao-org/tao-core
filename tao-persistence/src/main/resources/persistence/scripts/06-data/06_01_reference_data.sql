@@ -93,7 +93,7 @@ INSERT INTO workflow.status (description) VALUES
 
 -- Workflow graph visibility
 INSERT INTO common.visibility (visibility) VALUES
-('PUBLIC'), ('PRIVATE');
+('PUBLIC'), ('PRIVATE'), ('SUBSCRIPTION');
 
 -- Groups
 -- admin group
