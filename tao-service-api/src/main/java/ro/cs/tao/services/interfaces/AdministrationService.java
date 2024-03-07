@@ -19,6 +19,8 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.model.user.DisableUserInfo;
 import ro.cs.tao.services.model.user.UserMapping;
 import ro.cs.tao.services.model.user.UserUnicityInfo;
+import ro.cs.tao.subscription.ResourceSubscription;
+import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserStatus;
@@ -56,4 +58,6 @@ public interface AdministrationService extends TAOService {
     void deleteUser(String userId) throws PersistenceException;
 
     void messageUser(String userId, String message);
+
+    void initializeSubscription(ResourceSubscription subscription) throws TopologyException, PersistenceException;
 }
