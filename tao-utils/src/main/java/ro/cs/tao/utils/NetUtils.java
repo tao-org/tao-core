@@ -279,7 +279,8 @@ public class NetUtils {
                     requestBuilder.setProxy(apacheHttpProxy);
                 }
                 requestBase.setConfig(requestBuilder.build());
-                requestBase.setHeader(authHeader);
+                requestBase.addHeader(authHeader);
+                requestBase.addHeader("Content-Type", "application/json");
                 Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
                 response = httpClient.execute(requestBase);
                 Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
