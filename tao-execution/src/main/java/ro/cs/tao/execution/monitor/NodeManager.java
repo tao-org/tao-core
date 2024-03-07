@@ -457,7 +457,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return null;
     }
 
-    private NodeDescription getNewNodeDescription(int existingUserNodesCount, String userId, NodeFlavor matchingFlavor) {
+    public NodeDescription getNewNodeDescription(int existingUserNodesCount, String userId, NodeFlavor matchingFlavor) {
         final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
         NodeDescription node = new NodeDescription();
         node.setFlavor(matchingFlavor);
