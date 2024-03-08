@@ -276,6 +276,8 @@ public class ParameterDescriptor extends StringIdentifiable {
         return Objects.hash(super.hashCode(), name);
     }
 
+    public JavaType javaType() { return this.dataType; }
+
     protected Validator createValidator() {
         if (this.validator == null) {
             List<Validator> validators = new ArrayList<>(3);
