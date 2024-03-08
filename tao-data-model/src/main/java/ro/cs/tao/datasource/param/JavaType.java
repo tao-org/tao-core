@@ -8,6 +8,7 @@ import ro.cs.tao.utils.DateUtils;
 
 import javax.xml.bind.annotation.XmlEnum;
 import java.lang.reflect.Array;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -33,7 +34,9 @@ public enum JavaType implements TaoEnum<Class<?>> {
     DATE_ARRAY(LocalDateTime[].class, "date[]", "urn:ogc:def:timeList", DateUtils::parseDate),
     BOOLEAN(boolean.class, "bool", "urn:ogc:def:boolean", Boolean::parseBoolean),
     BOOLEAN_ARRAY(boolean[].class, "bool[]", "\"urn:ogc:def:string", Boolean::parseBoolean),
-    POLYGON(Polygon2D.class, "polygon", "urn:ogc:def:anyURI", Polygon2D::fromWKT);
+    POLYGON(Polygon2D.class, "polygon", "urn:ogc:def:anyURI", Polygon2D::fromWKT),
+    PATH(Path.class, "path", "urn:ogc:def:string", Path::of),
+    PATH_ARRAY(Path[].class, "path[]", "urn:ogc:def:stringList", Path::of);
 
     private final Class<?> clazz;
     private final String description;
@@ -156,6 +159,9 @@ public enum JavaType implements TaoEnum<Class<?>> {
                 break;
             case STRING_ARRAY:
                 array = new String[dimension];
+                break;
+            case PATH_ARRAY:
+                array = new Path[dimension];
                 break;
         }
         return array;
