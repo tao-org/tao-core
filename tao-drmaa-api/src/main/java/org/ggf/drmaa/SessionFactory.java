@@ -32,12 +32,15 @@
 package org.ggf.drmaa;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -69,7 +72,7 @@ public abstract class SessionFactory {
      * Right now, only one SessionFactory can exist at a time.  This is that
      * session factory.
      */
-    private static SessionFactory thisFactory = null;
+    private static Map<Environment, SessionFactory> thisFactories = null;
     /**
      * The name of the property used to find the Session implementation
      * class name.
@@ -82,7 +85,9 @@ public abstract class SessionFactory {
      * @return a Session instance appropriate for the DRM in use
      */
     public abstract org.ggf.drmaa.Session getSession();
-    
+
+    public abstract Environment getEnvironment();
+
     /**
      * Gets a SessionFactory instance appropriate for the DRM in use.  This
      * method uses the org.ggf.SessionFactory property to find
@@ -98,18 +103,28 @@ public abstract class SessionFactory {
      */
     public static SessionFactory getFactory() {
         synchronized (SessionFactory.class) {
-            if (thisFactory == null) {
-                /*NewFactoryAction action = new NewFactoryAction();
-                
-                thisFactory =
-                        (SessionFactory)AccessController.doPrivileged(action);*/
-                thisFactory = newFactory();
+            if (thisFactories == null) {
+                final SessionFactory factory = newFactory();
+                thisFactories = new HashMap<>();
+                thisFactories.put(factory.getEnvironment(), factory);
             }
         }
-        
-        return thisFactory;
+        return thisFactories.values().iterator().next();
     }
-    
+
+    public static SessionFactory getFactory(Environment env) {
+        synchronized (SessionFactory.class) {
+            if (thisFactories == null) {
+                readFactories();
+            }
+        }
+        return thisFactories.get(env);
+    }
+
+    public static Set<Environment> getEnvironments() {
+        return thisFactories != null ? thisFactories.keySet() : null;
+    }
+
     /**
      * Creates a SessionFactory object appropriate for the DRM in use.  This
      * method uses the org.ggf.SessionFactory property to find
@@ -190,6 +205,30 @@ public abstract class SessionFactory {
 
         throw new ConfigurationError("Provider for " + className +
                 " cannot be found", e);
+    }
+
+    private static void readFactories() throws ConfigurationError {
+        ClassLoader classLoader = findClassLoader();
+        Exception e = null;
+        try {
+            final ServiceRegistry<SessionFactory> registry =
+                    ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
+            String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
+            if (registry != null) {
+                final Set<SessionFactory> services = registry.getServices();
+                for (SessionFactory factory : services) {
+                    if (thisFactories == null) {
+                        thisFactories = new HashMap<>();
+                    }
+                    final Environment environment = factory.getEnvironment();
+                    if (environment != Environment.DEFAULT || factory.getClass().getName().equals(className)) {
+                        thisFactories.put(environment, factory);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new ConfigurationError(ex.getMessage(), ex);
+        }
     }
     
     /**

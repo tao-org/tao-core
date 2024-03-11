@@ -20,6 +20,7 @@ CREATE TABLE execution.job
 	id bigint NOT NULL,
 	name text NOT NULL,
 	job_type smallint NOT NULL DEFAULT 0,
+	env smallint DEFAULT 0,
 	app_id varchar(50),
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,

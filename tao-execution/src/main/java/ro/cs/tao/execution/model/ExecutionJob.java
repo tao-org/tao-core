@@ -17,6 +17,7 @@ package ro.cs.tao.execution.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import ro.cs.tao.component.LongIdentifiable;
+import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 
 import java.time.LocalDateTime;
@@ -42,6 +43,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private EndpointDescriptor callbackDescriptor;
     private Map<String, List<String>> taskDependencies;
     private JobType jobType;
+    private Environment environment;
     private String batchId;
     @JsonManagedReference
     private List<ExecutionTask> tasks;
@@ -145,6 +147,14 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
 
     public void setJobType(JobType jobType) {
         this.jobType = jobType;
+    }
+
+    public Environment getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
 
     @JsonManagedReference

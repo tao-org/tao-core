@@ -26,6 +26,7 @@ import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.execution.DrmaaJobExtensions;
 import ro.cs.tao.execution.ExecutionException;
@@ -79,7 +80,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private static ContainerProvider containerProvider;
     private static DRMAAExecutor instance;
     private static String appId;
-    private Session session;
+    //private Session session;
+    private final Map<Environment, Session> sessions;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
     private final List<TaskListener> taskListeners;
@@ -113,44 +115,56 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (services != null) {
             this.taskListeners.addAll(services);
         }
+        this.sessions = new HashMap<>();
         this.hostMemoryRequests = Collections.synchronizedMap(new HashMap<>());
         instance = this;
     }
 
     @Override
     public void initialize() throws ExecutionException {
-        session = org.ggf.drmaa.SessionFactory.getFactory().getSession();
-        try {
-            session.init(null);
-            super.initialize();
-            masterHost = Inet4Address.getLocalHost().getHostName();
-            this.queueWorker.start();
-        } catch (UnknownHostException | DrmaaException e) {
-            isInitialized.set(false);
-            throw new ExecutionException("Error initiating DRMAA session", e);
+        final Set<Environment> environments = SessionFactory.getEnvironments();
+        if (environments == null) {
+            throw new ExecutionException("DRMAA subsystem not initialized");
+        }
+        for (Environment env : environments) {
+            Session session = SessionFactory.getFactory(env).getSession();
+            try {
+                session.init(null);
+                super.initialize();
+                masterHost = Inet4Address.getLocalHost().getHostName();
+                this.queueWorker.start();
+            } catch (UnknownHostException | DrmaaException e) {
+                isInitialized.set(false);
+                logger.severe("Error initiating DRMAA " + env + " session: " + e.getMessage());
+            }
         }
     }
 
     @Override
     public void close() throws ExecutionException {
         super.close();
-        try {
-            session.exit();
-        } catch (DrmaaException e) {
-            logger.severe(e.getMessage());
+        for (Session session : this.sessions.values()) {
+            try {
+                session.exit();
+            } catch (DrmaaException e) {
+                logger.severe(e.getMessage());
+            }
         }
     }
 
     @Override
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
-            final String userId = task.getJob().getUserId();
-            logger.fine("Trying to provision a worker node for user " + userId);
-            NodeDescription node;
-            if ((node = NodeManager.getInstance().createWorkerNode(userId)) != null) {
-                final String message = "Node " + node.getId() + " created";
-                logger.fine(message);
-                sendMessage(task, message);
+            final ExecutionJob job = task.getJob();
+            final String userId = job.getUserId();
+            if (job.getJobType() == JobType.EXECUTION && job.getEnvironment() == Environment.DEFAULT) {
+                logger.fine("Trying to provision a worker node for user " + userId);
+                NodeDescription node;
+                if ((node = NodeManager.getInstance().createWorkerNode(userId)) != null) {
+                    final String message = "Node " + node.getId() + " created";
+                    logger.fine(message);
+                    sendMessage(task, message);
+                }
             }
             JobTemplate jt = createJobTemplate(task);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true, ExecutionStatus.QUEUED_ACTIVE.friendlyName());
@@ -166,7 +180,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void stop(ProcessingExecutionTask task)  throws ExecutionException {
         try {
             if (task.getResourceId() != null) {
-                session.control(task.getResourceId(), Session.TERMINATE);
+                this.sessions.get(task.getJob().getJobType()).control(task.getResourceId(), Session.TERMINATE);
+                //session.control(task.getResourceId(), Session.TERMINATE);
             }
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getId(), e);
@@ -179,6 +194,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void suspend(ProcessingExecutionTask task) throws ExecutionException {
         try {
             if (task.getResourceId() != null) {
+                Session session = getSession(task.getJob().getEnvironment());
                 session.control(task.getResourceId(), Session.SUSPEND);
             }
             changeTaskStatus(task, ExecutionStatus.SUSPENDED, ExecutionStatus.SUSPENDED.friendlyName());
@@ -191,6 +207,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void resume(ProcessingExecutionTask task) throws ExecutionException {
         try {
             if (task.getResourceId() != null) {
+                Session session = getSession(task.getJob().getEnvironment());
                 session.control(task.getResourceId(), Session.RESUME);
             }
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, "Resumed");
@@ -215,6 +232,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             for (ExecutionTask task : tasks) {
                 final String taskName = TaskUtilities.getTaskName(task);
                 try {
+                    Session session = getSession(task.getJob().getEnvironment());
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
                     logger.finest("DRMAA session returned " + jobStatus + " for task " + taskName);
                     final String userId = task.getJob().getUserId();
@@ -284,7 +302,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 }
                             }
                             if (session instanceof JobExitHandler) {
-                                final JobExitHandler handler = (JobExitHandler) this.session;
+                                final JobExitHandler handler = (JobExitHandler) session;
                                 String resourceId = task.getResourceId();
                                 handler.cleanupJob(resourceId);
                             }
@@ -295,7 +313,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             int code;
                             decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
                             if (session instanceof JobExitHandler) {
-                                final JobExitHandler handler = (JobExitHandler) this.session;
+                                final JobExitHandler handler = (JobExitHandler) session;
                                 String resourceId = task.getResourceId();
                                 error = handler.getJobOutput(resourceId);
                                 code = handler.getJobExitCode(resourceId);
@@ -329,14 +347,28 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public String defaultId() { return "DRMAAExecutor"; }
 
-    public String getDRMName() { return session != null ? session.serviceName() : "n/a"; }
+    public String getDRMName() {
+        return this.sessions != null
+               ? this.sessions.values().stream().map(Session::serviceName).collect(Collectors.joining(","))
+               : "n/a";
+    }
 
-    public String getDRMVersion() { return session != null ? session.getVersion().toString() : "n/a"; }
 
-    public String getJobOutput(String jobId) {
+    public String getDRMVersion() {
+        return this.sessions != null
+               ? this.sessions.values().stream().map(s -> s.getVersion().toString()).collect(Collectors.joining(","))
+               : "n/a";
+    }
+
+    public String getJobOutput(String resourceId) {
         String out;
+        final ExecutionTask task = taskProvider.getByResourceId(resourceId);
+        if (task == null) {
+            throw new ExecutionException("No such resourceId: " + resourceId);
+        }
+        Session session = this.sessions.get(task.getJob().getEnvironment());
         if (session instanceof JobExitHandler) {
-            out = ((JobExitHandler) this.session).getJobOutput(jobId);
+            out = ((JobExitHandler) session).getJobOutput(resourceId);
         } else {
             out = "n/a";
         }
@@ -385,6 +417,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final ProcessingExecutionTask task = pair.getKeyTwo();
         logger.finest(String.format("Task %s has been dequeued for execution", task.getId()));
         try {
+            Session session = getSession(task.getJob().getEnvironment());
             String id = session.runJob(jt);
             session.deleteJobTemplate(jt);
             if (id == null) {
@@ -432,6 +465,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     .stream()
                     .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
                     .findFirst().orElse(null);
+            Session session = getSession(task.getJob().getEnvironment());
             jt = session.createJobTemplate();
             if (jt == null) {
                 throw new ExecutionException("Error creating job template from the session!");
@@ -892,5 +926,16 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 }
             }
         }
+    }
+
+    private Session getSession(Environment environment) throws DrmaaException {
+        if (environment == null) {
+            environment = Environment.DEFAULT;
+        }
+        Session session = this.sessions.get(environment);
+        if (session == null) {
+            throw new DrmsInitException("No session for DRM " + environment);
+        }
+        return session;
     }
 }

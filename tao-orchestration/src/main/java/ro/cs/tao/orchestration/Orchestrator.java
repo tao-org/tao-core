@@ -22,6 +22,7 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.ProductHelperFactory;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -109,7 +110,6 @@ public class Orchestrator extends Notifiable {
                                                                                       ExecutionStatus.FAILED);
     private static final Set<ExecutionStatus> completedOkStatuses = EnumSet.of(ExecutionStatus.DONE,
                                                                                ExecutionStatus.PENDING_FINALISATION);
-
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
     private final BlockingQueue<AbstractMap.SimpleEntry<Message, SessionContext>> messageQueue;
@@ -315,7 +315,8 @@ public class Orchestrator extends Notifiable {
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
-            final ExecutionJob job = new ScriptJobFactory().createJob(context, this.uuid, description, descriptor, inputs, jobType);
+            final ExecutionJob job = new ScriptJobFactory().createJob(context, this.uuid, description, descriptor,
+                                                                      inputs, jobType, Environment.DEFAULT);
             this.jobQueue.put(job);
             return job;
         } catch (PersistenceException e) {
@@ -352,7 +353,12 @@ public class Orchestrator extends Notifiable {
                     optimized.setActive(descriptor.isActive());
                 }
             }
-            return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized, request.getParameters(), JobType.EXECUTION);
+            final Environment env = request.getEnvironment() != null
+                                    ? Environment.valueOf(request.getEnvironment())
+                                    : Environment.DEFAULT;
+            return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized,
+                                             request.getParameters(), JobType.valueOf(request.getJobType()),
+                                             env);
         } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -847,7 +853,7 @@ public class Orchestrator extends Notifiable {
                                             t.getName(), pcTask.getId(), instanceTargetOuptut));
                 if (keepOutput && JobType.EXECUTION.equals(jobType)) {
                     persistOutputProducts(pcTask);
-                } else if (!JobType.EXECUTION.equals(jobType)) {
+                } else if (JobType.EXECUTION != jobType) {
                     // cleanup empty folders created by simulated execution
                     Path jobPath = Paths.get(pcTask.getJob().getJobOutputPath());
                     try {
