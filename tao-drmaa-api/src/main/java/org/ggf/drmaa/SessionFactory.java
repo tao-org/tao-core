@@ -122,6 +122,9 @@ public abstract class SessionFactory {
     }
 
     public static Set<Environment> getEnvironments() {
+        if (thisFactories == null) {
+            readFactories();
+        }
         return thisFactories != null ? thisFactories.keySet() : null;
     }
 
