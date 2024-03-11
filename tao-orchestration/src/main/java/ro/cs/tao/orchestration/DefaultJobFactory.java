@@ -27,6 +27,7 @@ import ro.cs.tao.datasource.param.CommonParameterNames;
 import ro.cs.tao.datasource.persistence.DataSourceComponentGroupProvider;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.datasource.persistence.QueryProvider;
+import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
@@ -92,7 +93,8 @@ public class DefaultJobFactory {
      * @param inputs    The (possibly overridden) input parameter values
      * @param jobType   The output job format
      */
-    public ExecutionJob createJob(SessionContext context, String appId, String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs, JobType jobType)
+    public ExecutionJob createJob(SessionContext context, String appId, String jobName, WorkflowDescriptor workflow,
+                                  Map<String, Map<String, String>> inputs, JobType jobType, Environment environment)
             throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
@@ -105,11 +107,11 @@ public class DefaultJobFactory {
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-            job.setJobType(jobType);
             job.setJobOutputPath(Paths.get(SystemVariable.ROOT.value())
                                       .resolve(context.getPrincipal().getName())
                                       .resolve(jobName.replaceAll(invalidChars, "_"))
                                       .toString());
+            job.setEnvironment(environment);
             job = jobProvider.save(job);
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             Set<WorkflowNodeGroupDescriptor> groups = nodes.stream()
@@ -748,6 +750,7 @@ public class DefaultJobFactory {
             clone.setExecutionStatus(ExecutionStatus.UNDETERMINED);
             clone.setJobOutputPath(original.getJobOutputPath() + "_" + cloneNumber);
             clone.setJobType(original.getJobType());
+            clone.setEnvironment(original.getEnvironment());
             clone = jobProvider.save(clone);
             final List<ExecutionTask> originalTasks = original.getTasks();
             final Map<String, String> cloneTaskMap = new HashMap<>();

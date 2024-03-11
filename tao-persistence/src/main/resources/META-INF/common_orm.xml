@@ -873,12 +873,16 @@
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callbackDescriptor"/>
         <convert converter="ro.cs.tao.persistence.convert.JsonTaskDependenciesConverter" attribute-name="taskDependencies"/>
+        <convert converter="ro.cs.tao.persistence.convert.JobEnvironmentConverter" attribute-name="environment"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="text not null"/>
             </basic>
             <basic name="jobType">
                 <column name="job_type" nullable="false" column-definition="smallint not null default 0"/>
+            </basic>
+            <basic name="environment">
+                <column name="env" nullable="true" column-definition="smallint default 1"/>
             </basic>
             <basic name="appId">
                 <column name="app_id" nullable="true" column-definition="varchar(50) not null" />

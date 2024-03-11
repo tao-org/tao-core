@@ -8,6 +8,7 @@ public class ExecutionRequest {
     private String name;
     private String label;
     private String jobType;
+    private String environment;
     private Map<Long, String> inputs;
     private Map<String, Map<String, String>> parameters;
 
@@ -19,6 +20,7 @@ public class ExecutionRequest {
         this.name = other.name;
         this.label = other.label;
         this.jobType = other.jobType;
+        this.environment = other.environment;
         if (other.inputs != null) {
             this.inputs = new HashMap<>(other.inputs);
         }
@@ -39,15 +41,20 @@ public class ExecutionRequest {
     public String getJobType() {
         return jobType;
     }
-
     public void setJobType(String jobType) {
         this.jobType = jobType;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+    public void setEnvironment(String environment) {
+        this.environment = environment;
     }
 
     public Map<Long, String> getInputs() {
         return inputs;
     }
-
     public void setInputs(Map<Long, String> inputs) {
         this.inputs = inputs;
     }
