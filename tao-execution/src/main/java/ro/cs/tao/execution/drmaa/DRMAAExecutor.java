@@ -126,17 +126,22 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (environments == null) {
             throw new ExecutionException("DRMAA subsystem not initialized");
         }
-        for (Environment env : environments) {
-            Session session = SessionFactory.getFactory(env).getSession();
-            try {
-                session.init(null);
-                super.initialize();
-                masterHost = Inet4Address.getLocalHost().getHostName();
-                sessions.put(env, session);
+        synchronized (isInitialized) {
+            for (Environment env : environments) {
+                Session session = SessionFactory.getFactory(env).getSession();
+                try {
+                    session.init(null);
+                    super.initialize();
+                    masterHost = Inet4Address.getLocalHost().getHostName();
+                    sessions.put(env, session);
+                    isInitialized.set(true);
+                } catch (UnknownHostException | DrmaaException e) {
+                    isInitialized.set(false);
+                    logger.severe("Error initiating DRMAA " + env + " session: " + e.getMessage());
+                }
+            }
+            if (isInitialized.get()) {
                 this.queueWorker.start();
-            } catch (UnknownHostException | DrmaaException e) {
-                isInitialized.set(false);
-                logger.severe("Error initiating DRMAA " + env + " session: " + e.getMessage());
             }
         }
     }
