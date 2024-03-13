@@ -10,7 +10,8 @@ public enum JobType implements TaoEnum<Integer> {
     EXECUTION(0, "Native execution"),
     JSON_EXPORT(1, "Script as JSON"),
     CWL_EXPORT(2, "Script as CWL"),
-    BASH_EXPORT(3, "Script as Bash script");
+    BASH_EXPORT(3, "Script as Bash script"),
+    ARGO_EXPORT(4, "Script as ARGO script");
 
     private final int value;
     private final String description;
