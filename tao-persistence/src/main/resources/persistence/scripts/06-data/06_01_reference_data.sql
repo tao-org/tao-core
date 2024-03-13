@@ -132,7 +132,8 @@ INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUE
 (2, 'Sentinel1', 'GRD,SLC', '(S1[A-B])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
 (3, 'Landsat8', 'L1T,L1GT,L1TP,L2SP', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming'),
 (4, 'GeoTIFF', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.(tif|TIF|tiff|TIFF+)', 'Generic GeoTIFF product'),
-(5, 'Generic', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.([A-Za-z.]+)', 'Generic product');
+(5, 'Generic', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.([A-Za-z.]+)', 'Generic product'),
+(6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming')
 
 INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
 (1, 'MISSION', 1, 'Mission identifier'),
@@ -185,6 +186,20 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (5, 'MONTH', 4, 'Product month'),
 (5, 'DAY', 5, 'Product day'),
 (5, 'EXT', 6, 'Product file extension');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(6, 'MISSION', 1, 'Mission identifier'),
+(6, 'CLASS', 2, 'Product class'),
+(6, 'TYPE', 3, 'Product type'),
+(6, 'ADATESTART', 4, 'Sensing start date'),
+(6, 'ATIMESTART', 5, 'Sensing start time'),
+(6, 'ADATESTOP', 6, 'Sensing stop date'),
+(6, 'ATIMESTOP', 7, 'Sensing stop time'),
+(6, 'ORBIT', 8, 'Absolute orbit'),
+(6, 'COLLECTION', 9, 'Collection number'),
+(6, 'TOOLKIT', 10, 'Toolkit version number'),
+(6, 'PDATE', 11, 'Processing date'),
+(6, 'PTIME', 12, 'Processing time');
 
 -- Repository types
 INSERT INTO workspace.repository_type (id, name, params) VALUES
