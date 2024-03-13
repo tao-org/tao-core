@@ -132,6 +132,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 session.init(null);
                 super.initialize();
                 masterHost = Inet4Address.getLocalHost().getHostName();
+                sessions.put(env, session);
                 this.queueWorker.start();
             } catch (UnknownHostException | DrmaaException e) {
                 isInitialized.set(false);
@@ -497,6 +498,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         break;
                     case CWL_EXPORT:
                         value = ExecutionUnitFormat.CWL;
+                        break;
+                    case ARGO_EXPORT:
+                        value = ExecutionUnitFormat.ARGO;
                         break;
                     default:
                         value = ExecutionUnitFormat.TAO;
