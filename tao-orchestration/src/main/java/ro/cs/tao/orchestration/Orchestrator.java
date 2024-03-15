@@ -357,7 +357,8 @@ public class Orchestrator extends Notifiable {
                                     ? Environment.valueOf(request.getEnvironment())
                                     : Environment.DEFAULT;
             return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized,
-                                             request.getParameters(), JobType.valueOf(request.getJobType()),
+                                             request.getParameters(), 
+                                             request.getJobType() == null ? JobType.EXECUTION : JobType.valueOf(request.getJobType()),
                                              env);
         } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
