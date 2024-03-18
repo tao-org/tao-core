@@ -34,6 +34,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
@@ -41,6 +42,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -64,6 +67,7 @@ public class FileUtilities {
        add(".tif"); add(".TIF"); add(".tiff"); add(".TIFF");
        add(".nc"); add(".NC");
        add(".hd5"); add(".HD5");
+       add(".jp2"); add(".JP2");
     }};
     private static final DecimalFormat UNIT_FORMAT = new DecimalFormat("#,##0.#");
     private static final Pattern URI_PATTERN = Pattern.compile("\\w+:\\/{2,3}[A-Za-z0-9._/]+");
@@ -1367,5 +1371,40 @@ public class FileUtilities {
                 outputChannel.write(buffer);
             }
         }
+    }
+
+    public static String computeHash(Path path) throws IOException, NoSuchAlgorithmException {
+        String hash = null;
+        if (path != null) {
+            final MessageDigest shaDigest = MessageDigest.getInstance("SHA-1");
+            final ByteBuffer buffer = ByteBuffer.allocate(4096);
+            int read;
+            if (Files.isRegularFile(path)) {
+                try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
+                    while (channel.read(buffer) != -1) {
+                        shaDigest.update(buffer);
+                    }
+                }
+            } else {
+                Files.walkFileTree(path, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
+                            while (channel.read(buffer) != -1) {
+                                shaDigest.update(buffer);
+                            }
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+            final byte[] digest = shaDigest.digest();
+            final StringBuilder builder = new StringBuilder();
+            for (byte b : digest) {
+                builder.append(String.format("%02x", b));
+            }
+            hash = builder.toString();
+        }
+        return hash;
     }
 }
