@@ -84,7 +84,7 @@ public enum JavaType implements TaoEnum<Class<?>> {
                 throw new IllegalArgumentException("Value does not represent an array");
             }
             String[] split = value.substring(1, value.length() - 1).split(",");
-            Object array = Array.newInstance(this.clazz, split.length);
+            Object array = Array.newInstance(this.clazz.getComponentType(), split.length);
             for (int i = 0; i < split.length; i++) {
                 Array.set(array, i, this.converter.apply(split[i]));
             }
