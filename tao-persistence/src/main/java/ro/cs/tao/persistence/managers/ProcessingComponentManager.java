@@ -133,7 +133,6 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             throw new PersistenceException(String.format("Invalid parameters provided for updating entity of type %s!",
                                                          entity.getClass().getSimpleName()));
         }
-        repository.save(entity);
         Map<ParameterDescriptor, ParameterExpansionRule> rules = entity.getParameterDescriptors().stream()
                                                                        .filter(p -> p.getExpansionRule() != null)
                                                                        .collect(Collectors.toMap(Function.identity(),
@@ -143,6 +142,7 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             rule.setId(entry.getKey().getId());
             expansionRuleRepository.save(rule);
         }
+        repository.save(entity);
         return entity;
     }
 
