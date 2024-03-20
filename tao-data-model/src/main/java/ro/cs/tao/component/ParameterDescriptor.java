@@ -15,10 +15,7 @@
  */
 package ro.cs.tao.component;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.*;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.DependencyType;
@@ -37,7 +34,9 @@ import java.util.*;
  */
 @XmlRootElement(name = "parameter")
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-@JsonSubTypes({ @JsonSubTypes.Type(value = ParameterDescriptor.class), @JsonSubTypes.Type(value = TemplateParameterDescriptor.class)})
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({ @JsonSubTypes.Type(name = "REGULAR", value = ParameterDescriptor.class),
+                @JsonSubTypes.Type(name = "TEMPLATE", value = TemplateParameterDescriptor.class)})
 public class ParameterDescriptor extends StringIdentifiable {
     private String name;
     private ParameterType type;
