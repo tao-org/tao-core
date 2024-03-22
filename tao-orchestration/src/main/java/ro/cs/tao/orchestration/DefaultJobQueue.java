@@ -390,6 +390,41 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
         }
     }
 
+    @Override
+    public ExecutionJob takeExcept(String userId) {
+        if (userId == null) {
+            return take();
+        }
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            ExecutionJob job = null;
+            while (this.queue.isEmpty()) {
+                try {
+                    notEmpty.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
+            while (iterator.hasNext()) {
+                final Tuple<Long, String> next = iterator.next();
+                if (!next.getKeyTwo().equals(userId)) {
+                    iterator.remove();
+                    job = this.jobProvider.get(next.getKeyOne());
+                    break;
+                }
+            }
+            // All the queued jobs are of the same user, return the first one
+            if (job == null) {
+                return take();
+            }
+            return job;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /**
      * Retrieves the job that on the head of the queue.
      */

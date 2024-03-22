@@ -1719,7 +1719,7 @@ public class Orchestrator extends Notifiable {
                 logger.warning(e.getMessage());
             }
             if (instance.jobQueue.hasMoreJobs(job.getUserId())) {
-                instance.jobQueueWorker.setCurrentUserId(job.getUserId());
+                instance.jobQueueWorker.setLastUserId(job.getUserId());
             } else{
                 // finally, remove any volatile node if the mode is configured
                 final int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()

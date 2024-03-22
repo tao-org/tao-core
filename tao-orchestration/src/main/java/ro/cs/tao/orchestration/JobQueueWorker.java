@@ -15,7 +15,7 @@ public class JobQueueWorker extends Thread {
     private int maxJobs;
     private final Object monitor;
     private Orchestrator orchestrator;
-    private String currentUserId;
+    private String lastUserId;
     private volatile boolean paused;
     private volatile boolean stopped;
 
@@ -74,7 +74,7 @@ public class JobQueueWorker extends Thread {
                             this.monitor.wait(10000);
                         }
                     } else {
-                        final ExecutionJob job = this.queue.take(this.currentUserId != null ? this.currentUserId : null);
+                        final ExecutionJob job = this.queue.takeExcept(this.lastUserId != null ? this.lastUserId : null);
                         if (job != null) {
                             try {
                                 logger.finest(String.format("Job [%s] for user '%s' was dequeued",
@@ -91,7 +91,7 @@ public class JobQueueWorker extends Thread {
                                 }
                             }
                         }
-                        this.currentUserId = null;
+                        this.lastUserId = null;
                         /*synchronized (this.monitor) {
                             this.monitor.wait(2000);
                         }*/
@@ -106,7 +106,7 @@ public class JobQueueWorker extends Thread {
         }
     }
 
-    public void setCurrentUserId(String currentUserId) {
-        this.currentUserId = currentUserId;
+    public void setLastUserId(String userId) {
+        this.lastUserId = userId;
     }
 }
