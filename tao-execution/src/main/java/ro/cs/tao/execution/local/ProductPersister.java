@@ -29,6 +29,7 @@ import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.FileUtilities;
 
 import java.awt.geom.Point2D;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -68,7 +69,8 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                 product.setProductStatus(ProductStatus.PRODUCED);
                 product.addReference(SessionStore.currentContext().getPrincipal().getName());
                 product = SpringContextBridge.services().getService(EOProductProvider.class).save(product);
-                Path productPath = Path.of(product.getLocation());
+                final String location = product.getLocation();
+                Path productPath = FileUtilities.isURI(location) ? Path.of(URI.create(location)) : Path.of(location);
                 final String entryPoint = product.getEntryPoint();
                 if (entryPoint != null) {
                     if (FileUtilities.isRaster(Path.of(entryPoint))) {
