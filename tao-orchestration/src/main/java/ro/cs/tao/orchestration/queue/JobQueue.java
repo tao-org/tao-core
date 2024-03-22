@@ -117,6 +117,15 @@ public interface JobQueue {
     }
 
     /**
+     * Retrieves the next job for a user different than the argument
+     *
+     * @param userId The user identifier to be excluded
+     */
+    default ExecutionJob takeExcept(String userId) {
+        return take();
+    }
+
+    /**
      * Checks if the queue contains more jobs for a given user.
      *
      * @param userId The user identifier
