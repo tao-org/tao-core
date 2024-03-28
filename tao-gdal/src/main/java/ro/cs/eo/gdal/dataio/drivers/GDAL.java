@@ -25,6 +25,7 @@ public class GDAL extends GDALBase {
     private final MethodHandle getDataTypeSizeHandle;
     private final MethodHandle getDriverByNameHandle;
     private final MethodHandle buildVRTHandle;
+    private final MethodHandle rasterizeHandle;
     private final MethodHandle getLastErrorHandle;
 
     static {
@@ -53,6 +54,11 @@ public class GDAL extends GDALBase {
         buildVRTHandle = createStaticHandle(gdalClass, "BuildVRT",
                                             gdalDatasetClass,
                                             String.class, datasetArray.getClass(), GDALReflection.fetchGDALLibraryClass(BuildVRTOptions.CLASS_NAME));
+        rasterizeHandle = createStaticHandle(gdalClass, "Rasterize",
+                                             int.class,
+                                             gdalDatasetClass,
+                                             gdalDatasetClass,
+                                             GDALReflection.fetchGDALLibraryClass(RasterizeOptions.CLASS_NAME));
         getLastErrorHandle = createStaticHandle(gdalClass, "GetLastErrorMsg", String.class);
 
     }
@@ -184,6 +190,14 @@ public class GDAL extends GDALBase {
             Array.set(objectListCountJni, i, objectListCount[i].getJniDatasetInstance());
         }
         Object jniDatasetInstance = invokeStatic(instance.buildVRTHandle, dest, objectListCountJni, options.getJniBuildVRTOptionsInstance());
+        if (jniDatasetInstance != null) {
+            return new Dataset(jniDatasetInstance);
+        }
+        return null;
+    }
+
+    public static Dataset rasterize(Dataset src, Dataset dst, RasterizeOptions options) {
+        Object jniDatasetInstance = invokeStatic(instance.rasterizeHandle, dst, src, options.getJniRasterizeOptionsInstance());
         if (jniDatasetInstance != null) {
             return new Dataset(jniDatasetInstance);
         }
