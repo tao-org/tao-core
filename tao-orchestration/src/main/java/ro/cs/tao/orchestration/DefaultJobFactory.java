@@ -719,6 +719,7 @@ public class DefaultJobFactory {
                                 clonedDataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, list.get(i));
                                 clonedDataTask.setCardinality(1);
                                 clonedDataTask.setContext(dataTask.getContext());
+                                clonedDataTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
                                 taskProvider.update(clonedDataTask);
                                 clonedJob = jobProvider.update(clonedJob);
                                 jobs.add(clonedJob);
