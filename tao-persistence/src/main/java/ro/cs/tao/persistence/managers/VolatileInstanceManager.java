@@ -10,6 +10,7 @@ import ro.cs.tao.persistence.repository.VolatileInstanceRepository;
 import ro.cs.tao.topology.VolatileInstance;
 import ro.cs.tao.utils.StringUtilities;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Configuration
@@ -32,17 +33,45 @@ public class VolatileInstanceManager
 
     @Override
     public void delete(Long id) throws PersistenceException {
-        throw new PersistenceException("Delete is not allowed");
+        final VolatileInstance instance = get(id);
+        if (instance != null && instance.getDestroyed() == null) {
+            delete(instance);
+        }
     }
 
     @Override
     public void delete(VolatileInstance entity) throws PersistenceException {
-        throw new PersistenceException("Delete is not allowed");
+        entity.setDestroyed(LocalDateTime.now());
+        update(entity);
     }
 
     @Override
     public void delete(Iterable<Long> ids) throws PersistenceException {
-        throw new PersistenceException("Delete is not allowed");
+        if (ids != null) {
+            for (Long id : ids) {
+                delete(id);
+            }
+        }
+    }
+
+    @Override
+    public void deleteByNode(String nodeId) throws PersistenceException {
+        final List<VolatileInstance> instances = repository.getByNodeId(nodeId);
+        if (instances != null) {
+            for (VolatileInstance instance : instances) {
+                delete(instance);
+            }
+        }
+    }
+
+    @Override
+    public void deleteByUser(String userId) throws PersistenceException {
+        final List<VolatileInstance> instances = repository.findByUserId(userId);
+        if (instances != null) {
+            for (VolatileInstance instance : instances) {
+                delete(instance);
+            }
+        }
     }
 
     @Override
