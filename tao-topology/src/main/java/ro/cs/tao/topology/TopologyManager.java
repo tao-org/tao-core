@@ -23,6 +23,8 @@ import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.VolatileInstanceProvider;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -35,6 +37,7 @@ import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +63,7 @@ public class TopologyManager {
 
     private final Logger logger;
     private NodeProvider externalNodeProvider;
+    private VolatileInstanceProvider volatileInstanceProvider;
     private NodeProvider localNodeProvider;
     private final Set<NodeOperationListener> listeners;
     private final Set<TopologyToolInstaller> installers;
@@ -135,6 +139,10 @@ public class TopologyManager {
         DockerManager.setMasterNode(masterNodeInfo);
     }
 
+    public void setVolatileInstanceProvider(VolatileInstanceProvider provider) {
+        this.volatileInstanceProvider = provider;
+    }
+
     public void registerListener(NodeOperationListener listener) {
         this.listeners.add(listener);
     }
@@ -166,6 +174,17 @@ public class TopologyManager {
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         if (this.externalNodeProvider != null) {
             info = this.externalNodeProvider.create(info);
+            if (Boolean.TRUE.equals(info.getVolatile())) {
+                VolatileInstance vi = new VolatileInstance();
+                vi.setNodeId(info.getId());
+                vi.setUserId(info.getOwner());
+                vi.setCreated(LocalDateTime.now());
+                try {
+                    this.volatileInstanceProvider.save(vi);
+                } catch (PersistenceException e) {
+                    logger.severe(e.getMessage());
+                }
+            }
             String device;
             if (Integer.parseInt(cfgProvider.getValue("openstack.volume.ssd.size", "100")) > 0) {
                 device = cfgProvider.getValue("openstack.volume.ssd.device", "/dev/sds");
@@ -258,6 +277,13 @@ public class TopologyManager {
         if (this.externalNodeProvider != null && node.getVolatile()) {
             final String serverId = node.getServerId();
             this.externalNodeProvider.remove(serverId != null ? serverId : hostName);
+            if (this.volatileInstanceProvider != null) {
+                try {
+                    this.volatileInstanceProvider.deleteByNode(node.getId());
+                } catch (PersistenceException e) {
+                    logger.severe(e.getMessage());
+                }
+            }
         } else {
             // execute all the installers
             for (TopologyToolInstaller installer: installers) {

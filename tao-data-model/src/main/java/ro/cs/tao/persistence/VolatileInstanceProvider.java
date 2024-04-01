@@ -9,4 +9,8 @@ public interface VolatileInstanceProvider extends EntityProvider<VolatileInstanc
     List<VolatileInstance> getUserInstances(String userId);
 
     List<VolatileInstance> getFlavorInstances(String flavorId);
+
+    void deleteByNode(String nodeId) throws PersistenceException;
+
+    void deleteByUser(String userId) throws PersistenceException;
 }
