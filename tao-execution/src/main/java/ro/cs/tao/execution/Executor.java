@@ -22,11 +22,13 @@ import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.security.UserPrincipal;
@@ -49,6 +51,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
     private static final List<TaskStatusListener> statusListeners = new ArrayList<>();
     protected static ExecutionTaskProvider taskProvider;
+    protected static ExecutionJobProvider jobProvider;
     protected final AtomicBoolean isInitialized = new AtomicBoolean(false);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
@@ -71,6 +74,8 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     }
 
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
+
+    public static void setJobProvider(ExecutionJobProvider provider) { jobProvider = provider; }
 
     public Executor() {
         super();
@@ -190,6 +195,15 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime, String reason) {
         if (status != task.getExecutionStatus()) {
             task.setLastUpdated(LocalDateTime.now());
+            final ExecutionJob job = task.getJob();
+            if (status == ExecutionStatus.RUNNING && job.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE) {
+                job.setExecutionStatus(ExecutionStatus.RUNNING);
+                try {
+                    jobProvider.update(job);
+                } catch (PersistenceException e) {
+                    logger.severe("Cannot set job status: " + e.getMessage());
+                }
+            }
             final String name = TaskUtilities.getTaskName(task);
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
@@ -252,7 +266,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 message = "Task " + task.getId() + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
                         + " changed to " + status.friendlyName();
             }
-            final Message msg = Message.create(task.getJob().getUserId(), task.getId(), message, status.name(), true);
+            final Message msg = Message.create(job.getUserId(), task.getId(), message, status.name(), true);
             msg.setTopic(Topic.EXECUTION.value());
             msg.addItem("host", task.getExecutionNodeHostName());
             Messaging.send(msg);
