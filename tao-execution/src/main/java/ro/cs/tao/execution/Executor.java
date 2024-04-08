@@ -196,7 +196,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
         if (status != task.getExecutionStatus()) {
             task.setLastUpdated(LocalDateTime.now());
             final ExecutionJob job = task.getJob();
-            if (status == ExecutionStatus.RUNNING && job.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE) {
+            if ((status == ExecutionStatus.RUNNING || status == ExecutionStatus.DONE) && job.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE) {
                 job.setExecutionStatus(ExecutionStatus.RUNNING);
                 try {
                     jobProvider.update(job);
