@@ -44,11 +44,14 @@ import java.util.stream.Collectors;
 public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final String TOPOLOGY_NODE_NAME_PREFIX_KEY = "topology.node.name.prefix";
     private static final String TOPOLOGY_NODE_DEFAULT_DESCRIPTION_KEY = "topology.node.default.description";
+    private static final String TOPOLOGY_MASTER_USER_KEY = "topology.master.user";
+    private static final String TOPOLOGY_MASTER_PASSWORD_KEY = "topology.master.password";
     private static final String NODE_USER_LIMIT_KEY = "topology.node.user.limit";
     private static final String NODE_POLLING_INTERVAL_KEY = "topology.node.poll.interval";
     private static final String NODE_CREATION_WAIT_TIME_KEY = "topology.node.create.wait";
     private static final String DRMAA_SESSION_FACTORY_KEY = "tao.drmaa.sessionfactory";
     private static final String OPENSTACK_NODE_USER_KEY = "openstack.node.user";
+    private static final String OPENSTACK_NODE_PASSWORD_KEY = "openstack.node.password";
     private static final String USE_MASTER_FOR_EXECUTION_KEY = "topology.use.master.for.execution";
     private static final String NODE_CONNECTION_RETRIES_KEY = "topology.node.connection.retries";
     //private static final String IDLE_NODE_POLLING_INTERVAL_KEY = "topology.node.without.tasks.polling.interval";
@@ -116,21 +119,22 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             if (keyPath == null) {
                 keyPath = cfgProvider.getValue(ConfigurationProvider.APP_HOME) + File.separator + "config" + File.separator + "tao.key";
             }
-            String key = null;
             try {
                 final Path path = Path.of(keyPath);
                 if (Files.notExists(path)) {
                     throw new IOException("Private key file not found");
-                } else {
-                    key = Files.readString(path);
                 }
             } catch (IOException e) {
                 logger.warning(e.getMessage());
             }
-            defaultNodeInfo = new DefaultNodeInfo(cfgProvider.getValue(TOPOLOGY_NODE_NAME_PREFIX_KEY, "tao-"),
-                                                  cfgProvider.getValue(TOPOLOGY_NODE_DEFAULT_DESCRIPTION_KEY, "Worker node"),
-                                                  cfgProvider.getValue(OPENSTACK_NODE_USER_KEY, "taouser"),
-                                                  key,
+            defaultNodeInfo = new DefaultNodeInfo(cfgProvider.getValue(TOPOLOGY_NODE_NAME_PREFIX_KEY,
+                                                                       "tao-"),
+                                                  cfgProvider.getValue(TOPOLOGY_NODE_DEFAULT_DESCRIPTION_KEY,
+                                                                       "Worker node"),
+                                                  cfgProvider.getValue(OPENSTACK_NODE_USER_KEY,
+                                                                       cfgProvider.getValue(TOPOLOGY_MASTER_USER_KEY)),
+                                                  cfgProvider.getValue(OPENSTACK_NODE_PASSWORD_KEY,
+                                                                       cfgProvider.getValue(TOPOLOGY_MASTER_PASSWORD_KEY)),
                                                   keyPath);
         }
         return defaultNodeInfo;
