@@ -20,6 +20,7 @@ public class DataSubscription extends LongIdentifiable {
     private String repositoryId;
     private String name;
     private String dataRootPath;
+    private String checkSum;
     private int subscribersCount;
     private LocalDateTime created;
 
@@ -56,6 +57,14 @@ public class DataSubscription extends LongIdentifiable {
 
     public void setDataRootPath(String dataRootPath) {
         this.dataRootPath = dataRootPath;
+    }
+
+    public String getCheckSum() {
+        return checkSum;
+    }
+
+    public void setCheckSum(String checkSum) {
+        this.checkSum = checkSum;
     }
 
     public int getSubscribersCount() {

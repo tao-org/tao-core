@@ -78,7 +78,7 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                     }
                 }
                 Files.writeString(productPath.getParent().resolve(FileUtilities.getFilenameWithoutExtension(productPath) + ".sha"),
-                                  FileUtilities.computeHash(productPath));
+                                  FileUtilities.computeHash(productPath, "SHA-1"));
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",
                                             product.getName(), e.getMessage()));

@@ -23,9 +23,11 @@ public interface DataSubscriptionRepository extends PagingAndSortingRepository<D
             nativeQuery = true)
     DataSubscription get(@Param("userId") String userId, @Param("repositoryId") String repositoryId, @Param("path") String path);
 
-    @Query(value = "SELECT * FROM subscription.dataset WHERE user_id = :userId AND name = :name",
-            nativeQuery = true)
+    @Query(value = "SELECT * FROM subscription.dataset WHERE user_id = :userId AND name = :name", nativeQuery = true)
     DataSubscription get(@Param("userId") String userId, @Param("name") String name);
+
+    @Query(value = "SELECT * FROM subscription.dataset WHERE checksum = :checkSum", nativeQuery = true)
+    DataSubscription get(@Param("checkSum") String checkSum);
 
     @Query(value = "SELECT * FROM subscription.dataset WHERE data_root_path LIKE CONCAT('%',CAST(:userId AS varchar),'%') ORDER by created ASC",
            nativeQuery = true)

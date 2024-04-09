@@ -1373,10 +1373,10 @@ public class FileUtilities {
         }
     }
 
-    public static String computeHash(Path path) throws IOException, NoSuchAlgorithmException {
+    public static String computeHash(Path path, String algo) throws IOException, NoSuchAlgorithmException {
         String hash = null;
         if (path != null) {
-            final MessageDigest shaDigest = MessageDigest.getInstance("SHA-1");
+            final MessageDigest shaDigest = MessageDigest.getInstance(algo);
             final ByteBuffer buffer = ByteBuffer.allocate(4096);
             int read;
             if (Files.isRegularFile(path)) {
