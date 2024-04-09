@@ -32,4 +32,7 @@ public interface DataSubscriptionRepository extends PagingAndSortingRepository<D
     @Query(value = "SELECT * FROM subscription.dataset WHERE data_root_path LIKE CONCAT('%',CAST(:userId AS varchar),'%') ORDER by created ASC",
            nativeQuery = true)
     List<DataSubscription> getSubscribersFor(@Param("userId") String userId);
+
+    @Query(value = "SELECT * FROM subscription.dataset WHERE checksum IS NULL", nativeQuery = true)
+    List<DataSubscription> getUnchecked();
 }

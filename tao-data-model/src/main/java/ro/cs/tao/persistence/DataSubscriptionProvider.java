@@ -17,4 +17,6 @@ public interface DataSubscriptionProvider extends EntityProvider<DataSubscriptio
     DataSubscription get(String checkSum);
 
     List<DataSubscription> getSubscribersFor(String userId);
+
+    List<DataSubscription> getUnckecked();
 }
