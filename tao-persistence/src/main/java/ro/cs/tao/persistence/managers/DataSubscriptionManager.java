@@ -48,6 +48,11 @@ public class DataSubscriptionManager extends EntityManager<DataSubscription, Lon
     }
 
     @Override
+    public List<DataSubscription> getUnckecked() {
+        return repository.getUnchecked();
+    }
+
+    @Override
     protected String identifier() {
         return "id";
     }
