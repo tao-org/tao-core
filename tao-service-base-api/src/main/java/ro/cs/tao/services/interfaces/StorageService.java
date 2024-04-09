@@ -21,12 +21,15 @@ import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.model.FileObject;
 import ro.cs.tao.services.model.ItemAction;
+import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
@@ -251,4 +254,12 @@ public interface StorageService<T, U> extends TAOService {
      * @param item          The FileObject item onto which to execute the action
      */
     default void execute(String actionName, FileObject item) throws Exception { }
+
+    /**
+     * Computes the hash for the given file or folder (incl. its subfolders and files).
+     * @param path  The path for which to compute the hash
+     */
+    default String computeHash(String path) throws IOException, NoSuchAlgorithmException {
+        return Crypto.hash(new ArrayList<>() {{ add(path); }});
+    }
 }

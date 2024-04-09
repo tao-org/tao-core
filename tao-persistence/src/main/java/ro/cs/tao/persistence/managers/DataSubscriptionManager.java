@@ -43,6 +43,11 @@ public class DataSubscriptionManager extends EntityManager<DataSubscription, Lon
     }
 
     @Override
+    public DataSubscription get(String checkSum) {
+        return repository.get(checkSum);
+    }
+
+    @Override
     protected String identifier() {
         return "id";
     }

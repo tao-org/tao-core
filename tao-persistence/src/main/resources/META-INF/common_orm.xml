@@ -1530,6 +1530,9 @@
             <basic name="dataRootPath">
                 <column name="data_root_path" nullable="false" column-definition="varchar NOT NULL"/>
             </basic>
+            <basic name="checkSum">
+                <column name="checksum" nullable="true" column-definition="varchar"/>
+            </basic>
             <basic name="subscribersCount">
                 <column name="subscribers_count" nullable="true" column-definition="integer DEFAULT 0"/>
             </basic>

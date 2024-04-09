@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS subscription.dataset
     repository_id varchar NOT NULL,
     name varchar NOT NULL,
     data_root_path varchar NOT NULL,
+    checksum varchar,
     subscribers_count integer DEFAULT 0,
     created timestamp without time zone NULL DEFAULT now()
 );
