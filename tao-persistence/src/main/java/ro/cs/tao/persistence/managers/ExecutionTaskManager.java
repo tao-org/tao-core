@@ -389,6 +389,18 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
         return taskGroup;
     }
+
+    @Transactional
+    @Override
+    public int countRunableTasks(long jobId) {
+        return repository.countRunableTasks(jobId);
+    }
+
+    @Override
+    public boolean isTerminalTask(long taskId) {
+        return repository.isTerminalTask(taskId);
+    }
+
     //endregion
 
 
