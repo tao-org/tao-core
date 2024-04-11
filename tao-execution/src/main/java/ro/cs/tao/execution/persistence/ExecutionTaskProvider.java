@@ -30,4 +30,6 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     int getCPUsForUser(String userId);
     int getMemoryForUser(String userId);
     void updateComponentTime(String id, int duration);
+    int countRunableTasks(long jobId);
+    boolean isTerminalTask(long taskId);
 }

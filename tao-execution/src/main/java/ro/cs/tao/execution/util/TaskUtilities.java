@@ -258,10 +258,11 @@ public class TaskUtilities {
     }
 
     public static boolean isTerminalTask(ExecutionTask task) {
-        final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
+        return taskProvider.isTerminalTask(task.getId());
+        /*final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
         final List<WorkflowNodeDescriptor> nodes = node.getWorkflow().getNodes();
         return nodes.stream().noneMatch(n -> n.getIncomingLinks() != null &&
-                                         n.getIncomingLinks().stream().anyMatch(l -> node.getId() == l.getSourceNodeId()));
+                                         n.getIncomingLinks().stream().anyMatch(l -> node.getId() == l.getSourceNodeId()));*/
     }
 
     /**
@@ -278,12 +279,12 @@ public class TaskUtilities {
     }
 
     public static boolean haveAllTasksCompleted(ExecutionJob job) {
-        // TODO: replace with a count sql query
-        final List<ExecutionTask> tasks = job.orderedTasks();
+        return taskProvider.countRunableTasks(job.getId()) == 0;
+        /*final List<ExecutionTask> tasks = job.orderedTasks();
         return tasks != null &&
                 tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
                                              t.getExecutionStatus() == ExecutionStatus.FAILED ||
-                                             t.getExecutionStatus() == ExecutionStatus.CANCELLED);
+                                             t.getExecutionStatus() == ExecutionStatus.CANCELLED);*/
     }
 
     /**
