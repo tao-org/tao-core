@@ -7,6 +7,7 @@ import ro.cs.tao.utils.FileUtilities;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DockerVolumeMap {
@@ -23,8 +24,7 @@ public class DockerVolumeMap {
     private final String containerConfigurationFolder;
     private String hostEoDataFolder;
     private String containerEoDataFolder;
-    private String hostAdditionalFolder;
-    private String containerAdditionalFolder;
+    private Map<String, String> additionalMappings;
 
     public DockerVolumeMap(Map<String, String> volumeMap) {
         String value = volumeMap.get(DOCKER_WORKSPACE_MOUNT_KEY);
@@ -60,9 +60,14 @@ public class DockerVolumeMap {
 
         value = volumeMap.get(DOCKER_ADDITIONAL_MOUNT_KEY);
         if (StringUtils.isNotEmpty(value)) {
-            values = safeSplit(value);
-            this.hostAdditionalFolder = values[0];
-            this.containerAdditionalFolder = values[1];
+            final String[] maps = value.split(";");
+            for (String v : maps) {
+                values = safeSplit(v);
+                if (this.additionalMappings == null) {
+                    this.additionalMappings = new LinkedHashMap<>();
+                }
+                this.additionalMappings.put(values[0], values[1]);
+            }
         }
     }
 
@@ -94,9 +99,9 @@ public class DockerVolumeMap {
 
     public String getContainerEoDataFolder() { return containerEoDataFolder; }
 
-    public String getHostAdditionalFolder() { return hostAdditionalFolder; }
-
-    public String getContainerAdditionalFolder() { return containerAdditionalFolder; }
+    public Map<String, String> getAdditionalMappings() {
+        return additionalMappings;
+    }
 
     public String relativizePath(String path) {
         if (path.startsWith(getContainerWorkspaceFolder()) &&
