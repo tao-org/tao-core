@@ -55,6 +55,7 @@ import ro.cs.tao.utils.executors.container.ContainerUnit;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -672,9 +673,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     if (!StringUtilities.isNullOrEmpty(hostFolder)) {
                         unit.addVolumeMapping(hostFolder, volumeMount.getContainerEoDataFolder());
                     }
-                    hostFolder = volumeMount.getHostAdditionalFolder();
-                    if (!StringUtilities.isNullOrEmpty(hostFolder)) {
-                        unit.addVolumeMapping(hostFolder, volumeMount.getContainerAdditionalFolder());
+                    final Map<String, String> additionalMappings = volumeMount.getAdditionalMappings();
+                    if (additionalMappings != null && !additionalMappings.isEmpty()) {
+                        for (Map.Entry<String, String> entry : additionalMappings.entrySet()) {
+                            unit.addVolumeMapping(entry.getKey(), entry.getValue());
+                        }
                     }
                     unit.setContainerName(container.getName());
                     unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
@@ -734,10 +737,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             add("-v");
                             add(folder + ":" + volumeMap.getContainerConfigurationFolder());
                         }
-                        folder = volumeMap.getHostAdditionalFolder();
-                        if (!StringUtilities.isNullOrEmpty(folder)) {
-                            add("-v");
-                            add(folder + ":" + volumeMap.getContainerAdditionalFolder());
+                        final Map<String, String> additionalMappings = volumeMap.getAdditionalMappings();
+                        if (additionalMappings != null && !additionalMappings.isEmpty()) {
+                            for (Map.Entry<String, String> entry : additionalMappings.entrySet()) {
+                                add("-v");
+                                add(entry.getKey() + ":" + entry.getValue());
+                            }
                         }
                         if (cpu > 0) {
                             // Enforce the number of CPUs to be used
@@ -814,10 +819,26 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt");
         final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
-        if (!isLocal && component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
+        if (isLocal) {
+            Path p = Path.of(tmpPath);
+            try {
+                if (Files.isDirectory(p)) {
+                    Files.createDirectories(p);
+                } else {
+                    Files.createDirectories(p.getParent());
+                }
+            } catch (IOException e) {
+                logger.warning(e.getMessage());
+            }
+        } else {
             argsList.add(0, "mkdir");
-            argsList.add(1, tmpPath);
-            argsList.add(2, "&&");
+            argsList.add(1, "-p");
+            if (component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
+                argsList.add(2, tmpPath);
+            } else {
+                argsList.add(2, tmpPath.substring(0, tmpPath.lastIndexOf('/')));
+            }
+            argsList.add(3, "&&");
         }
         if (isSnap && isOutputManaged && tempOutput.toLowerCase().endsWith(".tif")) {
             argsList.add("-f");
@@ -843,10 +864,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         // Execute rm even if the previous failed, to clear the workdir
         argsList.add(";");
         argsList.add("rm");
-        if (recursiveCondition) {
-            argsList.add("-r");
-        }
-        if (!isOutputManaged) {
+        //if (recursiveCondition) {
+        argsList.add("-r");
+        argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')));
+        //}
+        /*if (!isOutputManaged) {
             argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
         } else {
             if (isSnapDimap) {
@@ -854,7 +876,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             } else {
                 argsList.add(tmpPath);
             }
-        }
+        }*/
         // all the existing args are merged into a single string as argument to -c
         final String quoteChar = isLocal
                 ? SystemUtils.IS_OS_WINDOWS
