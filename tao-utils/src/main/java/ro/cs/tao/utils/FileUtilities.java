@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.OutputAccumulator;
 import ro.cs.tao.utils.executors.monitoring.ListenableInputStream;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
@@ -1377,12 +1378,13 @@ public class FileUtilities {
         String hash = null;
         if (path != null) {
             final MessageDigest shaDigest = MessageDigest.getInstance(algo);
-            final ByteBuffer buffer = ByteBuffer.allocate(4096);
+            final ByteBuffer buffer = ByteBuffer.allocate(MemoryUnit.MB.value().intValue());
             int read;
             if (Files.isRegularFile(path)) {
                 try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
                     while (channel.read(buffer) != -1) {
                         shaDigest.update(buffer);
+                        buffer.clear();
                     }
                 }
             } else {
@@ -1392,6 +1394,7 @@ public class FileUtilities {
                         try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
                             while (channel.read(buffer) != -1) {
                                 shaDigest.update(buffer);
+                                buffer.clear();
                             }
                         }
                         return FileVisitResult.CONTINUE;
