@@ -866,7 +866,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         argsList.add("rm");
         //if (recursiveCondition) {
         argsList.add("-r");
-        argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')));
+        argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
         //}
         /*if (!isOutputManaged) {
             argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
