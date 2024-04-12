@@ -96,10 +96,10 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
             "ON CONFLICT (component_id) DO UPDATE SET average_duration_seconds = (component_time.average_duration_seconds + :duration) / 2", nativeQuery = true)
     void updateComponentTime(@Param("id") String id, @Param("duration") int duration);
 
-    @Query(value = "SELECT COUNT(id) FROM execution.task WHERE job_id = :jobId AND execution_status_id IN (4, 5, 6)", nativeQuery = true)
+    @Query(value = "SELECT COUNT(id) FROM execution.task WHERE job_id = :jobId AND execution_status_id < 4", nativeQuery = true)
     int countRunableTasks(@Param("jobId") long jobId);
 
-    @Query(value = "SELECT COUNT(l.target_graph_node_id) = 0 FROM workflow.component_link l JOIN execution.task t ON t.graph_node_id = l.source_graph_node_id" +
+    @Query(value = "SELECT COUNT(l.target_graph_node_id) = 0 FROM workflow.component_link l JOIN execution.task t ON t.graph_node_id = l.source_graph_node_id " +
             "WHERE t.id = :taskId", nativeQuery = true)
     boolean isTerminalTask(@Param("taskId") long taskId);
 
