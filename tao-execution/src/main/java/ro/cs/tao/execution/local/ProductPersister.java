@@ -73,10 +73,9 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                 Path productPath = FileUtilities.isURI(location) ? Path.of(URI.create(location)) : Path.of(location);
                 final String entryPoint = product.getEntryPoint();
                 if (entryPoint != null) {
-                    if (FileUtilities.isRaster(Path.of(entryPoint))) {
-                        productPath = productPath.resolve(entryPoint);
-                    }
+                    productPath = productPath.resolve(entryPoint);
                 }
+                logger.fine("Computing product SHA-1 hash");
                 Files.writeString(productPath.getParent().resolve(FileUtilities.getFilenameWithoutExtension(productPath) + ".sha"),
                                   FileUtilities.computeHash(productPath, "SHA-1"));
             } catch (Exception e) {
