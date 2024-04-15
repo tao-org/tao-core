@@ -206,12 +206,27 @@ public class Orchestrator extends Notifiable {
     public ExecutionJob startWorkflow(SessionContext context, ExecutionRequest request) throws ExecutionException {
         try {
             final String user = context.getPrincipal().getName();
-            final ExecutionJob job = tryCreateJob(user, context, request);
+            final List<ExecutionJob> jobs = new ArrayList<>();
+            
+        	final ExecutionJob job = tryCreateJob(user, context, request);
             if (job == null) {
                 throw new ExecutionException("Another job is running or queued for user '" + user + "'. New job will be queued");
-            } else {
-                this.jobQueue.put(job);
             }
+            jobs.add(job);
+            
+            // check if the data sources for the job contains product sets or queries
+            final List<DataSourceExecutionTask> dataTasks = job.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask)
+                    .map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
+
+            final long productSetTasks = dataTasks.stream().filter(dt -> dt.getComponent().getId().startsWith("product-set-")).count();
+            if (productSetTasks > 0) {
+            	// try to split the job
+            	jobs.addAll(jobFactory.splitJobBeforeExecution(job)); 
+            }
+            
+            // add jobs for processing
+            jobs.stream().forEach(j -> this.jobQueue.put(j));
+            
             return job;
         } catch (Exception e) {
             logger.severe(e.getMessage());
@@ -366,6 +381,39 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Creates a list of jobs from a workflow, intended for execution.
+     *
+     * @param context      The session context
+     * @param request    The execution request
+     * @param optimize  If <code>true</code>, the workflow will be optimized if possible
+     * @throws ExecutionException In case anything goes wrong
+     */
+    public List<ExecutionJob> createJobs(SessionContext context, ExecutionRequest request, boolean optimize)  throws ExecutionException {
+        try {
+        	// create the job as before. 
+        	final ExecutionJob mainJob = createJob(context, request, optimize);
+        	if (mainJob == null) {
+        		return null;
+        	}
+        	// split the job into sub-jobs
+        	final List<ExecutionJob> jobsList = this.jobFactory.splitJobBeforeExecution(mainJob);
+
+        	if (jobsList == null) {
+        		return null;
+        	}
+        	// add the main job to the list
+        	jobsList.add(0, mainJob);
+        	
+        	// return list
+        	return jobsList;
+        } catch (CloneNotSupportedException | PersistenceException e) {
+            logger.severe(e.getMessage());
+            throw new ExecutionException(e.getMessage());
+        }
+    }
+
+    
     /**
      * Creates a job for a WPS, intended for execution.
      *
@@ -1435,7 +1483,7 @@ public class Orchestrator extends Notifiable {
     private ExecutionJob tryCreateJob(String user, SessionContext context, ExecutionRequest request) {
         return createJob(context, request, ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
     }
-
+    
     private ExecutionJob tryCreateWPSJob(String user, String wpsId, Map<String, Map<String, String>> inputs) {
         return createWPSJob(wpsId, inputs);
     }
@@ -1742,6 +1790,13 @@ public class Orchestrator extends Notifiable {
                     }
                 }
             }
+            
+            // remove any volatile compnents created for this job
+            try {
+				jobFactory.removeVolatileComponents(job);
+			} catch (PersistenceException e) {
+				logger.severe(() -> String.format("Cannot remove volatile components. Reason: %s", e.getMessage()));
+			}
         }
 
         private void notify(ExecutionJob job) throws PersistenceException {

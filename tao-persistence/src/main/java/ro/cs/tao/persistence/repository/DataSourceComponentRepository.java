@@ -28,13 +28,13 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
      */
     DataSourceComponent findByLabel(String label);
 
-    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = false AND dsc.id like %?1% ORDER BY dsc.id")
+    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = false AND (dsc.volatile IS NULL OR dsc.volatile = false) AND dsc.id like %?1% ORDER BY dsc.id")
     List<DataSourceComponent> getUserDataSourceComponents(String userId);
 
-    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = false ORDER BY dsc.id")
+    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = false AND (dsc.volatile IS NULL OR dsc.volatile = false) ORDER BY dsc.id")
     List<DataSourceComponent> getUserDataSourceComponents();
 
-    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.id NOT IN (?1) ORDER BY dsc.id")
+    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.id NOT IN (?1) AND (dsc.volatile IS NULL OR dsc.volatile = false) ORDER BY dsc.id")
     List<DataSourceComponent> getOtherDataSourceComponents(Set<String> ids);
 
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = true ORDER BY dsc.id")
@@ -46,15 +46,15 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.dataSourceName = ?1 ORDER BY dsc.id")
     List<DataSourceComponent> getBySource(String dataSourceName);
 
-    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.dataSourceName = ?1 AND dsc.sensorName = ?2 ORDER BY dsc.id")
+    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.dataSourceName = ?1 AND dsc.sensorName = ?2 AND (dsc.volatile IS NULL OR dsc.volatile = false) ORDER BY dsc.id")
     List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor);
 
     @Query(value = "SELECT dsc.* FROM component.source_descriptor sd JOIN component.data_source_component dsc ON dsc.id = sd.parent_id " +
-            "WHERE dsc.id LIKE '%' || ?1 || '%' AND sd.name = 'query' AND sd.location IS NOT NULL ORDER BY dsc.created", nativeQuery = true)
+            "WHERE dsc.id LIKE '%' || ?1 || '%' AND sd.name = 'query' AND sd.location IS NOT NULL AND (dsc.volatile IS NULL OR dsc.volatile = false) ORDER BY dsc.created", nativeQuery = true)
     List<DataSourceComponent> getProductSets(String userName);
 
     @Query(value = "SELECT dsc.* FROM component.data_source_component dsc " +
-                   "JOIN workflow.query q ON q.component_id = dsc.id WHERE q.id = ?1",
+                   "JOIN workflow.query q ON q.component_id = dsc.id WHERE q.id = ?1 AND (dsc.volatile IS NULL OR dsc.volatile = false)",
            nativeQuery = true)
     DataSourceComponent getQueryDataSourceComponent(long queryId);
 }

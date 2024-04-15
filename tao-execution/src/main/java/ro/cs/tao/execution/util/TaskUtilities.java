@@ -383,6 +383,44 @@ public class TaskUtilities {
     }
 
     /**
+     * Performs grouping of the inputs of the two data source tasks.
+     * Returns a list of pairs [first_task_output, corresponding_second_task_output]
+     * @param primaryTask       The primary data source task
+     * @param secondaryTask     The secondary data source task (which is synchronized on the primary one)
+     */
+    public static List<Tuple<String, String>> coupleTaskInputs(DataSourceExecutionTask primaryTask,
+                                                                DataSourceExecutionTask secondaryTask) {
+        final SourceDescriptor sdTwo = secondaryTask.getComponent().getSources().stream()
+                                              .filter(s -> DataSourceComponent.SYNC_PARAMETER.equals(s.getName()))
+                                              .findFirst().orElse(null);
+        if (sdTwo == null) {
+            throw new IllegalArgumentException("Data sources not synchronized");
+        }
+        
+        SourceDescriptor firstSD = primaryTask.getComponent().getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().orElse(null);
+        if (firstSD == null) {
+        	throw new ExecutionException("Invalid primary data source");
+        }
+        SourceDescriptor secondSD = secondaryTask.getComponent().getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().orElse(null);
+        if (secondSD == null) {
+        	throw new ExecutionException("Invalid secondary data source");
+        }
+        final List<String> firstList = Arrays.asList(firstSD.getDataDescriptor().getLocation().split(","));
+        final List<String> secondList = Arrays.asList(secondSD.getDataDescriptor().getLocation().split(","));
+        final Pattern datePattern = Pattern.compile("(\\d{4}[0-1]\\d[0-3]\\d)");
+        final List<Tuple<String, String>> results = new ArrayList<>();
+        for (String firstValue : firstList) {
+            final Matcher matcher = datePattern.matcher(firstValue);
+            if (matcher.find()) {
+                final String date = matcher.group(1);
+                final String secondValue = secondList.stream().filter(v -> v.contains(date)).findFirst().orElse(null);
+                results.add(new Tuple<>(firstValue, secondValue));
+            }
+        }
+        return results;
+    }
+
+    /**
      * Checks if this task is an externally (i.e. not TAO-specific) executing task
      * @param task  The task
      */

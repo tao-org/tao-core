@@ -519,7 +519,8 @@ CREATE TABLE component.data_source_component
 	is_system boolean NOT NULL DEFAULT false,
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
-    modified timestamp NULL
+    modified timestamp NULL,
+    volatile boolean NULL DEFAULT false
 );
 ALTER TABLE component.data_source_component ADD CONSTRAINT PK_data_source_component
 	PRIMARY KEY (id);

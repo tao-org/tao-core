@@ -89,6 +89,8 @@ public class DataSourceComponent extends TaoComponent {
     private DownloadProgressListener progressListener;
     @XmlTransient
     private Principal principal;
+    @XmlTransient
+    private Boolean isVolatile;
 
     @XmlTransient
     private final Logger logger;
@@ -170,6 +172,9 @@ public class DataSourceComponent extends TaoComponent {
 
     public boolean getSystem() { return system; }
     public void setSystem(boolean value) { this.system = value; }
+
+    public Boolean getVolatile() { return isVolatile == null ? false : isVolatile; }
+    public void setVolatile(Boolean value) { this.isVolatile = value; }
 
     /**
      * Returns the user name used by this component to connect to the data source

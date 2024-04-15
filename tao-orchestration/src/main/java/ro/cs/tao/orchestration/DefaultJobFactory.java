@@ -738,6 +738,220 @@ public class DefaultJobFactory {
         return jobs;
     }
 
+
+    /**
+     * Creates a list of execution jobs from a job based on the list of values of the entry data source task.
+     * The first value is discarded, assuming it is taken by the original job.
+     *
+     * @param job       The job to be split
+     *
+     */
+    public List<ExecutionJob> splitJobBeforeExecution(ExecutionJob job) throws PersistenceException, CloneNotSupportedException {
+        final List<ExecutionJob> jobs = new ArrayList<>();
+        List<ExecutionTask> tasks = job.getTasks();
+        //jobs.add(job);
+        if (tasks != null) {
+            //DataSourceExecutionTask dataTask = (DataSourceExecutionTask) tasks.stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
+            final List<DataSourceExecutionTask> dataTasks = tasks.stream().filter(t -> t instanceof DataSourceExecutionTask)
+                                                           .map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
+            if (dataTasks.size() == 2) {
+                DataSourceExecutionTask dataTask = dataTasks.stream().filter(TaskUtilities::isSynchronized).findFirst().orElse(null);
+                if (dataTask != null) {
+                    DataSourceExecutionTask primaryTask = dataTasks.stream().filter(d -> !d.getId().equals(dataTask.getId())).findFirst().get();
+                    List<Tuple<String, String>> tuples = TaskUtilities.coupleTaskInputs(primaryTask, dataTask);
+                    final int size = tuples.size();
+                    if (size > 1) {
+                        for (int i = 1; i < size; i++) {
+                            ExecutionJob clonedJob = cloneJob(job, i + 1, size);
+                            final Map<String, List<String>> dependencies = clonedJob.getTaskDependencies();
+                            DataSourceExecutionTask clonedPrimaryDataTask = (DataSourceExecutionTask) clonedJob.getTasks().stream()
+                                                                     .filter(t -> t instanceof DataSourceExecutionTask
+                                                                             && !dependencies.containsKey(String.valueOf(t.getId())))
+                                                                     .findFirst().orElse(null);
+                            if (clonedPrimaryDataTask == null) {
+                                throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
+                            }
+                            DataSourceExecutionTask clonedSecondaryDataTask = (DataSourceExecutionTask) clonedJob.getTasks().stream()
+                                                                       .filter(t -> t instanceof DataSourceExecutionTask
+                                                                               && dependencies.containsKey(String.valueOf(t.getId())))
+                                                                       .findFirst().orElse(null);
+
+                            if (clonedSecondaryDataTask == null) {
+                                throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
+                            }
+
+                            final DataSourceComponent clonedPrimaryComponent = clonedPrimaryDataTask.getComponent().clone();
+                            clonedPrimaryComponent.setId(clonedPrimaryComponent.getId() + "_" + i);
+                            clonedPrimaryComponent.setVolatile(true);
+                            clonedPrimaryComponent.getSources().stream().forEach(s -> s.setParentId(clonedPrimaryComponent.getId()));
+                            clonedPrimaryComponent.getTargets().stream().forEach(t ->
+                            	{t.setParentId(clonedPrimaryComponent.getId());t.setCardinality(1);}
+                            );
+                            SourceDescriptor querryDescriptor = clonedPrimaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                            if (querryDescriptor == null) {
+                            	throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned correctly. Missing querry parameter descriptor");
+                            }
+                            querryDescriptor.setCardinality(1);
+                            querryDescriptor.getDataDescriptor().setLocation(tuples.get(i).getKeyOne());
+                            dataSourceComponentProvider.save(clonedPrimaryComponent);
+                            clonedPrimaryDataTask.setComponent(clonedPrimaryComponent);
+                            clonedPrimaryDataTask.setContext(primaryTask.getContext());
+                            clonedPrimaryDataTask.setCardinality(1);
+                            taskProvider.update(clonedPrimaryDataTask);
+
+                            
+                            final DataSourceComponent clonedSecondaryComponent = clonedSecondaryDataTask.getComponent().clone();
+                            clonedSecondaryComponent.setId(clonedSecondaryComponent.getId() + "_" + i);
+                            clonedSecondaryComponent.setVolatile(true);
+                            clonedSecondaryComponent.getSources().stream().forEach(s -> s.setParentId(clonedSecondaryComponent.getId()));
+                            clonedSecondaryComponent.getTargets().stream().forEach(t ->
+                            	{t.setParentId(clonedSecondaryComponent.getId());t.setCardinality(1);}
+                            );
+                            querryDescriptor = clonedSecondaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                            if (querryDescriptor == null) {
+                            	throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned correctly. Missing querry parameter descriptor");
+                            }
+                            querryDescriptor.setCardinality(1);
+                            querryDescriptor.getDataDescriptor().setLocation(tuples.get(i).getKeyTwo());
+                            dataSourceComponentProvider.save(clonedSecondaryComponent);
+                            clonedSecondaryDataTask.setComponent(clonedSecondaryComponent);
+                            clonedSecondaryDataTask.setContext(dataTask.getContext());
+                            clonedSecondaryDataTask.setCardinality(1);
+                            taskProvider.update(clonedSecondaryDataTask);
+                            clonedJob = jobProvider.update(clonedJob);
+                            jobs.add(clonedJob);
+                        }
+                        // Reset the output values to prevent appending to any existing value
+                        final DataSourceComponent clonedPrimaryComponent = primaryTask.getComponent().clone();
+                        clonedPrimaryComponent.setId(clonedPrimaryComponent.getId() + "_0");
+                        clonedPrimaryComponent.setVolatile(true);
+                        clonedPrimaryComponent.getSources().stream().forEach(s -> s.setParentId(clonedPrimaryComponent.getId()));
+                        clonedPrimaryComponent.getTargets().stream().forEach(t ->
+                        	{t.setParentId(clonedPrimaryComponent.getId());t.setCardinality(1);}
+                        );
+                        SourceDescriptor querryDescriptor = clonedPrimaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                        if (querryDescriptor == null) {
+                        	throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned correctly. Missing querry parameter descriptor");
+                        }
+                        querryDescriptor.setCardinality(1);
+                        querryDescriptor.getDataDescriptor().setLocation(tuples.get(0).getKeyOne());
+                        dataSourceComponentProvider.save(clonedPrimaryComponent);
+                        primaryTask.setComponent(clonedPrimaryComponent);
+                        primaryTask.setCardinality(1);
+                        taskProvider.update(primaryTask);
+
+                        final DataSourceComponent clonedSecondaryComponent = dataTask.getComponent().clone();
+                        clonedSecondaryComponent.setId(clonedSecondaryComponent.getId() + "_0");
+                        clonedSecondaryComponent.setVolatile(true);
+                        clonedSecondaryComponent.getSources().stream().forEach(s -> s.setParentId(clonedSecondaryComponent.getId()));
+                        clonedSecondaryComponent.getTargets().stream().forEach(t ->
+                        	{t.setParentId(clonedSecondaryComponent.getId());t.setCardinality(1);}
+                        );
+                        querryDescriptor = clonedSecondaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                        if (querryDescriptor == null) {
+                        	throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned correctly. Missing querry parameter descriptor");
+                        }
+                        querryDescriptor.setCardinality(1);
+                        querryDescriptor.getDataDescriptor().setLocation(tuples.get(0).getKeyTwo());
+                        dataSourceComponentProvider.save(clonedSecondaryComponent);
+                        dataTask.setComponent(clonedSecondaryComponent);
+                        dataTask.setCardinality(1);
+                        taskProvider.update(dataTask);
+                        job = jobProvider.update(job);
+                    }
+                }
+            } else {
+                for (DataSourceExecutionTask dataTask : dataTasks) {
+                	SourceDescriptor sourceDescriptor;
+					sourceDescriptor = dataTask.getComponent().getSources().stream().filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                	
+                	//Variable values = dataTask.getInputParameterValues().stream().filter(v -> v.getKey().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                	
+//                    Variable values = dataTask.getOutputParameterValues()
+//                                              .stream()
+//                                              .filter(v -> v.getKey().equals(DataSourceComponent.RESULTS_PARAMETER))
+//                                              .findFirst().orElse(null);
+                    if (sourceDescriptor != null && sourceDescriptor.getDataDescriptor() != null) {
+                        List<String> list = Arrays.asList(sourceDescriptor.getDataDescriptor().getLocation().split(","));
+                        if (list != null && list.size() > 1) {
+                            final int size = list.size();
+                            for (int i = 1; i < size; i++) {
+                                ExecutionJob clonedJob = cloneJob(job, i + 1, size);
+                                DataSourceExecutionTask clonedDataTask = (DataSourceExecutionTask) clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
+                                if (clonedDataTask == null) {
+                                    throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
+                                }
+                                final DataSourceComponent clonedComponent = clonedDataTask.getComponent().clone();
+                                clonedComponent.setId(clonedComponent.getId() + "_" + i);
+                                clonedComponent.setVolatile(true);
+                                clonedComponent.getSources().stream().forEach(s -> s.setParentId(clonedComponent.getId()));
+                                clonedComponent.getTargets().stream().forEach(t ->
+                                	{t.setParentId(clonedComponent.getId());t.setCardinality(1);}
+                                );
+                                // Reset the output values to prevent appending to any existing value
+                                final SourceDescriptor querryDescriptor = clonedComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                                if (querryDescriptor == null) {
+                                	throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned correctly. Missing querry parameter descriptor");
+                                }
+                                querryDescriptor.setCardinality(1);
+                                querryDescriptor.getDataDescriptor().setLocation(list.get(i));
+                                dataSourceComponentProvider.save(clonedComponent);
+                                clonedDataTask.setComponent(clonedComponent);
+                                clonedDataTask.setCardinality(1);
+                                clonedDataTask.setContext(dataTask.getContext());
+                                clonedDataTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+                                taskProvider.update(clonedDataTask);
+                                clonedJob = jobProvider.update(clonedJob);
+                                jobs.add(clonedJob);
+                            }
+                            // Reset the output values to prevent appending to any existing value
+//                            dataTask.setOutputParameterValues(null);
+//                            dataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, list.get(0));
+                            final DataSourceComponent clonedComponent = dataTask.getComponent().clone();
+                            clonedComponent.setId(clonedComponent.getId() + "_0");
+                            clonedComponent.setVolatile(true);
+                            clonedComponent.getSources().stream().forEach(s -> s.setParentId(clonedComponent.getId()));
+                            clonedComponent.getTargets().stream().forEach(t ->
+                        		{t.setParentId(clonedComponent.getId());t.setCardinality(1);}
+                            );
+
+                            final SourceDescriptor querryDescriptor = clonedComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                            if (querryDescriptor == null) {
+                            	throw new CloneNotSupportedException("Invalid DataSourceExecutionTask. Missing querry parameter descriptor");
+                            }
+                            querryDescriptor.setCardinality(1);
+                            querryDescriptor.getDataDescriptor().setLocation(list.get(0));
+                            dataSourceComponentProvider.save(clonedComponent);
+                            dataTask.setComponent(clonedComponent);
+                            dataTask.setCardinality(1);
+                            taskProvider.update(dataTask);
+                            job = jobProvider.update(job);
+                        }
+                    }
+                }
+            }
+        }
+        return jobs;
+    }
+
+    /**
+     * Remove volatile components.
+     * 
+     * @param job the finished job
+     * @throws PersistenceException if the removal fails
+     */
+    public void removeVolatileComponents(final ExecutionJob job) throws PersistenceException {
+        for (final ExecutionTask task : job.getTasks()) {
+        	if (task instanceof DataSourceExecutionTask) {
+        		// get the component
+        		final DataSourceComponent dsc = ((DataSourceExecutionTask) task).getComponent();
+        		if (dsc != null && dsc.getVolatile()) {
+        			dataSourceComponentProvider.delete(dsc);
+        		}
+        	}
+        }
+    }
+    
     public ExecutionJob cloneJob(ExecutionJob original, int cloneNumber, int total) throws CloneNotSupportedException, PersistenceException {
         return TransactionalMethod.withExceptionType(PersistenceException.class).execute(() -> {
             ExecutionJob clone = new ExecutionJob();
