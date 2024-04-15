@@ -78,8 +78,8 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
     public void setGeometry(String geometryAsText) {
         try {
             this.geometry = new GeometryAdapter().marshal(geometryAsText);
-            if (this.geometry instanceof MultiPolygon && this.geometry.getNumGeometries() == 1) {
-                this.geometry = this.geometry.getGeometryN(0);
+            if (this.geometry instanceof MultiPolygon || this.geometry.getNumGeometries() > 1) {
+                this.geometry = this.geometry.getEnvelope();
             }
         } catch (Exception ignored) { }
     }
