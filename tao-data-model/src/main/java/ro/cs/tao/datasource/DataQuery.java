@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,8 @@ public abstract class DataQuery extends StringIdentifiable {
     protected Map<String, DataSourceParameter> dataSourceParameters;
     /* Maps parameter system name to a query parameter (which has the same system name) */
     protected Map<String, QueryParameter<?>> parameters;
+    protected Predicate<EOProduct> coverageFilter;
+
     protected Logger logger = Logger.getLogger(getClass().getName());
 
     protected DataQuery() { }
@@ -168,35 +171,44 @@ public abstract class DataQuery extends StringIdentifiable {
             throw ex;
         }
         Instant start = Instant.now();
-        List<EOProduct> retList = executeImpl();
         final QueryParameter<?> footprintParam = actualParameters.get(CommonParameterNames.FOOTPRINT);
         if (this.coverage > 0.0 && footprintParam != null) {
-            // If coverage parameter is set, then keep only those products
-            // that intersect at least <coverage>% (of the given footprint) the area of interest
             final Polygon2D polygon2D = (Polygon2D) footprintParam.getValue();
+            final Geometry footprint;
             try {
-                final Geometry footprint = new GeometryAdapter().marshal(polygon2D.toWKT());
-                final double footprintArea = footprint.getArea();
-                retList.removeIf(p -> {
-                    Geometry product = p.geometryObject();
-                    final Geometry intersection = footprint.intersection(product);
-                    if (intersection.isEmpty()) {
+                footprint = new GeometryAdapter().marshal(polygon2D.toWKT());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            final double footprintArea = footprint.getArea();
+            this.coverageFilter = new Predicate<EOProduct>() {
+                @Override
+                public boolean test(EOProduct p) {
+                    // If coverage parameter is set, then keep only those products
+                    // that intersect at least <coverage>% (of the given footprint) the area of interest
+                    try {
+                        Geometry product = p.geometryObject();
+                        final Geometry intersection = footprint.intersection(product);
+                        if (intersection.isEmpty()) {
+                            return true;
+                        }
+                        final double productArea = product.getArea();
+                        final double areaPercentage = productArea > footprintArea
+                                                      ? intersection.getArea() / footprintArea
+                                                      : intersection.getArea() / productArea;
+                        final boolean toRemove = Math.abs(areaPercentage - coverage) > 0.0001;
+                        if (toRemove) {
+                            logger.finest(String.format("Product %s removed due to coverage (%.2f%%)", p.getName(), areaPercentage));
+                        }
+                        return toRemove;
+                    } catch (Exception e) {
+                        logger.warning(e.getMessage());
                         return true;
                     }
-                    final double productArea = product.getArea();
-                    final double areaPercentage = productArea > footprintArea
-                                                  ? intersection.getArea() / footprintArea
-                                                  : intersection.getArea() / productArea;
-                    final boolean toRemove = Math.abs(areaPercentage - this.coverage) > 0.0001;
-                    if (toRemove) {
-                        logger.finest(String.format("Product %s removed due to coverage (%.2f%%)", p.getName(), areaPercentage));
-                    }
-                    return toRemove;
-                });
-            } catch (Exception e) {
-                logger.warning(e.getMessage());
-            }
+                }
+            };
         }
+        List<EOProduct> retList = executeImpl();
         logger.finest(String.format("Data query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
 
         boolean canSortAcqDate = true;

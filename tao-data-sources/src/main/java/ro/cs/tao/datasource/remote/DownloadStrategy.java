@@ -147,6 +147,10 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         this.cancelled = true;
     }
 
+    public void setAuthentication(T authentication) {
+
+    }
+
     /**
      * Returns the local arhive root (if in {@link FetchMode}.SYMLINK).
      */

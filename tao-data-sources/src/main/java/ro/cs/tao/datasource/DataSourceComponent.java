@@ -447,10 +447,19 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private List<EOProduct> doFetchImpl(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        DataSource<?, ?> dataSource;
+        DataSource<?, ?> dataSource = null;
         String errorMessage;
+        Object token = null;
+        if (products != null && !products.isEmpty()) {
+            dataSource = createDataSource(products.get(0));
+            try {
+                token = dataSource.authenticate();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         for (EOProduct product : products) {
-            dataSource = createDataSource(product);
+            //dataSource = createDataSource(product);
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
             product.addAttribute("maxRetries", String.valueOf(this.maxRetries));
@@ -476,6 +485,7 @@ public class DataSourceComponent extends TaoComponent {
                         throw new NoSuchElementException("Product type '" + product.getProductType() + "' doesn't have an associated download strategy!");
                     }
                     if (templateFetcher instanceof DownloadStrategy) {
+                        ((DownloadStrategy) templateFetcher).setAuthentication(token);
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
                         downloadStrategy.setDestination(destinationPath);
                         downloadStrategy.setFetchMode(this.fetchMode);
