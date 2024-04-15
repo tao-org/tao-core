@@ -187,7 +187,7 @@ public abstract class DataQuery extends StringIdentifiable {
                     final double areaPercentage = productArea > footprintArea
                                                   ? intersection.getArea() / footprintArea
                                                   : intersection.getArea() / productArea;
-                    final boolean toRemove = areaPercentage < this.coverage;
+                    final boolean toRemove = Math.abs(areaPercentage - this.coverage) > 0.0001;
                     if (toRemove) {
                         logger.finest(String.format("Product %s removed due to coverage (%.2f%%)", p.getName(), areaPercentage));
                     }
