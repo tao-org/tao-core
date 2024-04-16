@@ -17,6 +17,7 @@ package ro.cs.tao.component;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Cosmin Cara
@@ -64,4 +65,16 @@ public class Variable implements Serializable{
         return new Variable(this.key, this.value);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Variable variable = (Variable) o;
+        return Objects.equals(getKey(), variable.getKey()) && Objects.equals(getValue(), variable.getValue());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getKey(), getValue());
+    }
 }
