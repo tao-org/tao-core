@@ -54,7 +54,6 @@ import ro.cs.tao.utils.executors.container.ContainerUnit;
 
 import java.io.IOException;
 import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -135,12 +134,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     super.initialize();
                     masterHost = Inet4Address.getLocalHost().getHostName();
                     sessions.put(env, session);
-                    isInitialized.set(true);
-                } catch (UnknownHostException | DrmaaException e) {
-                    isInitialized.set(false);
+                } catch (Exception e) {
                     logger.severe("Error initiating DRMAA " + env + " session: " + e.getMessage());
                 }
             }
+            isInitialized.set(sessions.size() > 0);
             if (isInitialized.get()) {
                 this.queueWorker.start();
             }
