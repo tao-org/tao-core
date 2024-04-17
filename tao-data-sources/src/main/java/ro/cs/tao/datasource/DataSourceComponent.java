@@ -463,7 +463,10 @@ public class DataSourceComponent extends TaoComponent {
                 throw new RuntimeException(e);
             }
         }
-        for (EOProduct product : products) {
+        int idx = 0;
+        final int size = products.size();
+        while (idx < size) {
+            EOProduct product = products.get(idx);
             //dataSource = createDataSource(product);
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
@@ -553,7 +556,15 @@ public class DataSourceComponent extends TaoComponent {
                 errorMessage = e.getMessage();
             } catch (Exception e) {
                 errorMessage = e.getMessage();
+                // maybe the token has just expired, retry one more time
+                try {
+                    token = dataSource.authenticate();
+                    idx--;
+                } catch (IOException inner) {
+                    errorMessage = inner.getMessage();
+                }
             } finally {
+                idx++;
                 if (errorMessage != null && this.productStatusListener != null) {
                     if(errorMessage.contains(""+ HttpStatus.SC_ACCEPTED)){
                         this.productStatusListener.downloadQueued(product,"Product not ready for download now. Download was queued.");
