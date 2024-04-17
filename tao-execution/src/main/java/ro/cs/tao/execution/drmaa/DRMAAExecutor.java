@@ -128,8 +128,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
         synchronized (isInitialized) {
             for (Environment env : environments) {
-                Session session = SessionFactory.getFactory(env).getSession();
                 try {
+                    Session session = SessionFactory.getFactory(env).getSession();
                     session.init(null);
                     super.initialize();
                     masterHost = Inet4Address.getLocalHost().getHostName();
