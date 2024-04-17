@@ -291,7 +291,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                                            String.valueOf(task.getId()),
                                            message,
                                            false);
-        Messaging.send(new UserPrincipal(userId), Topic.INFORMATION.value(), msg, false);
+        Messaging.send(new UserPrincipal(userId), Topic.INFORMATION.value(), getClass().getSimpleName(), msg, false);
     }
 
     protected void sendProgressMessage(ExecutionTask task) {
@@ -302,7 +302,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                                                false);
         try {
             message.setData(JsonMapper.instance().writeValueAsString(taskProvider.getTaskStatus(task.getId())));
-            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), message, false);
+            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), getClass().getSimpleName(), message, false);
         } catch (JsonProcessingException e) {
             logger.warning("Cannot send progress message. Reason: " + e.getMessage());
         }
@@ -318,7 +318,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             final ExecutionTaskSummary taskStatus = taskProvider.getTaskStatus(task.getId());
             taskStatus.setPercentComplete(percent);
             message.setData(JsonMapper.instance().writeValueAsString(taskStatus));
-            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), message, false);
+            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), getClass().getSimpleName(), message, false);
         } catch (JsonProcessingException e) {
             logger.warning("Cannot send progress message. Reason: " + e.getMessage());
         }
