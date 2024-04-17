@@ -878,7 +878,8 @@ public class FileUtilities {
                         }
                     }
                 });
-                Files.delete(source);
+                // This could be already deleted in postVisitDirectory
+                Files.deleteIfExists(source);
             }
         }
     }
