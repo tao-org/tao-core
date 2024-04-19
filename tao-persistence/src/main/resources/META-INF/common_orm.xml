@@ -1555,10 +1555,10 @@
             <basic name="flavorQuantity">
                 <column name="flavor_quantity" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
-            <basic name="flavorHddSize">
+            <basic name="flavorHddSizeGB">
                 <column name="flavor_hdd_quantity_GB" nullable="true" column-definition="smallint"/>
             </basic>
-            <basic name="flavorSsdSize">
+            <basic name="flavorSsdSizeGB">
                 <column name="flavor_ssd_quantity_GB" nullable="true" column-definition="smallint"/>
             </basic>
             <basic name="objectStorageGB">
