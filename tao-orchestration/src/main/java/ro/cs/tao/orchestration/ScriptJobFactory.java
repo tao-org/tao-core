@@ -5,15 +5,10 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Container;
-import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.JobType;
 import ro.cs.tao.execution.model.ScriptTask;
 import ro.cs.tao.execution.util.TaskUtilities;
-import ro.cs.tao.persistence.PersistenceException;
-import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.workflow.ParameterValue;
-import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.HashSet;
@@ -23,23 +18,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ScriptJobFactory extends DefaultJobFactory {
-
-    /**
-     * Creates an execution job for the given workflow, with the given input parameter values
-     * @param context   The current user session context
-     * @param appId     The orchestrator identifier
-     * @param jobName   The name of the new job
-     * @param workflow  The workflow
-     * @param inputs    The (possibly overridden) input parameter values
-     * @param jobType   The output job format
-     */
-    public ExecutionJob createJob(SessionContext context, String appId, String jobName, WorkflowDescriptor workflow,
-                                  Map<String, Map<String, String>> inputs, JobType jobType) throws PersistenceException {
-        final ExecutionJob job = createJob(context, appId, jobName, workflow, inputs);
-        job.setJobType(jobType);
-        jobProvider.update(job);
-        return job;
-    }
 
     @Override
     protected ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks, Map<String, String> inputs) {

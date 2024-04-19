@@ -32,15 +32,17 @@ public interface UserService extends TAOService {
 
     List<Group> getGroups();
 
-    void activateUser(String username) throws PersistenceException;
+    void activateUser(String userId) throws PersistenceException;
 
-    void resetPassword(String username, ResetPasswordInfo resetInfo) throws PersistenceException;
+    void createWorkspaces(String userId);
 
-    User getUserInfo(String username);
+    void resetPassword(String userId, ResetPasswordInfo resetInfo) throws PersistenceException;
+
+    User getUserInfo(String userId);
 
     User updateUserInfo(User updatedInfo) throws PersistenceException;
 
-    List<UserPreference> saveOrUpdateUserPreferences(String username, List<UserPreference> userPreferences) throws PersistenceException;
+    List<UserPreference> saveOrUpdateUserPreferences(String userId, List<UserPreference> userPreferences) throws PersistenceException;
 
-    List<UserPreference> removeUserPreferences(String username, List<String> userPrefsKeysToDelete) throws PersistenceException;
+    List<UserPreference> removeUserPreferences(String userId, List<String> userPrefsKeysToDelete) throws PersistenceException;
 }

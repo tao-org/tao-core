@@ -111,18 +111,14 @@ public class Utilities {
     }
 
     /**
-     * Extracts domain URL from given URL (eg: https://zipper.creodias.eu/ -> https://creodias.eu/)
+     * Extracts host URL from given URL (eg: https://zipper.creodias.eu/path -> zipper.creodias.eu)
      * @param url the URL
-     * @return the domain URL
+     * @return the host URL
      */
-    public static String getDomainURL(String url){
+    public static String getHostURL(String url){
         if (url != null) {
             try {
-                final URI uri = new URI(url.toLowerCase());
-                if (uri.getHost() != null) {
-                    final String domain = uri.getHost().replaceAll(".*\\.(.*\\..*)", "$1");
-                    return uri.getScheme() + "://" + domain;
-                }
+                return new URI(url.toLowerCase()).getHost();
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }

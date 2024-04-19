@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.beans.Transient;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Container for messages that circulate via the available {@link EventBus}.
@@ -108,12 +109,12 @@ public class Message extends LongIdentifiable {
     }
 
     @XmlElement(name = "user")
-    public String getUser() { return this.data != null ? this.data.get(PRINCIPAL_KEY) : null; }
-    public void setUser(String name) {
+    public String getUserId() { return this.data != null ? this.data.get(PRINCIPAL_KEY) : null; }
+    public void setUserId(String userId) {
         if (this.data == null) {
             this.data = new HashMap<>();
         }
-        this.data.put(PRINCIPAL_KEY, name);
+        this.data.put(PRINCIPAL_KEY, userId);
     }
 
     @XmlElement(name = "isRead")
@@ -139,6 +140,11 @@ public class Message extends LongIdentifiable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Transient
+    public Map<String, String> getRawData() {
+        return this.data != null ? new HashMap<>(this.data) : new HashMap<>();
     }
 
     @Transient
@@ -169,6 +175,20 @@ public class Message extends LongIdentifiable {
 
     @Transient
     public Map<String, String> getItems() { return data; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Message message = (Message) o;
+        return timestamp == message.timestamp && read == message.read && persistent == message.persistent && Objects.equals(data, message.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), timestamp, read, persistent, data);
+    }
 
     @Override
     public String toString() {

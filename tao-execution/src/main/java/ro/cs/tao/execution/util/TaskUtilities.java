@@ -196,7 +196,7 @@ public class TaskUtilities {
         int cardinality = -1;
         if (component != null) {
             List<SourceDescriptor> sources = component.getSources();
-            if (sources != null && sources.size() > 0) {
+            if (sources != null && !sources.isEmpty()) {
                 /*if (sources.size() == 1) {
                     cardinality = sources.get(0).getCardinality();
                 } else {*/
@@ -228,7 +228,7 @@ public class TaskUtilities {
         int cardinality = -1;
         if (component != null) {
             List<TargetDescriptor> targets = component.getTargets();
-            if (targets != null && targets.size() > 0) {
+            if (targets != null && !targets.isEmpty()) {
                 /*if (targets.size() == 1) {
                     cardinality = targets.get(0).getCardinality();
                 } else {*/
@@ -245,7 +245,7 @@ public class TaskUtilities {
     public static Map<String, String> getConnectedInputs(ExecutionTask sourceTask, ExecutionTask targetTask) {
         final WorkflowNodeDescriptor targetNode = workflowNodeProvider.get(targetTask.getWorkflowNodeId());
         final Set<ComponentLink> links = targetNode.getIncomingLinks();
-        if (links != null && links.size() > 0) {
+        if (links != null && !links.isEmpty()) {
             final Map<String, String> connections = new LinkedHashMap<>();
             final WorkflowNodeDescriptor sourceNode = workflowNodeProvider.get(sourceTask.getWorkflowNodeId());
             links.stream()
@@ -255,6 +255,14 @@ public class TaskUtilities {
         } else {
             return new HashMap<>();
         }
+    }
+
+    public static boolean isTerminalTask(ExecutionTask task) {
+        return taskProvider.isTerminalTask(task.getId());
+        /*final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
+        final List<WorkflowNodeDescriptor> nodes = node.getWorkflow().getNodes();
+        return nodes.stream().noneMatch(n -> n.getIncomingLinks() != null &&
+                                         n.getIncomingLinks().stream().anyMatch(l -> node.getId() == l.getSourceNodeId()));*/
     }
 
     /**
@@ -271,12 +279,12 @@ public class TaskUtilities {
     }
 
     public static boolean haveAllTasksCompleted(ExecutionJob job) {
-        // TODO: replace with a count sql query
-        final List<ExecutionTask> tasks = job.orderedTasks();
+        return taskProvider.countRunableTasks(job.getId()) == 0;
+        /*final List<ExecutionTask> tasks = job.orderedTasks();
         return tasks != null &&
                 tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
                                              t.getExecutionStatus() == ExecutionStatus.FAILED ||
-                                             t.getExecutionStatus() == ExecutionStatus.CANCELLED);
+                                             t.getExecutionStatus() == ExecutionStatus.CANCELLED);*/
     }
 
     /**
@@ -291,7 +299,7 @@ public class TaskUtilities {
         final WorkflowNodeDescriptor node = workflowNodeProvider.get(toTask.getWorkflowNodeId());
         //final ExecutionJob job = toTask.getJob();
         final Set<ComponentLink> links = node.getIncomingLinks();
-        if (links != null && links.size() > 0) {
+        if (links != null && !links.isEmpty()) {
             for (ComponentLink link : links) {
                 final ExecutionTask parentTask = taskProvider.getByJobAndNode(toTask.getJob().getId(),
                                                                               link.getSourceNodeId(), toTask.getInstanceId());
@@ -375,6 +383,44 @@ public class TaskUtilities {
     }
 
     /**
+     * Performs grouping of the inputs of the two data source tasks.
+     * Returns a list of pairs [first_task_output, corresponding_second_task_output]
+     * @param primaryTask       The primary data source task
+     * @param secondaryTask     The secondary data source task (which is synchronized on the primary one)
+     */
+    public static List<Tuple<String, String>> coupleTaskInputs(DataSourceExecutionTask primaryTask,
+                                                                DataSourceExecutionTask secondaryTask) {
+        final SourceDescriptor sdTwo = secondaryTask.getComponent().getSources().stream()
+                                              .filter(s -> DataSourceComponent.SYNC_PARAMETER.equals(s.getName()))
+                                              .findFirst().orElse(null);
+        if (sdTwo == null) {
+            throw new IllegalArgumentException("Data sources not synchronized");
+        }
+        
+        SourceDescriptor firstSD = primaryTask.getComponent().getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().orElse(null);
+        if (firstSD == null) {
+        	throw new ExecutionException("Invalid primary data source");
+        }
+        SourceDescriptor secondSD = secondaryTask.getComponent().getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().orElse(null);
+        if (secondSD == null) {
+        	throw new ExecutionException("Invalid secondary data source");
+        }
+        final List<String> firstList = Arrays.asList(firstSD.getDataDescriptor().getLocation().split(","));
+        final List<String> secondList = Arrays.asList(secondSD.getDataDescriptor().getLocation().split(","));
+        final Pattern datePattern = Pattern.compile("(\\d{4}[0-1]\\d[0-3]\\d)");
+        final List<Tuple<String, String>> results = new ArrayList<>();
+        for (String firstValue : firstList) {
+            final Matcher matcher = datePattern.matcher(firstValue);
+            if (matcher.find()) {
+                final String date = matcher.group(1);
+                final String secondValue = secondList.stream().filter(v -> v.contains(date)).findFirst().orElse(null);
+                results.add(new Tuple<>(firstValue, secondValue));
+            }
+        }
+        return results;
+    }
+
+    /**
      * Checks if this task is an externally (i.e. not TAO-specific) executing task
      * @param task  The task
      */
@@ -399,6 +445,8 @@ public class TaskUtilities {
             component = ((ProcessingExecutionTask) task).getComponent().getId();
         } else if (task instanceof WPSExecutionTask) {
             component = ((WPSExecutionTask) task).getComponent().getId();
+        } else if (task instanceof WMSExecutionTask) {
+            component = ((WMSExecutionTask) task).getComponent().getId();
         } else {
             component = "unknown component";
         }
@@ -425,11 +473,11 @@ public class TaskUtilities {
                 if (!absPath.startsWith(DOCKER_EODATA_HOST_POINT)) {
                     p = absPath;
                 } else {
-                    Messaging.send(task.getJob().getUserName(),
+                    Messaging.send(task.getJob().getUserId(),
                                    Topic.INFORMATION.getCategory(),
                                    "Product " + p.getFileName() + " will be temporarily brought into workspace");
                     final Path linkTarget = FileUtilities.replaceLink(p,
-                                                                      new ProgressNotifier(() -> task.getJob().getUserName(),
+                                                                      new ProgressNotifier(() -> task.getJob().getUserId(),
                                                                                            task.getJob().getName(), DataSourceTopic.PRODUCT_PROGRESS));
                     final Path link = p;
                     ExecutionsManager.getInstance().registerPostExecuteAction(task, () -> {

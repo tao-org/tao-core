@@ -64,7 +64,8 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                          : Level.FINE,
                        String.format("Task %s status change [%s -> %s].", task.getId(), oldStatus, newStatus)
                                + (reason != null ? " Reason: " + reason : ""));
-            task = get(task.getId());
+            task.setExecutionStatus(newStatus);
+            task.setLog(reason);
             return task;
         } finally {
             lock.unlock();
@@ -92,10 +93,21 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
-    public List<ExecutionTask> listRemoteExecuting() { return repository.getRemoteExecutingTasks(); }
+    public List<ExecutionTask> listWPSExecuting() { return repository.getWPSExecutingTasks(); }
+
+    @Override
+    public List<ExecutionTask> listWMSExecuting() { return repository.getWMSExecutingTasks(); }
 
     @Override
     public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
+
+    @Override
+    public int countByHostSince(String hostName, LocalDateTime since) { return repository.getRunningTaskCountByHostSince(hostName, since); }
+
+    @Override
+    public LocalDateTime getLastRunTask(String hostName) {
+        return repository.getLastRun(hostName);
+    }
 
     @Override
     public List<ExecutionTask> getDataSourceTasks(long jobId) {
@@ -107,13 +119,15 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
-                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
+                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE n.\"name\" END ELSE d.Label END \"componentName\", " +
                                                  "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
-                                                 "CASE WHEN ct.average_duration_seconds IS NULL THEN -1 ELSE " +
-                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, t.execution_log " +
+                                                 "CASE WHEN ct.average_duration_seconds IS NULL OR ct.average_duration_seconds = 0 THEN -1 ELSE " +
+                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, t.execution_log, " +
+                                                 "COALESCE(t.used_cpu, -1), COALESCE(t.used_ram, -1), t.command, j.name, j.user_id " +
                                                  "FROM execution.task t " +
                                                  "INNER JOIN execution.job j ON j.id = t.job_id " +
                                                  "LEFT OUTER JOIN workflow.graph w ON w.id = j.workflow_id " +
+                                                 "LEFT OUTER JOIN workflow.graph_node n ON n.id = t.graph_node_id " +
                                                  "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
                                                  "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
                                                  "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
@@ -151,11 +165,79 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             if (result.getOutput() == null) {
                 result.setOutput("");
             }
+            result.setUsedCPU(rs.getInt(11));
+            result.setUsedRAM(rs.getInt(12));
+            result.setCommand(rs.getString(13));
+            result.setJobName(rs.getString(14));
+            result.setUserId(rs.getString(15));
             return result;
         });
     }
 
     @Override
+    public ExecutionTaskSummary getTaskStatus(long taskId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return jdbcTemplate.query(con -> {
+            PreparedStatement statement =
+                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE n.\"name\" END ELSE d.Label END \"componentName\", " +
+                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
+                                                 "CASE WHEN ct.average_duration_seconds IS NULL OR ct.average_duration_seconds = 0 THEN -1 ELSE " +
+                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, t.execution_log, " +
+                                                 "COALESCE(t.used_cpu, -1), COALESCE(t.used_ram, -1), t.command, j.name, j.user_id " +
+                                                 "FROM execution.task t " +
+                                                 "INNER JOIN execution.job j ON j.id = t.job_id " +
+                                                 "LEFT OUTER JOIN workflow.graph w ON w.id = j.workflow_id " +
+                                                 "LEFT OUTER JOIN workflow.graph_node n ON n.id = t.graph_node_id " +
+                                                 "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
+                                                 "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
+                                                 "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
+                                                 "WHERE t.id = ?");
+            statement.setLong(1, taskId);
+            return statement;
+        }, rs -> {
+            ExecutionTaskSummary result = null;
+            if (rs.next()) {
+                result = new ExecutionTaskSummary();
+                result.setTaskId(rs.getLong(1));
+                result.setWorkflowName(rs.getString(2));
+                result.setComponentName(rs.getString(3));
+                Timestamp timestamp = rs.getTimestamp(4);
+                if (timestamp != null) {
+                    result.setTaskStart(timestamp.toLocalDateTime());
+                }
+                timestamp = rs.getTimestamp(5);
+                if (timestamp != null) {
+                    result.setTaskEnd(timestamp.toLocalDateTime());
+                }
+                result.setHost(rs.getString(6));
+                result.setTaskStatus(EnumUtils.getEnumConstantByValue(ExecutionStatus.class, rs.getInt(7)));
+                timestamp = rs.getTimestamp(8);
+                if (timestamp != null) {
+                    result.setLastUpdated(timestamp.toLocalDateTime());
+                }
+                double progress = rs.getDouble(9);
+                // If the progress comes > 100.0, it means the task takes longer than the current average,
+                // hence we set it to 99 not to overflow
+                if (Double.compare(progress, 100.0) == 1) {
+                    progress = 99;
+                }
+                result.setPercentComplete(progress);
+                result.setOutput(rs.getString(10));
+                if (result.getOutput() == null) {
+                    result.setOutput("");
+                }
+                result.setUsedCPU(rs.getInt(11));
+                result.setUsedRAM(rs.getInt(12));
+                result.setCommand(rs.getString(13));
+                result.setJobName(rs.getString(14));
+                result.setUserId(rs.getString(15));
+                result.setComponentType("exec");
+            }
+            return result;
+        });
+    }
+
+        @Override
     public ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId) {
         return repository.findByJobAndWorkflowNode(jobId, nodeId, instanceId);
     }
@@ -171,13 +253,13 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
-    public int getCPUsForUser(String userName) {
-        return repository.getCPUsForUser(userName);
+    public int getCPUsForUser(String userId) {
+        return repository.getCPUsForUser(userId);
     }    
 
     @Override
-    public int getMemoryForUser(String userName) {
-        return repository.getMemoryForUser(userName);
+    public int getMemoryForUser(String userId) {
+        return repository.getMemoryForUser(userId);
     }
 
     @Override
@@ -220,7 +302,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             }
 
             if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask) {
+                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask) {
 
                 // set the task parent job
                 task.setJob(job);
@@ -307,6 +389,18 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
         return taskGroup;
     }
+
+    @Transactional
+    @Override
+    public int countRunableTasks(long jobId) {
+        return repository.countRunableTasks(jobId);
+    }
+
+    @Override
+    public boolean isTerminalTask(long taskId) {
+        return repository.isTerminalTask(taskId);
+    }
+
     //endregion
 
 

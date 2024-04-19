@@ -24,6 +24,8 @@ import java.util.List;
  */
 public class AuthInfo {
     private boolean authenticated;
+    private String userId;
+    private String userName;
     private String authToken;
     private String refreshToken;
     private long expiration;
@@ -32,8 +34,10 @@ public class AuthInfo {
     public AuthInfo() {
     }
 
-    public AuthInfo(boolean authenticated, String authToken, String refreshToken, long expiration, List<String> profiles) {
+    public AuthInfo(boolean authenticated, String userId, String userName, String authToken, String refreshToken, long expiration, List<String> profiles) {
         this.authenticated = authenticated;
+        this.userId = userId;
+        this.userName = userName;
         this.authToken = authToken;
         this.refreshToken = refreshToken;
         this.expiration = expiration;
@@ -78,5 +82,21 @@ public class AuthInfo {
 
     public void setProfiles(List<String> profiles) {
         this.profiles = profiles;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

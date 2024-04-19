@@ -30,6 +30,7 @@ import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,13 +55,18 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      */
     @Override
-    public List<ProcessingComponent> listUserProcessingComponents(String userName) {
-        return repository.getUserComponentsByType(userName, ProcessingComponentType.EXECUTABLE.value());
+    public List<ProcessingComponent> listUserProcessingComponents(String userId) {
+        return repository.getUserComponentsByType(userId, ProcessingComponentType.EXECUTABLE.value());
     }
 
     @Override
-    public List<ProcessingComponent> listUserScriptComponents(String userName) {
-        return repository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
+    public List<ProcessingComponent> listUserScriptComponents(String userId) {
+        return repository.getUserComponentsByType(userId, ProcessingComponentType.SCRIPT.value());
+    }
+
+    @Override
+    public List<ProcessingComponent> listOtherComponents(Set<String> ids) {
+        return repository.getOtherComponents(ids);
     }
 
     @Override
@@ -109,7 +115,7 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             }
         }
         repository.save(entity);
-        if (map.size() > 0) {
+        if (!map.isEmpty()) {
             expansionRuleRepository.saveAll(map.values());
             descriptors.forEach(d -> {
                 if (map.containsKey(d)) {
@@ -127,7 +133,6 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             throw new PersistenceException(String.format("Invalid parameters provided for updating entity of type %s!",
                                                          entity.getClass().getSimpleName()));
         }
-        repository.save(entity);
         Map<ParameterDescriptor, ParameterExpansionRule> rules = entity.getParameterDescriptors().stream()
                                                                        .filter(p -> p.getExpansionRule() != null)
                                                                        .collect(Collectors.toMap(Function.identity(),
@@ -137,6 +142,7 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             rule.setId(entry.getKey().getId());
             expansionRuleRepository.save(rule);
         }
+        repository.save(entity);
         return entity;
     }
 

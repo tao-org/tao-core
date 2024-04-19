@@ -21,6 +21,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.param.JavaType;
+import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
@@ -29,7 +30,9 @@ import ro.cs.tao.eodata.sorting.*;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
+import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.WorkflowProvider;
@@ -46,7 +49,10 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.ComponentType;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,7 +74,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     private static EOProductProvider productProvider;
     private static WorkflowProvider workflowProvider;
     private static ExecutionTaskProvider taskProvider;
+    private static ExecutionJobProvider jobProvider;
     private static DataSourceConfigurationProvider configurationProvider;
+    private static DataSourceComponentProvider componentProvider;
 
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
@@ -83,6 +91,12 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
+    public static void setJobProvider(ExecutionJobProvider provider) {
+        jobProvider = provider;
+    }
+
+    public static void setComponentProvider(DataSourceComponentProvider provider) { componentProvider = provider; }
+
     public QueryExecutor() {
         super();
         if (productProvider == null) {
@@ -93,6 +107,12 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         }
         if (taskProvider == null) {
             throw new ExecutionException("An ExecutionTaskProvider is required to use this executor");
+        }
+        if (jobProvider == null) {
+            throw new ExecutionException("An ExecutionJobProvider is required to use this executor");
+        }
+        if (componentProvider == null) {
+            throw new ExecutionException("An DataSourceComponentProvider is required to use this executor");
         }
     }
 
@@ -105,6 +125,10 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             task.setStartTime(LocalDateTime.now());
             //changeTaskStatus(task, ExecutionStatus.RUNNING);
             task.setExecutionStatus(ExecutionStatus.RUNNING);
+            taskProvider.update(task);
+            final ExecutionJob job = task.getJob();
+            job.setExecutionStatus(ExecutionStatus.RUNNING);
+            jobProvider.update(job);
             dataSourceComponent = task.getComponent();
             // DSComponents having the id starting with 'product-set-' don't need to execute
             // a query. Instead, they should already contain a list of paths.
@@ -112,7 +136,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             String message = null;
             if (!dataSourceComponent.getId().startsWith("product-set-")) {
                 List<Variable> values = task.getInputParameterValues();
-                if (values == null || values.size() == 0) {
+                if (values == null || values.isEmpty()) {
                     throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
                 }
                 Variable variable = values.stream().filter(v -> DataSourceComponent.QUERY_PARAMETER.equals(v.getKey()) ||
@@ -128,7 +152,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
                 final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
                 final List<EOProduct> results = future.get();
-                if (results != null && results.size() > 0) {
+                if (results != null && !results.isEmpty()) {
                     int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
                     int rSize = results.size();
                     if (cardinality > 0 && cardinality != rSize) {
@@ -147,7 +171,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                       task.getId(), rSize, rSize - results.size()));
                         }
                     }
-                    WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
+                    WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
                     variable = values.stream().filter(v -> DataSourceComponent.SYNC_PARAMETER.equals(v.getKey()))
                                      .findFirst().orElse(null);
                     if (variable != null && variable.getValue() != null) {
@@ -253,17 +277,53 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 final String outPort = dataSourceComponent.getTargets().get(0).getName();
                 List<Variable> values = task.getOutputParameterValues();
                 final String strList;
-                if (values != null && values.size() > 0 && values.stream().anyMatch(v -> outPort.equals(v.getKey()))) {
+                if (values != null && !values.isEmpty() && values.stream().anyMatch(v -> outPort.equals(v.getKey()))) {
                     strList = values.stream().filter(v -> outPort.equals(v.getKey())).findFirst().get().getValue();
                 } else {
                     final SourceDescriptor descriptor = dataSourceComponent.getSources().stream()
                                                                            .filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER))
                                                                            .findFirst().get();
                     strList = descriptor.getDataDescriptor().getLocation();
-                    task.setOutputParameterValue(outPort,
-                                                 jsonifyResults(Arrays.asList(strList.split(","))));
+                    final String[] list = strList.split(",");
+                    // First try to replace any symlinks with actual data to avoid S3 read issues (if configured)
+                    final StringBuilder builder = new StringBuilder();
+                    final StringBuilder srcBuilder = new StringBuilder();
+                    final boolean shouldReplace = ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
+                    final double total = list.length;
+                    double counter = 0;
+                    for (String item : list) {
+                        try {
+                            Path path = FileUtilities.toPath(item);
+                            if (shouldReplace && Files.isSymbolicLink(path)) {
+                                sendMessage(task, "Product " + path.getFileName() + " is being copied locally.");
+                                counter += 1.0;
+                                sendProgressMessage(task, counter / total);
+                                builder.append(FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true));
+                            } else {
+                                builder.append(FileUtilities.asUnixPath(path, true));
+                            }
+                            builder.append(",");
+                            srcBuilder.append(FileUtilities.asUnixPath(path, true)).append(",");
+                        } catch (IOException e) {
+                            logger.warning(e.getMessage());
+                        }
+                    }
+                    if (builder.length() > 0) {
+                        builder.setLength(builder.length() - 1);
+                        srcBuilder.setLength(srcBuilder.length() - 1);
+                    } else {
+                        throw new QueryException("Either the product set is empty or the files don't exist on the disk");
+                    }
+                    // Persist any targets of the symlinks, together with the symlink path.
+                    // They will be restored at the end of the job.
+                    final TargetDescriptor targetDescriptor = dataSourceComponent.getTargets().stream()
+                                                                                 .filter(t -> t.getName().equals(DataSourceComponent.RESULTS_PARAMETER))
+                                                                                 .findFirst().get();
+                    targetDescriptor.getDataDescriptor().setLocation(builder.toString());
+                    descriptor.getDataDescriptor().setLocation(srcBuilder.toString());
+                    componentProvider.save(dataSourceComponent);
+                    task.setOutputParameterValue(outPort, jsonifyResults(Arrays.asList(list)));
                     task.getComponent().setTargetCardinality(descriptor.getCardinality());
-
                 }
                 if (StringUtilities.isNullOrEmpty(strList)) {
                     throw new QueryException("Empty product set");
@@ -372,7 +432,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         final List<String> names = deserializeResults(otherProductsList);
         final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));
         // If other list consists of non-products, do nothing
-        if (otherProducts != null && otherProducts.size() > 0) {
+        if (otherProducts != null && !otherProducts.isEmpty()) {
             final Set<LocalDate> otherDates = otherProducts.stream().map(p -> p.getAcquisitionDate().toLocalDate()).collect(Collectors.toSet());
             products.removeIf(p -> !otherDates.contains(p.getAcquisitionDate().toLocalDate()));
             final Map<LocalDate, List<EOProduct>> groupsByDate = new HashMap<>();

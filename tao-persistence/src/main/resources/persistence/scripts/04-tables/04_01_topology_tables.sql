@@ -22,7 +22,7 @@ CREATE TABLE topology.node
 	password text NOT NULL,
 	flavor_id varchar(250) NOT NULL,
 	description text NULL,
-	SSH_key text NULL,
+	ssh_key text NULL,
 	used_CPU integer NULL,
 	used_RAM integer NULL,
 	used_HDD integer NULL,
@@ -32,8 +32,9 @@ CREATE TABLE topology.node
     modified timestamp NULL DEFAULT now(),
     volatile boolean NULL DEFAULT false,
 	active boolean NULL DEFAULT true,
-	owner varchar(50),
-	app_id varchar(50)
+	owner_id varchar(50),
+	app_id varchar(50),
+	server_id varchar(50)
 );
 ALTER TABLE topology.node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
 ALTER TABLE topology.node ADD CONSTRAINT FK_execution_node_flavor
@@ -86,3 +87,20 @@ ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_servi
     FOREIGN KEY (service_id) REFERENCES topology.service (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_service_status
 	FOREIGN KEY (service_status_id) REFERENCES topology.service_status (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: topology.volatile_instance
+DROP TABLE IF EXISTS topology.volatile_instance;
+CREATE TABLE topology.volatile_instance
+(
+    id bigint NOT NULL,
+    node_id character varying NOT NULL,
+    user_id character varying NOT NULL,
+    created timestamp without time zone NOT NULL,
+    destroyed timestamp without time zone,
+    average_cpu_load real,
+    average_memory real
+);
+ALTER TABLE topology.volatile_instance ADD CONSTRAINT PK_volatile_instance PRIMARY KEY (id);
+CREATE SEQUENCE topology.volatile_instance_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE topology.volatile_instance ALTER COLUMN id SET DEFAULT nextval('topology.volatile_instance_id_seq');

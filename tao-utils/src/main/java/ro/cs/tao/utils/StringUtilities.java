@@ -86,4 +86,28 @@ public class StringUtilities {
     public static String toFirstCaps(String value) {
         return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
     }
+
+    public static String byteArrayToHexString(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return null;
+        }
+        final StringBuilder builder = new StringBuilder();
+        for (byte b : bytes) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
+    }
+
+    public static byte[] hexStringToByteArray(String s) {
+        String toConvert = s;
+        int len = s.length();
+        if (len % 2 == 1) {
+            toConvert = "0" + toConvert;
+        }
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(toConvert.charAt(i), 16) << 4) + Character.digit(toConvert.charAt(i+1), 16));
+        }
+        return data;
+    }
 }

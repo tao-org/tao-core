@@ -66,7 +66,7 @@ public abstract class NonMappedRepository<T, K> {
         }
         try {
             List<T> results = list(whereStatement, parameterMapper, null);
-            return results != null && results.size() > 0;
+            return results != null && !results.isEmpty();
         } catch (PersistenceException e) {
             logger.warning(e.getMessage());
             return false;

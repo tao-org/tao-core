@@ -18,12 +18,12 @@ package ro.cs.tao.messaging;
 import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
-import reactor.core.config.DispatcherType;
+import reactor.core.Dispatcher;
+import reactor.core.dispatch.ThreadPoolExecutorDispatcher;
 import ro.cs.tao.persistence.MessageProvider;
-import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -42,22 +42,22 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
 
     private final EventBus messageBus;
     private final Set<String> topics;
-    private final Map<Pattern, Set<reactor.fn.Consumer<Event<Message>>>> patternSubscribers;
+    private final Map<String, Set<reactor.fn.Consumer<Event<Message>>>> patternSubscribers;
     private final Set<String> matchedTopics;
     private MessageProvider messagePersister;
-    private final ExecutorService executorService;
     private final Logger logger;
 
     public DefaultMessageBus() {
         Environment environment = Environment.initializeIfEmpty();
+        Dispatcher dispatcher = new ThreadPoolExecutorDispatcher(MAX_THREADS, CAPACITY, Executors.newCachedThreadPool());
         this.messageBus = EventBus.create(environment,
-                                          Environment.newDispatcher(CAPACITY,
+                                          dispatcher
+                                          /*Environment.newDispatcher(CAPACITY,
                                                                     MAX_THREADS,
-                                                                    DispatcherType.THREAD_POOL_EXECUTOR));
+                                                                    DispatcherType.THREAD_POOL_EXECUTOR)*/);
         this.topics = new HashSet<>();
         this.patternSubscribers = new HashMap<>();
         this.matchedTopics = new HashSet<>();
-        this.executorService = new NamedThreadPoolExecutor("messaging-thread", 1);//Executors.newSingleThreadExecutor();
         this.logger = Logger.getLogger(DefaultMessageBus.class.getName());
     }
 
@@ -98,10 +98,10 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         for (String topic : matched) {
             this.messageBus.on($(topic), eventConsumer);
         }
-        if (!this.patternSubscribers.containsKey(topicPattern)) {
-            this.patternSubscribers.put(topicPattern, new HashSet<>());
+        if (!this.patternSubscribers.containsKey(topicPattern.pattern())) {
+            this.patternSubscribers.put(topicPattern.pattern(), new HashSet<>());
         }
-        this.patternSubscribers.get(topicPattern).add(eventConsumer);
+        this.patternSubscribers.get(topicPattern.pattern()).add(eventConsumer);
     }
 
     @Override
@@ -120,34 +120,31 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         checkPatternConsumers(topic);
         Message message = event.getData();
         message.setTopic(topic);
-        message.setUser(principal);
-        this.messageBus.notify(topic, event);
-        if (this.messagePersister != null && message.isPersistent()) {
-            this.executorService.submit(() -> {
-                try {
-                    //if (this.messagePersister != null && message.isPersistent()) {
-                    this.messagePersister.save(message);
-                    //}
-                } catch (Exception e) {
-                    this.logger.severe(e.getMessage());
-                }
-            });
+        message.setUserId(principal);
+        try {
+            if (messagePersister != null && message.isPersistent()) {
+                message.setId(null);
+                this.messagePersister.save(message);
+            }
+        } catch (Exception e) {
+            this.logger.severe(e.getMessage());
         }
+        this.messageBus.notify(topic, event);
     }
 
     @Override
     public void send(String principal, String topic, Message message) {
-        message.setUser(principal);
+        message.setUserId(principal);
         send(principal, topic, Event.wrap(message));
     }
 
     private void checkPatternConsumers(String topic) {
         if (!this.matchedTopics.contains(topic)) {
             Set<Set<reactor.fn.Consumer<Event<Message>>>> set = this.patternSubscribers.entrySet().stream()
-                    .filter(e -> e.getKey().matcher(topic).matches())
+                    .filter(e -> Pattern.compile(e.getKey()).matcher(topic).matches())
                     .map(Map.Entry::getValue)
                     .collect(Collectors.toSet());
-            if (set.size() > 0) {
+            if (!set.isEmpty()) {
                 set.forEach(sub -> sub.forEach(s -> this.messageBus.on($(topic), s)));
                 this.matchedTopics.add(topic);
             }

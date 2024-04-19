@@ -1,7 +1,6 @@
 package ro.cs.tao.eodata.naming;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,9 +10,14 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public class NameExpressionParser {
+    private static Set<TokenResolver> resolvers = new LinkedHashSet<>();
     private final NamingRule rule;
     private final Pattern rulePattern;
     private final Pattern tokenPattern = Pattern.compile("(\\$\\{\\d+\\:[^}]+\\})");
+
+    public static void setResolvers(Set<TokenResolver> resolvers) {
+        NameExpressionParser.resolvers.addAll(resolvers);
+    }
 
     public NameExpressionParser(NamingRule rule) {
         this.rule = rule;
@@ -38,7 +42,7 @@ public class NameExpressionParser {
                 }
             }
         }
-        if (invalidTokens.size() > 0) {
+        if (!invalidTokens.isEmpty()) {
             throw new ParseException(String.format("Invalid tokens: %s", String.join(",", invalidTokens)));
         }
     }
@@ -68,6 +72,10 @@ public class NameExpressionParser {
                                                        name, this.rule.getRegEx()));
             }
         }
-        return DateFunctions.resolve(transformed);
+        final Iterator<TokenResolver> iterator = resolvers.iterator();
+        while (iterator.hasNext()) {
+            transformed = iterator.next().resolve(transformed);
+        }
+        return transformed;
     }
 }

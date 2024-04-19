@@ -33,14 +33,15 @@ public class ToolCommandsTokens {
     static final String NODE_PROCESSORS_CNT = "#procs_cnt#";
     static final String INSTALL_SCRIPTS_ROOT_PATH = "#scripts_root_path#";
     static final String STEP_OUTPUT = "#step_output#";
+    static final String DOCKER_REGISTRY = "#docker_registry#";
 
     private static final List<String> tokensList;
 
     static {
-         tokensList = new ArrayList<String>() {{
+         tokensList = new ArrayList<>() {{
              add(MASTER_HOSTNAME); add(MASTER_USER); add(MASTER_PASS); add(MASTER_SHARE);
              add(NODE_HOSTNAME); add(NODE_USER); add(NODE_PASSWORD); add(NODE_SHARE); add(NODE_PROCESSORS_CNT);
-             add(INSTALL_SCRIPTS_ROOT_PATH); add(STEP_OUTPUT);
+             add(INSTALL_SCRIPTS_ROOT_PATH); add(STEP_OUTPUT); add(DOCKER_REGISTRY);
          }};
     }
 

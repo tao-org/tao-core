@@ -183,13 +183,13 @@ public class ScheduleManager {
 	}
 	
 	
-	public static List<JobData> getUserSchedules(final String userName) throws ScheduleException {
+	public static List<JobData> getUserSchedules(final String userId) throws ScheduleException {
 		if (instance == null || instance.quarzScheduler == null) {
 			throw new ScheduleException("Scheduling not available");
 		}
 		try {
 			final List<JobData> jobs = new LinkedList<>();
-			final Set<JobKey> keys = instance.quarzScheduler.getJobKeys(GroupMatcher.jobGroupEquals(userName));
+			final Set<JobKey> keys = instance.quarzScheduler.getJobKeys(GroupMatcher.jobGroupEquals(userId));
 			for (JobKey key : keys) {
 				final JobDetail jd = instance.quarzScheduler.getJobDetail(key); 
 				final Trigger t;
@@ -210,7 +210,7 @@ public class ScheduleManager {
 			}
 			return jobs;
 		} catch(SchedulerException e) {
-			logger.severe(String.format("Failed to get the schedules for user '%s'. Reason: %s", userName, e.getMessage()));
+			logger.severe(String.format("Failed to get the schedules for user '%s'. Reason: %s", userId, e.getMessage()));
 			throw new ScheduleException(e);
 		}
 	}

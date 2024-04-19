@@ -26,6 +26,7 @@ import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.execution.DrmaaJobExtensions;
 import ro.cs.tao.execution.ExecutionException;
@@ -33,13 +34,14 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
-import ro.cs.tao.execution.monitor.NodeManager.NodeData;
-import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.quota.UserQuotaManager;
+import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.utils.ExecutionUnitFormat;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
@@ -52,7 +54,6 @@ import ro.cs.tao.utils.executors.container.ContainerUnit;
 
 import java.io.IOException;
 import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,7 +61,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -74,17 +77,15 @@ import java.util.stream.Collectors;
  */
 public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private static String masterHost;
-    private static ExecutionTaskProvider taskProvider;
     private static ContainerProvider containerProvider;
     private static DRMAAExecutor instance;
     private static String appId;
-    private Session session;
+    //private Session session;
+    private final Map<Environment, Session> sessions;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
     private final List<TaskListener> taskListeners;
     private final Map<String, Tuple<NodeDescription, AtomicLong>> hostMemoryRequests;
-
-    public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
     public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
 
@@ -114,42 +115,67 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (services != null) {
             this.taskListeners.addAll(services);
         }
+        this.sessions = new HashMap<>();
         this.hostMemoryRequests = Collections.synchronizedMap(new HashMap<>());
         instance = this;
     }
 
     @Override
     public void initialize() throws ExecutionException {
-        session = org.ggf.drmaa.SessionFactory.getFactory().getSession();
-        try {
-            session.init(null);
-            super.initialize();
-            masterHost = Inet4Address.getLocalHost().getHostName();
-            this.queueWorker.start();
-        } catch (UnknownHostException | DrmaaException e) {
-            isInitialized.set(false);
-            throw new ExecutionException("Error initiating DRMAA session", e);
+        final Set<Environment> environments = SessionFactory.getEnvironments();
+        if (environments == null) {
+            throw new ExecutionException("DRMAA subsystem not initialized");
+        }
+        synchronized (isInitialized) {
+            for (Environment env : environments) {
+                try {
+                    Session session = SessionFactory.getFactory(env).getSession();
+                    session.init(null);
+                    super.initialize();
+                    masterHost = Inet4Address.getLocalHost().getHostName();
+                    sessions.put(env, session);
+                } catch (Exception e) {
+                    logger.severe("Error initiating DRMAA " + env + " session: " + e.getMessage());
+                }
+            }
+            isInitialized.set(sessions.size() > 0);
+            if (isInitialized.get()) {
+                this.queueWorker.start();
+            }
         }
     }
 
     @Override
     public void close() throws ExecutionException {
         super.close();
-        try {
-            session.exit();
-        } catch (DrmaaException e) {
-            logger.severe(e.getMessage());
+        for (Session session : this.sessions.values()) {
+            try {
+                session.exit();
+            } catch (DrmaaException e) {
+                logger.severe(e.getMessage());
+            }
         }
     }
 
     @Override
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
+            final ExecutionJob job = task.getJob();
+            final String userId = job.getUserId();
+            if (job.getJobType() == JobType.EXECUTION && job.getEnvironment() == Environment.DEFAULT) {
+                logger.fine("Trying to provision a worker node for user " + userId);
+                NodeDescription node;
+                if ((node = NodeManager.getInstance().createWorkerNode(userId)) != null) {
+                    final String message = "Node " + node.getId() + " created";
+                    logger.fine(message);
+                    sendMessage(task, message);
+                }
+            }
             JobTemplate jt = createJobTemplate(task);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true, ExecutionStatus.QUEUED_ACTIVE.friendlyName());
             this.queue.put(new Tuple<>(jt, task));
             logger.finest(String.format("Task %s has been added to the wait queue", task.getId()));
-        } catch (InterruptedException | DrmaaException | IOException | PersistenceException e) {
+        } catch (InterruptedException | DrmaaException | IOException | PersistenceException | TopologyException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
         }
@@ -159,11 +185,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void stop(ProcessingExecutionTask task)  throws ExecutionException {
         try {
             if (task.getResourceId() != null) {
-                session.control(task.getResourceId(), Session.TERMINATE);
+                this.sessions.get(task.getJob().getJobType()).control(task.getResourceId(), Session.TERMINATE);
+                //session.control(task.getResourceId(), Session.TERMINATE);
             }
-            markTaskFinished(task, ExecutionStatus.CANCELLED, ExecutionStatus.CANCELLED.friendlyName());
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getId(), e);
+        } finally {
+            markTaskFinished(task, ExecutionStatus.CANCELLED, ExecutionStatus.CANCELLED.friendlyName());
         }
     }
 
@@ -171,6 +199,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void suspend(ProcessingExecutionTask task) throws ExecutionException {
         try {
             if (task.getResourceId() != null) {
+                Session session = getSession(task.getJob().getEnvironment());
                 session.control(task.getResourceId(), Session.SUSPEND);
             }
             changeTaskStatus(task, ExecutionStatus.SUSPENDED, ExecutionStatus.SUSPENDED.friendlyName());
@@ -183,6 +212,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void resume(ProcessingExecutionTask task) throws ExecutionException {
         try {
             if (task.getResourceId() != null) {
+                Session session = getSession(task.getJob().getEnvironment());
                 session.control(task.getResourceId(), Session.RESUME);
             }
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, "Resumed");
@@ -207,8 +237,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             for (ExecutionTask task : tasks) {
                 final String taskName = TaskUtilities.getTaskName(task);
                 try {
+                    Session session = getSession(task.getJob().getEnvironment());
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
                     logger.finest("DRMAA session returned " + jobStatus + " for task " + taskName);
+                    final String userId = task.getJob().getUserId();
                     switch (jobStatus) {
                         case Session.SYSTEM_ON_HOLD:
                         case Session.USER_ON_HOLD:
@@ -244,9 +276,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                                                 taskName, e.getMessage()));
                                 }
                             }
+                            sendProgressMessage(task);
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
                         case Session.DONE:
-                            decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
+                            if (!(task instanceof ScriptTask)) {
+                                decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
+                            }
                             task.setLog(getJobOutput(task.getResourceId()));
                             // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
@@ -271,17 +307,18 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 }
                             }
                             if (session instanceof JobExitHandler) {
-                                final JobExitHandler handler = (JobExitHandler) this.session;
+                                final JobExitHandler handler = (JobExitHandler) session;
                                 String resourceId = task.getResourceId();
                                 handler.cleanupJob(resourceId);
                             }
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
                         case Session.FAILED:
                             String error;
                             int code;
                             decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
                             if (session instanceof JobExitHandler) {
-                                final JobExitHandler handler = (JobExitHandler) this.session;
+                                final JobExitHandler handler = (JobExitHandler) session;
                                 String resourceId = task.getResourceId();
                                 error = handler.getJobOutput(resourceId);
                                 code = handler.getJobExitCode(resourceId);
@@ -298,6 +335,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 ProcessingExecutionTask executionTask = (ProcessingExecutionTask) task;
                                 notifyExternalListeners(executionTask, ExecutionStatus.FAILED.friendlyName(), code, error);
                             }
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
                     }
                 } catch (Exception  e) {
@@ -314,14 +352,28 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public String defaultId() { return "DRMAAExecutor"; }
 
-    public String getDRMName() { return session != null ? session.serviceName() : "n/a"; }
+    public String getDRMName() {
+        return this.sessions != null
+               ? this.sessions.values().stream().map(Session::serviceName).collect(Collectors.joining(","))
+               : "n/a";
+    }
 
-    public String getDRMVersion() { return session != null ? session.getVersion().toString() : "n/a"; }
 
-    public String getJobOutput(String jobId) {
+    public String getDRMVersion() {
+        return this.sessions != null
+               ? this.sessions.values().stream().map(s -> s.getVersion().toString()).collect(Collectors.joining(","))
+               : "n/a";
+    }
+
+    public String getJobOutput(String resourceId) {
         String out;
+        final ExecutionTask task = taskProvider.getByResourceId(resourceId);
+        if (task == null) {
+            throw new ExecutionException("No such resourceId: " + resourceId);
+        }
+        Session session = this.sessions.get(task.getJob().getEnvironment());
         if (session instanceof JobExitHandler) {
-            out = ((JobExitHandler) this.session).getJobOutput(jobId);
+            out = ((JobExitHandler) session).getJobOutput(resourceId);
         } else {
             out = "n/a";
         }
@@ -370,6 +422,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final ProcessingExecutionTask task = pair.getKeyTwo();
         logger.finest(String.format("Task %s has been dequeued for execution", task.getId()));
         try {
+            Session session = getSession(task.getJob().getEnvironment());
             String id = session.runJob(jt);
             session.deleteJobTemplate(jt);
             if (id == null) {
@@ -417,6 +470,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     .stream()
                     .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
                     .findFirst().orElse(null);
+            Session session = getSession(task.getJob().getEnvironment());
             jt = session.createJobTemplate();
             if (jt == null) {
                 throw new ExecutionException("Error creating job template from the session!");
@@ -428,7 +482,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 template.setAttribute(DrmaaJobExtensions.TASK_ID, task.getId());
                 List<Long> parentIds = TaskUtilities.getParentIds(task);
                 template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, parentIds);
-                if (parentIds != null && parentIds.size() > 0) {
+                if (parentIds != null && !parentIds.isEmpty()) {
                     template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT,
                                           taskProvider.list(parentIds).stream().map(ExecutionTask::getInstanceTargetOutput).collect(Collectors.joining(",")));
                 } else {
@@ -436,7 +490,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 }
                 template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
                 template.setAttribute(DrmaaJobExtensions.JOB_ID, job.getId());
-                template.setAttribute(DrmaaJobExtensions.USER, job.getUserName());
+                template.setAttribute(DrmaaJobExtensions.USER, job.getUserId());
                 JobType jobType = job.getJobType();
                 final ExecutionUnitFormat value;
                 switch (jobType) {
@@ -449,6 +503,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     case CWL_EXPORT:
                         value = ExecutionUnitFormat.CWL;
                         break;
+                    case ARGO_EXPORT:
+                        value = ExecutionUnitFormat.ARGO;
+                        break;
                     default:
                         value = ExecutionUnitFormat.TAO;
                 }
@@ -458,42 +515,45 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                       basePath.resolve(basePath.getFileName().toString() + value.getExtension()).toString());
                 final List<Variable> values = task.getOutputParameterValues();
                 if (values != null) {
-                    template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
+                    template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
                 }
+                template.setAttribute(DrmaaJobExtensions.IS_TERMINAL_TASK, TaskUtilities.isTerminalTask(task));
             }
             final long memory = app != null
                                 ? app.getMemoryRequirements()
                                 : container.getApplications().stream().mapToLong(Application::getMemoryRequirements).min().orElse(0L);
             setMemoryConstraint(jt, memory);
-            final String preferredHostName = task.getExecutionNodeHostName();
-            final NodeData nodeData;
-            if (preferredHostName != null) {
-                nodeData = getNode(preferredHostName);
-            } else {
-                if (task instanceof ScriptTask) {
-                    nodeData = NodeManager.getInstance().getMasterNode();
-                } else {
-                    // the next call blocks until a node is available
-                    nodeData = getAvailableNode(job.getUserName(), component.getParallelism(), memory);
+            NodeData nodeData;
+            final Integer parallelism = component.getParallelism();
+            final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
+            nodeData = strategy.getNode(memory);
+            while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
+                try {
+                    TimeUnit.SECONDS.sleep(20);
+                } catch (InterruptedException ignored) { }
+                if (nodeData == null) {
+                    nodeData = strategy.getNode(memory);
                 }
             }
             final NodeDescription node = nodeData.getNode();
             if (node == null) {
                 throw new TryLaterException("Cannot obtain an available node [null]");
             } else {
-                incrementMemory(node, memory);
+                if (!(task instanceof ScriptTask)) {
+                    incrementMemory(node, memory);
+                }
                 logger.info("Task " + taskName + " will be submitted to host " + node.getId());
             }
             setHost(jt, node.getId());
             task.setExecutionNodeHostName(node.getId());
-            final int cpu = nodeData.getCpu();
+            int cpu = Math.min(nodeData.getCpu(), parallelism != null ? parallelism : 4);
             final long mem = nodeData.getMemory();
             String location = task.getComponent().getFileLocation();
             if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
                     (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
                 String path = container.getApplicationPath();
                 path = path == null ? "" : path;
-                if (!path.endsWith("/")) {
+                if (!path.isEmpty() && !path.endsWith("/")) {
                     path += "/";
                 }
                 path += location;
@@ -520,7 +580,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 try {
                     taskProvider.update(task);
                 } catch (PersistenceException e) {
-                    e.printStackTrace();
+                    logger.warning(e.getMessage());
                 }
             }
             // Insert parallel arguments, if any
@@ -611,9 +671,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     if (!StringUtilities.isNullOrEmpty(hostFolder)) {
                         unit.addVolumeMapping(hostFolder, volumeMount.getContainerEoDataFolder());
                     }
-                    hostFolder = volumeMount.getHostAdditionalFolder();
-                    if (!StringUtilities.isNullOrEmpty(hostFolder)) {
-                        unit.addVolumeMapping(hostFolder, volumeMount.getContainerAdditionalFolder());
+                    final Map<String, String> additionalMappings = volumeMount.getAdditionalMappings();
+                    if (additionalMappings != null && !additionalMappings.isEmpty()) {
+                        for (Map.Entry<String, String> entry : additionalMappings.entrySet()) {
+                            unit.addVolumeMapping(entry.getKey(), entry.getValue());
+                        }
                     }
                     unit.setContainerName(container.getName());
                     unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
@@ -633,7 +695,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         // multiple commands inside docker run
                         cmd = wrapShellInvocation(component, argsList, cmd,
                                                   task.getInstanceTemporaryOutput(),
-                                                  task.getInstanceTargetOutput(), isLocal);
+                                                  isLocal
+                                                    ? task.getInstanceTargetOutput()
+                                                    : task.getInstanceTargetOutput()
+                                                          .replace(ExecutionConfiguration.getMasterContainerVolumeMap()
+                                                                                         .getHostWorkspaceFolder(),
+                                                                   volumeMount.getContainerWorkspaceFolder()),
+                                                  isLocal);
                     }
                 } else {
                     cmd = "docker";
@@ -667,10 +735,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             add("-v");
                             add(folder + ":" + volumeMap.getContainerConfigurationFolder());
                         }
-                        folder = volumeMap.getHostAdditionalFolder();
-                        if (!StringUtilities.isNullOrEmpty(folder)) {
-                            add("-v");
-                            add(folder + ":" + volumeMap.getContainerAdditionalFolder());
+                        final Map<String, String> additionalMappings = volumeMap.getAdditionalMappings();
+                        if (additionalMappings != null && !additionalMappings.isEmpty()) {
+                            for (Map.Entry<String, String> entry : additionalMappings.entrySet()) {
+                                add("-v");
+                                add(entry.getKey() + ":" + entry.getValue());
+                            }
                         }
                         if (cpu > 0) {
                             // Enforce the number of CPUs to be used
@@ -687,7 +757,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         }
                     }};
                     String value = ExecutionConfiguration.getDockerRegistry();
-                    if (value != null) {
+                    if (!StringUtilities.isNullOrEmpty(value)) {
                         dockerArgsList.add(value + "/" + container.getName());
                     } else {
                         dockerArgsList.add(container.getId());
@@ -701,6 +771,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
             jt.setRemoteCommand(cmd);
             jt.setArgs(argsList);
+
+            setJobId(jt, job.getId());
+            setTaskId(jt, task.getId());
+
             taskProvider.update(task);
             logger.finest(String.format("Task %s: %s%s %s",
                     taskName,
@@ -721,12 +795,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
         final String workspaceFolder = SystemUtils.IS_OS_WINDOWS
-                                       ? volumeMap.getHostWorkspaceFolder().substring(2)
+                                       ? volumeMap.getHostWorkspaceFolder().substring(2).replace("\\", "/")
                                        : volumeMap.getHostWorkspaceFolder();
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
         if (finalPath.startsWith(workspaceFolder)) {
             try {
-                Files.createDirectories(Paths.get(finalPath));
+                FileUtilities.ensureExists(Paths.get(finalPath));
             } catch (IOException e) {
                 logger.warning(e.getMessage());
             }
@@ -735,16 +809,34 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                        : containerWorkspaceFolder + "/";
             finalPath = finalPath.replace(workspaceFolder, replacement);
         }
-        final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
-                                                                                || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
+        finalPath = finalPath.replace("//", "/");
+        final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> 
+                 (t.getDataDescriptor().getLocation() != null && t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")) ||
+                         "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
                                     || finalOutput.endsWith(".dim");
         final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt");
         final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
-        if (!isLocal && component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
+        if (isLocal) {
+            Path p = Path.of(tmpPath);
+            try {
+                if (Files.isDirectory(p)) {
+                    Files.createDirectories(p);
+                } else {
+                    Files.createDirectories(p.getParent());
+                }
+            } catch (IOException e) {
+                logger.warning(e.getMessage());
+            }
+        } else {
             argsList.add(0, "mkdir");
-            argsList.add(1, tmpPath);
-            argsList.add(2, "&&");
+            argsList.add(1, "-p");
+            if (component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
+                argsList.add(2, tmpPath);
+            } else {
+                argsList.add(2, tmpPath.substring(0, tmpPath.lastIndexOf('/')));
+            }
+            argsList.add(3, "&&");
         }
         if (isSnap && isOutputManaged && tempOutput.toLowerCase().endsWith(".tif")) {
             argsList.add("-f");
@@ -767,12 +859,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         argsList.add(finalPath);
-        argsList.add("&&");
+        // Execute rm even if the previous failed, to clear the workdir
+        argsList.add(";");
         argsList.add("rm");
-        if (recursiveCondition) {
-            argsList.add("-r");
-        }
-        if (!isOutputManaged) {
+        //if (recursiveCondition) {
+        argsList.add("-r");
+        argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
+        //}
+        /*if (!isOutputManaged) {
             argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
         } else {
             if (isSnapDimap) {
@@ -780,13 +874,20 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             } else {
                 argsList.add(tmpPath);
             }
-        }
+        }*/
         // all the existing args are merged into a single string as argument to -c
         final String quoteChar = isLocal
                 ? SystemUtils.IS_OS_WINDOWS
                     ? "\""
                     : ""
                 : "\"";
+        // before joining the arguments, check replace double quoted arguments with single quotes
+        argsList.replaceAll(new UnaryOperator<String>() {
+            @Override
+            public String apply(String arg) {
+                return arg.replace("\"", "'");
+            }
+        });
         final String singleArg = quoteChar + String.join(" ", argsList) + quoteChar;
         argsList.clear();
         argsList.add("-c");
@@ -813,35 +914,22 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
-    private NodeData getAvailableNode(String user, int cpus, long memory) throws DrmaaException {
-    	NodeData nodeData = null;
-        if (NodeManager.isAvailable()) {
-        	nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
-            while (!canSubmitTask(nodeData.getNode().getId(), memory)) {
-                try {
-                    Thread.sleep(20000);
-                } catch (InterruptedException ignored) { }
-                nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
+    private void setJobId(JobTemplate jt, Long id) throws DrmaaException {
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(DrmaaJobExtensions.JOB_ID)) {
+                job.setAttribute(DrmaaJobExtensions.JOB_ID, id);
             }
-            logger.finest(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
-        } else {
-            nodeData = NodeManager.getInstance().getMasterNode();
         }
-        if (nodeData == null) {
-            throw new DeniedByDrmException("No node was found for execution");
-        }
-        return nodeData;
     }
 
-    private NodeData getNode(String nodeName) throws DrmaaException {
-        NodeData nodeData = null;
-        if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
-            nodeData = NodeManager.getInstance().getNode(nodeName);
+    private void setTaskId(JobTemplate jt, Long id) throws DrmaaException {
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(DrmaaJobExtensions.TASK_ID)) {
+                job.setAttribute(DrmaaJobExtensions.TASK_ID, id);
+            }
         }
-        if (nodeData == null) {
-            throw new DeniedByDrmException(String.format("Node '%s' was not found", nodeName));
-        }
-        return nodeData;
     }
 
     private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
@@ -867,5 +955,16 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 }
             }
         }
+    }
+
+    private Session getSession(Environment environment) throws DrmaaException {
+        if (environment == null) {
+            environment = Environment.DEFAULT;
+        }
+        Session session = this.sessions.get(environment);
+        if (session == null) {
+            throw new DrmsInitException("No session for DRM " + environment);
+        }
+        return session;
     }
 }

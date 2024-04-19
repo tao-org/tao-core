@@ -28,15 +28,15 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
     private TargetDescriptorRepository targetDescriptorRepository;
 
     @Override
-    public List<DataSourceComponentGroup> listByUser(String userName) {
-        return userName != null ? this.repository.getUserDataSourceComponentGroups(userName) :
+    public List<DataSourceComponentGroup> listByUser(String userId) {
+        return userId != null ? this.repository.getUserDataSourceComponentGroups(userId) :
                 this.repository.getDataSourceComponentGroups();
     }
 
     @Override
     public DataSourceComponentGroup getDataSourceComponentGroupByLabel(String label) {
         List<DataSourceComponentGroup> components = this.repository.getDataSourceComponentGroupByLabel(label);
-        return (components == null || components.size() == 0) ? null : components.get(0);
+        return (components == null || components.isEmpty()) ? null : components.get(0);
     }
 
     @Override

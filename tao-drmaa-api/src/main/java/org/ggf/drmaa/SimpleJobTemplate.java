@@ -411,7 +411,7 @@ public class SimpleJobTemplate implements JobTemplate, JobTemplateExtension, Ser
             allPropertyNames = new HashSet();
             addRequiredNames(allPropertyNames);
             Set optionalAttributeNames = getOptionalAttributeNames();
-            if (optionalAttributeNames != null && optionalAttributeNames.size() > 0) {
+            if (optionalAttributeNames != null && !optionalAttributeNames.isEmpty()) {
                 if (this.optionalMembers == null) {
                     optionalMembers = new HashMap<>();
                 }
@@ -532,7 +532,7 @@ public class SimpleJobTemplate implements JobTemplate, JobTemplateExtension, Ser
                 error = true;
             }
 
-            if ((args != null) && (args.size() > 0)) {
+            if ((args != null) && (!args.isEmpty())) {
                 Iterator i = args.iterator();
                 boolean firstArg = true;
 
@@ -592,7 +592,7 @@ public class SimpleJobTemplate implements JobTemplate, JobTemplateExtension, Ser
                 error = true;
             }
 
-            if ((email != null) && (email.size() > 0)) {
+            if ((email != null) && (!email.isEmpty())) {
                 Iterator i = email.iterator();
                 boolean firstEmail = true;
 
@@ -681,7 +681,7 @@ public class SimpleJobTemplate implements JobTemplate, JobTemplateExtension, Ser
                 error = true;
             }
 
-            if ((env != null) && (env.size() > 0)) {
+            if ((env != null) && (!env.isEmpty())) {
                 Iterator i = env.keySet().iterator();
                 boolean firstEnv = true;
 

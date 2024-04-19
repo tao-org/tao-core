@@ -1,6 +1,7 @@
 package ro.cs.tao.utils.executors;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -8,36 +9,35 @@ import java.util.logging.Logger;
 public class BlockingQueueWorker<E> extends Thread {
     private final BlockingQueue<E> monitoredQueue;
     private final Function<E, Void> work;
-    private NamedThreadPoolExecutor executor;
+    private final NamedThreadPoolExecutor executor;
     private Consumer<BlockingQueue<E>> statePersister;
     private final Logger logger;
     private volatile boolean stopped;
     private volatile boolean paused;
     private final Object monitor;
+    private final int delay;
+    private final AtomicInteger activeCounter;
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable) {
         this(monitoredQueue, runnable, 1);
     }
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, String name) {
-        this(monitoredQueue, runnable, 1, name);
+        this(monitoredQueue, runnable, 1, name, 5000);
     }
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism) {
-        this.monitoredQueue = monitoredQueue;
-        this.work = runnable;
-        this.executor = new NamedThreadPoolExecutor("queue-worker", parallelism > 0 ? parallelism : 1);
-        this.stopped = false;
-        this.monitor = new Object();
-        this.logger = Logger.getLogger(getClass().getName());
+        this(monitoredQueue, runnable, parallelism, "queue-worker", 5000);
     }
 
-    public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism, String name) {
+    public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism, String name, int delay) {
         this.monitoredQueue = monitoredQueue;
         this.work = runnable;
         this.executor = new NamedThreadPoolExecutor(name, parallelism > 0 ? parallelism : 1);
         this.stopped = false;
         this.monitor = new Object();
+        this.delay = delay;
+        this.activeCounter = new AtomicInteger(0);
         this.logger = Logger.getLogger(getClass().getName());
     }
 
@@ -62,10 +62,9 @@ public class BlockingQueueWorker<E> extends Thread {
     public void run() {
         while (!stopped) {
             try {
-                if (this.paused || (this.executor != null && this.executor.getActiveCount() >= this.executor.getMaximumPoolSize())) {
-                    //Thread.sleep(10000);
+                if (this.paused || (this.activeCounter.get() >= this.executor.getMaximumPoolSize())) {
                     synchronized (this.monitor) {
-                        this.monitor.wait(10000);
+                        this.monitor.wait(this.delay);
                     }
                 } else {
                     if (this.statePersister != null) {
@@ -74,6 +73,7 @@ public class BlockingQueueWorker<E> extends Thread {
                     E entry = this.monitoredQueue.take();
                     this.executor.submit(() -> {
                         try {
+                            this.activeCounter.incrementAndGet();
                             this.work.apply(entry);
                             // Item was handled, re-persist the state without it
                             if (this.statePersister != null) {
@@ -81,6 +81,8 @@ public class BlockingQueueWorker<E> extends Thread {
                             }
                         } catch (Exception e) {
                             logger.severe(e.getMessage());
+                        } finally {
+                            this.activeCounter.decrementAndGet();
                         }
                     });
                 }

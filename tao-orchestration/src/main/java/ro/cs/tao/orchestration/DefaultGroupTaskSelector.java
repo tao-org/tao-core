@@ -84,7 +84,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     public List<ExecutionTask> chooseNext(ExecutionGroup taskHolder, ExecutionTask currentTask) {
         List<ExecutionTask> next = null;
         List<ExecutionTask> tasks = taskHolder.getTasks();
-        if (tasks != null && tasks.size() > 0) {
+        if (tasks != null && !tasks.isEmpty()) {
             next = new ArrayList<>();
             switch (taskHolder.getExecutionStatus()) {
                 // If the group is not started, we return the first task in line
@@ -94,7 +94,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                         ExecutionGroup groupTask = (ExecutionGroup) task;
                         ProcessingComponent component = ((ProcessingExecutionTask) currentTask).getComponent();
                         List<TargetDescriptor> targets = component.getTargets();
-                        int cardinality = (targets != null && targets.size() > 0) ? targets.get(0).getCardinality() : 1;
+                        int cardinality = (targets != null && !targets.isEmpty()) ? targets.get(0).getCardinality() : 1;
                         groupTask.setStateHandler(
                                 new LoopStateHandler(
                                         new LoopState(cardinality, 1)));
@@ -109,7 +109,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                         }
                     } else{
                         List<Variable> values = currentTask.getOutputParameterValues();
-                        if (values != null && values.size() > 0) {
+                        if (values != null && !values.isEmpty()) {
                             for (Variable variable : values) {
                                 task.setInputParameterValue(variable.getKey(), variable.getValue());
                             }

@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.OutputAccumulator;
 import ro.cs.tao.utils.executors.monitoring.ListenableInputStream;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
@@ -34,10 +35,16 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -61,9 +68,11 @@ public class FileUtilities {
        add(".tif"); add(".TIF"); add(".tiff"); add(".TIFF");
        add(".nc"); add(".NC");
        add(".hd5"); add(".HD5");
+       add(".jp2"); add(".JP2");
     }};
     private static final DecimalFormat UNIT_FORMAT = new DecimalFormat("#,##0.#");
     private static final Pattern URI_PATTERN = Pattern.compile("\\w+:\\/{2,3}[A-Za-z0-9._/]+");
+    private static final Pattern PATH_PATTERN = Pattern.compile("^/(.*)*");
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static String getExtension(Path path) {
@@ -107,6 +116,10 @@ public class FileUtilities {
 
     public static boolean isURI(String path) {
         return URI_PATTERN.matcher(path).find();
+    }
+
+    public static boolean isPath(String value) {
+        return PATH_PATTERN.matcher(value).find();
     }
 
     public static Path toPath(String path) {
@@ -194,18 +207,28 @@ public class FileUtilities {
     public static Path ensureExists(Path folder) throws IOException {
         if (folder != null && !Files.exists(folder)) {
             if (isPosixFileSystem()) {
-                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
-                FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(perms);
                 try {
-                    folder = Files.createDirectories(folder, attrs);
-                } catch (Exception e) {
-                    // Maybe just attributes cannot be set
-                    folder = Files.createDirectories(folder);
+                    Files.createDirectories(folder);
+                    if (!"root".equalsIgnoreCase(System.getProperty("user.name"))) {
+                        final List<String> args = new ArrayList<>();
+                        args.add("chmod");
+                        args.add("777");
+                        args.add(folder.toAbsolutePath().toString());
+                        final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                                     Inet4Address.getLocalHost().getHostName(),
+                                                                     args, true);
+                        final OutputAccumulator accumulator = new OutputAccumulator();
+                        executor.setOutputConsumer(accumulator);
+                        if (executor.execute(true) != 0) {
+                            throw new Exception(accumulator.getOutput());
+                        }
+                    }
+                } catch (Exception inner) {
+                    logger.severe(ExceptionUtils.getStackTrace(logger, inner));
                 }
             } else {
                 folder = Files.createDirectories(folder);
             }
-
         }
         return folder;
     }
@@ -231,7 +254,7 @@ public class FileUtilities {
         try {
             if (file != null && Files.exists(file)) {
                 if (isPosixFileSystem()) {
-                    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
+                    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwxrwx");
                     file = Files.setPosixFilePermissions(file, perms);
                 }
             }
@@ -246,25 +269,27 @@ public class FileUtilities {
      * @param file  The input file
      */
     public static void takeOwnership(Path file) {
-        try {
-            final List<String> args = new ArrayList<>() {{
-               add("chown");
-               if (Files.isDirectory(file)) {
-                   add("-R");
-               }
-               add(System.getProperty("user.name") + ":" + System.getProperty("user.name"));
-               add(file.toAbsolutePath().toString());
-            }};
-            final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
-                                                         Inet4Address.getLocalHost().getHostName(),
-                                                         args, true);
-            final OutputAccumulator accumulator = new OutputAccumulator();
-            executor.setOutputConsumer(accumulator);
-            if (executor.execute(true) != 0) {
-                throw new Exception(accumulator.getOutput());
+        if (!"root".equalsIgnoreCase(System.getProperty("user.name"))) {
+            try {
+                final List<String> args = new ArrayList<>() {{
+                    add("chown");
+                    if (Files.isDirectory(file)) {
+                        add("-R");
+                    }
+                    add(System.getProperty("user.name") + ":" + System.getProperty("user.name"));
+                    add(file.toAbsolutePath().toString());
+                }};
+                final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                             Inet4Address.getLocalHost().getHostName(),
+                                                             args, true);
+                final OutputAccumulator accumulator = new OutputAccumulator();
+                executor.setOutputConsumer(accumulator);
+                if (executor.execute(true) != 0) {
+                    throw new Exception(accumulator.getOutput());
+                }
+            } catch (Exception e) {
+                logger.severe(ExceptionUtils.getStackTrace(logger, e));
             }
-        } catch (Exception e) {
-            logger.severe(ExceptionUtils.getStackTrace(logger, e));
         }
     }
 
@@ -525,6 +550,7 @@ public class FileUtilities {
         Path resolved;
         if (Files.isSymbolicLink(link)) {
             resolved = Files.readSymbolicLink(link);
+            logger.fine("Replacing link " + link + " with actual product " + resolved);
             Path target = link.getParent();
             Files.delete(link);
             if (progressListener != null) {
@@ -536,6 +562,26 @@ public class FileUtilities {
             resolved = link;
         }
         return resolved;
+    }
+
+    /**
+     * Replaces a file or folder with a symbolic link.
+     * @param path  The file or folder to be replaced
+     * @param linkTarget    The target of the symbolic link
+     */
+    public static void replaceWithLink(Path path, Path linkTarget) throws IOException {
+        if (!Files.exists(path)) {
+            throw new NoSuchFileException(path.toString());
+        }
+        if (!Files.exists(linkTarget)) {
+            throw new NoSuchFileException(linkTarget.toString());
+        }
+        if (Files.isDirectory(path)) {
+            deleteTree(path);
+        } else {
+            Files.delete(path);
+        }
+        linkFile(linkTarget, path);
     }
 
     /**
@@ -610,6 +656,7 @@ public class FileUtilities {
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         Path targetFile = targetFolder.resolve(source.relativize(file));
                         Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        ensurePermissions(targetFile);
                         copied.incrementAndGet();
                         return FileVisitResult.CONTINUE;
                     }
@@ -831,7 +878,8 @@ public class FileUtilities {
                         }
                     }
                 });
-                Files.delete(source);
+                // This could be already deleted in postVisitDirectory
+                Files.deleteIfExists(source);
             }
         }
     }
@@ -1325,5 +1373,42 @@ public class FileUtilities {
                 outputChannel.write(buffer);
             }
         }
+    }
+
+    public static String computeHash(Path path, String algo) throws IOException, NoSuchAlgorithmException {
+        String hash = null;
+        if (path != null) {
+            final MessageDigest shaDigest = MessageDigest.getInstance(algo);
+            final ByteBuffer buffer = ByteBuffer.allocate(MemoryUnit.MB.value().intValue());
+            int read;
+            if (Files.isRegularFile(path)) {
+                try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
+                    while (channel.read(buffer) != -1) {
+                        shaDigest.update(buffer);
+                        buffer.clear();
+                    }
+                }
+            } else {
+                Files.walkFileTree(path, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
+                            while (channel.read(buffer) != -1) {
+                                shaDigest.update(buffer);
+                                buffer.clear();
+                            }
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+            final byte[] digest = shaDigest.digest();
+            final StringBuilder builder = new StringBuilder();
+            for (byte b : digest) {
+                builder.append(String.format("%02x", b));
+            }
+            hash = builder.toString();
+        }
+        return hash;
     }
 }

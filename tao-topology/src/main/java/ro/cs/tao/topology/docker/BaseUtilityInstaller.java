@@ -1,6 +1,7 @@
 package ro.cs.tao.topology.docker;
 
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerVisibility;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.JacksonUtil;
@@ -32,6 +33,7 @@ public abstract class BaseUtilityInstaller implements UtilityContainerInstaller 
                     newContainer.setName(dockerContainer.getName());
                     newContainer.setTag(dockerContainer.getTag());
                     newContainer.setLogo(readContainerLogo(logoFile()));
+                    newContainer.setVisibility(ContainerVisibility.PUBLIC);
                     this.containerProvider.save(newContainer);
                 }
             }

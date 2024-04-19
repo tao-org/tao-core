@@ -15,7 +15,7 @@ import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
-import ro.cs.tao.persistence.NodeProvider;
+import ro.cs.tao.persistence.NodeDBProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -56,7 +56,7 @@ public class ExecutionsManagerTest {
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
         job.setWorkflowId(1L);
-        job.setUserName("admin");
+        job.setUserId("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname",
             Collections.unmodifiableMap(Stream.of(
@@ -105,7 +105,7 @@ public class ExecutionsManagerTest {
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
         job.setWorkflowId(1L);
-        job.setUserName("admin");
+        job.setUserId("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname", new HashMap<>());
         job.addTask(task);
@@ -165,7 +165,7 @@ public class ExecutionsManagerTest {
     }
 
     private static NodeDescription createNode(String nodeName) throws PersistenceException {
-        NodeProvider nodeProvider = SpringContextBridge.services().getService(NodeProvider.class);
+        NodeDBProvider nodeDBProvider = SpringContextBridge.services().getService(NodeDBProvider.class);
 
         NodeDescription node = new NodeDescription();
         node.setActive(Boolean.TRUE);
@@ -175,9 +175,9 @@ public class ExecutionsManagerTest {
         node.setUserPass("test");
 
         try {
-            nodeProvider.update(node);
+            nodeDBProvider.update(node);
         } catch (Exception e) {
-            nodeProvider.save(node);
+            nodeDBProvider.save(node);
         }
         return node;
     }

@@ -114,7 +114,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
      */
     public void setFilteredTiles(Set<String> tiles) {
         this.filteredTiles = tiles;
-        if (tiles != null && tiles.size() > 0) {
+        if (tiles != null && !tiles.isEmpty()) {
             StringBuilder text = new StringBuilder();
             text.append("(?:.+)(");
             int idx = 1, n = tiles.size();
@@ -145,6 +145,10 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     @Override
     public void cancel() {
         this.cancelled = true;
+    }
+
+    public void setAuthentication(T authentication) {
+
     }
 
     /**
@@ -397,7 +401,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
         if (this.progressEnabled) {
             this.timer = new Timer("Progress reporter", true);
-            this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
+            this.timer.scheduleAtFixedRate(new TimedJob(this.dataSource.getId()), 0, this.progressReportInterval);
         }
     }
 
@@ -408,7 +412,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         if (this.progressEnabled) {
             if (this.timer == null) {
                 this.timer = new Timer("Progress reporter", true);
-                this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
+                this.timer.scheduleAtFixedRate(new TimedJob(this.dataSource.getId()), 0, this.progressReportInterval);
             }
         }
     }
@@ -546,14 +550,21 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     }
 
     private class TimedJob extends TimerTask {
+        private final String dsName;
         private double lastValue;
+
+        TimedJob(String dataSourceName) {
+            this.dsName = dataSourceName;
+        }
+
         @Override
         public void run() {
             if (progressListener != null && currentProductProgress != null) {
                 if (currentProductProgress.value() != lastValue) {
                     double delta = currentProductProgress.value() - lastValue;
                     progressListener.notifyProgress(currentProductProgress.value(),
-                                                    delta / currentProductProgress.factor() / DownloadStrategy.this.progressReportInterval * 1000 / MemoryUnit.MB.value());
+                                                    delta / currentProductProgress.factor() / DownloadStrategy.this.progressReportInterval * 1000 / MemoryUnit.MB.value(),
+                                                    DownloadManager.getQueuedDownloads(this.dsName) + 1);
                     lastValue = currentProductProgress.value();
                 }
             }
@@ -577,7 +588,9 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
             double oldFactor = this.factor;
             this.factor = newSize > 0 ? (double) 1 / (double) newSize : 0.0;
             double oldValue = this.adder.sumThenReset();
-            this.adder.add(oldValue / oldFactor * this.factor);
+            if (oldFactor > 0) {
+                this.adder.add(oldValue / oldFactor * this.factor);
+            }
             this.needsAdjustment = false;
         }
 

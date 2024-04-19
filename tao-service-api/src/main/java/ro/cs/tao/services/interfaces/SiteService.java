@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface SiteService extends CRUDService<Site, String> {
 
-    List<Site> getByUser(String userName);
+    List<Site> getByUser(String userId);
 }

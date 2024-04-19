@@ -24,9 +24,10 @@ import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Class encapsulating the desired status of an execution job and the action to get there.
@@ -42,7 +43,7 @@ public abstract class JobCommand {
     private static final PersistenceManager persistenceManager;
 
     private final ExecutionStatus requestedStatus;
-    private final Set<ExecutionStatus> allowedStates;
+    protected final Set<ExecutionStatus> allowedStates;
 
     static {
         persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
@@ -75,7 +76,9 @@ public abstract class JobCommand {
         if (job != null) {
             ExecutionStatus currentStatus = job.getExecutionStatus();
             if (!this.allowedStates.contains(currentStatus)) {
-                throw new ExecutionException("Invalid job state");
+                throw new ExecutionException(String.format("Invalid job state. Expected %s, found %s",
+                                                           this.allowedStates.stream().map(Enum::name).collect(Collectors.joining(",")),
+                                                           currentStatus.name()));
             }
             try {
                 job.setExecutionStatus(this.requestedStatus);
@@ -103,14 +106,12 @@ public abstract class JobCommand {
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.UNDETERMINED);
-            }};
+            return EnumSet.of(ExecutionStatus.UNDETERMINED);
         }
         @Override
         protected void doAction(ExecutionJob job) {
             List<ExecutionTask> tasks = job.orderedTasks();
-            if (tasks == null || tasks.size() == 0) {
+            if (tasks == null || tasks.isEmpty()) {
                 throw new ExecutionException(String.format("Job %s doesn't contain any tasks", job.getId()));
             }
             //ExecutionTask firstTask = tasks.get(0);
@@ -140,18 +141,12 @@ public abstract class JobCommand {
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.UNDETERMINED);
-                add(ExecutionStatus.QUEUED_ACTIVE);
-                add(ExecutionStatus.RUNNING);
-            }};
+            return EnumSet.of(ExecutionStatus.UNDETERMINED, ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
         }
         @Override
         protected void doAction(ExecutionJob job) {
             job.orderedTasks().stream()
-                    .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
-                            t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE ||
-                            t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
+                    .filter(t -> this.allowedStates.contains(t.getExecutionStatus()))
                     .forEach(TaskCommand.STOP::applyTo);
         }
     }
@@ -165,20 +160,19 @@ public abstract class JobCommand {
      * should also have the <code>SUSPENDED</code> status.
      */
     private static class JobSuspend extends JobCommand {
+        private static final Set<ExecutionStatus> taskStates = EnumSet.of(ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
+
         private JobSuspend() {
             super(ExecutionStatus.SUSPENDED);
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.RUNNING);
-            }};
+            return EnumSet.of(ExecutionStatus.RUNNING);
         }
         @Override
         protected void doAction(ExecutionJob job) {
             job.orderedTasks().stream()
-                    .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
-                            t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
+                    .filter(t -> taskStates.contains(t.getExecutionStatus()))
                     .forEach(TaskCommand.SUSPEND::applyTo);
         }
     }
@@ -195,14 +189,12 @@ public abstract class JobCommand {
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.SUSPENDED);
-            }};
+            return EnumSet.of(ExecutionStatus.SUSPENDED);
         }
         @Override
         protected void doAction(ExecutionJob job) {
             job.orderedTasks().stream()
-                    .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
+                    .filter(t -> this.allowedStates.contains(t.getExecutionStatus()))
                     .forEach(TaskCommand.RESUME::applyTo);
         }
     }

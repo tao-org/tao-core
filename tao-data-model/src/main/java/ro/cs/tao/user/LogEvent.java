@@ -6,17 +6,17 @@ import java.time.LocalDateTime;
 
 public class LogEvent extends LongIdentifiable {
     private LocalDateTime timestamp;
-    private String userName;
+    private String userId;
     private String event;
 
     public LogEvent() {
         super();
     }
 
-    public LogEvent(LocalDateTime timestamp, String userName, String event) {
+    public LogEvent(LocalDateTime timestamp, String userId, String event) {
         super();
         this.timestamp = timestamp;
-        this.userName = userName;
+        this.userId = userId;
         this.event = event;
     }
 
@@ -28,12 +28,12 @@ public class LogEvent extends LongIdentifiable {
         this.timestamp = timestamp;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getEvent() {

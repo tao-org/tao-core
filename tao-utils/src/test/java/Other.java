@@ -1,13 +1,20 @@
+import org.apache.commons.codec.digest.Crypt;
+import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.DateUtils;
+import ro.cs.tao.utils.executors.ProcessHelper;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class Other {
 
     public static void main(String[] args) throws IOException {
-        testDateFormat();
+        //testDateFormat();
+        System.out.println(Crypto.decrypt("HM6p+OYI9WRfTPB4jdfn40lNR98InEyw5AGCoIU1rc0=", "eouser"));
+        //final List<String> jupyterlite = ProcessHelper.tokenizeCommands("docker ps --filter \"ancestor=jupyterlite\" --filter \"name=1c48b074-0e26-41a9-ba95-8e3780dbff01\" --filter \"status=running\"");
+        //jupyterlite.forEach(s -> System.out.println(s));
     }
 
     private static void testDateFormat() {

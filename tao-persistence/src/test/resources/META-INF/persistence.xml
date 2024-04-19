@@ -21,7 +21,7 @@
         <class>ro.cs.tao.component.TemplateParameterDescriptor</class>
         <class>ro.cs.tao.component.ProcessingComponent</class>
         <class>ro.cs.tao.component.GroupComponent</class>
-        <class>ro.cs.tao.component.WPSComponent</class>
+        <class>ro.cs.tao.component.ogc.WPSComponent</class>
 
         <class>ro.cs.tao.datasource.DataSourceComponent</class>
         <class>ro.cs.tao.datasource.DataSourceComponentGroup</class>

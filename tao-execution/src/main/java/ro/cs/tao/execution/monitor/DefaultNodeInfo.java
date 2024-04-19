@@ -5,12 +5,14 @@ public class DefaultNodeInfo {
     private final String description;
     private final String user;
     private final String password;
+    private final String sshKey;
 
-    public DefaultNodeInfo(String namePrefix, String description, String user, String password) {
+    public DefaultNodeInfo(String namePrefix, String description, String user, String password, String key) {
         this.namePrefix = namePrefix;
         this.description = description;
         this.user = user;
         this.password = password;
+        this.sshKey = key;
     }
 
     public String getNamePrefix() { return namePrefix; }
@@ -20,4 +22,8 @@ public class DefaultNodeInfo {
     public String getUser() { return user; }
 
     public String getPassword() { return password; }
+
+    public String getSshKey() {
+        return sshKey;
+    }
 }

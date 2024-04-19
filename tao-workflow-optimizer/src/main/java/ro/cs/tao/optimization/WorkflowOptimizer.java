@@ -156,7 +156,7 @@ public class WorkflowOptimizer {
 
             /* make empty workflow */
             WorkflowDescriptor workflow = builder.createWorkflowDescriptor();
-            if (workflow.getNodes().size() > 0) {
+            if (!workflow.getNodes().isEmpty()) {
                 // already done this
                 return workflow;
             }

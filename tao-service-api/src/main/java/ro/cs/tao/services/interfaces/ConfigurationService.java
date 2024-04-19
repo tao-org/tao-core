@@ -18,6 +18,8 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.services.model.KeyValuePair;
 
 /**
+ * Service for managing (i.e., CRUD operations) configuration items.
+ *
  * @author Cosmin Cara
  */
 public interface ConfigurationService extends CRUDService<KeyValuePair, String> {

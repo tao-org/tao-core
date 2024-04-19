@@ -40,6 +40,8 @@ public class Container extends StringIdentifiable {
     private Set<String> format;
     private String commonParameters;
     private String formatNameParameter;
+    private String ownerId;
+    private ContainerVisibility visibility;
 
     @Override
     public String defaultId() { return UUID.randomUUID().toString();}
@@ -98,6 +100,22 @@ public class Container extends StringIdentifiable {
 
     public String getLogo() { return logo; }
     public void setLogo(String logo) { this.logo = logo; }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public ContainerVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(ContainerVisibility containerVisibility) {
+        this.visibility = containerVisibility;
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -52,4 +52,9 @@ public class NullQuotaManager implements QuotaManager {
 	public void updateUserProcessingQuota(Principal principal) throws QuotaException {
 		// Nothing to do
 	}
+
+	@Override
+	public void updateUserCPU(Principal principal) throws QuotaException {
+		// Nothing to do
+	}
 }

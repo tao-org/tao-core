@@ -26,14 +26,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.logger.Logger;
@@ -41,13 +38,12 @@ import ro.cs.tao.utils.logger.Logger;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -58,7 +54,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
  */
 public class NetUtils {
 
-    private static final Map<CompositeKey, CloseableHttpClient> httpClients = new HashMap<>();
+    private static final AutoEvictableCache<CompositeKey, WrappedCloseableHttpClient> httpClients;
     private static Proxy javaNetProxy;
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
@@ -66,6 +62,7 @@ public class NetUtils {
 
     static {
         allowSelfSignedCertificates();
+        httpClients = new AutoEvictableCache<>(compositeKey -> WrappedCloseableHttpClient.create(), 3600);
     }
 
     public static String getAuthToken(final String username, final String password) {
@@ -77,7 +74,7 @@ public class NetUtils {
     }
 
     public static void setProxy(String type, final String host, final int port, final String user, final String pwd) {
-        if (type != null && host != null && !"".equals(type) && !"".equals(host)) {
+        if (type != null && host != null && !type.isEmpty() && !host.isEmpty()) {
             Proxy.Type proxyType = Enum.valueOf(Proxy.Type.class, type.toUpperCase());
             javaNetProxy = new Proxy(proxyType, new InetSocketAddress(host, port));
             Authenticator.setDefault(new Authenticator() {
@@ -211,32 +208,6 @@ public class NetUtils {
         return connection;
     }
 
-    private static SSLConnectionSocketFactory sslConnectionSocketFactory() {
-        SSLConnectionSocketFactory sslsf = null;
-        try {
-            // This is to accept self-signed certificates
-            SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(new KeyManager[0], new TrustManager[] {
-                    new X509TrustManager() {
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
-
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return null;
-                        }
-                    } },
-                    new SecureRandom());
-            sslsf = new SSLConnectionSocketFactory(ctx, NoopHostnameVerifier.INSTANCE);
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-        return sslsf;
-    }
-
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) throws IOException {
         return openConnection(method, url, credentials, (List<NameValuePair>) null);
     }
@@ -244,45 +215,9 @@ public class NetUtils {
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, String json) throws IOException {
         CloseableHttpResponse response;
         try {
-            URI uri = new URI(url);
-            String domain = uri.getHost();
-            if (domain.indexOf(".") > 0) {
-                String[] tokens = domain.split("\\.");
-                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
-            }
-            final CompositeKey key;
-            if (credentials != null) {
-                key = new CompositeKey(domain, credentials.getUserPrincipal(), credentials.getPassword());
-            } else {
-                key = new CompositeKey(domain, null);
-            }
-            synchronized (httpClients) {
-                if (!httpClients.containsKey(key)) {
-                    //ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
-                    CredentialsProvider credentialsProvider = null;
-                    if (credentials != null) {
-                        credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
-                        credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
-                    }
-                    CloseableHttpClient httpClient;
-                    if (credentialsProvider != null) {
-                        httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
-                                .setDefaultCredentialsProvider(credentialsProvider)
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .build();
-                    } else {
-                        httpClient = HttpClients.custom()
-                                .setDefaultCookieStore(new BasicCookieStore())
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .build();
-                    }
-                    httpClients.put(key, httpClient);
-                }
-            }
-            CloseableHttpClient httpClient = httpClients.get(key);
-            HttpRequestBase requestBase;
+            final URI uri = new URI(url);
+            final CloseableHttpClient httpClient = getOrCreateHttpClient(uri, credentials);
+            final HttpRequestBase requestBase;
             switch (method) {
                 case GET:
                     requestBase = new HttpGet(uri);
@@ -318,12 +253,10 @@ public class NetUtils {
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, String header, String authToken, String json) throws IOException {
         CloseableHttpResponse response;
         try {
-            URI uri = new URI(url);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(new BasicCookieStore())
-                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                                             .build();
-                HttpRequestBase requestBase;
+            final URI uri = new URI(url);
+            final Header authHeader = new BasicHeader(header, authToken);
+            final CloseableHttpClient httpClient = getOrCreateHttpClient(uri, header);
+            final HttpRequestBase requestBase;
                 switch (method) {
                     case GET:
                         requestBase = new HttpGet(uri);
@@ -346,7 +279,8 @@ public class NetUtils {
                     requestBuilder.setProxy(apacheHttpProxy);
                 }
                 requestBase.setConfig(requestBuilder.build());
-                requestBase.setHeader(header, authToken);
+                requestBase.addHeader(authHeader);
+                requestBase.addHeader("Content-Type", "application/json");
                 Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
                 response = httpClient.execute(requestBase);
                 Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
@@ -360,12 +294,9 @@ public class NetUtils {
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Header header, List<NameValuePair> parameters) throws IOException {
         CloseableHttpResponse response;
         try {
-            URI uri = new URI(url);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(new BasicCookieStore())
-                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                                             .build();
-            HttpRequestBase requestBase;
+            final URI uri = new URI(url);
+            final CloseableHttpClient httpClient = getOrCreateHttpClient(uri, header);
+            final HttpRequestBase requestBase;
             switch (method) {
                 case GET:
                     requestBase = new HttpGet(uri);
@@ -405,12 +336,9 @@ public class NetUtils {
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
-            URI uri = new URI(url);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(new BasicCookieStore())
-                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                                             .build();
-            HttpRequestBase requestBase;
+            final URI uri = new URI(url);
+            final CloseableHttpClient httpClient = getOrCreateHttpClient(uri, "");
+            final HttpRequestBase requestBase;
             switch (method) {
                 case GET:
                     requestBase = new HttpGet(uri);
@@ -424,7 +352,7 @@ public class NetUtils {
                 default:
                     throw new IllegalArgumentException("Method not supported");
             }
-            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom().setRedirectsEnabled(true)
                                                                       .setConnectionRequestTimeout(timeoutMillis)
                                                                       .setConnectTimeout(timeoutMillis)
                                                                       .setSocketTimeout(timeoutMillis);
@@ -455,43 +383,7 @@ public class NetUtils {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            String domain = uri.getHost();
-            if (domain.indexOf(".") > 0) {
-                String[] tokens = domain.split("\\.");
-                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
-            }
-            final CompositeKey key;
-            if (credentials != null) {
-                key = new CompositeKey(domain, credentials.getUserPrincipal(), credentials.getPassword());
-            } else {
-                key = new CompositeKey(domain, null);
-            }
-            synchronized (httpClients) {
-                if (!httpClients.containsKey(key)) {
-                    //ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
-                    CredentialsProvider credentialsProvider = null;
-                    if (credentials != null) {
-                        credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
-                        credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
-                    }
-                    CloseableHttpClient httpClient;
-                    if (credentialsProvider != null) {
-                        httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
-                                .setDefaultCredentialsProvider(credentialsProvider)
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .build();
-                    } else {
-                        httpClient = HttpClients.custom()
-                                .setDefaultCookieStore(new BasicCookieStore())
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .build();
-                    }
-                    httpClients.put(key, httpClient);
-                }
-            }
-            CloseableHttpClient httpClient = httpClients.get(key);
+            CloseableHttpClient httpClient = getOrCreateHttpClient(uri, credentials);
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:
@@ -525,12 +417,12 @@ public class NetUtils {
     }
 
     public static String getResponseAsString(String url) throws IOException {
-        return getResponseAsString(url, null);
+        return getResponseAsString(url, null, null);
     }
 
-    public static String getResponseAsString(String url, Credentials credentials) throws IOException {
+    public static String getResponseAsString(String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
         String result = null;
-        try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
+        try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials, parameters)) {
             switch (response.getStatusLine().getStatusCode()) {
                 case 200:
                     result = EntityUtils.toString(response.getEntity());
@@ -544,6 +436,10 @@ public class NetUtils {
             }
         }
         return result;
+    }
+
+    public static String getResponseAsString(String url, List<NameValuePair> parameters) throws IOException {
+        return getResponseAsString(url, null, parameters);
     }
 
     public static NetStreamResponse getResponseAsStream(String url) throws IOException {
@@ -580,5 +476,73 @@ public class NetUtils {
             }
         }
         return result;
+    }
+
+    public static List<Cookie> getCookies(String url, Credentials credentials) throws IOException {
+        return getCookies(url, credentials.getUserPrincipal().getName() + ":" + credentials.getPassword());
+    }
+
+    public static List<Cookie> getCookies(String url, String authToken) throws IOException {
+        try {
+            final URI uri = new URI(url);
+            final String domain = extractDomainFromURL(uri);
+            final CompositeKey key = new CompositeKey(domain, authToken);
+            final WrappedCloseableHttpClient wrappedCloseableHttpClient;
+            synchronized (httpClients) {
+                wrappedCloseableHttpClient = httpClients.get(key);
+            }
+            if (wrappedCloseableHttpClient != null) {
+                return wrappedCloseableHttpClient.getCookieStore().getCookies().stream().filter(c -> c.getValue() != null && !c.getValue().isEmpty()).collect(Collectors.toList());
+            }
+            Logger.getRootLogger().debug("Could not get cookies for %s : HttpClient not found.", url);
+            return new ArrayList<>();
+        } catch (URISyntaxException e) {
+            Logger.getRootLogger().debug("Could not get cookies for %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
+    }
+
+    private static String extractDomainFromURL(URI uri) throws URISyntaxException {
+        String domain = uri.getHost();
+        if (domain.indexOf(".") > 0) {
+            String[] tokens = domain.split("\\.");
+            domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
+        }
+        return domain;
+    }
+
+    private static CloseableHttpClient getOrCreateHttpClient(URI uri, Credentials credentials) throws URISyntaxException {
+        if (credentials != null) {
+            return getOrCreateHttpClient(uri, credentials.getUserPrincipal().getName() + ":" + credentials.getPassword(), credentials);
+        }
+        return getOrCreateHttpClient(uri, "");
+    }
+
+    private static CloseableHttpClient getOrCreateHttpClient(URI uri, Header authHeader) throws URISyntaxException {
+        if (authHeader != null) {
+            return getOrCreateHttpClient(uri, authHeader.getName() + ":" + authHeader.getValue());
+        }
+        return getOrCreateHttpClient(uri, "");
+    }
+
+    private static CloseableHttpClient getOrCreateHttpClient(URI uri, String authToken) throws URISyntaxException {
+        return getOrCreateHttpClient(uri, authToken, null);
+    }
+
+    private static CloseableHttpClient getOrCreateHttpClient(URI uri, String authToken, Credentials credentials) throws URISyntaxException {
+        final String domain = extractDomainFromURL(uri);
+        final CompositeKey key = new CompositeKey(domain, authToken);
+        synchronized (httpClients) {
+            if (!httpClients.keySet().contains(key)) {
+                final CredentialsProvider credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
+                httpClients.put(key, WrappedCloseableHttpClient.create(credentialsProvider));
+            }
+        }
+        final WrappedCloseableHttpClient wrappedCloseableHttpClient = httpClients.get(key);
+        if (credentials != null) {
+            wrappedCloseableHttpClient.setCredentials(uri, credentials);
+        }
+        return wrappedCloseableHttpClient.getCloseableHttpClient();
+
     }
 }

@@ -44,7 +44,7 @@ ALTER TABLE usr.user_type ADD CONSTRAINT PK_user_type PRIMARY KEY (id);
 DROP TABLE IF EXISTS usr."user" CASCADE;
 CREATE TABLE usr."user"
 (
-	id integer NOT NULL,
+	id varchar NOT NULL DEFAULT(uuid_generate_v4()),
 	username varchar(50) NOT NULL,
 	-- password nullable for external users
 	password text NULL,
@@ -75,17 +75,13 @@ ALTER TABLE usr."user" ADD CONSTRAINT FK_user_status
 	FOREIGN KEY (status_id) REFERENCES usr.user_status (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE usr."user" ADD CONSTRAINT FK_user_type
     	FOREIGN KEY (user_type_id) REFERENCES usr.user_type (id) ON DELETE No Action ON UPDATE No Action;
-DROP SEQUENCE IF EXISTS usr.user_id_seq CASCADE;
-CREATE SEQUENCE usr.user_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-ALTER TABLE usr."user" ALTER COLUMN id SET DEFAULT nextval('usr.user_id_seq');
-ALTER SEQUENCE usr.user_id_seq OWNED BY usr."user".id;
 
 -------------------------------------------------------------------------------
 -- table: usr.user_group
 DROP TABLE IF EXISTS usr.user_group CASCADE;
 CREATE TABLE usr.user_group
 (
-	user_id integer NOT NULL,
+	user_id varchar NOT NULL,
 	group_id integer NOT NULL
 );
 ALTER TABLE usr.user_group ADD CONSTRAINT PK_user_group PRIMARY KEY (user_id, group_id);
@@ -99,7 +95,7 @@ ALTER TABLE usr.user_group ADD CONSTRAINT FK_user_group_group
 DROP TABLE IF EXISTS usr.user_prefs CASCADE;
 CREATE TABLE usr.user_prefs
 (
-	user_id integer NOT NULL,
+	user_id varchar NOT NULL,
 	pref_key varchar(50) NOT NULL,
 	pref_value varchar(250) NOT NULL
 );

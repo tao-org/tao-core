@@ -32,7 +32,7 @@ public class ExecutionJobInfo {
     private LocalDateTime endTime;
     private long workflowId;
     private String queryId;
-    private String userName;
+    private String userId;
     private ExecutionStatus executionStatus;
 
     public ExecutionJobInfo(){}
@@ -43,7 +43,7 @@ public class ExecutionJobInfo {
         this.endTime = executionJob.getEndTime();
         this.workflowId = executionJob.getWorkflowId();
         this.queryId = executionJob.getQueryId();
-        this.userName = executionJob.getUserName();
+        this.userId = executionJob.getUserId();
         this.executionStatus = executionJob.getExecutionStatus();
         this.name = executionJob.getName();
     }
@@ -92,12 +92,12 @@ public class ExecutionJobInfo {
         this.queryId = queryId;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public ExecutionStatus getExecutionStatus() {

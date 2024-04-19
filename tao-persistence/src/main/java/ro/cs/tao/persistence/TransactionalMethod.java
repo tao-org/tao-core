@@ -88,4 +88,37 @@ public class TransactionalMethod<E extends Exception> {
             }
         }
     }
+
+    /**
+     * Executes the wrapped runnable without returning anything,
+     * or rolls back the transaction and throws an exception of the checked type.
+     * @param inner The runnable code
+     * @throws E    The checked exception to be (re-)thrown
+     */
+    public void execute(Runnable inner) throws E {
+        TransactionStatus transaction = null;
+        try {
+            if (transactionManager != null) {
+                transaction = transactionManager.getTransaction(null);
+            }
+            inner.run();
+            if (transaction != null) {
+                transactionManager.commit(transaction);
+            }
+        } catch (Exception e) {
+            if (transaction != null) {
+                transactionManager.rollback(transaction);
+            }
+            if (e.getClass().isAssignableFrom(this.exceptionType)) {
+                throw (E) e;
+            } else {
+                try {
+                    throw this.exceptionType.getConstructor(Throwable.class).newInstance(e);
+                } catch (InstantiationException | NoSuchMethodException | IllegalAccessException |
+                         InvocationTargetException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+    }
 }

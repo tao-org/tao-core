@@ -49,7 +49,7 @@ public class PersistenceManager {
     private NodeFlavorManager nodeFlavorManager;
 
     @Autowired
-    private NodeManager nodeManager;
+    private NodeDBManager nodeManager;
 
     @Autowired
     private ContainerManager containerManager;
@@ -59,6 +59,9 @@ public class PersistenceManager {
 
     @Autowired
     private WPSComponentManager wpsComponentManager;
+
+    @Autowired
+    private WMSComponentManager wmsComponentManager;
 
     @Autowired
     private GroupComponentManager groupComponentManager;
@@ -114,13 +117,37 @@ public class PersistenceManager {
     private SiteManager siteManager;
 
     @Autowired
-    private WPSAuthenticationManager wpsAuthenticationManager;
+    private WebServiceAuthenticationManager wpsAuthenticationManager;
 
     @Autowired
     private DownloadQueueManager downloadQueueManager;
 
     @Autowired
     private AuditManager auditManager;
+
+    @Autowired
+    private ContainerInstanceManager containerInstanceManager;
+
+    @Autowired
+    private ConfigurationManager configurationManager;
+
+    @Autowired
+    private VolatileInstanceManager volatileInstanceManager;
+
+    @Autowired
+    private ResourceUsageManager resourceUsageManager;
+
+    @Autowired
+    private ResourceUsageReportManager resourceUsageReportManager;
+
+    @Autowired
+    private WorkflowSubscriptionManager workflowSubscriptionManager;
+
+    @Autowired
+    private DataSubscriptionManager dataSubscriptionManager;
+
+    @Autowired
+    private ResourceSubscriptionManager resourceSubscriptionManager;
 
     @PostConstruct
     public void initialize() {
@@ -138,7 +165,7 @@ public class PersistenceManager {
 
     public NodeFlavorManager nodeFlavors() { return nodeFlavorManager; }
 
-    public NodeManager nodes() { return nodeManager; }
+    public NodeDBManager nodes() { return nodeManager; }
 
     public ContainerManager containers() { return containerManager; }
 
@@ -178,13 +205,31 @@ public class PersistenceManager {
 
     public WPSComponentManager wpsComponents() { return wpsComponentManager; }
 
+    public WMSComponentManager wmsComponents() { return wmsComponentManager; }
+
     public RepositoryManager repositories() { return repositoryManager; }
 
     public SiteManager sites() { return siteManager; }
 
-    public WPSAuthenticationManager wpsAuthentication() { return wpsAuthenticationManager; }
+    public WebServiceAuthenticationManager webServiceAuthentication() { return wpsAuthenticationManager; }
 
     public DownloadQueueManager downloadQueue() { return downloadQueueManager; }
 
     public AuditManager audit() { return auditManager; }
+
+    public ContainerInstanceManager containerInstance() { return containerInstanceManager; }
+
+    public ConfigurationManager configuration() { return configurationManager; }
+
+    public VolatileInstanceManager volatileInstances() { return volatileInstanceManager; }
+
+    public ResourceUsageManager resourceUsage() { return resourceUsageManager; }
+
+    public ResourceUsageReportManager resourceUsageReport() { return resourceUsageReportManager; }
+
+    public WorkflowSubscriptionManager workflowSubscription() { return workflowSubscriptionManager; }
+
+    public DataSubscriptionManager dataSubscription() { return dataSubscriptionManager; }
+
+    public ResourceSubscriptionManager resourceSubscription() { return resourceSubscriptionManager; }
 }

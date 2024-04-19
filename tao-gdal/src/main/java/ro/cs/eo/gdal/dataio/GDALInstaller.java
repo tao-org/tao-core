@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
-import static org.apache.commons.lang.SystemUtils.IS_OS_UNIX;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_UNIX;
 
 /**
  * GDAL installer class for deploying GDAL binaries to the aux data dir.

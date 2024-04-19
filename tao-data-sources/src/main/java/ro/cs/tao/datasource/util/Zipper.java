@@ -72,6 +72,7 @@ public class Zipper {
                     listener.started(archiveName);
                 }
                 long read = 0;
+                int iterations = 0;
                 for (Path path : paths) {
                     String sp = sourceFolder.relativize(path).toString();
                     try {
@@ -83,9 +84,9 @@ public class Zipper {
                                 int r;
                                 while ((r = stream.read(buffer)) != -1) {
                                     outputStream.write(buffer, 0, r);
-                                    if (listener != null) {
-                                        read += r;
-                                        listener.notifyProgress((double) r / (double) total);
+                                    read += r;
+                                    if (listener != null && iterations++ % 64 == 0) { // report progress at each 64MB read
+                                        listener.notifyProgress((double) read / (double) total);
                                     }
                                 }
                             }
@@ -148,9 +149,13 @@ public class Zipper {
         }
         try {
             Files.createDirectories(target);
-            byte[] buffer = new byte[65536];
+            byte[] buffer = new byte[MemoryUnit.MB.value().intValue()];
             double totalRead = 0;
             long total = Files.size(source);
+            int iterations = 0;
+            if (listener != null) {
+                listener.started(source.getFileName().toString());
+            }
             try (InputStream is = Files.newInputStream(source);
                  ZipInputStream zis = new ZipInputStream(is)) {
                 ZipEntry entry = zis.getNextEntry();
@@ -165,7 +170,7 @@ public class Zipper {
                             while ((read = zis.read(buffer)) > 0) {
                                 outputStream.write(buffer, 0, read);
                                 totalRead += (double) read * ((double) entry.getCompressedSize() / entry.getSize());
-                                if (listener != null) {
+                                if (listener != null && iterations++ % 128 == 0) { // report progress at each 128MB read
                                     listener.notifyProgress(totalRead / total);
                                 }
                             }
@@ -178,6 +183,10 @@ public class Zipper {
         } catch (IOException e) {
             logger.warning(ExceptionUtils.getStackTrace(logger, e));
             throw e;
+        } finally {
+            if (listener != null) {
+                listener.ended();
+            }
         }
         return target;
     }

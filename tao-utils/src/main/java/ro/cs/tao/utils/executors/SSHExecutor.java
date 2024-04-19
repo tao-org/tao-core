@@ -850,7 +850,7 @@ public class SSHExecutor extends Executor<Channel> {
                 @Override
                 public synchronized void write(byte[] b, int off, int len) {
                     String message = new String(b, off, len).replaceAll("\n", "");
-                    if (message.length() > 0) {
+                    if (!message.isEmpty()) {
                         if (outputConsumer != null) {
                             outputConsumer.consume(message);
                         }
@@ -865,8 +865,9 @@ public class SSHExecutor extends Executor<Channel> {
             if (asSuperUser) {
                 if (this.certificate != null) {
                     this.password = "";
+                } else {
+                    writeSudoPassword(channel, this.password);
                 }
-                writeSudoPassword(channel, this.password);
             }
             BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
             String line;

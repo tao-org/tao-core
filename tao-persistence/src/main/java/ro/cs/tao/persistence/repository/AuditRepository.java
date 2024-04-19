@@ -23,4 +23,5 @@ public interface AuditRepository extends PagingAndSortingRepository<LogEvent, Lo
     List<LogEvent> getByUserAndInterval(@Param("user") String user,
                                         @Param("startDate") LocalDateTime startDate,
                                         @Param("endDate") LocalDateTime endDate);
+
 }

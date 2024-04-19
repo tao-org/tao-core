@@ -32,6 +32,6 @@ public class StringArrayToStringConverter implements AttributeConverter<String[]
 
     @Override
     public String[] convertToEntityAttribute(String dbData) {
-        return dbData.replace("[", "").replace("]", "").split(", ");
+        return (dbData == null || dbData.equals("[]")) ? new String[0] : dbData.replace("[", "").replace("]", "").split(", ");
     }
 }

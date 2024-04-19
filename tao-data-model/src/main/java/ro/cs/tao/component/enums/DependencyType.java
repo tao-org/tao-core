@@ -10,7 +10,9 @@ public enum DependencyType implements TaoEnum<Integer> {
     @XmlEnumValue("1")
     EXCLUSIVE(1, "Exclusive"),
     @XmlEnumValue("2")
-    FILTER(2, "Filter");
+    FILTER(2, "Filter"),
+    @XmlEnumValue("3")
+    REQUIRED_IF(3, "Required if");
 
     private final int value;
     private final String description;

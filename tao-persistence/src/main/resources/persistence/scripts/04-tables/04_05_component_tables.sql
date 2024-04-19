@@ -101,6 +101,17 @@ ALTER TABLE component.container_type ALTER COLUMN id SET DEFAULT nextval('compon
 ALTER SEQUENCE component.container_type_id_seq OWNED BY component.container_type.id;
 
 -------------------------------------------------------------------------------
+-- table: component.container_visibility
+DROP TABLE IF EXISTS component.container_visibility CASCADE;
+CREATE TABLE component.container_visibility
+(
+	id integer NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE component.container_visibility ADD CONSTRAINT PK_container_visibility
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
 -- table: container
 DROP TABLE IF EXISTS component.container CASCADE;
 CREATE TABLE component.container
@@ -109,18 +120,22 @@ CREATE TABLE component.container
 	name varchar(1024) NOT NULL,
 	description varchar(1024) NOT NULL,
 	type_id int NULL DEFAULT 1,
+	visibility_id int NULL DEFAULT 1,
 	tag varchar(1024) NOT NULL,
 	application_path varchar(1024) NULL,
 	logo_image varchar NULL,
 	common_parameters varchar(128) NULL,
 	format_name_parameter varchar(20) NULL,
 	created timestamp NULL DEFAULT now(),
-    modified timestamp NULL
+    modified timestamp NULL,
+    owner_id varchar NULL
 );
 ALTER TABLE component.container ADD CONSTRAINT PK_container
 	PRIMARY KEY (id);
 ALTER TABLE component.container ADD CONSTRAINT FK_container_container_type
 	FOREIGN KEY (type_id) REFERENCES component.container_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.container ADD CONSTRAINT FK_container_container_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.container_visibility (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: container_applications
@@ -152,6 +167,24 @@ ALTER TABLE component.container_formats ADD CONSTRAINT FK_container_formats_cont
 	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
+-- Table: component.container_instance
+DROP TABLE IF EXISTS component.container_instance;
+CREATE TABLE IF NOT EXISTS component.container_instance
+(
+    id varchar(1024) NOT NULL,
+    container_id varchar(1024) NOT NULL,
+    name varchar(50),
+    host_port integer,
+    user_id character varying(50) NOT NULL
+);
+ALTER TABLE component.container_instance ADD CONSTRAINT PK_container_instance
+    PRIMARY KEY (id);
+ALTER TABLE component.container_instance ADD CONSTRAINT FK_container_instance_container
+    FOREIGN KEY (container_id) REFERENCES component.container (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE component.container_instance ADD CONSTRAINT FK_container_instance_user
+    FOREIGN KEY (user_id) REFERENCES usr.user (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-------------------------------------------------------------------------------
 -- table: processing_component
 DROP TABLE IF EXISTS component.processing_component CASCADE;
 CREATE TABLE component.processing_component
@@ -168,7 +201,7 @@ CREATE TABLE component.processing_component
 	main_tool_file_location varchar(512) NOT NULL,
 	working_directory varchar(512) NULL,
 	template_type_id integer NOT NULL,
-	owner_user varchar NULL,
+	owner_user_id varchar NULL,
 	visibility_id integer NOT NULL,
 	multi_thread boolean NULL DEFAULT false,
 	parallelism integer NULL DEFAULT 1,
@@ -186,7 +219,7 @@ ALTER TABLE component.processing_component ADD CONSTRAINT PK_processing_componen
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_template_type
 	FOREIGN KEY (template_type_id) REFERENCES component.template_type (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_user
-	FOREIGN KEY (owner_user) REFERENCES usr.user (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (owner_user_id) REFERENCES usr.user (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES component.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_processing_component_type
@@ -342,7 +375,7 @@ CREATE TABLE component.group_component
 	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
-	owner_user_id integer NULL,
+	owner_user_id varchar NULL,
 	visibility_id integer NOT NULL,
 	parallelism integer NULL DEFAULT 1,
 	tags text NULL,
@@ -486,7 +519,8 @@ CREATE TABLE component.data_source_component
 	is_system boolean NOT NULL DEFAULT false,
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
-    modified timestamp NULL
+    modified timestamp NULL,
+    volatile boolean NULL DEFAULT false
 );
 ALTER TABLE component.data_source_component ADD CONSTRAINT PK_data_source_component
 	PRIMARY KEY (id);
@@ -536,14 +570,14 @@ CREATE TABLE component.data_source_component_group
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
 	tags text NULL,
-	username text NOT NULL,
+	user_id text NOT NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL DEFAULT now()
 );
 ALTER TABLE component.data_source_component_group ADD CONSTRAINT PK_data_source_component_group
 	PRIMARY KEY (id);
 ALTER TABLE component.data_source_component_group ADD CONSTRAINT FK_data_source_component_group_user
-	FOREIGN KEY (username) REFERENCES usr.user (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr.user (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.data_source_component_group_sources
@@ -648,7 +682,7 @@ CREATE TABLE component.wps_component
     remote_address varchar(1024) NOT NULL,
 	capability  varchar(512) NOT NULL,
 	visibility_id integer NOT NULL,
-	owner_user varchar NULL,
+	owner_user_id varchar NULL,
 	container_id varchar(1024) NOT NULL,
 	parameters json NULL,
     active boolean NULL DEFAULT true,
@@ -666,13 +700,13 @@ ALTER TABLE component.wps_component ADD CONSTRAINT FK_wps_component_container
 DROP TABLE IF EXISTS component.wps_component_sources CASCADE;
 CREATE TABLE component.wps_component_sources
 (
-	wps_component_id varchar(512) NOT NULL,
+	component_id varchar(512) NOT NULL,
 	source_descriptor_id varchar(512) NOT NULL
 );
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT PK_wps_component_sources
-	PRIMARY KEY (wps_component_id, source_descriptor_id);
+	PRIMARY KEY (component_id, source_descriptor_id);
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_sources_wps_component
-	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
+	FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_source_descriptor
 	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 
@@ -681,13 +715,13 @@ ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_sour
 DROP TABLE IF EXISTS component.wps_component_targets CASCADE;
 CREATE TABLE component.wps_component_targets
 (
-	wps_component_id varchar(512) NOT NULL,
+	component_id varchar(512) NOT NULL,
 	target_descriptor_id varchar(512) NOT NULL
 );
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT PK_wps_component_targets
-	PRIMARY KEY (wps_component_id, target_descriptor_id);
+	PRIMARY KEY (component_id, target_descriptor_id);
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_wps_component
-	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
+	FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_target_descriptor
 	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 
@@ -696,12 +730,85 @@ ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targ
 DROP TABLE IF EXISTS component.wps_component_parameters CASCADE;
 CREATE TABLE component.wps_component_parameters
 (
-    wps_component_id varchar(512) NOT NULL,
-    wps_processing_parameter_id varchar(512) NOT NULL
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
 );
 ALTER TABLE component.wps_component_parameters ADD CONSTRAINT PK_wps_component_parameters
-    PRIMARY KEY (wps_component_id, wps_processing_parameter_id);
+    PRIMARY KEY (component_id, processing_parameter_id);
 ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_component
-    FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+    FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_parameter
-    FOREIGN KEY (wps_processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component
+DROP TABLE IF EXISTS component.wms_component CASCADE;
+CREATE TABLE component.wms_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text,
+	authors varchar(1024),
+	copyright text,
+	node_affinity varchar(250) NULL,
+    remote_address varchar(1024) NOT NULL,
+	capability  varchar(512) NOT NULL,
+	visibility_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	container_id varchar(1024) NOT NULL,
+	parameters json NULL,
+    active boolean NULL DEFAULT true,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL
+);
+ALTER TABLE component.wms_component ADD CONSTRAINT PK_wms_component
+	PRIMARY KEY (id);
+ALTER TABLE component.wms_component ADD CONSTRAINT FK_wms_component_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component_sources
+DROP TABLE IF EXISTS component.wms_component_sources CASCADE;
+CREATE TABLE component.wms_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT PK_wms_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_sources_wms_component
+	FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component_targets
+DROP TABLE IF EXISTS component.wms_component_targets CASCADE;
+CREATE TABLE component.wms_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT PK_wms_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targets_wms_component
+	FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: wms_component_parameters
+DROP TABLE IF EXISTS component.wms_component_parameters CASCADE;
+CREATE TABLE component.wms_component_parameters
+(
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT PK_wms_component_parameters
+    PRIMARY KEY (component_id, processing_parameter_id);
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_component
+    FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_parameter
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;

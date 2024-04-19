@@ -15,10 +15,16 @@
  */
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
+import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
+import ro.cs.tao.datasource.param.JavaType;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -41,6 +47,34 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
     private List<ParameterDescriptor> parameters;
     private Template template;
     private TemplateEngine templateEngine;
+
+    @JsonCreator
+    public TemplateParameterDescriptor(@JsonProperty("id") String id,
+                               @JsonProperty("name") String name,
+                               @JsonProperty("type") ParameterType type,
+                               @JsonProperty("dataType") JavaType dataType,
+                               @JsonProperty("defaultValue") String defaultValue,
+                               @JsonProperty("description") String description,
+                               @JsonProperty("label") String label,
+                               @JsonProperty("unit") String unit,
+                               @JsonProperty("valueSet") String[] valueSet,
+                               @JsonProperty("format") String format,
+                               @JsonProperty("expansionRule") ParameterExpansionRule rule,
+                               @JsonProperty("notNull") boolean notNull,
+                               @JsonProperty("parameters") List<ParameterDescriptor> parameters) {
+        super(id);
+        setName(name);
+        setType(type);
+        setDataType(dataType.value());
+        setDefaultValue(defaultValue);
+        setDescription(description);
+        setLabel(label);
+        setValueSet(valueSet);
+        setFormat(format);
+        setExpansionRule(rule);
+        setNotNull(notNull);
+        setParameters(parameters);
+    }
 
     public TemplateParameterDescriptor() {
         super();
@@ -72,28 +106,42 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         this.parameters.add(parameter);
     }
 
+    public TemplateType getTemplateType() {
+        final String format = getFormat();
+        return format != null ? TemplateType.valueOf(format) : TemplateType.JSON;
+    }
+
+    public void setTemplateType(TemplateType type) {
+        setFormat(type.name());
+        this.templateEngine = EngineFactory.createInstance(type);
+    }
+
     public Template getTemplate() {
         if (this.template == null) {
             this.template = new BasicTemplate();
-            if (this.templateEngine != null) {
-                try {
-                    this.template.associateWith(this.templateEngine);
-                } catch (TemplateException e) {
-                    e.printStackTrace();
-                }
-            }
+            this.template.associateWith(getTemplateEngine());
+            this.template.setContents(getDefaultValue(), false);
         }
         return this.template;
     }
 
     public void setTemplate(Template template) throws TemplateException {
-        this.template = template;
-        this.template.associateWith(this.templateEngine);
+        if (template != null) {
+            if (!getTemplateType().equals(template.getTemplateType())) {
+                throw new TemplateException("Incompatible template type");
+            }
+            this.template = template;
+            this.template.associateWith(getTemplateEngine());
+            setDefaultValue(this.template.getContents());
+        }
     }
 
     @XmlTransient
     public TemplateEngine getTemplateEngine() {
-        return templateEngine;
+        if (this.templateEngine == null) {
+            this.templateEngine = EngineFactory.createInstance(getTemplateType());
+        }
+        return this.templateEngine;
     }
 
     @XmlTransient
@@ -118,7 +166,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
                 removeEmptyParameter(parameter);
             }
         }
-        return this.templateEngine.transform(this.template, params);
+        return this.templateEngine.transform(getTemplate(), params);
     }
 
     @Override

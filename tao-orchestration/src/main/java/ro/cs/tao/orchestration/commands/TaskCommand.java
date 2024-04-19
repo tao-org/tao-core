@@ -21,7 +21,7 @@ import ro.cs.tao.execution.model.ExecutionGroup;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -74,10 +74,7 @@ public abstract class TaskCommand {
             }
             try {
                 doAction(task);
-                /*task.setExecutionStatus(this.requestedStatus);
-                persistenceManager.updateExecutionTask(task);*/
             } catch (Exception ex) {
-                ex.printStackTrace();
                 task.setExecutionStatus(ExecutionStatus.FAILED);
                 throw new ExecutionException(ex);
             }
@@ -94,9 +91,7 @@ public abstract class TaskCommand {
         }
         @Override
         public Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.UNDETERMINED);
-            }};
+            return EnumSet.of(ExecutionStatus.UNDETERMINED);
         }
         @Override
         protected void doAction(ExecutionTask task) {
@@ -119,11 +114,7 @@ public abstract class TaskCommand {
         }
         @Override
         public Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.UNDETERMINED);
-                add(ExecutionStatus.QUEUED_ACTIVE);
-                add(ExecutionStatus.RUNNING);
-            }};
+            return EnumSet.of(ExecutionStatus.UNDETERMINED, ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
         }
         @Override
         protected void doAction(ExecutionTask task) {
@@ -144,10 +135,7 @@ public abstract class TaskCommand {
         }
         @Override
         public Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.QUEUED_ACTIVE);
-                add(ExecutionStatus.RUNNING);
-            }};
+            return EnumSet.of(ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
         }
         @Override
         protected void doAction(ExecutionTask task) {
@@ -164,9 +152,7 @@ public abstract class TaskCommand {
         }
         @Override
         public Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
-                add(ExecutionStatus.SUSPENDED);
-            }};
+            return EnumSet.of(ExecutionStatus.SUSPENDED);
         }
         @Override
         protected void doAction(ExecutionTask task) {

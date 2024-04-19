@@ -41,7 +41,12 @@ public enum TemplateType implements TaoEnum<Integer> {
      * XSLT template
      */
     @XmlEnumValue("3")
-    XSLT(3, "XSL Template");
+    XSLT(3, "XSL"),
+    /**
+     * JSON template
+     */
+    @XmlEnumValue("4")
+    JSON(4, "JSON");
 
     private final int value;
     private final String description;

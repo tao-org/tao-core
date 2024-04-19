@@ -17,6 +17,7 @@ package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
+import ro.cs.tao.drmaa.Environment;
 
 /**
  * Specialization of the DRMAA {@link SessionFactory} base class for local invocations.
@@ -27,6 +28,11 @@ public class DefaultSessionFactory extends SessionFactory {
     private DefaultSession thisSession;
 
     public DefaultSessionFactory() { }
+
+    @Override
+    public Environment getEnvironment() {
+        return Environment.DEFAULT;
+    }
 
     @Override
     public Session getSession() {

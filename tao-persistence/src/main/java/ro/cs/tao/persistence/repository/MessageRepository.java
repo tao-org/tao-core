@@ -26,22 +26,22 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, L
 
     /**
      * Find Message entity by user identifier
-     * @param userName - the given user identifier
+     * @param userId - the given user identifier
      * @return the corresponding Message entity
      */
-    Page<Message> findByUser(String userName, Pageable pageRequest);
+    Page<Message> findByUserId(String userId, Pageable pageRequest);
 
-    @Query(value = "SELECT * FROM common.notification WHERE username = :user AND read = false", nativeQuery = true)
-    List<Message> getUnreadMessages(@Param("user") String userName);
+    @Query(value = "SELECT * FROM common.notification WHERE user_id = :userId AND read = false", nativeQuery = true)
+    List<Message> getUnreadMessages(@Param("userId") String userId);
 
-    @Query(value = "SELECT * FROM common.notification WHERE username = :user AND timestamp = :timestamp", nativeQuery = true)
-    Message get(@Param("user") String userName, @Param("timestamp") long timestamp);
-
-    @Modifying
-    @Query(value = "UPDATE common.notification SET read = true WHERE id IN (:ids)", nativeQuery = true)
-    void markAsRead(@Param("ids") List<Long> ids);
+    @Query(value = "SELECT * FROM common.notification WHERE user_id = :userId AND timestamp = :timestamp", nativeQuery = true)
+    Message get(@Param("userId") String userId, @Param("timestamp") long timestamp);
 
     @Modifying
-    @Query(value = "DELETE FROM common.notification WHERE username = :user", nativeQuery = true)
-    void deleteAll(@Param("user") String userName);
+    @Query(value = "UPDATE common.notification SET read = true WHERE id IN (:ids) AND user_id = :userId", nativeQuery = true)
+    void markAsRead(@Param("ids") List<Long> ids, @Param("userId") String userId);
+
+    @Modifying
+    @Query(value = "DELETE FROM common.notification WHERE user_id = :userId", nativeQuery = true)
+    void deleteAll(@Param("userId") String userId);
 }

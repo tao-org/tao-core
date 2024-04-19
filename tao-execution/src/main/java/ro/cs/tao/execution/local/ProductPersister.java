@@ -26,8 +26,12 @@ import ro.cs.tao.eodata.util.Conversions;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.awt.geom.Point2D;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -37,8 +41,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class ProductPersister implements OutputDataHandler<EOProduct> {
-    //private final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
-    private final Logger logger = Logger.getLogger(getClass().getName());
+        private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
     public Class<EOProduct> isIntendedFor() { return EOProduct.class; }
@@ -66,6 +69,15 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                 product.setProductStatus(ProductStatus.PRODUCED);
                 product.addReference(SessionStore.currentContext().getPrincipal().getName());
                 product = SpringContextBridge.services().getService(EOProductProvider.class).save(product);
+                final String location = product.getLocation();
+                Path productPath = FileUtilities.isURI(location) ? Path.of(URI.create(location)) : Path.of(location);
+                final String entryPoint = product.getEntryPoint();
+                if (entryPoint != null) {
+                    productPath = productPath.resolve(entryPoint);
+                }
+                logger.fine("Computing product SHA-1 hash");
+                Files.writeString(productPath.getParent().resolve(FileUtilities.getFilenameWithoutExtension(productPath) + ".sha"),
+                                  FileUtilities.computeHash(productPath, "SHA-1"));
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",
                                             product.getName(), e.getMessage()));

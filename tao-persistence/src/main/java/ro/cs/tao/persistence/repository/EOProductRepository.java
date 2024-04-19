@@ -34,8 +34,8 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
     List<EOProduct> getPublicProducts();
 
     @Query(value = "SELECT p.* FROM product.raster_data_product p LEFT JOIN product.raster_data_product_refs r ON r.product_id = p.id " +
-            "WHERE p.visibility_id = 1 AND p.status_id = 5 AND r.refs != :user", nativeQuery = true)
-    List<EOProduct> getOtherPublishedProducts(@Param("user") String user);
+            "WHERE p.visibility_id = 1 AND p.status_id = 5 AND r.refs != :userId", nativeQuery = true)
+    List<EOProduct> getOtherPublishedProducts(@Param("userId") String userId);
 
     @Query(value = "SELECT name FROM product.raster_data_product WHERE name IN (:names) AND status_id IN (2, 3)", nativeQuery = true)
     List<String> getExistingProductNames(@Param("names") Set<String> names);
@@ -49,14 +49,14 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
     int getOtherProductReferences(@Param("componentId") String componentId, @Param("name") String name);
 
     @Query(value = "SELECT COALESCE(SUM(p.approximate_size), 0) FROM product.raster_data_product p " +
-            "JOIN product.raster_data_product_refs r ON r.product_id = p.id WHERE r.refs = :userName", nativeQuery = true)
-    long getUserRasterProductsSize(@Param("userName") String userName);
+            "JOIN product.raster_data_product_refs r ON r.product_id = p.id WHERE r.refs = :userId", nativeQuery = true)
+    long getUserRasterProductsSize(@Param("userId") String userId);
 
     @Query(value = "SELECT COALESCE(SUM(p.approximate_size), 0) FROM product.raster_data_product p " +
             "JOIN product.raster_data_product_refs r ON r.product_id = p.id JOIN product.product_status s ON " +
-    		"p.status_id = s.id WHERE r.refs = :userName AND s.status IN ('DOWNLOADING','DOWNLOADED') AND " +
+    		"p.status_id = s.id WHERE r.refs = :userId AND s.status IN ('DOWNLOADING','DOWNLOADED') AND " +
             "p.location LIKE CONCAT(CAST(:publicLocation AS varchar), '%')", nativeQuery = true)
-    long getUserInputRasterProductsSize(@Param("userName") String userName, @Param("publicLocation") String publicLocation);
+    long getUserInputRasterProductsSize(@Param("userId") String userId, @Param("publicLocation") String publicLocation);
 
     @Query(value = "WITH t AS (SELECT CONCAT('%', t.job_id, '-', t.id, '%') AS c FROM execution.task t " +
             "JOIN execution.job j on j.id = t.job_id WHERE j.workflow_id = :workflowId) " +
@@ -69,10 +69,10 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
     List<EOProduct> getJobOutputs(@Param("jobId") long jobId);
 
     @Query(value = "SELECT p.* FROM product.raster_data_product p JOIN product.raster_data_product_refs r "
-    		+ "ON r.product_id = p.id WHERE r.refs = :userName AND p.acquisition_date IS NOT NULL AND "
+    		+ "ON r.product_id = p.id WHERE r.refs = :userId AND p.acquisition_date IS NOT NULL AND "
     		+ "st_intersects(\"geometry\", st_geomfromtext(:footprint)) "
     		+ "ORDER BY p.acquisition_date DESC LIMIT 1", nativeQuery = true)
-    EOProduct getNewestProductForUser(@Param("userName") String userName, @Param("footprint") String footprint);
+    EOProduct getNewestProductForUser(@Param("userId") String userId, @Param("footprint") String footprint);
 
     
     @Modifying

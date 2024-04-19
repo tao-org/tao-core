@@ -16,6 +16,7 @@ public class NamingRule implements Identifiable<Integer> {
     private String sensor;
     private String regEx;
     private String description;
+    private String synonyms;
     private List<NameToken> tokens;
 
     @Override
@@ -51,6 +52,14 @@ public class NamingRule implements Identifiable<Integer> {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getSynonyms() {
+        return synonyms;
+    }
+
+    public void setSynonyms(String synonyms) {
+        this.synonyms = synonyms;
     }
 
     public List<NameToken> getTokens() {

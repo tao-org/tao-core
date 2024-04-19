@@ -90,6 +90,13 @@ public class Messaging {
         instance.send(principal, topic, event);
     }
     /**
+     * Sends a pre-created message
+     * @param message       The message
+     */
+    public static void send(Message message) {
+        instance.send(message.getUserId(), message.getTopic(), message);
+    }
+    /**
      * Sends a simple text message
      * @param principal     The principal sending the message
      * @param topic         The topic to send the message to

@@ -18,35 +18,41 @@ package ro.cs.tao.component.converters;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.utils.DateUtils;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 /**
- * Converter between {@link LocalDateTime} and {@link String} objects.
+ * Converter between {@link LocalDate} and {@link String} objects.
  *
  * @author Cosmin Cara
  */
-public class DateConverter extends DefaultConverter<LocalDateTime> {
+public class DateConverter extends DefaultConverter<LocalDate> {
     private static final DateTimeFormatter format = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+    private static final DateTimeFormatter alternateFormat = DateUtils.getFormatterAtUTC("MM/dd/yyyy");
 
     public DateConverter() { }
 
     @Override
-    public LocalDateTime fromString(String value) throws ConversionException {
+    public LocalDate fromString(String value) throws ConversionException {
         try {
-            return value != null ? LocalDateTime.parse(value, format) : null;
+            return value != null ? DateUtils.parseDate(value) : null;
         } catch (DateTimeParseException e) {
             throw new ConversionException(e.getMessage());
         }
     }
 
     @Override
-    public String stringValue(LocalDateTime value) throws ConversionException {
+    public String stringValue(LocalDate value) throws ConversionException {
+        if (value == null) return null;
         try {
-            return value != null ? format.format(value) : null;
+            return format.format(value);
         } catch (Exception ex) {
-            throw new ConversionException(ex.getMessage());
+            try {
+                return alternateFormat.format(value);
+            } catch (Exception ex2) {
+                throw new ConversionException(ex.getMessage());
+            }
         }
     }
 }

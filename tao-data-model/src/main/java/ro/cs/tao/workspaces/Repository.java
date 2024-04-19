@@ -14,12 +14,14 @@ public class Repository extends StringIdentifiable {
     private String name;
     private String description;
     private String urlPrefix;
-    private String userName;
+    private String userId;
     private RepositoryType type;
     private LinkedHashMap<String, String> parameters;
     private boolean readOnly;
     private boolean system;
     private boolean editable;
+    private short order;
+    private boolean persistentStorage;
     private LocalDateTime created;
 
     @XmlTransient
@@ -51,12 +53,12 @@ public class Repository extends StringIdentifiable {
         this.urlPrefix = urlPrefix;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public RepositoryType getType() {
@@ -97,6 +99,22 @@ public class Repository extends StringIdentifiable {
 
     public void setEditable(boolean editable) {
         this.editable = editable;
+    }
+
+    public short getOrder() {
+        return order;
+    }
+
+    public void setOrder(short order) {
+        this.order = order;
+    }
+
+    public boolean isPersistentStorage() {
+        return persistentStorage;
+    }
+
+    public void setPersistentStorage(boolean persistentStorage) {
+        this.persistentStorage = persistentStorage;
     }
 
     public LocalDateTime getCreated() {

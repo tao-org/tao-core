@@ -31,6 +31,7 @@ public abstract class TaoLoginModule implements LoginModule {
     protected boolean commitSucceeded = false;
     protected String username;
     protected String password;
+    protected String id;
     protected final Logger logger;
     protected final AuthenticationMode configuredAuthMode;
 
@@ -87,13 +88,16 @@ public abstract class TaoLoginModule implements LoginModule {
             password = new String(passwordCallback.getPassword());
         }
         // verify the username and password
-        if (loginImpl(username, password) != null) {
+        User user;
+        if ((this.configuredAuthMode.equals(intendedFor()) || "admin".equals(username)) && (user = loginImpl(username, password)) != null) {
             succeeded = true;
+            id = user.getId();
             return succeeded;
         } else {
             succeeded = false;
             username = null;
             password = null;
+            id = null;
             if (localLogin && this.configuredAuthMode != AuthenticationMode.LOCAL) {
                 return succeeded;
             } else {
@@ -116,7 +120,7 @@ public abstract class TaoLoginModule implements LoginModule {
             // add a Principal (authenticated identity) to the Subject
 
             // assume the user we authenticated is the SamplePrincipal
-            userPrincipal = new UserPrincipal(username);
+            userPrincipal = new UserPrincipal(id);
             subject.getPrincipals().add(userPrincipal);
 
             // erase username and password values

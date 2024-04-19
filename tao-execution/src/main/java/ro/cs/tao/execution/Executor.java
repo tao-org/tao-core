@@ -15,20 +15,24 @@
  */
 package ro.cs.tao.execution;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.execution.model.DataSourceExecutionTask;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
+import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
+import ro.cs.tao.security.UserPrincipal;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
@@ -46,13 +50,15 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
     private static final List<TaskStatusListener> statusListeners = new ArrayList<>();
+    protected static ExecutionTaskProvider taskProvider;
+    protected static ExecutionJobProvider jobProvider;
     protected final AtomicBoolean isInitialized = new AtomicBoolean(false);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
 
-    public static Tuple<Integer, Long> getResourcesInUse(String userName) {
-        Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+    public static Tuple<Integer, Long> getResourcesInUse(String userId) {
+        Tuple<Integer, Long> tuple = resourcesUsage.get(userId);
         if (tuple == null) {
             tuple = new Tuple<>(0, 0L);
         }
@@ -66,6 +72,10 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     public static void removeStatusListener(TaskStatusListener listener) {
         Executor.statusListeners.remove(listener);
     }
+
+    public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
+
+    public static void setJobProvider(ExecutionJobProvider provider) { jobProvider = provider; }
 
     public Executor() {
         super();
@@ -185,6 +195,15 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime, String reason) {
         if (status != task.getExecutionStatus()) {
             task.setLastUpdated(LocalDateTime.now());
+            final ExecutionJob job = task.getJob();
+            if ((status == ExecutionStatus.RUNNING || status == ExecutionStatus.DONE) && job.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE) {
+                job.setExecutionStatus(ExecutionStatus.RUNNING);
+                try {
+                    jobProvider.update(job);
+                } catch (PersistenceException e) {
+                    logger.severe("Cannot set job status: " + e.getMessage());
+                }
+            }
             final String name = TaskUtilities.getTaskName(task);
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
@@ -193,13 +212,13 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
-                final String userName = task.getContext().getPrincipal().getName();
+                final String userId = task.getContext().getPrincipal().getName();
                 final int cpu = task.getUsedCPU();
                 final long memory = task.getUsedRAM();
                 if (firstTime) {
                     task.setExecutionStatus(status);
                     notifyStatusListener(task);
-                    increment(userName, cpu, memory);
+                    increment(userId, cpu, memory);
                 } else {
                     switch (status) {
                         case PENDING_FINALISATION:
@@ -207,14 +226,14 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                             task.setEndTime(LocalDateTime.now());
                             task.setExecutionStatus(status);
                             notifyStatusListener(task);
-                            decrement(userName, cpu, memory);
+                            decrement(userId, cpu, memory);
                             break;
                         case CANCELLED:
                         case SUSPENDED:
                         case FAILED:
                             task.setEndTime(LocalDateTime.now());
                             notifyStatusListener(task, status, reason);
-                            decrement(userName, cpu, memory);
+                            decrement(userId, cpu, memory);
                             break;
                         case RUNNING:
                             if (task.getStartTime() == null) {
@@ -247,7 +266,10 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 message = "Task " + task.getId() + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
                         + " changed to " + status.friendlyName();
             }
-            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());
+            final Message msg = Message.create(job.getUserId(), task.getId(), message, status.name(), true);
+            msg.setTopic(Topic.EXECUTION.value());
+            msg.addItem("host", task.getExecutionNodeHostName());
+            Messaging.send(msg);
         }
     }
 
@@ -263,24 +285,63 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
         }
     }
 
-    private void decrement(String userName, int cpu, long memory) {
+    protected void sendMessage(ExecutionTask task, String message) {
+        final String userId = task.getJob().getUserId();
+        final Message msg = Message.create(userId,
+                                           String.valueOf(task.getId()),
+                                           message,
+                                           false);
+        Messaging.send(new UserPrincipal(userId), Topic.INFORMATION.value(), getClass().getSimpleName(), msg, false);
+    }
+
+    protected void sendProgressMessage(ExecutionTask task) {
+        final String userId = task.getJob().getUserId();
+        final Message message = Message.create(userId,
+                                               String.valueOf(task.getId()),
+                                               ExecutionStatus.RUNNING.name(),
+                                               false);
+        try {
+            message.setData(JsonMapper.instance().writeValueAsString(taskProvider.getTaskStatus(task.getId())));
+            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), getClass().getSimpleName(), message, false);
+        } catch (JsonProcessingException e) {
+            logger.warning("Cannot send progress message. Reason: " + e.getMessage());
+        }
+    }
+
+    protected void sendProgressMessage(ExecutionTask task, double percent) {
+        final String userId = task.getJob().getUserId();
+        final Message message = Message.create(userId,
+                                               String.valueOf(task.getId()),
+                                               ExecutionStatus.RUNNING.name(),
+                                               false);
+        try {
+            final ExecutionTaskSummary taskStatus = taskProvider.getTaskStatus(task.getId());
+            taskStatus.setPercentComplete(percent);
+            message.setData(JsonMapper.instance().writeValueAsString(taskStatus));
+            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), getClass().getSimpleName(), message, false);
+        } catch (JsonProcessingException e) {
+            logger.warning("Cannot send progress message. Reason: " + e.getMessage());
+        }
+    }
+
+    private void decrement(String userId, int cpu, long memory) {
         synchronized (resourcesUsage) {
-            final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+            final Tuple<Integer, Long> tuple = resourcesUsage.get(userId);
             if (tuple != null) {
-                resourcesUsage.put(userName,
+                resourcesUsage.put(userId,
                                    new Tuple<>(Math.max(0, tuple.getKeyOne() - cpu),
                                                Math.max(0, tuple.getKeyTwo() - memory)));
             }
         }
     }
 
-    private void increment(String userName, int cpu, long memory) {
+    private void increment(String userId, int cpu, long memory) {
         synchronized (resourcesUsage) {
-            final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+            final Tuple<Integer, Long> tuple = resourcesUsage.get(userId);
             if (tuple == null) {
-                resourcesUsage.put(userName, new Tuple<>(cpu, memory));
+                resourcesUsage.put(userId, new Tuple<>(cpu, memory));
             } else {
-                resourcesUsage.put(userName,
+                resourcesUsage.put(userId,
                                    new Tuple<>(Math.max(0, tuple.getKeyOne() + cpu),
                                                Math.max(0, tuple.getKeyTwo() + memory)));
             }

@@ -59,6 +59,7 @@ public class DataSourceComponent extends TaoComponent {
     public static final String QUERY_PARAMETER = "query";
     public static final String SYNC_PARAMETER = "dateSync";
     public static final String RESULTS_PARAMETER = "results";
+    private static final Set<FetchMode> quickFetchModes = EnumSet.of(FetchMode.SYMLINK, FetchMode.CHECK);
 
     @XmlElement
     private String sensorName;
@@ -88,6 +89,8 @@ public class DataSourceComponent extends TaoComponent {
     private DownloadProgressListener progressListener;
     @XmlTransient
     private Principal principal;
+    @XmlTransient
+    private Boolean isVolatile;
 
     @XmlTransient
     private final Logger logger;
@@ -169,6 +172,9 @@ public class DataSourceComponent extends TaoComponent {
 
     public boolean getSystem() { return system; }
     public void setSystem(boolean value) { this.system = value; }
+
+    public Boolean getVolatile() { return isVolatile == null ? false : isVolatile; }
+    public void setVolatile(Boolean value) { this.isVolatile = value; }
 
     /**
      * Returns the user name used by this component to connect to the data source
@@ -387,7 +393,11 @@ public class DataSourceComponent extends TaoComponent {
      * @param additionalProperties  Additional properties that can be passed to the component
      */
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        return DownloadManager.queueDownload(this, this::doFetchImpl, products, tiles, destinationPath, localRootPath, additionalProperties);
+        if (quickFetchModes.contains(this.fetchMode)) {
+            return doFetchImpl(products, tiles, destinationPath, localRootPath, additionalProperties);
+        } else{
+            return DownloadManager.queueDownload(this, this::doFetchImpl, products, tiles, destinationPath, localRootPath, additionalProperties);
+        }
     }
 
     /**
@@ -442,10 +452,22 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private List<EOProduct> doFetchImpl(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        DataSource<?, ?> dataSource;
+        DataSource<?, ?> dataSource = null;
         String errorMessage;
-        for (EOProduct product : products) {
-            dataSource = createDataSource(product);
+        Object token = null;
+        if (products != null && !products.isEmpty()) {
+            dataSource = createDataSource(products.get(0));
+            try {
+                token = dataSource.authenticate();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        int idx = 0;
+        final int size = products.size();
+        while (idx < size) {
+            EOProduct product = products.get(idx);
+            //dataSource = createDataSource(product);
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
             product.addAttribute("maxRetries", String.valueOf(this.maxRetries));
@@ -471,6 +493,7 @@ public class DataSourceComponent extends TaoComponent {
                         throw new NoSuchElementException("Product type '" + product.getProductType() + "' doesn't have an associated download strategy!");
                     }
                     if (templateFetcher instanceof DownloadStrategy) {
+                        ((DownloadStrategy) templateFetcher).setAuthentication(token);
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
                         downloadStrategy.setDestination(destinationPath);
                         downloadStrategy.setFetchMode(this.fetchMode);
@@ -533,7 +556,15 @@ public class DataSourceComponent extends TaoComponent {
                 errorMessage = e.getMessage();
             } catch (Exception e) {
                 errorMessage = e.getMessage();
+                // maybe the token has just expired, retry one more time
+                try {
+                    token = dataSource.authenticate();
+                    idx--;
+                } catch (IOException inner) {
+                    errorMessage = inner.getMessage();
+                }
             } finally {
+                idx++;
                 if (errorMessage != null && this.productStatusListener != null) {
                     if(errorMessage.contains(""+ HttpStatus.SC_ACCEPTED)){
                         this.productStatusListener.downloadQueued(product,"Product not ready for download now. Download was queued.");
@@ -560,7 +591,7 @@ public class DataSourceComponent extends TaoComponent {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource<?, ?> dataSource = null;
         if (product != null) {
-            final String productLocationUrlDomain = Utilities.getDomainURL(product.getLocation());
+            final String productLocationUrlDomain = Utilities.getHostURL(product.getLocation());
             dataSource = dsManager.getMatchingDataSource(productLocationUrlDomain);
         }
         if (dataSource == null) {

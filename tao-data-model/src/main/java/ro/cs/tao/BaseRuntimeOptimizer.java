@@ -18,7 +18,7 @@ public abstract class BaseRuntimeOptimizer implements RuntimeOptimizer {
     public ProcessingComponent aggregate(List<ProcessingComponent> sources,
                                          Map<String, Map<String, String>> values) throws AggregationException {
         ProcessingComponent aggregator = null;
-        if (sources != null && sources.size() > 0) {
+        if (sources != null && !sources.isEmpty()) {
             if (sources.size() == 1) {
                 aggregator = sources.get(0);
             } else {

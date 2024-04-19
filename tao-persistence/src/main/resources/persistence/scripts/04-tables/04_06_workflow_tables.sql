@@ -40,8 +40,9 @@ CREATE TABLE workflow.graph
 (
 	id bigint NOT NULL,
 	name varchar(250) NOT NULL,
+	description varchar,
 	created timestamp NULL DEFAULT now(),
-	username varchar(50) NOT NULL,
+	user_id varchar(50) NOT NULL,
 	definition_path varchar(512) NULL,
 	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
@@ -51,7 +52,8 @@ CREATE TABLE workflow.graph
 	custom_values json NULL,
 	tags text NULL,
 	created_from_graph_id bigint,
-	active boolean NULL DEFAULT true
+	active boolean NULL DEFAULT true,
+	temporary boolean NULL DEFAULT false
 );
 ALTER TABLE workflow.graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
 ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_status
@@ -59,7 +61,7 @@ ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_status
 ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_visibility
 	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_user
-	FOREIGN KEY (username) REFERENCES usr."user" (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS workflow.workflow_graph_id_seq CASCADE;
 CREATE SEQUENCE workflow.workflow_graph_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE workflow.graph ALTER COLUMN id SET DEFAULT nextval('workflow.workflow_graph_id_seq');
@@ -72,6 +74,7 @@ CREATE TABLE workflow.graph_node
 (
 	id bigint NOT NULL,
 	name varchar(250) NULL,
+	description varchar,
 	created timestamp NULL DEFAULT now(),
 	workflow_id bigint NOT NULL,
 	node_level integer NOT NULL,
@@ -163,7 +166,7 @@ ALTER TABLE workflow.query ADD CONSTRAINT PK_query
 ALTER TABLE workflow.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source);
 ALTER TABLE workflow.query ADD CONSTRAINT U_query_label UNIQUE(label, user_id);
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_user
-	FOREIGN KEY (user_id) REFERENCES usr."user"(username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr."user"(id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_graph_node
 	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node(id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_data_source_component
@@ -192,3 +195,15 @@ ALTER TABLE workflow.query_parameter ALTER COLUMN id SET DEFAULT nextval('workfl
 ALTER SEQUENCE workflow.query_parameter_id_seq OWNED BY workflow.query_parameter.id;
 ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_2
 	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: graph_image
+DROP TABLE IF EXISTS workflow.graph_image CASCADE;
+CREATE TABLE workflow.graph_image
+(
+	workflow_id bigint NOT NULL,
+	image varchar NOT NULL
+);
+ALTER TABLE workflow.graph_image ADD CONSTRAINT PK_graph_image PRIMARY KEY (workflow_id);
+ALTER TABLE workflow.graph_image ADD CONSTRAINT FK_graph_image_workflow_graph
+	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE CASCADE ON UPDATE No Action;

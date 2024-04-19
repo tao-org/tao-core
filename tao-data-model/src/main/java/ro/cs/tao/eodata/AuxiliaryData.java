@@ -30,7 +30,7 @@ import java.util.Map;
 public class AuxiliaryData extends StringIdentifiable {
     private String location;
     private String description;
-    private String userName;
+    private String userId;
     private LocalDateTime created;
     private LocalDateTime modified;
 
@@ -43,8 +43,8 @@ public class AuxiliaryData extends StringIdentifiable {
     public void setDescription(String description) { this.description = description; }
 
     @XmlTransient
-    public String getUserName() { return userName; }
-    public void setUserName(String userName) { this.userName = userName; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     @XmlElement(name = "created")
     public LocalDateTime getCreated() { return created; }
@@ -57,7 +57,7 @@ public class AuxiliaryData extends StringIdentifiable {
     public Map<String, String> toAttributeMap() {
         Map<String, String> attributes = new HashMap<>();
         attributes.put("description", description != null ? description : "n/a");
-        attributes.put("user", userName != null ? userName : "n/a");
+        attributes.put("user", userId != null ? userId : "n/a");
         attributes.put("created", created != null ? created.format(DateTimeFormatter.ISO_DATE_TIME) : "n/a");
         return attributes;
     }

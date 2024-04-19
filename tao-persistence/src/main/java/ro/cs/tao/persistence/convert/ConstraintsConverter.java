@@ -33,7 +33,7 @@ public class ConstraintsConverter implements AttributeConverter<List<String>, St
     public String convertToDatabaseColumn(List<String> attribute) {
         String result = null;
 
-        if (attribute != null && attribute.size() > 0) {
+        if (attribute != null && !attribute.isEmpty()) {
             result = "";
             for (String constraint : attribute) {
                 result = result.concat(constraint).concat(";");

@@ -46,9 +46,22 @@ public interface ProgressListener {
         System.out.println(subTaskName + " completed");
     }
     /**
+     * Signals that a sub-activity has completed with a status.
+     * @param subTaskName The name of the sub-activity.
+     * @param succeeded the status of the sub-activity
+     */
+    default void subActivityEnded(String subTaskName, boolean succeeded) {
+        System.out.println(subTaskName + " completed");
+    }
+    /**
      * Signals that the current activity (task) has completed.
      */
     default void ended() { }
+
+    /**
+     * Signals that the current activity (task) has completed with a status
+     */
+    default void ended(boolean succeeded) { ended(); }
 
     /**
      * Signals the current progress of the activity.

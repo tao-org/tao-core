@@ -67,4 +67,6 @@ public interface QuotaManager {
      * @throws QuotaException if the operation fails due to some error
      */
     void updateUserProcessingQuota(Principal principal) throws QuotaException;
+
+    void updateUserCPU(Principal principal) throws QuotaException;
 }

@@ -103,7 +103,7 @@ public class Parameter {
                 stringValues.add(value.toString());
             }
         }
-        return stringValues.size() > 0 ? stringValues.toArray(new String[0]) : null;
+        return !stringValues.isEmpty() ? stringValues.toArray(new String[0]) : null;
     }
 
     public ParameterDescriptor toParameterDescriptor() {

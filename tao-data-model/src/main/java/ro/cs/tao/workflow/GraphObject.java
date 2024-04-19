@@ -32,6 +32,7 @@ import java.util.List;
 public abstract class GraphObject extends LongIdentifiable {
 
     protected String name;
+    protected String description;
     protected LocalDateTime created;
     private List<ParameterValue> customValues;
 
@@ -41,6 +42,10 @@ public abstract class GraphObject extends LongIdentifiable {
     @XmlElement(name = "name")
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    @XmlElement(name = "description")
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     @XmlElement(name = "created")
     public LocalDateTime getCreated() { return created; }

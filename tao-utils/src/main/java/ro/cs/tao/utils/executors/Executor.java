@@ -38,14 +38,17 @@ import java.util.logging.Logger;
  */
 public abstract class Executor<T> implements Runnable {
     public static final String SHELL_COMMAND_SEPARATOR = ";";
-    private static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
-    private static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
+    protected static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
+    protected static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
     private static final NamedThreadPoolExecutor executorService;
     private static final Logger staticLogger;
     private static final Map<String, AtomicLong> requestedMemory;
     private static final Map<Executor<?>, Long> memoryRequirements;
     private static Map<String, String> environment;
     private static Set<ExecutionDescriptorConverter> converters;
+    private static String localSudoUser;
+    private static String localSudoPwd;
+
 
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
@@ -62,9 +65,9 @@ public abstract class Executor<T> implements Runnable {
 
     T channel;
     String host;
-    String user;
-    String password;
-    String certificate;
+    protected String user;
+    protected String password;
+    protected String certificate;
     volatile boolean isStopped;
     private volatile boolean isSuspended;
     List<String> arguments;
@@ -75,7 +78,15 @@ public abstract class Executor<T> implements Runnable {
     ActivityListener monitor;
 
     private volatile int retCode = Integer.MAX_VALUE;
-    private final CountDownLatch counter;
+    private CountDownLatch counter;
+
+    public static void setLocalSudoUser(String localSudoUser) {
+        Executor.localSudoUser = localSudoUser;
+    }
+
+    public static void setLocalSudoPwd(String localSudoPwd) {
+        Executor.localSudoPwd = localSudoPwd;
+    }
 
     public static void setConverters(Set<ExecutionDescriptorConverter> converters) {
         if (converters != null) {
@@ -288,10 +299,12 @@ public abstract class Executor<T> implements Runnable {
                     }
                     executorService.submit(executors[finalI]);
                     printQueue();
-                    executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
+                    if (!executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS)) {
+                        staticLogger.warning(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
+                                                           jobs[finalI], timeout));
+                    }
                 } catch (InterruptedException iex) {
-                    staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
-                                                      jobs[finalI], timeout));
+                    staticLogger.severe(String.format("The job %s was interrupted", jobs[finalI]));
                 } finally {
                     executors[finalI].stop();
                     printQueue();
@@ -334,6 +347,10 @@ public abstract class Executor<T> implements Runnable {
         switch (type) {
             case PROCESS:
                 executor = new ProcessExecutor(host, arguments, asSuperUser, workingDir);
+                if (asSuperUser) {
+                    executor.setUser(Executor.localSudoUser);
+                    executor.setPassword(Executor.localSudoPwd);
+                }
                 break;
             case SSH2:
                 executor = new SSHExecutor(host, arguments, asSuperUser, mode, asyncSSHExecution, asyncSSHFileName);
@@ -375,7 +392,10 @@ public abstract class Executor<T> implements Runnable {
             try {
                 AuthenticationType authenticationType = executionUnit.getCertificate() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
                 RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(executionUnit.getHost(), authenticationType,
-                                                                      executionUnit.getUser(), executionUnit.getPassword());
+                                                                      executionUnit.getUser(),
+                                                                      AuthenticationType.PASSWORD.equals(authenticationType)
+                                                                        ? executionUnit.getPassword()
+                                                                        : executionUnit.getCertificate());
                 final long availMem = runtimeInfo.getAvailableMemoryMB();
                 final long requested = requestedMemory.computeIfAbsent(executionUnit.getHost(), h -> new AtomicLong(0L)).get();
                 retVal = (availMem - requested) >= minMemory;
@@ -481,13 +501,17 @@ public abstract class Executor<T> implements Runnable {
             isStopped = isSuspended = false;
             requestedMemory.computeIfAbsent(this.host, h -> new AtomicLong(0L))
                            .getAndAdd(memoryRequirements.computeIfAbsent(this, k -> 0L));
+            if (this.counter != null && this.counter.getCount() == 0) {
+                // This can happen if the same instance is reused
+                this.counter = new CountDownLatch(1);
+            }
             retCode = execute(true);
         } catch (Exception e) {
             retCode = -255;
             logger.severe(e.getMessage());
         } finally {
             if (this.counter != null) {
-                counter.countDown();
+                this.counter.countDown();
             }
             requestedMemory.get(this.host).getAndAdd(-memoryRequirements.remove(this));
             isStopped = true;
@@ -538,11 +562,8 @@ public abstract class Executor<T> implements Runnable {
     protected void insertSudoParams() {
         int idx = 0;
         String curArg;
-        List<String> sudoArgs = new ArrayList<String>() {{
-               add("sudo");
-               add("-S");
-               add("-p");
-               add("''");
+        List<String> sudoArgs = new ArrayList<>() {{
+            add("sudo"); add("-S"); add("-p ''");
         }};
         while (idx < arguments.size()) {
             curArg = arguments.get(idx);

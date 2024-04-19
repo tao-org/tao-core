@@ -27,6 +27,7 @@ public class DataSourceCredentials extends LongIdentifiable {
     private String dataSource;
     private String userName;
     private String password;
+    private String secret;
     private Map<String, String> params;
     private LocalDateTime created;
     private LocalDateTime modified;
@@ -72,6 +73,14 @@ public class DataSourceCredentials extends LongIdentifiable {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
     }
 
     public LocalDateTime getCreated() {

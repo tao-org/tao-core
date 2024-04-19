@@ -75,7 +75,7 @@ public class Crypto {
     }
 
     public static String hash(List<String> inputs) {
-        if (inputs != null && inputs.size() > 0) {
+        if (inputs != null && !inputs.isEmpty()) {
             MessageDigest md5 = null;
             try {
                 md5 = MessageDigest.getInstance("MD5");

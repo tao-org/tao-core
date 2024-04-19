@@ -19,8 +19,8 @@ public class SiteManager extends EntityManager<Site, String, SiteRepository>
         implements SiteProvider {
 
     @Override
-    public List<Site> getByUser(String userName) {
-        return this.repository.getByUser(userName);
+    public List<Site> getByUser(String userId) {
+        return this.repository.getByUser(userId);
     }
 
     @Override

@@ -21,12 +21,15 @@ import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.model.FileObject;
 import ro.cs.tao.services.model.ItemAction;
+import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
@@ -38,7 +41,7 @@ import java.util.zip.ZipOutputStream;
  */
 public interface StorageService<T, U> extends TAOService {
 
-    String AVLFOLDER = ".avlfolder";
+    String FOLDER_PLACEHOLDER = ".folder";
     String CONTENTS_ATTRIBUTE = "contents";
     String REMOTE_PATH_ATTRIBUTE = "remotePath";
     String ROOT_TITLE = "__root";
@@ -60,6 +63,15 @@ public interface StorageService<T, U> extends TAOService {
     default void setVectorDataProvider(VectorDataProvider vectorDataProvider) { }
 
     default void setAuxiliaryDataProvider(AuxiliaryDataProvider auxiliaryDataProvider) { }
+
+    /**
+     * Creates the root of the repository. Since not all storages support this, the default implementation
+     * does nothing. It is up to the specializations to override this method with the proper behavior.
+     *
+     * @param root    The root of the repository
+     * @throws  IOException if the root cannot be created
+     */
+    default void createRoot(String root) throws IOException { }
     /**
      * Creates a folder.
      *
@@ -136,6 +148,10 @@ public interface StorageService<T, U> extends TAOService {
      * @throws IOException if the content cannot be retrieved
      */
     List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth) throws IOException;
+
+    default List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth, Set<Path> excludedPaths) throws IOException {
+        return listFiles(fromPath, exclusions, lastItem, depth);
+    }
 
     /**
      * Lists the full tree of folders and files starting from the given path.
@@ -215,7 +231,7 @@ public interface StorageService<T, U> extends TAOService {
      * Returns a placeholder "file" to be used for S3-like storages when creating a "folder"
      */
     default FileObject emptyFolderItem() {
-        final FileObject object = new FileObject("", AVLFOLDER, false, 0, AVLFOLDER);
+        final FileObject object = new FileObject("", FOLDER_PLACEHOLDER, false, 0, FOLDER_PLACEHOLDER);
         object.addAttribute(CONTENTS_ATTRIBUTE, ".");
         return object;
     }
@@ -238,4 +254,12 @@ public interface StorageService<T, U> extends TAOService {
      * @param item          The FileObject item onto which to execute the action
      */
     default void execute(String actionName, FileObject item) throws Exception { }
+
+    /**
+     * Computes the hash for the given file or folder (incl. its subfolders and files).
+     * @param path  The path for which to compute the hash
+     */
+    default String computeHash(String path) throws IOException, NoSuchAlgorithmException {
+        return Crypto.hash(new ArrayList<>() {{ add(path); }});
+    }
 }

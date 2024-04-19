@@ -20,11 +20,12 @@ CREATE TABLE execution.job
 	id bigint NOT NULL,
 	name text NOT NULL,
 	job_type smallint NOT NULL DEFAULT 0,
+	env smallint DEFAULT 0,
 	app_id varchar(50),
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	workflow_id bigint,
-	username varchar(50) NOT NULL,
+	user_id varchar(50) NOT NULL,
 	output_path varchar(512),
 	query_id bigint NULL,
 	execution_status_id integer NOT NULL,
@@ -37,7 +38,7 @@ ALTER TABLE execution.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_workflow
 	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_user
-	FOREIGN KEY (username) REFERENCES usr."user" (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_query
 	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_execution_status
@@ -164,6 +165,7 @@ CREATE TABLE execution.user_data_source_connection
     data_source_id varchar(512) NOT NULL,
 	username varchar(50) NULL,
 	password text NULL,
+	tfa_secret text NULL,
 	params varchar(512) NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
@@ -172,7 +174,7 @@ ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT PK_user_data_so
 	PRIMARY KEY (id);
 ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT U_user_data_source_connection UNIQUE (user_id, data_source_id);
 ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_user
-	FOREIGN KEY (user_id) REFERENCES usr."user" (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS execution.user_data_source_connection_id_seq CASCADE;
 CREATE SEQUENCE execution.user_data_source_connection_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE execution.user_data_source_connection ALTER COLUMN id SET DEFAULT nextval('execution.user_data_source_connection_id_seq');
@@ -193,3 +195,35 @@ CREATE TABLE execution.component_time
 CREATE INDEX IF NOT EXISTS fki_fk_component_time_processing_component
     ON execution.component_time USING btree
     (component_id COLLATE pg_catalog."default" ASC NULLS LAST);
+
+-- Table: execution.resource_usage
+DROP TABLE IF EXISTS execution.resource_usage;
+CREATE TABLE IF NOT EXISTS execution.resource_usage
+(
+    id bigint NOT NULL,
+    user_id character varying NOT NULL,
+    task_id bigint NOT NULL,
+    host_name character varying NOT NULL,
+    flavor character varying,
+    start_time timestamp without time zone,
+    end_time timestamp without time zone,
+    CONSTRAINT resource_usage_pkey PRIMARY KEY (id)
+);
+DROP SEQUENCE IF EXISTS execution.resource_usage_id_seq;
+CREATE SEQUENCE IF NOT EXISTS execution.resource_usage_id_seq INCREMENT 1 START 1 MINVALUE 1 NO MAXVALUE;
+ALTER TABLE execution.resource_usage ALTER COLUMN id SET DEFAULT nextval('execution.resource_usage_id_seq');
+ALTER SEQUENCE execution.resource_usage_id_seq OWNED BY execution.resource_usage.id;
+
+-- Table: execution.resource_usage_report
+DROP TABLE IF EXISTS execution.resource_usage_report;
+CREATE TABLE IF NOT EXISTS execution.resource_usage_report
+(
+    id bigint NOT NULL,
+    user_id character varying NOT NULL,
+    last_report_time timestamp without time zone,
+    CONSTRAINT resource_usage_report_pkey PRIMARY KEY (id)
+);
+DROP SEQUENCE IF EXISTS execution.resource_usage_report_id_seq;
+CREATE SEQUENCE IF NOT EXISTS execution.resource_usage_report_id_seq INCREMENT 1 START 1 MINVALUE 1 NO MAXVALUE;
+ALTER TABLE execution.resource_usage_report ALTER COLUMN id SET DEFAULT nextval('execution.resource_usage_report_id_seq');
+ALTER SEQUENCE execution.resource_usage_report_id_seq OWNED BY execution.resource_usage_report.id;
