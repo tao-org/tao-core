@@ -30,6 +30,10 @@ public class CompositeKey {
         this.composites = composites;
     }
 
+    public Object getKey(int index) {
+        return composites != null && composites.length > index ? composites[index] : null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

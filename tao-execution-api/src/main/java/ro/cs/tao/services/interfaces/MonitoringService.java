@@ -31,15 +31,15 @@ public interface MonitoringService<T> extends TAOService {
 
     RuntimeInfo getNodeSnapshot(String hostName);
 
-    List<T> getLiveNotifications();
+    List<T> getLiveNotifications(String userId);
 
-    Map<String, List<T>> getUnreadNotifications(String userName);
+    Map<String, List<T>> getUnreadNotifications(String userId);
 
-    List<T> getNotifications(String user, int page);
+    List<T> getNotifications(String userId, int page);
 
-    List<T> acknowledgeNotification(List<T> notifications);
+    List<Long> acknowledgeNotification(List<Long> notifications, String userId);
 
-    void deleteAll(String userName);
+    void deleteAll(String userId);
 
     Map<String, Boolean> getNodesOnlineStatus();
 

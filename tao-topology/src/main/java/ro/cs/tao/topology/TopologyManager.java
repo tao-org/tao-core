@@ -18,21 +18,26 @@ package ro.cs.tao.topology;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.VolatileInstanceProvider;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.docker.DockerImageInstaller;
 import ro.cs.tao.topology.docker.DockerManager;
-import ro.cs.tao.topology.docker.StandaloneContainer;
+import ro.cs.tao.topology.docker.SingletonContainer;
 import ro.cs.tao.topology.provider.DefaultNodeOperationListener;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,14 +53,17 @@ import java.util.stream.Collectors;
 public class TopologyManager {
 
     //private static final String createMountTemplate;
+    private static final String checkLocalShareWindowsTemplate;
     private static final String createLocalShareWindowsTemplate;
     private static final String createLocalShareLinuxTemplate;
+    private static final String createWorkingDirectoryTemplate;
     private static final OutputAccumulator sharedAccumulator;
     private static final TopologyManager instance;
     private static NodeDescription masterNodeInfo;
 
     private final Logger logger;
     private NodeProvider externalNodeProvider;
+    private VolatileInstanceProvider volatileInstanceProvider;
     private NodeProvider localNodeProvider;
     private final Set<NodeOperationListener> listeners;
     private final Set<TopologyToolInstaller> installers;
@@ -64,8 +72,10 @@ public class TopologyManager {
     static {
         //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
         //createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4$s,password=%5$s,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
+        checkLocalShareWindowsTemplate = "net share %s";
         createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
-        createLocalShareLinuxTemplate = "if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\" /etc/samba/smb.conf; fi;";
+        createLocalShareLinuxTemplate = "setenforce 0 && if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\n\tcreate mask = 0666\n\tforce create mode = 0666\n\tdirectory mask = 0777\n\tforce directory mode = 0777\" /etc/samba/smb.conf; fi;";
+        createWorkingDirectoryTemplate = "mount %s " + ExecutionConfiguration.getWorkerContainerVolumeMap().getHostWorkspaceFolder();
         sharedAccumulator = new OutputAccumulator();
         instance = new TopologyManager();
         Executor.setEnvironment(ConfigurationManager.getInstance().getSystemEnvironment());
@@ -84,8 +94,8 @@ public class TopologyManager {
         final Set<NodeProvider> nodeProviders = nodeProviderRegistry.getServices();
         final String configuredProvider = ConfigurationManager.getInstance().getValue("topology.provider");
         logger.info(String.format("External node providers available: %s",
-                                  nodeProviders.size() == 0 ? "none" :
-                                          nodeProviders.stream().map(p -> p.getClass().getName()).collect(Collectors.joining(","))));
+                                  nodeProviders.isEmpty() ? "none" :
+                                  nodeProviders.stream().map(p -> p.getClass().getName()).collect(Collectors.joining(","))));
         for (NodeProvider provider : nodeProviders) {
             if (provider.getClass().getName().equals(configuredProvider)) {
                 this.externalNodeProvider = provider;
@@ -96,6 +106,11 @@ public class TopologyManager {
             logger.info("No external node provider configured");
         } else {
             logger.info(String.format("External node provider '%s' registered", this.externalNodeProvider.getClass().getSimpleName()));
+            try {
+                this.externalNodeProvider.authenticate();
+            } catch (Throwable e) {
+                logger.severe(e.getMessage());
+            }
         }
         this.listeners = new HashSet<>();
         registerListener(new DefaultNodeOperationListener());
@@ -122,6 +137,10 @@ public class TopologyManager {
         }
         setMasterNodeInfo();
         DockerManager.setMasterNode(masterNodeInfo);
+    }
+
+    public void setVolatileInstanceProvider(VolatileInstanceProvider provider) {
+        this.volatileInstanceProvider = provider;
     }
 
     public void registerListener(NodeOperationListener listener) {
@@ -151,45 +170,103 @@ public class TopologyManager {
         return this.localNodeProvider.listNodes();
     }
 
-    public void addNode(NodeDescription info) throws TopologyException {
+    public NodeDescription addNode(NodeDescription info) throws TopologyException {
+        final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         if (this.externalNodeProvider != null) {
             info = this.externalNodeProvider.create(info);
+            if (Boolean.TRUE.equals(info.getVolatile())) {
+                VolatileInstance vi = new VolatileInstance();
+                vi.setNodeId(info.getId());
+                vi.setUserId(info.getOwner());
+                vi.setCreated(LocalDateTime.now());
+                try {
+                    this.volatileInstanceProvider.save(vi);
+                } catch (PersistenceException e) {
+                    logger.severe(e.getMessage());
+                }
+            }
+            String device;
+            if (Integer.parseInt(cfgProvider.getValue("openstack.volume.ssd.size", "100")) > 0) {
+                device = cfgProvider.getValue("openstack.volume.ssd.device", "/dev/sds");
+                final ServiceInstallStatus status = createWorkingDir(info, device);
+                if (status.getStatus() != ServiceStatus.INSTALLED) {
+                    logger.severe(String.format("Device %s has not been mount on node %s!", device, info.getId()));
+                }
+            } else if (Integer.parseInt(cfgProvider.getValue("openstack.volume.hdd.size", "0")) > 0) {
+                device = cfgProvider.getValue("openstack.volume.hdd.device", "/dev/sdh");
+                final ServiceInstallStatus status = createWorkingDir(info, device);
+                if (status.getStatus() != ServiceStatus.INSTALLED) {
+                    logger.severe(String.format("Device %s has not been mount on node %s!", device, info.getId()));
+                }
+            }
         }
         info.setActive(false);
         this.localNodeProvider.create(info);
-        /*// make sure the common share is mounted on the node
-        final ServiceInstallStatus mountStatus = checkMount(info);
-        if (mountStatus.getStatus() == ServiceStatus.ERROR) {
-            logger.severe(String.format("Common share mount could not be done on node [%s]. Reason: %s",
-                                        info.getId(), mountStatus.getReason()));
-        }*/
         notifyListeners(info, ServiceInstallStatus.NODE_ADDED);
-        for (TopologyToolInstaller installer: installers) {
-            // execute all the installers
-            this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(info, this::notifyListeners) {
-                @Override
-                public ServiceInstallStatus execute(NodeDescription node) {
-                    ServiceInstallStatus status = installer.installNewNode(node);
-                    try {
-                        node.setActive(true);
-                        node = localNodeProvider.update(node);
-                    } catch (Exception e) {
-                        logger.severe(String.format("Cannot update service status for '%s' on node [%s]",
-                                                    status.getServiceName(), node.getId()));
+        if (cfgProvider.getBooleanValue("openstack.execute.installers")) {
+            for (TopologyToolInstaller installer : installers) {
+                // execute all the installers
+                // Make execution synchronous, otherwise other commands sent to this machine may fail
+                //this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(info, this::notifyListeners) {
+                final BinaryTask<NodeDescription, ServiceInstallStatus> task = new BinaryTask<>(info, this::notifyListeners) {
+                    @Override
+                    public ServiceInstallStatus execute(NodeDescription node) {
+                        ServiceInstallStatus status = installer.installNewNode(node);
+                        try {
+                            node.setActive(true);
+                            node = localNodeProvider.update(node);
+                        } catch (Exception e) {
+                            logger.severe(String.format("Cannot update service status for '%s' on node [%s]",
+                                                        status.getServiceName(), node.getId()));
+                        }
+                        return status;
                     }
-                    return status;
-                }
-            });
+                };
+                task.run();
+            }
+        } else {
+            info.setActive(true);
+            localNodeProvider.update(info);
         }
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
-        message.setUser(SystemPrincipal.instance().getName());
+        message.setUserId(SystemPrincipal.instance().getName());
         message.setPersistent(false);
         message.addItem("node", info.getId());
         message.addItem("operation", "added");
         message.addItem("user", info.getUserName());
         message.addItem("password", info.getUserPass());
         Messaging.send(SystemPrincipal.instance(), Topic.TOPOLOGY.value(), message);
+        return info;
+    }
+
+    public void installServices(NodeDescription node, ServiceDescription service) {
+        BinaryTask<NodeDescription, ServiceInstallStatus> task;
+        for (TopologyToolInstaller installer: installers) {
+            // execute all the installers
+            task = new BinaryTask<>(node, this::notifyListeners) {
+                @Override
+                public ServiceInstallStatus execute(final NodeDescription node) {
+                    ServiceInstallStatus status = null;
+                    try {
+                        status = installer.installNewNode(node);
+                        String msg;
+                        if (status == ServiceInstallStatus.NODE_ADDED) {
+                            msg = String.format("%s installed on node %s", status.getServiceName(), node.getId());
+                            logger.info(msg);
+                        } else {
+                            msg = String.format("%s installation failed on node %s", status.getServiceName(), node.getId());
+                            logger.warning(msg);
+                        }
+                        Messaging.send(SystemPrincipal.instance().getName(), Topic.TOPOLOGY.value(), msg);
+                    } catch (Exception e) {
+                        logger.severe(e.getMessage());
+                    }
+                    return status;
+                }
+            };
+            task.execute(node);
+        }
     }
 
     public void removeNode(String hostName) {
@@ -197,8 +274,16 @@ public class TopologyManager {
         if (node == null) {
             throw new TopologyException(String.format("Node [%s] doesn't exist", hostName));
         }
-        if (this.externalNodeProvider != null && node.getVolatile()) {
-            this.externalNodeProvider.remove(hostName);
+        if (this.externalNodeProvider != null/* && node.getVolatile()*/) {
+            final String serverId = node.getServerId();
+            this.externalNodeProvider.remove(serverId != null ? serverId : hostName);
+            if (this.volatileInstanceProvider != null) {
+                try {
+                    this.volatileInstanceProvider.deleteByNode(node.getId());
+                } catch (PersistenceException e) {
+                    logger.severe(e.getMessage());
+                }
+            }
         } else {
             // execute all the installers
             for (TopologyToolInstaller installer: installers) {
@@ -212,7 +297,7 @@ public class TopologyManager {
         notifyListeners(node, ServiceInstallStatus.NODE_REMOVED);
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
-        message.setUser(SystemPrincipal.instance().getName());
+        message.setUserId(SystemPrincipal.instance().getName());
         message.setPersistent(false);
         message.addItem("node", hostName);
         message.addItem("operation", "removed");
@@ -247,9 +332,9 @@ public class TopologyManager {
         return new ArrayList<>(serviceRegistry.getServices());
     }
 
-    public List<StandaloneContainer> getStandaloneContainers() {
-        ServiceRegistry<StandaloneContainer> serviceRegistry =
-                ServiceRegistryManager.getInstance().getServiceRegistry(StandaloneContainer.class);
+    public List<SingletonContainer> getStandaloneContainers() {
+        ServiceRegistry<SingletonContainer> serviceRegistry =
+                ServiceRegistryManager.getInstance().getServiceRegistry(SingletonContainer.class);
         return new ArrayList<>(serviceRegistry.getServices());
     }
 
@@ -309,13 +394,39 @@ public class TopologyManager {
             Executor<?> executor = Executor.execute(sharedAccumulator, job);
             logger.fine("Executing " + String.join(" ", commands));
             waitFor(executor, 5, TimeUnit.SECONDS);
-            if (executor.getReturnCode() != 0) {
+            int retCode;
+            if ((retCode = executor.getReturnCode()) != 0) {
                 status.setStatus(ServiceStatus.ERROR);
                 status.setReason(sharedAccumulator.getOutput());
-                logger.warning("Command failed: " + status.getReason());
+                logger.warning(String.format("Command %s failed with code %d", String.join(" ", commands), retCode));
             }
             sharedAccumulator.reset();
         }
+        return status;
+    }
+
+    public ServiceInstallStatus createWorkingDir(NodeDescription node, String device) {
+        ServiceInstallStatus status = new ServiceInstallStatus();
+        status.setServiceName("Worker workdir");
+        List<String> commands = ProcessHelper.tokenizeCommands(createWorkingDirectoryTemplate, device);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
+                                              node.getId(),
+                                              node.getUserName(),
+                                              node.getSshKey() != null ? node.getSshKey() : node.getUserPass(),
+                                              commands, true, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        Executor<?> executor = Executor.execute(sharedAccumulator, job);
+        logger.fine("Executing " + String.join(" ", commands));
+        waitFor(executor, 5, TimeUnit.SECONDS);
+        int retCode;
+        if ((retCode = executor.getReturnCode()) != 0) {
+            status.setStatus(ServiceStatus.ERROR);
+            status.setReason(sharedAccumulator.getOutput());
+            logger.warning(String.format("Command %s failed with code %d", String.join(" ", commands), retCode));
+        } else {
+            status.setStatus(ServiceStatus.INSTALLED);
+        }
+        sharedAccumulator.reset();
         return status;
     }
 
@@ -331,7 +442,6 @@ public class TopologyManager {
                 masterNodeInfo.setId(hostName);
             }
         } catch (Exception e) {
-            e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
         }
     }

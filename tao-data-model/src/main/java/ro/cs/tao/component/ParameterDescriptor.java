@@ -18,6 +18,7 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.DependencyType;
@@ -36,6 +37,7 @@ import java.util.*;
  */
 @XmlRootElement(name = "parameter")
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonSubTypes({ @JsonSubTypes.Type(value = ParameterDescriptor.class), @JsonSubTypes.Type(value = TemplateParameterDescriptor.class)})
 public class ParameterDescriptor extends StringIdentifiable {
     private String name;
     private ParameterType type;
@@ -159,7 +161,6 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.unit = unit;
     }
 
-    //@XmlJavaTypeAdapter(StringArrayAdapter.class)
     public String[] getValueSet() {
         return valueSet;
     }
@@ -168,6 +169,11 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.valueSet = valueSet;
     }
 
+    /**
+     * For a regular parameter, the format represents the string representation of the parameter (e.g. the date format).
+     * For a template parameter, the format represents the type of the template of the parameter.
+     *
+     */
     public String getFormat() {
         return format;
     }
@@ -269,6 +275,8 @@ public class ParameterDescriptor extends StringIdentifiable {
     public int hashCode() {
         return Objects.hash(super.hashCode(), name);
     }
+
+    public JavaType javaType() { return this.dataType; }
 
     protected Validator createValidator() {
         if (this.validator == null) {

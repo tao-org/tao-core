@@ -1,42 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>tao-core</artifactId>
-        <groupId>ro.c-s.tao</groupId>
-        <version>1.4.3</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>tao-spring-bridge</artifactId>
-    <name>TAO Spring Bridge</name>
-    <description>Bridge between the TAO core (Spring-agnostic) and Spring framework</description>
-    <packaging>jar</packaging>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.c-s.tao</groupId>
-            <artifactId>tao-data-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-
-            <!-- Include tao-persistence.jar in target -->
-            <!--<plugin>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<artifactId>tao-core</artifactId>
+		<groupId>ro.c-s.tao</groupId>
+		<version>1.5.0</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>tao-spring-bridge</artifactId>
+	<name>TAO Spring Bridge</name>
+	<description>Bridge between the TAO core (Spring-agnostic) and Spring framework</description>
+	<packaging>jar</packaging>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ro.c-s.tao</groupId>
+			<artifactId>tao-data-model</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<!-- Include tao-persistence.jar in target -->
+			<!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.0.1</version>
@@ -55,9 +49,8 @@
                     </execution>
                 </executions>
             </plugin>-->
-
-            <!-- Make spring bridge jar with dependencies included in jar -->
-            <!--<plugin>
+			<!-- Make spring bridge jar with dependencies included in jar -->
+			<!--<plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
@@ -73,9 +66,8 @@
                     </descriptorRefs>
                 </configuration>
             </plugin>-->
-
-            <!--Extract persistence mapping resources and add them in spring bridge -->
-            <!--<plugin>
+			<!--Extract persistence mapping resources and add them in spring bridge -->
+			<!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.0.1</version>
@@ -98,9 +90,6 @@
                     </execution>
                 </executions>
             </plugin>-->
-
-
-        </plugins>
-    </build>
-
+		</plugins>
+	</build>
 </project>

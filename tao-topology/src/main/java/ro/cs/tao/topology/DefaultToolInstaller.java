@@ -21,6 +21,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.*;
 
 import java.io.File;
@@ -55,7 +56,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
 
         //final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
         final String os = System.getProperty("os.name").toLowerCase();
-        final String toolInstallCfgFile = os.contains("ubuntu") ? "UbuntuInstallConfig.xml" : "CentOSInstallConfig.xml";
+        final String toolInstallCfgFile = os.contains("ubuntu") ? "/UbuntuInstallConfig.xml" : "/CentOSInstallConfig.xml";
         InputStream is = this.getClass().getResourceAsStream(toolInstallCfgFile);
         this.toolInstallConfigs = ToolInstallersConfigParser.parse(is,
                 new ToolInstallersConfigHandler("tool_install_configurations"));
@@ -86,6 +87,30 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 toolCfg.getVersion(),
                 toolCfg.getDescription()),
               installStatus.getStatus()));
+        }
+        return installStatus;
+    }
+
+    @Override
+    public ServiceInstallStatus installNewNode(NodeDescription info, ServiceDescription service) throws TopologyException {
+        ServiceInstallStatus installStatus = ServiceInstallStatus.NODE_ADDED;
+        final ToolInstallConfig toolCfg = toolInstallConfigs.stream().filter(t -> t.getName().equals(service.getName())).findFirst().orElse(null);
+        if (toolCfg == null) {
+            installStatus.setStatus(ServiceStatus.ERROR);
+            installStatus.setReason("Not found");
+        } else {
+            try {
+                installStatus.setServiceName(toolCfg.getName());
+                invokeSteps(info, toolCfg, false);
+                installStatus.setStatus(ServiceStatus.INSTALLED);
+            } catch (TopologyException tex) {
+                installStatus.setStatus(ServiceStatus.ERROR);
+                installStatus.setReason(tex.getMessage());
+            }
+            info.addServiceStatus(new NodeServiceStatus(new ServiceDescription(installStatus.getServiceName(),
+                                                                               toolCfg.getVersion(),
+                                                                               toolCfg.getDescription()),
+                                                        installStatus.getStatus()));
         }
         return installStatus;
     }
@@ -158,10 +183,10 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         } else {
             // For process invocation type normally we will have always localhost
             hostName = "localhost";
-            if (user == null || "".equals(user)) {
+            if (user == null || user.isEmpty()) {
                 user = masterNodeInfo.getUserName();
             }
-            if (pass == null || "".equals(pass)) {
+            if (pass == null || pass.isEmpty()) {
                 pass = masterNodeInfo.getUserPass();
             }
         }
@@ -173,6 +198,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                         hostName, user, pass,
                         argsList, curStep.getExecutionModeMode().value(),
                         curStep.getSshMode());
+                if (!StringUtilities.isNullOrEmpty(nodeDescr.getSshKey())) {
+                    job.setCertificate(nodeDescr.getSshKey());
+                }
                 break;
             case PROCESS:
                 job = new ExecutionUnit(ExecutorType.PROCESS,
@@ -201,6 +229,10 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 switch (token) {
                     case ToolCommandsTokens.MASTER_HOSTNAME:
                         replacementStr = masterNodeInfo.getId();
+                        int idx = replacementStr.indexOf(".");
+                        if (idx > 0 && replacementStr.indexOf(".", idx + 1) < 0) {
+                            replacementStr = replacementStr.substring(0, idx);
+                        }
                         break;
                     case ToolCommandsTokens.MASTER_USER:
                         replacementStr = masterNodeInfo.getUserName();
@@ -232,6 +264,8 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                     case ToolCommandsTokens.STEP_OUTPUT:
                         cmd = handleStepOutputReplacements(cmd, allSteps);
                         break;
+                    case ToolCommandsTokens.DOCKER_REGISTRY:
+                        replacementStr = ExecutionConfiguration.getDockerRegistry();
                 }
                 if(replacementStr != null) {
                     replacementStr = replacementStr.replace("\\", "\\\\");
@@ -256,7 +290,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 String stepName = cmd.substring(idx+ToolCommandsTokens.STEP_OUTPUT.length(), stepLastDiezIdx);
                 ToolInstallStep sourceStep = getStepByName(stepName, allSteps);
                 List<String> msgs = sourceStep.getExecutionMessages();
-                if(msgs.size() > 0) {
+                if(!msgs.isEmpty()) {
                     cmd = cmd.substring(0, idx) + msgs.get(0).trim() + cmd.substring(stepLastDiezIdx+1);
                 }
             } else {

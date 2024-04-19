@@ -21,7 +21,7 @@ import java.util.Set;
 @Repository
 @Qualifier(value = "userRepository")
 @Transactional
-public interface UserRepository extends PagingAndSortingRepository<User, Long> {
+public interface UserRepository extends PagingAndSortingRepository<User, String> {
 
     /**
      * Find User entity by its username
@@ -55,9 +55,12 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
             "WHERE ug.group_id = 1 AND u.status_id = 2", nativeQuery = true)
     List<User> getAdministrators();
 
-    @Query(value = "SELECT * FROM usr.user WHERE username in (:names) ORDER BY username", nativeQuery = true)
-    List<User> getUsers(@Param("names")Set<String> names);
+    @Query(value = "SELECT * FROM usr.user WHERE id in (:ids) ORDER BY username", nativeQuery = true)
+    List<User> getUsers(@Param("ids")Set<String> ids);
 
     @Query(value = "SELECT id FROM usr.user WHERE username = :usr and password = :pwd", nativeQuery = true)
-    Integer login(@Param("usr") String user, @Param("pwd") String password);
+    String login(@Param("usr") String user, @Param("pwd") String password);
+
+    @Query(value = "SELECT id FROM usr.user WHERE username = :usr", nativeQuery = true)
+    String getId(@Param("usr") String user);
 }

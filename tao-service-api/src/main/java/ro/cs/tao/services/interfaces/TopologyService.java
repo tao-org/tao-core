@@ -19,6 +19,7 @@ import ro.cs.tao.Tag;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
+import ro.cs.tao.topology.ServiceDescription;
 
 import java.util.List;
 
@@ -32,4 +33,5 @@ public interface TopologyService extends CRUDService<NodeDescription, String> {
     List<NodeDescription> getNodes(NodeFlavor nodeFlavor);
     List<NodeFlavor> getNodeFlavors();
     boolean isExternalProviderAvailable();
+    void installServices(NodeDescription node, ServiceDescription service);
 }

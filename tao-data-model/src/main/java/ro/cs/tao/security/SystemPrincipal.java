@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.security;
 
+import ro.cs.tao.persistence.UserProvider;
+
 import javax.security.auth.Subject;
 import java.security.Principal;
 
@@ -28,13 +30,19 @@ public final class SystemPrincipal implements Principal {
 
     private static final SystemPrincipal instance = new SystemPrincipal();
 
+    public static void refresh(UserProvider provider) {
+        instance.id = provider.getId("SystemAccount");
+    }
+
     public static Principal instance() { return instance; }
+
+    private String id;
 
     private SystemPrincipal() { }
 
     @Override
     public String getName() {
-        return "SystemAccount";
+        return id;
     }
 
     @Override

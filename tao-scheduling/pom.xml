@@ -14,51 +14,43 @@
   ~ You should have received a copy of the GNU General Public License along
   ~ with this program; if not, see http://www.gnu.org/licenses/
   -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>tao-core</artifactId>
-        <groupId>ro.c-s.tao</groupId>
-        <version>1.4.3</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>tao-scheduling</artifactId>
-    <name>TAO Scheduling Core</name>
-    <description>Module handling the timed job executions</description>
-    <packaging>jar</packaging>
-
-    <dependencies>
-
-        <dependency>
-            <groupId>ro.c-s.tao</groupId>
-            <artifactId>tao-utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.c-s.tao</groupId>
-            <artifactId>tao-persistence</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.c-s.tao</groupId>
-            <artifactId>tao-orchestration</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.c-s.tao</groupId>
-            <artifactId>tao-spring-bridge</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        
-        <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
-        <dependency>
-            <groupId>org.quartz-scheduler</groupId>
-            <artifactId>quartz</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-    </dependencies>
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<artifactId>tao-core</artifactId>
+		<groupId>ro.c-s.tao</groupId>
+		<version>1.5.0</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>tao-scheduling</artifactId>
+	<name>TAO Scheduling Core</name>
+	<description>Module handling the timed job executions</description>
+	<packaging>jar</packaging>
+	<dependencies>
+		<dependency>
+			<groupId>ro.c-s.tao</groupId>
+			<artifactId>tao-utils</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ro.c-s.tao</groupId>
+			<artifactId>tao-persistence</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ro.c-s.tao</groupId>
+			<artifactId>tao-orchestration</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ro.c-s.tao</groupId>
+			<artifactId>tao-spring-bridge</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
+		<dependency>
+			<groupId>org.quartz-scheduler</groupId>
+			<artifactId>quartz</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+	</dependencies>
 </project>

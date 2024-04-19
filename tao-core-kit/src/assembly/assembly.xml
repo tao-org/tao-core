@@ -54,7 +54,7 @@
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}
             </outputFileNameMapping>
             <excludes>
-                <exclude>ro.cs.tao:tao-*</exclude>
+                <exclude>ro.c-s.tao:tao-*</exclude>
                 <!-- Unwanted dependencies -->
                 <exclude>commons-lang:commons-lang:jar:2.4</exclude>
                 <exclude>org.apache.httpcomponents:httpclient:jar:4.5.13</exclude>
@@ -87,13 +87,14 @@
                 <exclude>org.slf4j:slf4j-api:jar:1.7.32</exclude>
                 <exclude>org.slf4j:slf4j-api:jar:1.7.33</exclude>
                 <exclude>org.yaml:snakeyaml:jar:1.30</exclude>
+                <exclude>com.zaxxer:HikariCP-java6:jar:2.3.13</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>modules</outputDirectory>
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
             <includes>
-                <include>ro.cs.tao:*</include>
+                <include>ro.c-s.tao:*</include>
             </includes>
         </dependencySet>
     </dependencySets>

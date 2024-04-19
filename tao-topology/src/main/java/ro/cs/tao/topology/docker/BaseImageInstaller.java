@@ -16,12 +16,18 @@
 
 package ro.cs.tao.topology.docker;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.Tag;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.SourceDescriptor;
-import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.*;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.enums.TagType;
@@ -29,6 +35,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.docker.ContainerVisibility;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -36,6 +43,7 @@ import ro.cs.tao.persistence.TagProvider;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.JacksonUtil;
+import ro.cs.tao.utils.StringUtilities;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -47,17 +55,32 @@ import java.util.stream.Collectors;
 
 public abstract class BaseImageInstaller implements DockerImageInstaller {
     //protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
-    private static final Path dockerPath;
+    protected static final Path dockerPath;
+    protected static final Path dockerImagesPath;
     protected final Logger logger;
     protected final TagProvider tagProvider;
     protected final ContainerProvider containerProvider;
     protected final ProcessingComponentProvider componentProvider;
+    protected final Properties additionalProperties;
     private List<Tag> componentTags;
 
     static {
+        final Logger log = Logger.getLogger(BaseImageInstaller.class.getName());
         dockerPath = findInPath("docker" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : ""));
         if (dockerPath == null) {
-            Logger.getLogger(BaseImageInstaller.class.getName()).warning("[docker] was not found in system path");
+            log.warning("[docker] was not found in system path");
+        }
+        final String cfgValue = ConfigurationManager.getInstance().getValue("tao.docker.images");
+        if (cfgValue == null) {
+            log.warning("Invalid path for docker images");
+            throw new RuntimeException("Invalid path for docker images");
+        } else {
+            dockerImagesPath = Paths.get(cfgValue);
+            try {
+                Files.createDirectories(dockerImagesPath);
+            } catch (IOException e) {
+                log.severe(e.getMessage());
+            }
         }
     }
 
@@ -67,6 +90,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         this.componentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         this.logger = Logger.getLogger(getClass().getName());
         this.componentTags = this.tagProvider.list();
+        this.additionalProperties = new Properties();
         if (this.componentTags == null) {
             this.componentTags = new ArrayList<>();
         }
@@ -78,15 +102,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         if (dockerPath != null) {
             try {
                 final String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
-                if ((container = DockerManager.getDockerImage(getContainerName())) == null &&
-                    (container = DockerManager.getDockerImage(localRegistry + "/" + getContainerName())) == null) {
-                    final String cfgValue = ConfigurationManager.getInstance().getValue("tao.docker.images");
-                    if (cfgValue == null) {
-                        logger.warning("Invalid path for docker images");
-                        return null;
-                    }
-                    final Path dockerImagesPath = Paths.get(cfgValue);
-                    Files.createDirectories(dockerImagesPath);
+                if ((container = DockerManager.getDockerImage(localRegistry + "/" + getContainerName())) == null &&
+                    (container = DockerManager.getDockerImage(getContainerName())) == null) {
                     // first try the container.properties file, maybe it is a container from Docker Hub
                     Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
                     Files.createDirectories(dockerImagesPath.resolve(getContainerName()));
@@ -104,26 +121,20 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     } catch (Exception notFound) {
                         logger.fine(String.format("Container %s doesn't have container.properties", getContainerName()));
                     }
-                    Properties properties = new Properties();
                     if (Files.exists(dockerfilePath)) {
-                        properties.load(Files.newBufferedReader(dockerfilePath));
+                        additionalProperties.load(Files.newBufferedReader(dockerfilePath));
                     }
-                    if (properties.size() > 0) {
-                        container = DockerManager.pullImage(properties.getProperty("docker.hub.name"));
+                    if (!additionalProperties.isEmpty()) {
+                        final String dockerHubName = additionalProperties.getProperty("docker.hub.name");
+                        if (!StringUtilities.isNullOrEmpty(dockerHubName)) {
+                            container = DockerManager.pullImage(dockerHubName);
+                        }
                     } else {
                         dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
                         if (!Files.exists(dockerfilePath) || Files.size(dockerfilePath) == 0) {
                             Files.deleteIfExists(dockerfilePath);
                             logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
-                            //Files.createDirectories(dockerfilePath.getParent());
-                            try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
-                                 OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
-                                int read;
-                                while ((read = is.read(buffer)) != -1) {
-                                    os.write(buffer, 0, read);
-                                }
-                                os.flush();
-                            }
+                            Files.write(dockerfilePath, readResource("Dockerfile"));
                         }
                         container = DockerManager.getDockerImage(getContainerName());
                     }
@@ -155,6 +166,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             dbContainer.setName(getContainerName());
             dbContainer.setTag(container != null ? container.getTag() : getContainerName());
             dbContainer.setType(ContainerType.DOCKER);
+            dbContainer.setVisibility(ContainerVisibility.PUBLIC);
             dbContainer = initializeContainer(dbContainer, dockerPath != null ? getPathInContainer() : getPathInSystem());
             if (dbContainer == null) {
                 logger.severe(String.format("Container %s failed to register", getContainerName()));
@@ -163,6 +175,18 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             }
         }
         return dbContainer;
+    }
+
+    protected Properties getAdditionalProperties() {
+        Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
+        if (Files.exists(dockerfilePath)) {
+            try (InputStream stream = Files.newInputStream(dockerfilePath)) {
+                additionalProperties.load(stream);
+            } catch (IOException e) {
+                logger.warning("Cannot read file " + dockerfilePath);
+            }
+        }
+        return additionalProperties;
     }
 
     protected Container readContainerDescriptor(String fileName) throws IOException {
@@ -179,23 +203,45 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         ProcessingComponent[] components;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
             final String str = reader.lines().collect(Collectors.joining(""));
-            components = JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
+            final ObjectMapper mapper = new ObjectMapper();
+            final ObjectMapper innerMapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(ParameterDescriptor.class, new JsonDeserializer<>() {
+                @Override
+                public ParameterDescriptor deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+                    JsonNode node = p.readValueAsTree();
+                    try (JsonParser parser = innerMapper.createParser(node.toString())) {
+                        final ObjectCodec codec = parser.getCodec();
+                        JsonNode innerNode = parser.readValueAsTree();
+                        if (ParameterType.TEMPLATE.name().equals(innerNode.get("type").textValue())) {
+                            return codec.treeToValue(innerNode, TemplateParameterDescriptor.class);
+                        } else {
+                            return codec.treeToValue(innerNode, ParameterDescriptor.class);
+                        }
+                    }
+                }
+            });
+            mapper.registerModule(module);
+            components = mapper.readValue(str, ProcessingComponent[].class);
         }
         return components;
     }
 
     protected String readContainerLogo(String fileName) throws IOException {
-        try (InputStream in = getClass().getResourceAsStream(fileName)) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            if (in == null) return null;
-            int read;
-            byte[] buffer = new byte[1024];
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
+        if (!StringUtilities.isNullOrEmpty(fileName)) {
+            try (InputStream in = getClass().getResourceAsStream(fileName)) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                if (in == null) return null;
+                int read;
+                byte[] buffer = new byte[1024];
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                out.flush();
+                return Base64.getEncoder().encodeToString(out.toByteArray());
             }
-            out.flush();
-            return Base64.getEncoder().encodeToString(out.toByteArray());
         }
+        return null;
     }
 
     protected byte[] readResource(String name) throws IOException {
@@ -254,6 +300,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             readContainer.setApplicationPath(path);
             readContainer.getApplications().forEach(this::configureApplication);
             readContainer.setLogo(readContainerLogo(getLogoFileName()));
+            readContainer.setOwnerId(SystemPrincipal.instance().getName());
+            readContainer.setVisibility(container.getVisibility());
             readContainer = this.containerProvider.save(readContainer);
         } catch (Exception e) {
             logger.severe(e.getMessage());
@@ -269,7 +317,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     component.setContainerId(readContainer.getId());
                     component.setLabel(component.getId());
                     component.setComponentType(ProcessingComponentType.EXECUTABLE);
-                    containerApplications.stream().filter(a -> a.getName().equals(component.getId())).findFirst()
+                    containerApplications.stream().filter(a -> a.getName().equals(component.getId()) ||
+                                                               a.getName().equals(component.getLabel())).findFirst()
                                          .ifPresent(application -> component.setFileLocation(application.getPath()));
                     List<ParameterDescriptor> parameterDescriptors = component.getParameterDescriptors();
                     if (parameterDescriptors != null) {
@@ -291,11 +340,17 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     }
                     final List<SourceDescriptor> sources = component.getSources();
                     if (sources != null) {
-                        sources.forEach(s -> s.setId(UUID.randomUUID().toString()));
+                        sources.forEach(s -> {
+                            s.setId(UUID.randomUUID().toString());
+                            s.setParentId(component.getId());
+                        });
                     }
                     final List<TargetDescriptor> targets = component.getTargets();
                     if (targets != null) {
-                        targets.forEach(t -> t.setId(UUID.randomUUID().toString()));
+                        targets.forEach(t -> {
+                            t.setId(UUID.randomUUID().toString());
+                            t.setParentId(component.getId());
+                        });
                     }
                     String template = component.getTemplateContents();
                     final int length = template.length();
@@ -307,16 +362,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         }
                         i++;
                     }
-                    /*final String[] tokens = template.split("\n");
-                    for (int j = 0; j < tokens.length - 1; j++) {
-                        final int idx = j;
-                        if ((targets != null && targets.stream().anyMatch(t -> t.getName().equals(tokens[idx].substring(1)))) ||
-                                (sources != null && sources.stream().anyMatch(s -> s.getName().equals(tokens[idx].substring(1))))) {
-                            tokens[j + 1] = tokens[j].replace('-', '$');
-                            j++;
-                        }
-                    }
-                    component.setTemplateContents(String.join("\n", tokens));*/
                     component.setTemplateContents(template);
                     component.setComponentType(ProcessingComponentType.EXECUTABLE);
                     component.setVisibility(ProcessingComponentVisibility.SYSTEM);
@@ -345,8 +390,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         app.setName(app.getName());
         app.setPath(appPath);
     }
-
-    protected abstract String getContainerName();
 
     protected abstract String getDescription();
 

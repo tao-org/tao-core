@@ -18,6 +18,7 @@ package ro.cs.tao.utils.executors;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -60,22 +61,23 @@ public class ProcessExecutor extends Executor<Process> {
             final Level parentLevel = this.logger.getParent().getLevel();
             if (arguments.get(0).equals("docker") &&
                     arguments.stream().noneMatch(a -> a.equals("gdalinfo") || a.equals("build")
-                            || a.equals("tag") || a.equals("push") || a.equals("images")) &&
+                            || a.equals("tag") || a.equals("push") || a.equals("images") || a.equals("start")) &&
                     (parentLevel == null || parentLevel.intValue() <= Level.FINE.intValue())) {
                 //pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                 pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
                 pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+            } else {
+                pb.redirectErrorStream(true);
             }
-            //pb.redirectErrorStream(true);
             pb.environment().putAll(getEnvironment() != null ? getEnvironment() : System.getenv());
             if (asSuperUser) {
                 insertSudoParams();
             }
             //start the process
             this.channel = pb.start();
-            if (asSuperUser) {
+            /*if (asSuperUser) {
                 writeSudoPassword();
-            }
+            }*/
             if (this.monitor != null) {
                 this.monitor.attachTo(this.channel);
             }
@@ -86,7 +88,7 @@ public class ProcessExecutor extends Executor<Process> {
                 String line;
                 while (!this.isStopped && (line = outReader.readLine()) != null) {
                     //consume the line if possible
-                    if (!"".equals(line.trim())) {
+                    if (!line.trim().isEmpty()) {
                         if (this.outputConsumer != null) {
                             this.outputConsumer.consume(line);
                         }
@@ -150,9 +152,25 @@ public class ProcessExecutor extends Executor<Process> {
 
     @Override
     protected void insertSudoParams() {
-        if (!SystemUtils.IS_OS_WINDOWS) {
-            super.insertSudoParams();
+        int idx = 0;
+        String curArg;
+        List<String> sudoArgs = SystemUtils.IS_OS_LINUX
+        ? new ArrayList<>() {{
+            add("sudo"); add("-S"); add("--user=" + user);
+            //add("--prompt=" + password);
+            }}
+        : new ArrayList<>() {{
+            add("runas"); add("/user:" + user);
+            }};
+        while (idx < arguments.size()) {
+            curArg = arguments.get(idx);
+            if (SHELL_COMMAND_SEPARATOR.equals(curArg) || SHELL_COMMAND_SEPARATOR_AMP.equals(curArg) ||
+                    SHELL_COMMAND_SEPARATOR_BAR.equals(curArg)) {
+                arguments.addAll(idx + 1, sudoArgs);
+            }
+            idx++;
         }
+        arguments.addAll(0, sudoArgs);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package ro.cs.tao.docker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.FileUtilities;
@@ -14,15 +15,9 @@ public class ExecutionConfiguration {
     private static Boolean forceMemoryRequirements;
     private static String dockerRegistry;
     private static Boolean useDocker;
-    private static Boolean devMode;
-    private static DockerVolumeMap masterVolumeMap;
-    private static DockerVolumeMap workerVolumeMap;
 
     public static boolean developmentModeEnabled() {
-        if (devMode == null) {
-            devMode = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue("tao.dev.mode", "false"));
-        }
-        return devMode;
+        return Boolean.parseBoolean(ConfigurationManager.getInstance().getValue("tao.dev.mode", "false"));
     }
 
     public static boolean forceMemoryConstraint() {
@@ -34,43 +29,43 @@ public class ExecutionConfiguration {
     }
 
     public static DockerVolumeMap getMasterContainerVolumeMap() {
-        if (masterVolumeMap == null) {
-            final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_MASTER_MAPPINGS);
-            if (value == null) {
-                throw new RuntimeException("No volume mappings found for master!");
-            }
-            Map<String, String> map = new HashMap<>();
-            try {
-                map = JsonMapper.instance().readerFor(map.getClass()).readValue(value);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            map = map.entrySet().stream()
-                                .collect(Collectors.toMap(Map.Entry::getKey,
-                                                          e -> {
-                                                              final String[] values = e.getValue().split(":");
-                                                              return FileUtilities.asUnixPath(Paths.get(values[0]), false) + ":" + values[1];
-                                                          }));
-            masterVolumeMap = new DockerVolumeMap(map);
+        final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_MASTER_MAPPINGS);
+        if (value == null) {
+            throw new RuntimeException("No volume mappings found for master!");
         }
-        return masterVolumeMap;
+        Map<String, String> map = new HashMap<>();
+        try {
+            map = JsonMapper.instance().readerFor(map.getClass()).readValue(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        final boolean isDockerVolumeStyle = SystemUtils.IS_OS_LINUX ||
+                ConfigurationManager.getInstance()
+                                    .getValue("docker.volume.map.style", "docker")
+                                    .equals("docker");
+        return new DockerVolumeMap(map.entrySet().stream()
+                                      .collect(Collectors.toMap(Map.Entry::getKey,
+                                            e -> {
+                                                final String[] values = e.getValue().split(":");
+                                                return (isDockerVolumeStyle
+                                                        ? FileUtilities.asUnixPath(Paths.get(values[0]), false)
+                                                        : Paths.get(values[0]).toAbsolutePath())
+                                                        + ":" + values[1];
+                                            })));
     }
 
     public static DockerVolumeMap getWorkerContainerVolumeMap() {
-        if (workerVolumeMap == null) {
-            final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_WORKER_MAPPINGS);
-            if (value == null) {
-                throw new RuntimeException("No volume mappings found for worker nodes!");
-            }
-            Map<String, String> map = new HashMap<>();
-            try {
-                map = JsonMapper.instance().readerFor(map.getClass()).readValue(value);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            workerVolumeMap = new DockerVolumeMap(map);
+        final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_WORKER_MAPPINGS);
+        if (value == null) {
+            throw new RuntimeException("No volume mappings found for worker nodes!");
         }
-        return workerVolumeMap;
+        Map<String, String> map = new HashMap<>();
+        try {
+            map = JsonMapper.instance().readerFor(map.getClass()).readValue(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return new DockerVolumeMap(map);
     }
 
     public static String getDockerRegistry() {

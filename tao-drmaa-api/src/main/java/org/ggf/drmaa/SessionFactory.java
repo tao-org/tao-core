@@ -32,14 +32,15 @@
 package org.ggf.drmaa;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -71,7 +72,7 @@ public abstract class SessionFactory {
      * Right now, only one SessionFactory can exist at a time.  This is that
      * session factory.
      */
-    private static SessionFactory thisFactory = null;
+    private static Map<Environment, SessionFactory> thisFactories = null;
     /**
      * The name of the property used to find the Session implementation
      * class name.
@@ -84,7 +85,9 @@ public abstract class SessionFactory {
      * @return a Session instance appropriate for the DRM in use
      */
     public abstract org.ggf.drmaa.Session getSession();
-    
+
+    public abstract Environment getEnvironment();
+
     /**
      * Gets a SessionFactory instance appropriate for the DRM in use.  This
      * method uses the org.ggf.SessionFactory property to find
@@ -100,17 +103,31 @@ public abstract class SessionFactory {
      */
     public static SessionFactory getFactory() {
         synchronized (SessionFactory.class) {
-            if (thisFactory == null) {
-                NewFactoryAction action = new NewFactoryAction();
-                
-                thisFactory =
-                        (SessionFactory)AccessController.doPrivileged(action);
+            if (thisFactories == null) {
+                final SessionFactory factory = newFactory();
+                thisFactories = new HashMap<>();
+                thisFactories.put(factory.getEnvironment(), factory);
             }
         }
-        
-        return thisFactory;
+        return thisFactories.values().iterator().next();
     }
-    
+
+    public static SessionFactory getFactory(Environment env) {
+        synchronized (SessionFactory.class) {
+            if (thisFactories == null) {
+                readFactories();
+            }
+        }
+        return thisFactories.get(env);
+    }
+
+    public static Set<Environment> getEnvironments() {
+        if (thisFactories == null) {
+            readFactories();
+        }
+        return thisFactories != null ? thisFactories.keySet() : null;
+    }
+
     /**
      * Creates a SessionFactory object appropriate for the DRM in use.  This
      * method uses the org.ggf.SessionFactory property to find
@@ -170,15 +187,15 @@ public abstract class SessionFactory {
         String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
         // try to find services in properties or CLASSPATH
         try {
-            if (className != null && ! className.equals("")) {
-                factory = (SessionFactory)Class.forName(className).newInstance();
+            if (className != null && !className.isEmpty()) {
+                factory = (SessionFactory)Class.forName(className).getConstructor().newInstance();
                 Logger.getLogger(SessionFactory.class.getName()).info("Class " + className + " is loaded");
             } else {
                 final ServiceRegistry<SessionFactory> registry =
                         ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
                 if (registry != null) {
                     final Set<SessionFactory> services = registry.getServices();
-                    if (services != null && services.size() > 0) {
+                    if (services != null && !services.isEmpty()) {
                         factory = services.iterator().next();
                     }
                 }
@@ -191,6 +208,30 @@ public abstract class SessionFactory {
 
         throw new ConfigurationError("Provider for " + className +
                 " cannot be found", e);
+    }
+
+    private static void readFactories() throws ConfigurationError {
+        ClassLoader classLoader = findClassLoader();
+        Exception e = null;
+        try {
+            final ServiceRegistry<SessionFactory> registry =
+                    ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
+            String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
+            if (registry != null) {
+                final Set<SessionFactory> services = registry.getServices();
+                for (SessionFactory factory : services) {
+                    if (thisFactories == null) {
+                        thisFactories = new HashMap<>();
+                    }
+                    final Environment environment = factory.getEnvironment();
+                    if (environment != Environment.DEFAULT || factory.getClass().getName().equals(className)) {
+                        thisFactories.put(environment, factory);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new ConfigurationError(ex.getMessage(), ex);
+        }
     }
     
     /**
@@ -238,7 +279,7 @@ public abstract class SessionFactory {
                 spiClass = classLoader.loadClass(className);
             }
             
-            return spiClass.newInstance();
+            return spiClass.getConstructor().newInstance();
         } catch (ClassNotFoundException ex) {
             throw new ConfigurationError("Provider " + className +
                     " not found", ex);
@@ -258,7 +299,7 @@ public abstract class SessionFactory {
         /**
          * The Exception which caused this Exception
          */
-        private Exception exception;
+        private final Exception exception;
         
         /**
          * Construct a new instance with the specified detail string and
@@ -285,13 +326,13 @@ public abstract class SessionFactory {
      * allows the DRMAA library to be granted the required security permissions
      * without having to grant those permission to the user's application.
      */
-    private static class NewFactoryAction implements PrivilegedAction {
-        /**
+    /*private static class NewFactoryAction implements PrivilegedAction {
+        *//**
          * Create a new factory.
          * @return a new factory
-         */
+         *//*
         public Object run() {
             return newFactory();
         }
-    }
+    }*/
 }

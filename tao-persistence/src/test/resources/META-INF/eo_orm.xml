@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<entity-mappings xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm
+                 http://xmlns.jcp.org/xml/ns/persistence/orm/orm_2_2.xsd"
+                 version="2.2">
+
+    <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
+
+    <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(1000) not null"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) not null"/>
+            </basic>
+            <basic name="formatType">
+                <column name="type_id" nullable="false" column-definition="integer not null"/>
+                <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+            </basic>
+            <basic name="geometry">
+                <column name="geometry" nullable="false" column-definition="geography(Polygon,4326) not null"/>
+            </basic>
+            <basic name="crs">
+                <column name="coordinate_reference_system" nullable="true" column-definition="text"/>
+            </basic>
+            <basic name="location">
+                <column name="location" nullable="false" column-definition="varchar not null"/>
+            </basic>
+            <basic name="entryPoint">
+                <column name="entry_point" nullable="true" column-definition="varchar(1000) null"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="true" column-definition="integer null DEFAULT 2"/>
+                <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
+            </basic>
+            <basic name="productStatus">
+                <column name="status_id" nullable="true" column-definition="integer null" />
+            </basic>
+
+            <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
+                <collection-table name="product.data_product_attributes" >
+                    <join-column name="data_product_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+
+            <transient name="files"/>
+        </attributes>
+    </mapped-superclass>
+
+    <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
+        <table name="product.raster_data_product"/>
+        <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
+        <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+        <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
+        <convert converter="ro.cs.tao.persistence.convert.PixelTypeConverter" attribute-name="pixelType" />
+        <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
+        <attributes>
+            <basic name="sensorType">
+                <column name="sensor_type_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="acquisitionDate">
+                <column name="acquisition_date" nullable="false" column-definition="timestamp not null"/>
+            </basic>
+            <basic name="pixelType">
+                <column name="pixel_type_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="productType">
+                <column name="product_type" nullable="false" column-definition="varchar(512) not null"/>
+            </basic>
+            <basic name="width">
+                <column name="width" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="height">
+                <column name="height" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="approximateSize">
+                <column name="approximate_size" nullable="false" column-definition="bigint not null"/>
+            </basic>
+            <element-collection name="refs">
+                <collection-table name="product.raster_data_product_refs">
+                    <join-column name="product_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+            <transient name="processingDate"/>
+            <transient name="quicklookLocation" />
+            <transient name="satelliteName"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.eodata.VectorData" access="PROPERTY">
+        <table name="product.vector_data_product"/>
+        <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
+        <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+        <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
+        <attributes>
+            <element-collection name="refs">
+                <collection-table name="product.vector_data_product_refs" >
+                    <join-column name="product_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.eodata.AuxiliaryData" access="PROPERTY">
+        <table name="product.auxiliary_data"/>
+        <attributes>
+            <basic name="location">
+                <column name="location" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+            <basic name="modified">
+                <column name="modified" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.datasource.DownloadQueueItem" access="PROPERTY">
+        <table name="product.download_queue"/>
+        <convert converter="ro.cs.tao.persistence.convert.ProductListConverter" attribute-name="products" />
+        <convert converter="ro.cs.tao.persistence.convert.SetConverter" attribute-name="tiles" />
+        <convert converter="ro.cs.tao.persistence.convert.PropertiesConverter" attribute-name="properties" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </id>
+            <basic name="products">
+                <column name="products" nullable="false" column-definition="json NOT NULL" />
+            </basic>
+            <basic name="dataSourceName">
+                <column name="data_source" nullable="false" column-definition="varchar(255) NOT NULL" />
+            </basic>
+            <basic name="destinationPath">
+                <column name="destination" nullable="false" column-definition="varchar(512) NOT NULL" />
+            </basic>
+            <basic name="localRootPath">
+                <column name="local_root" nullable="true" column-definition="varchar(512)" />
+            </basic>
+            <basic name="tiles">
+                <column name="tiles" nullable="true" column-definition="json" />
+            </basic>
+            <basic name="properties">
+                <column name="properties" nullable="true" column-definition="json" />
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.component.ogc.WPSComponent" access="PROPERTY">
+        <table name="component.wps_component"/>
+
+        <association-override name="sources">
+            <join-table name="component.wps_component_sources">
+                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="component.wps_component_targets">
+                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter" attribute-name="parameters" />
+        <attributes>
+            <basic name="remoteAddress">
+                <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+            <basic name="capabilityName">
+                <column name="capability" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="owner">
+                <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="parameters">
+                <column name="parameters" nullable="true" column-definition="json NULL" />
+            </basic>
+            <many-to-one name="service" fetch="EAGER" target-entity="ro.cs.tao.docker.Container">
+                <join-column name="container_id" nullable="true"/>
+            </many-to-one>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.execution.model.WPSExecutionTask" access="PROPERTY">
+
+        <discriminator-value>33</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ogc.WPSComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+            <transient name="externalCommonParameters"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.eodata.naming.NamingRule" access="PROPERTY">
+        <table name="product.naming_rule"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="integer NOT NULL"/>
+                <generated-value strategy="IDENTITY" generator="rule_identifier"/>
+            </id>
+            <basic name="sensor">
+                <column name="sensor" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </basic>
+            <basic name="regEx">
+                <column name="regex" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="varchar(100) NOT NULL"/>
+            </basic>
+            <element-collection name="tokens" target-class="ro.cs.tao.eodata.naming.NameToken" access="PROPERTY" fetch="EAGER">
+                <collection-table name="product.naming_rule_token">
+                    <join-column name="naming_rule_id" referenced-column-name="id"/>
+                </collection-table>
+            </element-collection>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.workspaces.Site" access="PROPERTY">
+        <table name="workspace.site"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="footprint">
+                <column name="footprint" nullable="false" column-definition="geography(Polygon,4326) not null"/>
+            </basic>
+            <basic name="startDate">
+                <column name="start_date" nullable="false" column-definition="timestamp NOT NULL"/>
+            </basic>
+            <basic name="endDate">
+                <column name="end_date" nullable="false" column-definition="timestamp NOT NULL"/>
+            </basic>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar(50)"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <embeddable class="ro.cs.tao.component.DataDescriptor" access="PROPERTY">
+        <attributes>
+            <basic name="formatType">
+                <column name="data_format_id" nullable="false" column-definition="integer NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+            </basic>
+            <basic name="formatName">
+                <column name="format_name" nullable="true" column-definition="varchar(30) NULL"/>
+            </basic>
+            <basic name="geometry">
+                <column name="geometry" nullable="true" column-definition="geography(POLYGON, 4326) NULL"/>
+            </basic>
+            <basic name="crs">
+                <column name="coordinate_reference_system" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="sensorType">
+                <column name="sensor_type_id" nullable="true" column-definition="integer NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
+            </basic>
+
+            <basic name="dimension">
+                <column name="dimension" nullable="true" column-definition="json NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.DimensionConverter" />
+            </basic>
+
+            <basic name="location">
+                <column name="location" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
+    <embeddable class="ro.cs.tao.eodata.naming.NameToken" access="PROPERTY">
+        <attributes>
+            <basic name="name">
+                <column name="token_name" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="matchingGroupNumber">
+                <column name="matching_group_number" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="varchar(100) NOT NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
+    <converter class="ro.cs.tao.persistence.convert.PixelTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.SensorTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.DataFormatConverter" />
+    <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
+    <converter class="ro.cs.tao.persistence.convert.SetConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.ProductStatusConverter" />
+    <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
+</entity-mappings>

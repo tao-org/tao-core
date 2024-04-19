@@ -8,7 +8,9 @@ import ro.cs.tao.utils.DateUtils;
 
 import javax.xml.bind.annotation.XmlEnum;
 import java.lang.reflect.Array;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.function.Function;
 
 @XmlEnum(Class.class)
@@ -32,7 +34,9 @@ public enum JavaType implements TaoEnum<Class<?>> {
     DATE_ARRAY(LocalDateTime[].class, "date[]", "urn:ogc:def:timeList", DateUtils::parseDate),
     BOOLEAN(boolean.class, "bool", "urn:ogc:def:boolean", Boolean::parseBoolean),
     BOOLEAN_ARRAY(boolean[].class, "bool[]", "\"urn:ogc:def:string", Boolean::parseBoolean),
-    POLYGON(Polygon2D.class, "polygon", "urn:ogc:def:anyURI", Polygon2D::fromWKT);
+    POLYGON(Polygon2D.class, "polygon", "urn:ogc:def:anyURI", Polygon2D::fromWKT),
+    PATH(Path.class, "path", "urn:ogc:def:string", Path::of),
+    PATH_ARRAY(Path[].class, "path[]", "urn:ogc:def:stringList", Path::of);
 
     private final Class<?> clazz;
     private final String description;
@@ -58,6 +62,8 @@ public enum JavaType implements TaoEnum<Class<?>> {
 
     public String ogcURN() { return this.ogcURN; }
 
+    public Function<String, Object> getConverter() { return this.converter; }
+
     public Object parse(String value) {
         if (this.clazz.isArray()) {
             throw new IllegalArgumentException("Method should not be called on an array type");
@@ -78,7 +84,7 @@ public enum JavaType implements TaoEnum<Class<?>> {
                 throw new IllegalArgumentException("Value does not represent an array");
             }
             String[] split = value.substring(1, value.length() - 1).split(",");
-            Object array = Array.newInstance(this.clazz, split.length);
+            Object array = Array.newInstance(this.clazz.getComponentType(), split.length);
             for (int i = 0; i < split.length; i++) {
                 Array.set(array, i, this.converter.apply(split[i]));
             }
@@ -120,6 +126,10 @@ public enum JavaType implements TaoEnum<Class<?>> {
         return STRING;
     }
 
+    public static boolean isValid(String name) {
+        return Arrays.stream(JavaType.values()).anyMatch(t -> t.description.equals(name));
+    }
+
     public static Object createArray(JavaType type, int dimension) {
         if (dimension <= 0) {
             throw new IllegalArgumentException("[dimension]");
@@ -149,6 +159,9 @@ public enum JavaType implements TaoEnum<Class<?>> {
                 break;
             case STRING_ARRAY:
                 array = new String[dimension];
+                break;
+            case PATH_ARRAY:
+                array = new Path[dimension];
                 break;
         }
         return array;

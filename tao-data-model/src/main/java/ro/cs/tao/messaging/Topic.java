@@ -33,6 +33,10 @@ public class Topic {
      */
     public static final Topic SYSTEM = Topic.create("system");
     /**
+     * Topic for system resources messages / events (i.e., node load)
+     */
+    public static final Topic RESOURCES = Topic.create("resources");
+    /**
      * Topic for informational messages / events.
      */
     public static final Topic INFORMATION = Topic.create("info");
@@ -60,6 +64,14 @@ public class Topic {
      * Topic for signaling the progress of a transfer of files between workspaces
      */
     public static final Topic TRANSFER_PROGRESS = Topic.create("transfer");
+    /**
+     * Topic for signaling authentication events (like login, logout)
+     */
+    public static final Topic AUTHENTICATION = Topic.create("authentication");
+    /**
+     * Topic for signaling publication of containers
+     */
+    public static final Topic CONTAINER = Topic.create("container");
 
     public static Topic create(String category) {
         if (!topicRegistry.containsKey(category)) {
@@ -73,11 +85,15 @@ public class Topic {
     }
 
     public static Topic create(String category, String tag) {
-        return new Topic(category, tag);
+        final Topic topic = new Topic(category, tag);
+        topicRegistry.put(topic.value(), topic);
+        return topic;
     }
 
     public static Topic create(Topic parent, String tag) {
-        return new Topic(parent.value(), tag);
+        final Topic topic = new Topic(parent.value(), tag);
+        topicRegistry.put(topic.value(), topic);
+        return topic;
     }
 
     public static Pattern getCategoryPattern(Topic topic) {

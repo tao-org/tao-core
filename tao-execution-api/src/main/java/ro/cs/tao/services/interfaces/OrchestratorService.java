@@ -95,39 +95,41 @@ public interface OrchestratorService extends TAOService {
     void resumeJob(long jobId) throws ExecutionException;
     /**
      * Removes all pending jobs for a user.
-     * @param user  The user for which to remove the jobs
+     * @param userId  The user for which to remove the jobs
      * @return      The number of purged jobs
      */
-    int purgeJobs(String user) throws ExecutionException;
+    int purgeJobs(String userId) throws ExecutionException;
 
     /**
      * Returns (from the database) the list of tasks that are marked as being executed.
      */
-    List<ExecutionTaskSummary> getRunningTasks(String userName);
+    List<ExecutionTaskSummary> getRunningTasks(String userId);
     /**
      * Returns (from the database) the status of the tasks of the given job.
      */
     List<ExecutionTaskSummary> getTasksStatus(long jobId);
 
-    List<ExecutionJobSummary> getRunningJobs(String userName);
+    List<ExecutionJobSummary> getRunningJobs(String userId);
 
-    List<ExecutionJobSummary> getCompletedJobs(String userName);
+    List<ExecutionJobSummary> getCompletedJobs(String userId);
 
     Queue<ExecutionJobSummary> getQueuedJobs();
 
-    Queue<ExecutionJobSummary> getQueuedJobs(String userName);
+    Queue<ExecutionJobSummary> getQueuedJobs(String userId);
 
     Map<String, Queue<ExecutionJobSummary>> getQueuedUserJobs();
 
-    void moveJobUp(long jobId, String userName);
+    void moveJobUp(long jobId, String userId);
 
-    void moveJobDown(long jobId, String userName);
+    void moveJobDown(long jobId, String userId);
 
-    void deleteJobFromQueue(String userName, long jobId) throws PersistenceException;
+    void deleteJobFromQueue(String userId, long jobId) throws PersistenceException;
 
-    void clearJobHistory(String userName) throws PersistenceException;
+    void clearJobHistory(String userId) throws PersistenceException;
 
     long startExternalWorkflow(String jsonGraph, String container, EndpointDescriptor callback) throws ExecutionException;
 
     long invokeWPS(String identifier, Map<String, Map<String, String>> inputs) throws ExecutionException;
+
+    long invokeWMS(String identifier, Map<String, String> inputs) throws ExecutionException;
 }

@@ -30,24 +30,26 @@ public enum Status implements TaoEnum<Integer> {
      * The workflow is draft (still in editing mode)
      */
     @XmlEnumValue("1")
-    DRAFT(1, "Draft"),
+    DRAFT(1, "Draft", true),
     /**
-     * The workflow is validated and ready to be executed, and may still be edited
+     * The workflow is validated and ready to be executed, and may not be edited
      */
     @XmlEnumValue("2")
-    READY(2, "Ready for Publication"),
+    READY(2, "Ready for Publication", true),
     /**
      * The workflow was published and hence cannot be edited
      */
     @XmlEnumValue("3")
-    PUBLISHED(3, "Published");
+    PUBLISHED(3, "Published", false);
 
     private final int value;
     private final String description;
+    private final boolean visible;
 
-    Status(int value, String description) {
+    Status(int value, String description, boolean visible) {
         this.value = value;
         this.description = description;
+        this.visible = visible;
     }
 
     @Override
@@ -55,4 +57,11 @@ public enum Status implements TaoEnum<Integer> {
 
     @Override
     public Integer value() { return this.value; }
+
+    @Override
+    public boolean isVisible() {
+        return this.visible;
+    }
+
+
 }

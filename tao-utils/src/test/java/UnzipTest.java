@@ -50,6 +50,7 @@ public class UnzipTest {
                 e.printStackTrace();
             }
         }*/
+        System.out.println(Crypto.decrypt("user", "user"));
         System.out.println(Crypto.encrypt("user", "user"));
     }
 }

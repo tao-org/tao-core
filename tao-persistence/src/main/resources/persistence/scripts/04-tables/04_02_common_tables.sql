@@ -36,7 +36,7 @@ CREATE TABLE common.notification
     id bigserial NOT NULL,
     timestamp bigint NOT NULL,
     topic character varying NOT NULL,
-	username character varying NOT NULL,
+	user_id character varying NOT NULL,
 	read boolean NULL,
 	data character varying NOT NULL,
 	discriminator integer NOT NULL
@@ -47,7 +47,7 @@ CREATE SEQUENCE common.notification_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE
 ALTER TABLE common.notification ALTER COLUMN id SET DEFAULT nextval('common.notification_id_seq');
 ALTER SEQUENCE common.notification_id_seq OWNED BY common.notification.id;
 CREATE INDEX IX_notification ON common.notification
-    USING btree (topic COLLATE pg_catalog."default", username COLLATE pg_catalog."default");
+    USING btree (topic COLLATE pg_catalog."default", user_id COLLATE pg_catalog."default");
 
 -------------------------------------------------------------------------------
 -- table: workflow_graph_visibility
@@ -70,7 +70,7 @@ CREATE TABLE common.audit
 (
     id bigserial NOT NULL,
     "timestamp" timestamp without time zone NOT NULL,
-    username character varying NOT NULL,
+    user_id character varying NOT NULL,
     event character varying NOT NULL
 );
 ALTER TABLE common.audit ADD CONSTRAINT PK_audit PRIMARY KEY (id);
@@ -79,4 +79,4 @@ CREATE SEQUENCE common.audit_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START 
 ALTER TABLE common.audit ALTER COLUMN id SET DEFAULT nextval('common.audit_id_seq');
 ALTER SEQUENCE common.audit_id_seq OWNED BY common.audit.id;
 CREATE INDEX IX_audit ON common.audit
-    USING btree (username COLLATE pg_catalog."default", timestamp);
+    USING btree (user_id COLLATE pg_catalog."default", timestamp);

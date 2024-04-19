@@ -4,6 +4,7 @@ import ro.cs.tao.Sort;
 import ro.cs.tao.component.ProcessingComponent;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ProcessingComponentProvider extends EntityProvider<ProcessingComponent, String> {
 
@@ -12,6 +13,7 @@ public interface ProcessingComponentProvider extends EntityProvider<ProcessingCo
     List<ProcessingComponent> list(int pageNumber, int pageSize, Sort sort);
     List<ProcessingComponent> listUserProcessingComponents(String userName);
     List<ProcessingComponent> listUserScriptComponents(String userName);
+    List<ProcessingComponent> listOtherComponents(Set<String> ids);
     List<ProcessingComponent> listByLabel(String label);
     boolean hasCopyComponent(String containerId);
     boolean hasMoveComponent(String containerId);

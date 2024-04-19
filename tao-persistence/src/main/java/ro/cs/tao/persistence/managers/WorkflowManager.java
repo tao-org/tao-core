@@ -21,8 +21,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.beans.Query;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
@@ -30,9 +32,9 @@ import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workflow.*;
 import ro.cs.tao.workflow.enums.ComponentType;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -77,14 +79,19 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
                             List<ParameterValue> customValues = n.getCustomValues();
                             if (customValues == null || customValues.isEmpty()) {
                                 DataSourceComponent component = dataSourceComponentManager.get(n.getComponentId());
-                                Query query = queryManager.get(finalWorkflow.getUserName(),
-                                                               component.getSensorName(),
-                                                               component.getDataSourceName(),
-                                                               n.getId());
-                                if (query != null) {
-                                    n.setCustomValues(query.getValues().entrySet().stream()
-                                                           .map(e -> new ParameterValue(e.getKey(), e.getValue()))
-                                                           .collect(Collectors.toList()));
+                                if (component != null) {
+                                    Query query = queryManager.get(finalWorkflow.getUserId(),
+                                                                   component.getSensorName(),
+                                                                   component.getDataSourceName(),
+                                                                   n.getId());
+                                    if (query != null) {
+                                        n.setCustomValues(query.getValues().entrySet().stream()
+                                                               .map(e -> new ParameterValue(e.getKey(), e.getValue()))
+                                                               .collect(Collectors.toList()));
+                                    }
+                                } else {
+                                    Logger.getLogger(WorkflowManager.class.getName()).warning(String.format("Component [%s] referred by node [%s] does not exist",
+                                                                                                            n.getComponentId(), n.getName()));
                                 }
                             }
                         });
@@ -111,18 +118,18 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserWorkflowsByStatus(String user, int statusId) {
-        return repository.getUserWorkflowsByStatus(user, statusId);
+    public List<WorkflowDescriptor> listUserWorkflowsByStatus(String userId, int statusId) {
+        return repository.getUserWorkflowsByStatus(userId, statusId);
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserPublishedWorkflowsByVisibility(String user, int visibilityId) {
-        return repository.getUserPublishedWorkflowsByVisibility(user, visibilityId);
+    public List<WorkflowDescriptor> listUserPublishedWorkflowsByVisibility(String userId, int visibilityId) {
+        return repository.getUserPublishedWorkflowsByVisibility(userId, visibilityId);
     }
 
     @Override
-    public List<WorkflowDescriptor> listOtherPublicWorkflows(String user) {
-        return repository.getOtherPublicWorkflows(user);
+    public List<WorkflowDescriptor> listOtherPublicWorkflows(String userId) {
+        return repository.getOtherPublicWorkflows(userId);
     }
 
     @Override
@@ -131,8 +138,19 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserVisible(String user) {
-        return repository.getUserVisibleWorkflows(user);
+    public List<WorkflowDescriptor> listUserVisible(String userId) {
+        final List<WorkflowDescriptor> workflows = repository.getUserWorkflows(userId);
+        final String value = ConfigurationManager.getInstance().getValue("other.workflows.visibility");
+        if (value != null && Enum.valueOf(Visibility.class, value.toUpperCase()).equals(Visibility.SUBSCRIPTION)) {
+            // if the visibility mode is SUBSCRIPTION,
+            // only workflows published by admins and those subscribed to are returned
+            //workflows.addAll(repository.getPublicWorkflows());
+            workflows.addAll(repository.getSubscribedWorkflows(userId));
+        } else {
+            workflows.addAll(repository.getOtherPublicWorkflows(userId));
+        }
+        workflows.removeIf(w -> w.isTemporary());
+        return workflows;
     }
 
     @Override
@@ -160,7 +178,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         }
         final List<WorkflowNodeDescriptor> nodes = workflow.get().getOrderedNodes();
         for (WorkflowNodeDescriptor node : nodes) {
-            final List<Query> list = queryManager.list(entity.getUserName(), node.getId());
+            final List<Query> list = queryManager.list(entity.getUserId(), node.getId());
             if (list != null) {
                 for (Query query : list) {
                     queryManager.delete(query);
@@ -191,12 +209,40 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
+    public Map<Long, String> getWorkflowImages(Set<Long> ids) {
+        final List<Object[]> list = repository.getWorkflowImages(ids);
+        return list != null && !list.isEmpty()
+               ? list.stream().collect(Collectors.toMap(p -> p[0] instanceof BigInteger ? ((BigInteger) p[0]).longValue() : (Long) p[0], p -> (String) p[1]))
+               : null;
+    }
+
+    @Override
+    public String getWorkflowImage(long id) {
+        return repository.getWorkflowImage(id);
+    }
+
+    @Override
+    public void addWorkflowImage(long id, String image) {
+        repository.insertImage(id, image);
+    }
+
+    @Override
+    public void updateWorkflowImage(long id, String newImage) {
+        repository.updateImage(id, newImage);
+    }
+
+    @Override
+    public void deleteWorkflowImage(long id) {
+        repository.deleteImage(id);
+    }
+
+    @Override
     protected String identifier() { return "id"; }
 
     @Override
     protected boolean checkEntity(WorkflowDescriptor entity) {
         return entity != null && !StringUtilities.isNullOrEmpty(entity.getName()) &&
-                !StringUtilities.isNullOrEmpty(entity.getUserName()) &&
+                !StringUtilities.isNullOrEmpty(entity.getUserId()) &&
                 entity.getVisibility() != null && entity.getStatus() != null;
     }
 

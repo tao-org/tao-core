@@ -32,6 +32,7 @@ import java.util.List;
 public class NodeDescription extends StringIdentifiable {
     private String userName;
     private String userPass;
+    private String sshKey;
     private NodeFlavor flavor;
     private String description;
     private NodeRole role;
@@ -41,6 +42,7 @@ public class NodeDescription extends StringIdentifiable {
     private List<String> tags;
     private String owner;
     private String appId;
+    private String serverId;
 
     public NodeDescription() { this.active = true;}
 
@@ -58,6 +60,10 @@ public class NodeDescription extends StringIdentifiable {
     public void setUserPass(String userPass) {
         this.userPass = userPass;
     }
+
+    @XmlElement(name = "sshKey")
+    public String getSshKey() { return sshKey; }
+    public void setSshKey(String sshKey) { this.sshKey = sshKey; }
 
     @XmlElement(name = "flavor")
     public NodeFlavor getFlavor() { return flavor; }
@@ -94,6 +100,10 @@ public class NodeDescription extends StringIdentifiable {
     @XmlElement(name = "appId")
     public String getAppId() { return appId; }
     public void setAppId(String appId) { this.appId = appId; }
+
+    @XmlElement(name = "serverId")
+    public String getServerId() { return serverId; }
+    public void setServerId(String id) { this.serverId = id; }
 
     @XmlElementWrapper(name = "services")
     public List<NodeServiceStatus> getServicesStatus() {

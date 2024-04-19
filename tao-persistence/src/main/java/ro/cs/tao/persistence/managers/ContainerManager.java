@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.docker.ContainerVisibility;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.repository.ContainerRepository;
 
@@ -36,6 +37,21 @@ public class ContainerManager extends EntityManager<Container, String, Container
     @Override
     public List<Container> getByType(ContainerType type) {
         return repository.findByTypeId(type.value());
+    }
+
+    @Override
+    public List<Container> getByTypeAndVisibility(ContainerType type, ContainerVisibility visibility) {
+        return repository.findByTypeAndVisibility(type.value(), visibility.value());
+    }
+
+    @Override
+    public List<Container> listContainersVisibleToUser(String userId) {
+        return repository.listContainersVisibleToUser(userId);
+    }
+
+    @Override
+    public List<Container> listUserContainers(String userId) {
+        return repository.listUserContainers(userId);
     }
 
     @Override

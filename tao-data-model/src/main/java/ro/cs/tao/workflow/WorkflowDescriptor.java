@@ -39,7 +39,7 @@ import java.util.List;
 public class WorkflowDescriptor
         extends GraphObject implements NodeListOrderer {
 
-    private String userName;
+    private String userId;
     private Visibility visibility;
     protected Status status;
     private String path;
@@ -49,11 +49,12 @@ public class WorkflowDescriptor
     private float xCoord;
     private float yCoord;
     private float zoom;
+    private boolean temporary;
     private List<String> tags;
 
     @XmlElement(name = "userName")
-    public String getUserName() { return userName; }
-    public void setUserName(String userName) { this.userName = userName; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     @XmlElement(name = "visibility")
     public Visibility getVisibility() { return visibility; }
@@ -86,6 +87,15 @@ public class WorkflowDescriptor
     @XmlTransient
     public float getZoom() { return zoom; }
     public void setZoom(float zoom) { this.zoom = zoom; }
+
+    @XmlElement(name = "temporary")
+    public boolean isTemporary() {
+        return temporary;
+    }
+
+    public void setTemporary(boolean temporary) {
+        this.temporary = temporary;
+    }
 
     @XmlElementWrapper(name = "nodes")
     @JsonManagedReference

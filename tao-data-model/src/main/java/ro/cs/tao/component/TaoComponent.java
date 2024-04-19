@@ -17,7 +17,6 @@ package ro.cs.tao.component;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import ro.cs.tao.security.SessionContext;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.*;
@@ -46,8 +45,6 @@ public abstract class TaoComponent extends StringIdentifiable {
     protected List<String> tags;
 
     protected Map<String, StringIdentifiable> descriptorIndex = new HashMap<>();
-
-    private SessionContext sessionContext;
 
     @Override
     public String defaultId() { return "NewComponent"; }

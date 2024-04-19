@@ -162,7 +162,7 @@ DROP TABLE IF EXISTS product.raster_data_product_refs CASCADE;
 CREATE TABLE product.raster_data_product_refs
 (
 	product_id character varying(1000) NOT NULL,
-	refs character varying(100) NOT NULL
+	refs character varying NOT NULL
 );
 ALTER TABLE product.raster_data_product_refs ADD CONSTRAINT PK_raster_data_product_refs
 	PRIMARY KEY (product_id, refs);
@@ -215,7 +215,7 @@ CREATE TABLE product.auxiliary_data
     id character varying(1000) NOT NULL,
 	location character varying NOT NULL,
 	description character varying NOT NULL,
-	username character varying NOT NULL,
+	user_id character varying NOT NULL,
 	visibility_id integer NULL DEFAULT 2,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
@@ -260,7 +260,8 @@ CREATE TABLE product.naming_rule
     id integer NOT NULL,
     sensor varchar(50) NOT NULL,
     regex varchar(512) NOT NULL,
-    description varchar(100) NOT NULL
+    description varchar(100) NOT NULL,
+    synonyms varchar
 );
 ALTER TABLE product.naming_rule ADD CONSTRAINT PK_naming_rule
     PRIMARY KEY (id);

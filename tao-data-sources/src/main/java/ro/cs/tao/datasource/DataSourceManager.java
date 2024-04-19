@@ -25,6 +25,7 @@ import ro.cs.tao.utils.NetUtils;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Manager class for DataSource plugins.
@@ -50,7 +51,7 @@ public class DataSourceManager {
 
     private DataSourceManager() {
         Map<String, String> proxySettings = ConfigurationManager.getInstance().getValues("proxy");
-        if (proxySettings != null && proxySettings.size() > 0) {
+        if (proxySettings != null && !proxySettings.isEmpty()) {
             String port = proxySettings.get("proxy.port");
             String host = proxySettings.get("proxy.host");
             if (host != null && !host.isEmpty()) {
@@ -277,14 +278,26 @@ public class DataSourceManager {
      * @return      A data source instance if matched or <code>null</code> if not found.
      */
     public DataSource<?, ?> getMatchingDataSource(String url) {
-        DataSource<?, ?> match = url != null ? this.registry.getServices().stream().filter(d -> {
-            String connectionStringDomain = Utilities.getDomainURL(d.getConnectionString());
-            if (url.equals(connectionStringDomain)) {
-                return true;
+        boolean continueMatching=true;
+        DataSource<?,?> match = null;
+        while (continueMatching) {
+            final String urlToMatch = url;
+            Stream<DataSource> matches = this.registry.getServices().stream().filter(d -> {
+                String hostURL = Utilities.getHostURL(d.getConnectionString());
+                if (hostURL != null && hostURL.endsWith(urlToMatch)) {
+                    return true;
+                } else {
+                    hostURL = Utilities.getHostURL(d.getAlternateConnectionString());
+                    return hostURL != null && hostURL.endsWith(urlToMatch);
+                }
+            });
+            url = url.substring(url.indexOf('.') + 1);
+            final List<DataSource> matchedDataSources = matches.collect(Collectors.toList());
+            continueMatching = matchedDataSources.size() != 1 && url.contains(".");
+            if (!continueMatching && !matchedDataSources.isEmpty()) {
+                match = matchedDataSources.get(0);
             }
-            connectionStringDomain = Utilities.getDomainURL(d.getAlternateConnectionString());
-            return url.equals(connectionStringDomain);
-        }).findFirst().orElse(null) : null;
+        }
         if (match != null) {
             try {
                 match = match.getClass().newInstance();

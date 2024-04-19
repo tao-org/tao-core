@@ -112,7 +112,7 @@ public class OutputDataHandlerManager {
         if (list == null) {
             return null;
         }
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
             T element = list.get(0);
             if (element == null) {
                 throw new DataHandlingException("Unhandled null value");

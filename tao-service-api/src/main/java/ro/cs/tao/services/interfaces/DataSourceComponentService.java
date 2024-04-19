@@ -25,12 +25,26 @@ import ro.cs.tao.services.model.component.ProductSetInfo;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Set;
 
 public interface DataSourceComponentService extends CRUDService<DataSourceComponent, String> {
 
-    List<DataSourceComponent> getUserDataSourceComponents(String userName);
+    /**
+     * Retrieves all the data source components of a given user.
+     * @param userId    The user identifier
+     */
+    List<DataSourceComponent> getUserDataSourceComponents(String userId);
 
+    /**
+     * Retrieves all the system (i.e., not belonging to a user) data source components.
+     */
     List<DataSourceComponent> getSystemDataSourceComponents();
+
+    /**
+     * Retrieves the data source components that don't have the given identifiers.
+     * @param ids   The set of identifiers to be excluded
+     */
+    List<DataSourceComponent> getOhterDataSourceComponents(Set<String> ids);
 
     /**
      * Creates a user data source component that wraps the given list of products.
@@ -62,20 +76,59 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      */
     DataSourceComponent createForLocations(List<String> productNames, String label, Principal principal) throws PersistenceException;
 
+    /**
+     * Retrieves all the tags associated to data source components.
+     */
     List<Tag> getDatasourceTags();
 
+    /**
+     * Retrieves the configuration of the given data source.
+     * @param dataSourceId  The data source identifier
+     * @throws PersistenceException
+     */
     DataSourceConfiguration getConfiguration(String dataSourceId) throws PersistenceException;
 
+    /**
+     * Saves the configuration of a data source.
+     * @param configuration     The data source configuration structure
+     * @throws PersistenceException
+     */
     void saveConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
 
+    /**
+     * Updates the configuration of a data source.
+     * @param configuration     The data source configuration structure
+     * @throws PersistenceException
+     */
     void updateConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
 
-    List<DataSourceComponent> getProductSets(String userName) throws PersistenceException;
+    /**
+     * Retrieves all the product sets of a given user.
+     * @param userId    The user identifier
+     * @throws PersistenceException
+     */
+    List<DataSourceComponent> getProductSets(String userId) throws PersistenceException;
 
+    /**
+     * Retrieves all the data source components for a given data source.
+     * @param dataSourceName    The data source name
+     * @throws PersistenceException
+     */
     List<DataSourceComponent> getBySource(String dataSourceName) throws PersistenceException;
 
+    /**
+     * Retrieves all the data source components for a given data source and collection (or sensor).
+     * @param dataSourceName    The data source name
+     * @param sensor    The collection or sensor
+     * @throws PersistenceException
+     */
     List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor) throws PersistenceException;
 
+    /**
+     * Updates the data source component associated with a product set.
+     * @param productSet    The product set information
+     * @throws PersistenceException
+     */
     DataSourceComponent updateProductSet(ProductSetInfo productSet) throws PersistenceException;
 
 }

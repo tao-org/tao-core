@@ -14,6 +14,6 @@ import java.util.List;
 @Transactional
 public interface SiteRepository extends PagingAndSortingRepository<Site, String> {
 
-    @Query(value = "SELECT * FROM workspace.site WHERE username = :user", nativeQuery = true)
-    List<Site> getByUser(@Param("user") String user);
+    @Query(value = "SELECT * FROM workspace.site WHERE user_id = :userId", nativeQuery = true)
+    List<Site> getByUser(@Param("userId") String userId);
 }

@@ -29,7 +29,7 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class JavascriptTemplateEngine extends TemplateEngine {
-    private ScriptEngine scriptEngine;
+    private final ScriptEngine scriptEngine;
 
     public JavascriptTemplateEngine() {
         this.scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");

@@ -31,4 +31,9 @@ public interface TaoEnum<T> {
      * Returns the value associated to the enumeration constant.
      */
     T value();
+
+    /**
+     * Returns <code>true</code> if the pair should be visible/usable by upper layers
+     */
+    default boolean isVisible() { return true; }
 }

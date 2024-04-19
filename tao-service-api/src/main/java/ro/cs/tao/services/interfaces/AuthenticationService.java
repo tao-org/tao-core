@@ -26,13 +26,21 @@ import ro.cs.tao.services.model.auth.AuthInfo;
 public interface AuthenticationService extends TAOService {
 
     /**
-     * Login user using its credentials
+     * Login user using the credentials
      *
      * @param user  User login
      * @param password User password
      * @return authentication result
      */
     AuthInfo login(String user, String password);
+
+    /**
+     * Login user the code given by the external authenticator
+     *
+     * @param code  Code to obtain the token
+     * @return authentication result
+     */
+    AuthInfo loginWithCode(String code);
 
     /**
      * Logout user

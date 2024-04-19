@@ -23,15 +23,16 @@ import ro.cs.tao.persistence.repository.DataSourceComponentRepository;
 import ro.cs.tao.utils.StringUtilities;
 
 import java.util.List;
+import java.util.Set;
 
 @Component("dataSourceComponentManager")
 public class DataSourceComponentManager extends TaoComponentManager<DataSourceComponent, DataSourceComponentRepository>
                                         implements DataSourceComponentProvider {
 
     @Override
-    public List<DataSourceComponent> getUserDataSourceComponents(String userName) {
-        return userName != null ? this.repository.getUserDataSourceComponents(userName) :
-                this.repository.getUserDataSourceComponents();
+    public List<DataSourceComponent> getUserDataSourceComponents(String userId) {
+        return userId != null ? this.repository.getUserDataSourceComponents(userId) :
+               this.repository.getUserDataSourceComponents();
     }
 
     @Override
@@ -40,14 +41,19 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
     }
 
     @Override
-    public DataSourceComponent getDataSourceComponentByLabel(String label) {
-        List<DataSourceComponent> components = this.repository.getDataSourceComponentByLabel(label);
-        return (components == null || components.size() == 0) ? null : components.get(0);
+    public List<DataSourceComponent> getOtherDataSourceComponents(Set<String> ids) {
+        return this.repository.getOtherDataSourceComponents(ids);
     }
 
     @Override
-    public List<DataSourceComponent> getProductSets(String userName) {
-        List<DataSourceComponent> components = this.repository.getUserDataSourceComponents(userName);
+    public DataSourceComponent getDataSourceComponentByLabel(String label) {
+        List<DataSourceComponent> components = this.repository.getDataSourceComponentByLabel(label);
+        return (components == null || components.isEmpty()) ? null : components.get(0);
+    }
+
+    @Override
+    public List<DataSourceComponent> getProductSets(String userId) {
+        List<DataSourceComponent> components = this.repository.getUserDataSourceComponents(userId);
         if (components != null) {
             components.removeIf(c -> StringUtilities.isNullOrEmpty(c.getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().get().getDataDescriptor().getLocation()));
         }

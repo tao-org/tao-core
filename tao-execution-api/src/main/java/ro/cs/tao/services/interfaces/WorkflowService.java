@@ -22,6 +22,7 @@ import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.execution.ExecutionJobInfo;
 import ro.cs.tao.services.model.execution.ExecutionTaskInfo;
 import ro.cs.tao.services.model.workflow.WorkflowInfo;
@@ -30,6 +31,8 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.Status;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -84,9 +87,35 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     /**
      * Returns all the workflows visible to the given user.
      * The list consists in all the workflows of the user plus the published workflows of other users.
+     * @param userId  The user identifier
      * @return The workflow information list (not the full workflow structures)
      */
-    List<WorkflowInfo> getUserVisibleWorkflows(String user);
+    List<WorkflowInfo> getUserVisibleWorkflows(String userId);
+
+    /**
+     * Returns the workflows to which a user has subscribed.
+     * @param userId  The user identifier
+     * @return The workflow information list (not the full workflow structures)
+     */
+    List<WorkflowInfo> getUserSubscribedWorkflows(String userId);
+
+    /**
+     * Subscribes a user to a workflow (created by other user).
+     * The prerequisites are that the workflow has the status 'Published' and has the visibility 'Subscription'
+     * @param userId        The user identifier
+     * @param workflowId    The workflow identifier
+     *
+     * @return  The identifier of the created subscription
+     */
+    long subscribeToWorkflow(String userId, long workflowId);
+    /**
+     * Unsubscribes a user from a workflow.
+     *
+     * @param userId        The user identifier
+     * @param workflowId    The workflow identifier
+     */
+    void unsubscribeFromWorkflow(String userId, long workflowId);
+
     /**
      * Adds a node to a workflow.
      * @param workflowId    The workflow identifier
@@ -191,8 +220,9 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Creates a duplicate of the given workflow
      *
      * @param workflow  The workflow to clone
+     * @param temporary If the clone is temporary or persistent
      */
-    WorkflowDescriptor clone(WorkflowDescriptor workflow) throws PersistenceException;
+    WorkflowDescriptor clone(WorkflowDescriptor workflow, boolean temporary) throws PersistenceException;
 
     /**
      * Creates a duplicate of the given workflow and adds new input nodes corresponding to the ID map (links).
@@ -265,4 +295,46 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @param workflowDescriptor    The workflow descriptor
      */
     String workflowToSnapGraph(WorkflowDescriptor workflowDescriptor) throws Exception;
+
+    /**
+     * Returns the image associated with the workflow, if any
+     * @param id    The workflow identifier
+     * @return      A base64 encoded image
+     */
+    String getWorkflowImage(long id);
+
+    /**
+     * Attaches an image to a workflow
+     * @param id        The workflow identifier
+     * @param image     The base64 encoded image
+     */
+    void addWorkflowImage(long id, String image);
+
+    /**
+     * Replaces the image associated with a workflow
+     * @param id        The workflow identifier
+     * @param newImage  A base64 encoded image
+     */
+    void updateWorkflowImage(long id, String newImage);
+
+    /**
+     * Removes any image associated with a workflow
+     * @param id    The workflow identifier
+     */
+    void deleteWorkflowImage(long id);
+
+    /**
+     * Imports the definition of a workflow from the given input stream.
+     * @param source    The input stream
+     * @throws IOException
+     * @throws SerializationException
+     */
+    WorkflowDescriptor importWorkflow(InputStream source) throws IOException, SerializationException, PersistenceException;
+
+    /**
+     * Exports the definition of a workflow in JSON
+     * @param descriptor    The workflow to be exported
+     * @throws SerializationException
+     */
+    String exportWorkflow(WorkflowDescriptor descriptor) throws SerializationException;
 }

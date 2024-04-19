@@ -6,10 +6,10 @@ import java.util.List;
 
 public interface MessageProvider extends EntityProvider<Message, Long> {
 
-    List<Message> getUserMessages(String user, Integer pageNumber);
-    List<Message> getUnreadMessages(String user);
-    Message get(String userName, long timestamp);
-    void acknowledge(List<Long> messageIds);
-    void clear(String user);
+    List<Message> getUserMessages(String userId, Integer pageNumber);
+    List<Message> getUnreadMessages(String userId);
+    Message get(String userId, long timestamp);
+    void acknowledge(List<Long> messageIds, String userId);
+    void clear(String userId);
 
 }

@@ -35,7 +35,17 @@ public class DownloadProgressNotifier extends ProgressNotifier implements Downlo
     public void notifyProgress(double progressValue, double transferSpeed) {
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendTransientMessage(new DownloadProgress(taskName, progressValue, transferSpeed));
+            sendTransientMessage(new DownloadProgress(taskName, progressValue, transferSpeed, 0));
+        } else {
+            ended();
+        }
+    }
+
+    @Override
+    public void notifyProgress(double progressValue, double transferSpeed, int queuedItems) {
+        taskCounter = progressValue;
+        if (taskCounter < 1) {
+            sendTransientMessage(new DownloadProgress(taskName, progressValue, transferSpeed, queuedItems));
         } else {
             ended();
         }

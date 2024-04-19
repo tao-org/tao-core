@@ -23,8 +23,8 @@ public class AuxiliaryDataManager extends EntityManager<AuxiliaryData, String, A
     }
 
     @Override
-    public List<AuxiliaryData> list(String userName, String... locations) {
-        return repository.getAuxiliaryDataByLocation(userName, new HashSet<>(Arrays.asList(locations)));
+    public List<AuxiliaryData> list(String userId, String... locations) {
+        return repository.getAuxiliaryDataByLocation(userId, new HashSet<>(Arrays.asList(locations)));
     }
 
     @Override
@@ -44,6 +44,6 @@ public class AuxiliaryDataManager extends EntityManager<AuxiliaryData, String, A
     protected boolean checkEntity(AuxiliaryData auxiliaryData) {
         return auxiliaryData != null && auxiliaryData.getLocation() != null && !auxiliaryData.getLocation().isEmpty() &&
                 auxiliaryData.getDescription() != null && !auxiliaryData.getDescription().isEmpty() &&
-                auxiliaryData.getUserName() != null && !auxiliaryData.getUserName().isEmpty();
+                auxiliaryData.getUserId() != null && !auxiliaryData.getUserId().isEmpty();
     }
 }

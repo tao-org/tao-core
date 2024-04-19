@@ -25,15 +25,20 @@ public class UserPrincipal implements Principal, Serializable {
     /** Generated serial ID. */
 	private static final long serialVersionUID = -138887607776483992L;
 	
-	private final String userName;
+	private final String id;
 
-    public UserPrincipal(String userName) {
-        this.userName = userName;
+    public UserPrincipal(String id) {
+        this.id = id;
     }
 
     @Override
-    public String getName() { return this.userName; }
+    public String getName() { return this.id; }
 
     @Override
     public boolean implies(Subject subject) { return true; }
+
+    @Override
+    public String toString() {
+        return id;
+    }
 }
