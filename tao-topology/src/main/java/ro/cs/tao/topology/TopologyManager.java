@@ -274,7 +274,7 @@ public class TopologyManager {
         if (node == null) {
             throw new TopologyException(String.format("Node [%s] doesn't exist", hostName));
         }
-        if (this.externalNodeProvider != null && node.getVolatile()) {
+        if (this.externalNodeProvider != null/* && node.getVolatile()*/) {
             final String serverId = node.getServerId();
             this.externalNodeProvider.remove(serverId != null ? serverId : hostName);
             if (this.volatileInstanceProvider != null) {
