@@ -60,4 +60,6 @@ public interface AdministrationService extends TAOService {
     void messageUser(String userId, String message);
 
     void initializeSubscription(ResourceSubscription subscription) throws TopologyException, PersistenceException;
+
+    void deleteSubscription(ResourceSubscription subscription) throws TopologyException, PersistenceException;
 }
