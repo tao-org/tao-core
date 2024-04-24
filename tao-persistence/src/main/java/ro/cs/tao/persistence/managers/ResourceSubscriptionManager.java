@@ -19,8 +19,8 @@ public class ResourceSubscriptionManager extends EntityManager<ResourceSubscript
                                             implements ResourceSubscriptionProvider {
 
     @Override
-    public List<ResourceSubscription> getByUser(String userId) {
-        return repository.getByUser(userId);
+    public ResourceSubscription getUserOpenSubscription(String userId) {
+        return repository.getUserOpenSubscription(userId);
     }
 
     @Override
@@ -36,6 +36,6 @@ public class ResourceSubscriptionManager extends EntityManager<ResourceSubscript
     @Override
     protected boolean checkEntity(ResourceSubscription entity) {
         return entity != null && !StringUtilities.isNullOrEmpty(entity.getUserId())
-                && entity.getType() != null && entity.getFlavor() != null && entity.getFlavorQuantity() > 0;
+                && entity.getType() != null && (entity.getFlavors() != null || entity.getObjectStorageGB() != null);
     }
 }
