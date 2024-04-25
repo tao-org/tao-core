@@ -24,6 +24,7 @@ import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -129,16 +130,19 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
             return null;
         }
         final List<ExecutionTask> candidates = new ArrayList<>();
-        job.getTaskDependencies().forEach((key, value) -> {
-            if (value.contains(String.valueOf(task.getId()))) {
-                if (value.stream()
-                         .map(v -> job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(v))).findFirst().get())
-                         .allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE &&
-                                        t.getOutputParameterValues() != null)) {
-                    candidates.add(job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(key))).findFirst().get());
+        final Map<String, List<String>> taskDependencies = job.getTaskDependencies();
+        if (taskDependencies != null) {
+            taskDependencies.forEach((key, value) -> {
+                if (value.contains(String.valueOf(task.getId()))) {
+                    if (value.stream()
+                             .map(v -> job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(v))).findFirst().get())
+                             .allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE &&
+                                     t.getOutputParameterValues() != null)) {
+                        candidates.add(job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(key))).findFirst().get());
+                    }
                 }
-            }
-        });
+            });
+        }
         return candidates;
     }
 }
