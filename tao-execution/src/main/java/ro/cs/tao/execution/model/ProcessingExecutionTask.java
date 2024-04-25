@@ -70,10 +70,13 @@ public class ProcessingExecutionTask extends ExecutionTask {
         final boolean descriptorExists =
                 this.component.getParameterDescriptors().stream().anyMatch(d -> d.getName().equals(parameterName)) ||
                 this.component.getSources().stream().anyMatch(s -> s.getName().equals(parameterName)) ||
-                this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName));
+                this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName)) ||
+                this.component.getParameterDescriptors().stream().filter(p -> p instanceof TemplateParameterDescriptor)
+                              .map(p -> (TemplateParameterDescriptor) p)
+                              .anyMatch(p -> p.getParameters().stream().anyMatch(d -> d.getName().equals(parameterName)));
         if (!descriptorExists) {
             if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterName)) {
-                throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
+                throw new ValidationException(String.format("The parameter [%s] does not exists in the component '%s'",
                                                             parameterName, component.getLabel()));
             }
         }
@@ -173,7 +176,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                      .findFirst().orElse(null);
                     if (templateDescriptor != null) {
                         descriptor = templateDescriptor.getParameters().stream()
-                                                       .filter(d -> templateDescriptor.getName().equals(key)).findFirst().get();
+                                                       .filter(d -> d.getName().equals(key)).findFirst().get();
                         value = getParameterTypedValue(descriptor, strValue);
                     } else {
                         // If it's not a parameter or a sub-parameter, it must be a source
