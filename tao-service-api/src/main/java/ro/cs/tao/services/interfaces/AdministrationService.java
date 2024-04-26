@@ -62,7 +62,7 @@ public interface AdministrationService extends TAOService {
 
     void initializeSubscription(ResourceSubscription subscription) throws TopologyException, PersistenceException;
 
-    public void createFlavorNodesForSubscription(ResourceSubscription subscription, FlavorSubscription flavor, int nodesToCreate) throws TopologyException, PersistenceException;
+    void createFlavorNodesForSubscription(ResourceSubscription subscription, FlavorSubscription flavor, int nodesToCreate) throws TopologyException, PersistenceException;
 
     void deleteFlavorNodesForSubscription(ResourceSubscription subscription, FlavorSubscription flavor, int nodesToDelete) throws TopologyException, PersistenceException;
 }
