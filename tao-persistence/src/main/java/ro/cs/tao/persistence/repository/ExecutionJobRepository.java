@@ -61,4 +61,10 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
             "WHERE t.job_id = :jobId " +
             "ORDER BY t.id", nativeQuery = true)
     List<String> getJobOutputs(@Param("jobId") Long jobId);
+    
+    @Query(value = "SELECT COUNT(id) FROM execution.job WHERE batch_id = :batchId AND execution_status_id in (:statuses)", nativeQuery = true)
+    int countJobsByBatchAndStatus(@Param("batchId") String batchId, @Param("statuses") Set<Integer> statuses);
+    
+    @Query(value = "SELECT * FROM execution.job WHERE batch_id in (:batchIds) ORDER BY start_time ASC", nativeQuery = true)
+    List<ExecutionJob>  finbByBatches(@Param("batchIds") List<String> batchIds);
 }
