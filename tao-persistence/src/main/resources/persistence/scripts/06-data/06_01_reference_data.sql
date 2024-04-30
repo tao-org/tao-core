@@ -119,12 +119,17 @@ INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='SystemAccount'), 1);
 
 -- Node flavor
-INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx)
-VALUES ('master', 8, 32, 1024, 32, 1.0);
+INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx) VALUES
+('master', 8, 32, 1024, 32, 1.0),
+('k8s', 8, 32, 1024, 32, 1.0);
 
 -- localhost execution node
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)
 VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
+
+-- Kubernetes execution node
+INSERT INTO topology.node (id, username, password, flavor_id, description, role)
+VALUES ('k8s-master', '', '', 'k8s', 'K8s Node', 'k8s');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUES

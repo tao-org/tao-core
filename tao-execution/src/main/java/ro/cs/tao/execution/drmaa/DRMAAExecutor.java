@@ -36,6 +36,7 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.ContainerProvider;
+import ro.cs.tao.persistence.NodeDBProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.UserPrincipal;
@@ -523,31 +524,46 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 ? app.getMemoryRequirements()
                                 : container.getApplications().stream().mapToLong(Application::getMemoryRequirements).min().orElse(0L);
             setMemoryConstraint(jt, memory);
-            NodeData nodeData;
-            final Integer parallelism = component.getParallelism();
-            final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
-            nodeData = strategy.getNode(memory);
-            while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
-                try {
-                    TimeUnit.SECONDS.sleep(20);
-                } catch (InterruptedException ignored) { }
-                if (nodeData == null) {
-                    nodeData = strategy.getNode(memory);
+
+            NodeDescription node = null;
+            final int cpu;
+            final long mem;
+            if(job.getEnvironment() == Environment.DEFAULT) {
+                NodeData nodeData;
+                final Integer parallelism = component.getParallelism();
+                final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
+                nodeData = strategy.getNode(memory);
+                while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
+                    try {
+                        TimeUnit.SECONDS.sleep(20);
+                    } catch (InterruptedException ignored) { }
+                    if (nodeData == null) {
+                        nodeData = strategy.getNode(memory);
+                    }
                 }
-            }
-            final NodeDescription node = nodeData.getNode();
-            if (node == null) {
-                throw new TryLaterException("Cannot obtain an available node [null]");
+                node = nodeData.getNode();
+                if (node == null) {
+                    throw new TryLaterException("Cannot obtain an available node [null]");
+                } else {
+                    if (!(task instanceof ScriptTask)) {
+                        incrementMemory(node, memory);
+                    }
+                    logger.info("Task " + taskName + " will be submitted to host " + node.getId());
+                }
+                setHost(jt, node.getId());
+                task.setExecutionNodeHostName(node.getId());
+                cpu = Math.min(nodeData.getCpu(), parallelism != null ? parallelism : 4);
+                mem = nodeData.getMemory();
             } else {
-                if (!(task instanceof ScriptTask)) {
-                    incrementMemory(node, memory);
-                }
-                logger.info("Task " + taskName + " will be submitted to host " + node.getId());
+                // Kubernetes
+                node = new NodeDescription();
+                node.setId("k8s-master");
+                setHost(jt, node.getId());
+                task.setExecutionNodeHostName(node.getId());
+                cpu = 0;
+                mem = 0;
             }
-            setHost(jt, node.getId());
-            task.setExecutionNodeHostName(node.getId());
-            int cpu = Math.min(nodeData.getCpu(), parallelism != null ? parallelism : 4);
-            final long mem = nodeData.getMemory();
+
             String location = task.getComponent().getFileLocation();
             if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
                     (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
@@ -698,7 +714,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                                   isLocal
                                                     ? task.getInstanceTargetOutput()
                                                     : task.getInstanceTargetOutput()
-                                                          .replace(ExecutionConfiguration.getMasterContainerVolumeMap()
+                                                          .replace(ExecutionConfiguration.getMasterContainerVolumeMap(job.getEnvironment() == Environment.KUBERNETES)
                                                                                          .getHostWorkspaceFolder(),
                                                                    volumeMount.getContainerWorkspaceFolder()),
                                                   isLocal);
@@ -794,7 +810,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
         String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
-        final String workspaceFolder = SystemUtils.IS_OS_WINDOWS
+        final String workspaceFolder = SystemUtils.IS_OS_WINDOWS && !volumeMap.getHostWorkspaceFolder().startsWith("/")
                                        ? volumeMap.getHostWorkspaceFolder().substring(2).replace("\\", "/")
                                        : volumeMap.getHostWorkspaceFolder();
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();

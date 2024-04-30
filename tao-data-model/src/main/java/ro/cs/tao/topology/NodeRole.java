@@ -4,7 +4,8 @@ import ro.cs.tao.TaoEnum;
 
 public enum NodeRole implements TaoEnum<String> {
     MASTER("master", "Master node"),
-    WORKER("worker", "Worker node");
+    WORKER("worker", "Worker node"),
+    K8S("k8s", "Kubernetes node");
 
     private final String value;
     private final String description;
