@@ -1545,6 +1545,7 @@
     <entity class="ro.cs.tao.subscription.ResourceSubscription" access="PROPERTY">
         <table name="subscription.resource_subscription"/>
         <convert converter="ro.cs.tao.persistence.convert.SubscriptionTypeConverter" attribute-name="type"/>
+        <convert converter="ro.cs.tao.persistence.convert.FlavorConverter" attribute-name="flavors"/>
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
@@ -1552,14 +1553,8 @@
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
-            <basic name="flavorQuantity">
-                <column name="flavor_quantity" nullable="false" column-definition="smallint NOT NULL"/>
-            </basic>
-            <basic name="flavorHddSizeGB">
-                <column name="flavor_hdd_quantity_GB" nullable="true" column-definition="smallint"/>
-            </basic>
-            <basic name="flavorSsdSizeGB">
-                <column name="flavor_ssd_quantity_GB" nullable="true" column-definition="smallint"/>
+            <basic name="flavors">
+                <column name="flavors" nullable="true" column-definition="json"/>
             </basic>
             <basic name="objectStorageGB">
                 <column name="object_storage_GB" nullable="true" column-definition="smallint"/>
@@ -1573,9 +1568,6 @@
             <basic name="ended">
                 <column name="ended" nullable="true" column-definition="timestamp without time zone"/>
             </basic>
-            <many-to-one name="flavor" fetch="EAGER" target-entity="ro.cs.tao.topology.NodeFlavor">
-                <join-column name="flavor_id" nullable="false"/>
-            </many-to-one>
         </attributes>
     </entity>
 
