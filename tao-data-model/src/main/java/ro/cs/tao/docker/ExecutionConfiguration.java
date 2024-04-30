@@ -54,6 +54,29 @@ public class ExecutionConfiguration {
                                             })));
     }
 
+    public static DockerVolumeMap getMasterContainerVolumeMap(boolean insideDocker) {
+        final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_MASTER_MAPPINGS);
+        if (value == null) {
+            throw new RuntimeException("No volume mappings found for master!");
+        }
+        Map<String, String> map = new HashMap<>();
+        try {
+            map = JsonMapper.instance().readerFor(map.getClass()).readValue(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new DockerVolumeMap(map.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> {
+                            final String[] values = e.getValue().split(":");
+                            return (insideDocker
+                                    ? FileUtilities.asUnixPath(Paths.get(values[0]), insideDocker)
+                                    : Paths.get(values[0]).toAbsolutePath())
+                                    + ":" + values[1];
+                        })));
+    }
+
     public static DockerVolumeMap getWorkerContainerVolumeMap() {
         final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_WORKER_MAPPINGS);
         if (value == null) {

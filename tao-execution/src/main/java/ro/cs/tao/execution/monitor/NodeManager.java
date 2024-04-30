@@ -552,6 +552,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
+        if (NodeRole.K8S.equals(node.getRole())) return null;
+
         AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
         OSRuntimeInfo<RuntimeInfo> osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(),
                                                                                  type == AuthenticationType.PASSWORD
