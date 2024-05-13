@@ -191,7 +191,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected final void addInitialActiveNodes() {
         List<NodeDescription> nodes = listNodes();
         for (NodeDescription node : nodes) {
-            if (node.getActive() != null && node.getActive()) {
+            if (node.getActive() != null && node.getActive() && !NodeRole.K8S.equals(node.getRole())) {
                 addNode(node, new RuntimeInfo());
                 if (node.getVolatile()) {
                     nodeUpdates.put(node.getId(), LocalDateTime.now());
@@ -201,11 +201,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected List<NodeDescription> listNodes() throws TopologyException {
-        return this.nodeProvider.listNodes();
+        return this.nodeProvider.listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).collect(Collectors.toList());
     }
 
     public int getActiveNodes() throws TopologyException {
-        return listNodes().size();
+        return (int) listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).count();
     }
 
     /**
