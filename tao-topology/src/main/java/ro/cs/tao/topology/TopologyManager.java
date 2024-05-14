@@ -414,6 +414,9 @@ public class TopologyManager {
                                               node.getUserName(),
                                               node.getSshKey() != null ? node.getSshKey() : node.getUserPass(),
                                               commands, true, SSHMode.EXEC);
+        if(node.getSshKey() != null) {
+            job.setCertificate(node.getSshKey());
+        }
         sharedAccumulator.reset();
         Executor<?> executor = Executor.execute(sharedAccumulator, job);
         logger.fine("Executing " + String.join(" ", commands));
