@@ -35,5 +35,5 @@ public interface NodeRepository extends PagingAndSortingRepository<NodeDescripti
 
     @Query(value = "SELECT * FROM topology.node n " +
             "WHERE n.owner_id = :userId AND n.flavor_id = :flavorId", nativeQuery = true)
-    List<NodeDescription> findByUserWithFlavor(@Param("userId") String userId,@Param("flavorId") String flavorId);
+    List<NodeDescription> getNodesByUserAndFlavor(@Param("userId") String userId, @Param("flavorId") String flavorId);
 }
