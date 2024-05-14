@@ -61,6 +61,11 @@ public class NodeDBManager extends EntityManager<NodeDescription, String, NodeRe
     }
 
     @Override
+    public List<NodeDescription> getByUserWithFlavor(String userId, String flavorId) {
+        return repository.findByUserWithFlavor(userId, flavorId);
+    }
+
+    @Override
     public int countUsableNodes(String userId) {
         return repository.countUsableNodes(userId);
     }
