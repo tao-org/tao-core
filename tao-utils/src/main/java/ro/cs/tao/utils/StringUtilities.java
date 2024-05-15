@@ -16,6 +16,8 @@
 
 package ro.cs.tao.utils;
 
+import java.util.regex.Pattern;
+
 /**
  * String utility class
  *
@@ -23,7 +25,8 @@ package ro.cs.tao.utils;
  * @since   1.0
  */
 public class StringUtilities {
-
+    //a991206e-3ba2-457a-bbd6-ec38d2853e8c
+    private static final Pattern guidPattern = Pattern.compile("[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}");
     /**
      * Convenience method to check if a string is null or empty
      * @param value     The string to check
@@ -109,5 +112,9 @@ public class StringUtilities {
             data[i / 2] = (byte) ((Character.digit(toConvert.charAt(i), 16) << 4) + Character.digit(toConvert.charAt(i+1), 16));
         }
         return data;
+    }
+
+    public static boolean isGUID(String s) {
+        return guidPattern.matcher(s).matches();
     }
 }
