@@ -72,6 +72,8 @@ public class DataSourceComponent extends TaoComponent {
     @XmlTransient
     private String password;
     @XmlTransient
+    private String secret;
+    @XmlTransient
     private boolean cancelled;
     @XmlTransient
     private ProductFetchStrategy currentFetcher;
@@ -206,6 +208,14 @@ public class DataSourceComponent extends TaoComponent {
         this.password = password;
     }
 
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
+
     @Override
     public String defaultId() { return this.sensorName + "-" + this.dataSourceName; }
 
@@ -278,8 +288,9 @@ public class DataSourceComponent extends TaoComponent {
      * Sets the credentials of the account to be used by this component
      * @param userName  The user name
      * @param password  The password (preferably encrypted)
+     * @param secret    (optional) The secret (for 2FA) or the bearer token if required
      */
-    public void setUserCredentials(String userName, String password) {
+    public void setUserCredentials(String userName, String password, String secret) {
         this.userName = userName;
         this.password = password;
         if (password != null && userName != null) {
@@ -291,6 +302,17 @@ public class DataSourceComponent extends TaoComponent {
             }
             if (decryptedPass != null) {
                 this.password = decryptedPass;
+            }
+        }
+        if (secret != null) {
+            String decrypted = null;
+            try {
+                decrypted = Crypto.decrypt(secret, userName);
+            } catch (Exception ex) {
+                logger.warning(ex.getMessage());
+            }
+            if (decrypted != null) {
+                this.secret = decrypted;
             }
         }
     }
@@ -601,6 +623,9 @@ public class DataSourceComponent extends TaoComponent {
         }
         if (!StringUtilities.isNullOrEmpty(this.userName)) {
             dataSource.setCredentials(this.userName, this.password);
+        }
+        if (dataSource.isBearerTokenSupported()) {
+            dataSource.setBearerToken(this.secret);
         }
         return dataSource;
     }

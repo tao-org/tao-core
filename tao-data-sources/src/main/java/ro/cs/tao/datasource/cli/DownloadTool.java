@@ -138,7 +138,8 @@ public class DownloadTool {
                 DataSourceComponent dsComponent = new DataSourceComponent(satellite, dataSourceName);
                 dsComponent.setFetchMode(getArgValue(commandLine, Constants.MODE, FetchMode.class, FetchMode.OVERWRITE));
                 dsComponent.setUserCredentials(getArgValue(commandLine, Constants.USER, String.class, null),
-                                               getArgValue(commandLine, Constants.PWD, String.class, null));
+                                               getArgValue(commandLine, Constants.PWD, String.class, null),
+                                               null);
                 final DataQuery query = dsComponent.createQuery();
                 Integer value = getArgValue(commandLine, Constants.PAGE_SIZE, Integer.class, null);
                 if (value != null) {
