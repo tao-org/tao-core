@@ -56,7 +56,7 @@ INSERT INTO component.parameter_type (type) VALUES
 
 -- Pixel types
 INSERT INTO product.pixel_type (type) VALUES
-('UINT8'), ('INT8'), ('UINT16'), ('INT16'), ('UINT32'), ('INT32'), ('FLOAT32'), ('FLOAT64');
+('UINT8'), ('INT8'), ('UINT16'), ('INT16'), ('UINT32'), ('INT32'), ('FLOAT32'), ('FLOAT64'), ('UNKNOWN');
 
 -- Sensor types
 INSERT INTO product.sensor_type (type) VALUES
