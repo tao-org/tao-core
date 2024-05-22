@@ -37,6 +37,7 @@ public class DataSourceDescriptor {
     private Map<String, DataSourceParameter> parameters;
     private boolean requiresAuthentication;
     private boolean requires2FA;
+    private boolean requiresBearerToken;
 
     public DataSourceDescriptor() {
     }
@@ -44,7 +45,7 @@ public class DataSourceDescriptor {
     public DataSourceDescriptor(String mission, String sensor, String dataSourceName, String category, String description,
 								String temporalCoverage, String spatialCoverage,
 								Map<String, DataSourceParameter> parameters,
-                                boolean requiresAuthentication, boolean requires2FA) {
+                                boolean requiresAuthentication, boolean requires2FA, boolean requiresBearerToken) {
         this.mission = mission;
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
@@ -55,6 +56,7 @@ public class DataSourceDescriptor {
 		this.spatialCoverage = spatialCoverage;
         this.requiresAuthentication = requiresAuthentication;
         this.requires2FA = requires2FA;
+        this.requiresBearerToken = requiresBearerToken;
         if (this.parameters != null) {
             Iterator<String> iterator = parameters.keySet().iterator();
             int order = 1;
@@ -148,6 +150,14 @@ public class DataSourceDescriptor {
 
     public void setRequires2FA(boolean requires2FA) {
         this.requires2FA = requires2FA;
+    }
+
+    public boolean isRequiresBearerToken() {
+        return requiresBearerToken;
+    }
+
+    public void setRequiresBearerToken(boolean requiresBearerToken) {
+        this.requiresBearerToken = requiresBearerToken;
     }
 
     public Map<String, DataSourceParameter> getParameters() {
