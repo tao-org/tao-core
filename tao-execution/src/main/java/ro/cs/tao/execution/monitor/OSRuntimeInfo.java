@@ -16,12 +16,10 @@
 
 package ro.cs.tao.execution.monitor;
 
-import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.utils.executors.*;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,18 +45,6 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         this.isRemote = remote;
         this.runtimeClass = clazz;
         this.logger = Logger.getLogger(getClass().getName());
-    }
-
-    public static <R extends RuntimeInfo> OSRuntimeInfo<R> createInspector(String host, String user, String password,
-                                                                           AuthenticationType authType, Class<R> clazz) throws Exception {
-        String localhost = InetAddress.getLocalHost().getHostName();
-        if (localhost.equals(host)) {
-            return SystemUtils.IS_OS_WINDOWS
-                   ? new Windows<>(host, user, password, false, authType, clazz)
-                   : new Linux<>(host, authType, user, password, false, clazz);
-        } else {
-            return new Linux<>(host, authType, user, password, true, clazz);
-        }
     }
 
     public abstract double getProcessorUsage() throws IOException;
@@ -523,7 +509,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         }
     }
 
-    private static class Consumer implements OutputConsumer {
+    static class Consumer implements OutputConsumer {
         private final List<String> messages = new ArrayList<>();
         @Override
         public void consume(String message) {

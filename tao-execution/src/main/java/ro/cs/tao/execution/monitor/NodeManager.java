@@ -555,13 +555,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         if (NodeRole.K8S.equals(node.getRole())) return null;
 
         AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
-        OSRuntimeInfo<RuntimeInfo> osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(),
-                                                                                 type == AuthenticationType.PASSWORD
-                                                                                    ? node.getUserPass() : node.getSshKey(),
-                                                                                 type,
-                                                                                 RuntimeInfo.class);
-        final RuntimeInfo info = osRuntimeInfo.getInfo();
-        if (osRuntimeInfo instanceof OSRuntimeInfo.Linux) {
+        final NodeRuntimeInspector inspector = RuntimeInspectorFactory.getInstance()
+                                                                      .get(node.getId(),
+                                                                           node.getRole(),
+                                                                           type,
+                                                                           node.getUserName(),
+                                                                           type == AuthenticationType.PASSWORD ? node.getUserPass() : node.getSshKey());
+        final RuntimeInfo info = inspector.getInfo();
+        if (inspector instanceof LinuxRuntimeInspector) {
             // Linux reports CPU as the sum of the cores load, hence it may be > 100%
             info.setCpuTotal(info.getCpuTotal() / (double) node.getFlavor().getCpu());
         }
