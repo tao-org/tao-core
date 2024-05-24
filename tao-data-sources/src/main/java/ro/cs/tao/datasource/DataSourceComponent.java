@@ -479,10 +479,12 @@ public class DataSourceComponent extends TaoComponent {
         Object token = null;
         if (products != null && !products.isEmpty()) {
             dataSource = createDataSource(products.get(0));
-            try {
-                token = dataSource.authenticate();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            if (fetchMode == FetchMode.OVERWRITE || fetchMode == FetchMode.RESUME) {
+                try {
+                    token = dataSource.authenticate();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         int idx = 0;
@@ -579,11 +581,13 @@ public class DataSourceComponent extends TaoComponent {
             } catch (Exception e) {
                 errorMessage = e.getMessage();
                 // maybe the token has just expired, retry one more time
-                try {
-                    token = dataSource.authenticate();
-                    idx--;
-                } catch (IOException inner) {
-                    errorMessage = inner.getMessage();
+                if (fetchMode == FetchMode.OVERWRITE || fetchMode == FetchMode.RESUME) {
+                    try {
+                        token = dataSource.authenticate();
+                        idx--;
+                    } catch (IOException inner) {
+                        errorMessage = inner.getMessage();
+                    }
                 }
             } finally {
                 idx++;
