@@ -153,6 +153,7 @@ CREATE TABLE workflow.query
 	data_source varchar(512) NOT NULL,
 	username varchar NULL,
 	password varchar NULL,
+	secret varchar,
 	page_size integer NULL,
 	page_number integer NULL,
 	_limit integer NULL,  -- reserved word

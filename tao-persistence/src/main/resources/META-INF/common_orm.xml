@@ -1201,6 +1201,9 @@
             <basic name="password">
                 <column name="password" nullable="true" column-definition="varchar NULL"/>
             </basic>
+            <basic name="secret">
+                <column name="secret" nullable="true" column-definition="varchar NULL"/>
+            </basic>
             <basic name="pageSize">
                 <column name="page_size" nullable="true" column-definition="integer NULL"/>
             </basic>
