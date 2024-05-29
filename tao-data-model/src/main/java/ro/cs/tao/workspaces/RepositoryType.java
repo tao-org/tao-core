@@ -26,6 +26,7 @@ public enum RepositoryType implements TaoEnum<Integer> {
           new LinkedHashMap<String, Boolean>() {{
               put("openstack.auth.url", false); put("openstack.tenantId", false); put("openstack.domain", false);
               put("openstack.user", false); put("openstack.password", false); put("openstack.bucket", true);
+              put("openstack.public.url", false);
     }}, false, true),
     @XmlEnumValue("4")
     STAC(4, "STAC repository", "stac", "stac.url", null, null, "position",

@@ -210,7 +210,7 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 INSERT INTO workspace.repository_type (id, name, params) VALUES
 (1, 'Local repository', '{"root":true}'),
 (2, 'AWS S3 repository', '{"aws.region":true,"aws.access.key":false,"aws.secret.key":false,"aws.bucket":true,"aws.endpoint":false}'),
-(3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true}'),
+(3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true,"openstack.public.url":false}'),
 (4, 'STAC repository', '{"stac.url":true, "page.size":false}'),
 (5, 'Network share repository', '{"smb.server":true,"smb.domain":false,"smb.share":true,"smb.user":false,"smb.password":false}'),
 (6, 'FTP repository', '{"ftp.server":true,"ftp.user":false,"ftp.password":false}'),
@@ -311,6 +311,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (6, 'openstack.volume.ssd.device', '/dev/sds', 'Linux device for SSD', 'string', 'SSD device', null, now()),
 (6, 'openstack.execute.installers', 'false', 'Run post-install steps', 'bool', 'Run post-install steps', null, now()),
 (6, 'openstack.node.user', 'eouser', 'Default account on a new node', 'string', 'Default account', null, now()),
+(6, 'openstack.public.url', '', 'HTTPS URL for accessing the user bucket', 'string', 'HTTPS Swift URL', null, now()),
 (7, 'aws.region', 'eu-central-1', 'AWS region', 'string', 'AWS region', null, now()),
 (7, 'aws.access.key', null, 'AWS access key', 'string', 'Access key', null, now()),
 (7, 'aws.secret.key', null, 'AWS secret key', 'string', 'Secret key', null, now()),
