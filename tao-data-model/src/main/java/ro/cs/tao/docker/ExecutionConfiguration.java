@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ExecutionConfiguration {
-    private static Boolean forceMemoryRequirements;
-    private static String dockerRegistry;
     private static Boolean useDocker;
 
     public static boolean developmentModeEnabled() {
@@ -21,11 +19,8 @@ public class ExecutionConfiguration {
     }
 
     public static boolean forceMemoryConstraint() {
-        if (forceMemoryRequirements == null) {
-            forceMemoryRequirements = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Constants.FORCE_MEMORY_REQUIREMENTS_KEY,
-                                                                                                           "false"));
-        }
-        return forceMemoryRequirements;
+        return Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Constants.FORCE_MEMORY_REQUIREMENTS_KEY,
+                                                                                "false"));
     }
 
     public static DockerVolumeMap getMasterContainerVolumeMap() {
@@ -92,10 +87,7 @@ public class ExecutionConfiguration {
     }
 
     public static String getDockerRegistry() {
-        if (dockerRegistry == null) {
-            dockerRegistry = ConfigurationManager.getInstance().getValue(Constants.DOCKER_REGISTRY);
-        }
-        return dockerRegistry;
+        return ConfigurationManager.getInstance().getValue(Constants.DOCKER_REGISTRY);
     }
 
     public static boolean useDocker() {
