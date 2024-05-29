@@ -192,6 +192,15 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         return newParameter;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TemplateParameterDescriptor)) return false;
+        if (!super.equals(o)) return false;
+        TemplateParameterDescriptor that = (TemplateParameterDescriptor) o;
+        return id.equals(that.id);
+    }
+
     private void removeEmptyParameter(ParameterDescriptor descriptor) {
         if (this.template != null) {
             String templateContents = this.template.getContents();
