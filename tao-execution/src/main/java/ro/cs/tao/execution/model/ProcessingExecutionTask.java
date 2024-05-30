@@ -159,7 +159,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
             return null;
         }
         Map<String, Object> inputParams = new HashMap<>();
-        final List<ParameterDescriptor> parameterDescriptors = this.component.getParameterDescriptors();
+        final Set<ParameterDescriptor> parameterDescriptors = this.component.getParameterDescriptors();
         if (inputParameterValues != null) {
             for (Variable input : inputParameterValues) {
                 String strValue = input.getValue();

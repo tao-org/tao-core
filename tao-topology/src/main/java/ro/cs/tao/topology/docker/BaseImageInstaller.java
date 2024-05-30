@@ -320,7 +320,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     containerApplications.stream().filter(a -> a.getName().equals(component.getId()) ||
                                                                a.getName().equals(component.getLabel())).findFirst()
                                          .ifPresent(application -> component.setFileLocation(application.getPath()));
-                    List<ParameterDescriptor> parameterDescriptors = component.getParameterDescriptors();
+                    Set<ParameterDescriptor> parameterDescriptors = component.getParameterDescriptors();
                     if (parameterDescriptors != null) {
                         parameterDescriptors.forEach(p -> {
                             if (p.getName() == null) {
