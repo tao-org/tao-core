@@ -218,7 +218,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     public int getActiveNodes() throws TopologyException {
-        return (int) listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).count();
+        return listNodes().size();
     }
 
     /**
@@ -500,7 +500,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected final void addInitialActiveNodes() {
         List<NodeDescription> nodes = listNodes();
         for (NodeDescription node : nodes) {
-            if (node.getActive() != null && node.getActive() && !NodeRole.K8S.equals(node.getRole())) {
+            if (node.getActive() != null && node.getActive()) {
                 addNode(node, new RuntimeInfo());
                 if (node.getVolatile()) {
                     nodeUpdates.put(node.getId(), LocalDateTime.now());
@@ -510,7 +510,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected List<NodeDescription> listNodes() throws TopologyException {
-        return this.nodeProvider.listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).collect(Collectors.toList());
+        return this.nodeProvider.listNodes();
     }
 
     protected NodeData getSubscriptionNodeCandidate(ResourceSubscription subscription, int cpus, long memory) {
@@ -627,8 +627,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
-        if (NodeRole.K8S.equals(node.getRole())) return null;
-
         AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
         final NodeRuntimeInspector inspector = RuntimeInspectorFactory.getInstance()
                                                                       .get(node.getId(),
