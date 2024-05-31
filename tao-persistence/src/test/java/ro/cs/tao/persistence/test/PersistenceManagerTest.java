@@ -50,10 +50,8 @@ import ro.cs.tao.workflow.enums.Status;
 import java.awt.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by oana on 7/18/2017.
@@ -583,8 +581,8 @@ public class PersistenceManagerTest {
 
         component.setVariables(variables);
 
-        // list of component parameters
-        List<ParameterDescriptor> parameters = new ArrayList<>();
+        // set of component parameters
+        Set<ParameterDescriptor> parameters = new LinkedHashSet<>();
 
         final ParameterDescriptor param1 = new ParameterDescriptor();
         param1.setId("testParam1");
