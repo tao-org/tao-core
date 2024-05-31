@@ -983,7 +983,7 @@ public class Orchestrator extends Notifiable {
             }
             cardinality = valuesList.size();
             if (cardinality == 0) { // no point to continue since we have nothing to do
-                changeStatus(nextTask, ExecutionStatus.CANCELLED, String.format("Task %s produced no results", TaskUtilities.getTaskName(task)));
+                changeStatus(nextTask, ExecutionStatus.CANCELLED, String.format("Task %s produced no results", TaskUtilities.getTaskDescriptiveName(task)));
             }
             for (int i = 0; i < cardinality; i++) {
                 String file = valuesList.get(i);
@@ -1013,7 +1013,7 @@ public class Orchestrator extends Notifiable {
                 int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
                 if (expectedCardinality < -1) { // allow also -1, it represents no input required for the task
                     String message = String.format("Cannot determine input cardinality for task %s",
-                                                   TaskUtilities.getTaskName(nextTask));
+                                                   TaskUtilities.getTaskDescriptiveName(nextTask));
                     changeStatus(nextTask, ExecutionStatus.CANCELLED, message);
                 }
                 if (cardinality > 1 && expectedCardinality == 1) {
@@ -1035,7 +1035,7 @@ public class Orchestrator extends Notifiable {
                 if (expectedCardinality != 0) {
                     if (cardinality < expectedCardinality) {
                         String message = String.format("Insufficient inputs for task %s [expected %s, received %s]",
-                                                       TaskUtilities.getTaskName(nextTask),
+                                                       TaskUtilities.getTaskDescriptiveName(nextTask),
                                                        expectedCardinality, cardinality);
                         changeStatus(nextTask, ExecutionStatus.CANCELLED, message);
                     }

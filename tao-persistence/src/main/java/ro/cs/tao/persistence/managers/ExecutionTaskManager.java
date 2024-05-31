@@ -25,6 +25,7 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -399,6 +400,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public boolean isTerminalTask(long taskId) {
         return repository.isTerminalTask(taskId);
+    }
+
+    @Override
+    public TransitionBehavior getTransitionBehavior(long taskId) {
+        return EnumUtils.getEnumConstantByValue(TransitionBehavior.class, repository.getTransitionBehavior(taskId));
     }
 
     //endregion

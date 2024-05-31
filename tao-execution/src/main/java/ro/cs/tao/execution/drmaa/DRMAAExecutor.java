@@ -36,7 +36,6 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.ContainerProvider;
-import ro.cs.tao.persistence.NodeDBProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.UserPrincipal;
@@ -236,7 +235,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (tasks != null) {
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {
-                final String taskName = TaskUtilities.getTaskName(task);
+                final String taskName = TaskUtilities.getTaskDescriptiveName(task);
                 try {
                     Session session = getSession(task.getJob().getEnvironment());
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
@@ -463,7 +462,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         JobTemplate jt;
         try {
             logger.entering(getClass().getSimpleName(), "createJobTemplate(" + task.getId() + ")");
-            final String taskName = TaskUtilities.getTaskName(task);
+            final String taskName = TaskUtilities.getTaskDescriptiveName(task);
             String[] pArgs = null;
             final ProcessingComponent component = task.getComponent();
             final Container container = containerProvider.get(component.getContainerId());
