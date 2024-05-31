@@ -204,7 +204,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     logger.severe("Cannot set job status: " + e.getMessage());
                 }
             }
-            final String name = TaskUtilities.getTaskName(task);
+            final String name = TaskUtilities.getTaskDescriptiveName(task);
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
                     if (task.getContext() == null) {

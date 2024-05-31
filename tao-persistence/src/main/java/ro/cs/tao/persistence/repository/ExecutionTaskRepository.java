@@ -103,4 +103,8 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
             "WHERE t.id = :taskId", nativeQuery = true)
     boolean isTerminalTask(@Param("taskId") long taskId);
 
+    @Query(value = "SELECT COALESCE(n.behavior_id, 1) FROM execution.task t JOIN workflow.graph_node n ON n.id = t.graph_node_id WHERE t.id = :taskId",
+           nativeQuery = true)
+    int getTransitionBehavior(@Param("taskId") long taskId);
+
 }

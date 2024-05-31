@@ -17,13 +17,13 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.stereotype.Component;
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -111,4 +111,9 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
 	public List<ExecutionJob> list(List<String> batchIds) {
 		return repository.finbByBatches(batchIds);
 	}
+
+    @Override
+    public List<DataSourceExecutionTask> getDatasourceTasks(long jobId) {
+        return repository.getDatasourceTasks(jobId);
+    }
 }
