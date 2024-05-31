@@ -8,6 +8,7 @@ import ro.cs.tao.eodata.enums.DataFormat;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -162,7 +163,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        ArrayList<ParameterDescriptor> parameters = new ArrayList<>();
+        Set<ParameterDescriptor> parameters = new LinkedHashSet<>();
         parameters.add(newParameter("outmode_string",
                                     String.class,
                                     "ulco",

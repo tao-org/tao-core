@@ -91,7 +91,7 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
 
     @Override
     public ProcessingComponent save(ProcessingComponent entity) throws PersistenceException {
-        List<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
+        Set<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
         Map<ParameterDescriptor, ParameterExpansionRule> map = new HashMap<>();
         if (descriptors != null) {
             descriptors.forEach(d -> {
