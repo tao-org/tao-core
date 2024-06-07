@@ -496,6 +496,7 @@ public class TaskUtilities {
      * @param job   The job
      */
     public static List<DataSourceExecutionTask> findDataSourceTasks(ExecutionJob job) {
-        return jobProvider.getDatasourceTasks(job.getId());
+        List<ExecutionTask> tasks = taskProvider.getDataSourceTasks(job.getId());
+        return tasks.stream().map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
     }
 }
