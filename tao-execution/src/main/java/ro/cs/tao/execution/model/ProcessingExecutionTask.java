@@ -73,11 +73,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName)) ||
                 this.component.getParameterDescriptors().stream().filter(p -> p instanceof TemplateParameterDescriptor)
                               .map(p -> (TemplateParameterDescriptor) p)
-                              .anyMatch(p -> p.getParameters().stream().anyMatch(d -> d.getName().equals(parameterName)));
+                              .anyMatch(p -> p.getParameters().stream().anyMatch(d -> parameterName.equals(p.getName()+"~"+d.getName())));
         if (!descriptorExists) {
             if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterName)) {
                 throw new ValidationException(String.format("The parameter [%s] does not exists in the component '%s'",
-                                                            parameterName, component.getLabel()));
+                        parameterName, component.getLabel()));
             }
         }
         if (this.inputParameterValues == null) {
@@ -168,16 +168,26 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 ParameterDescriptor descriptor = parameterDescriptors.stream()
                                                                      .filter(d -> d.getName().equals(key))
                                                                      .findFirst().orElse(null);
+                if(descriptor instanceof TemplateParameterDescriptor){
+                    //create a map of every template parameter
+                    inputParams.put(key, new HashMap<>());
+                    continue;
+                }
                 if (descriptor == null) {
                     // maybe it is a sub-parameter of a template parameter
                     TemplateParameterDescriptor templateDescriptor = (TemplateParameterDescriptor) parameterDescriptors.stream()
                                                      .filter(d -> d.getType() == ParameterType.TEMPLATE &&
-                                                             ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> p.getName().equals(key)))
+                                                             ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> key.equals(d.getName() + "~" + p.getName())))
                                                      .findFirst().orElse(null);
                     if (templateDescriptor != null) {
+                        //sub-parameter should be added to the appropriate map
                         descriptor = templateDescriptor.getParameters().stream()
-                                                       .filter(d -> d.getName().equals(key)).findFirst().get();
+                                                       .filter(d -> key.equals(templateDescriptor.getName() + "~" + d.getName())).findFirst().get();
                         value = getParameterTypedValue(descriptor, strValue);
+                        Object templateObj = inputParams.get(templateDescriptor.getName());
+                        Map<String, Object> templateMap = (Map<String, Object>) templateObj;
+                        templateMap.put(key.split("~")[1], value);
+                        continue;
                     } else {
                         // If it's not a parameter or a sub-parameter, it must be a source
                         value = getParameterTypedValue(descriptor, strValue);
