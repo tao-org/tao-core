@@ -73,6 +73,7 @@ public class FileUtilities {
     private static final DecimalFormat UNIT_FORMAT = new DecimalFormat("#,##0.#");
     private static final Pattern URI_PATTERN = Pattern.compile("\\w+:\\/{2,3}[A-Za-z0-9._/]+");
     private static final Pattern PATH_PATTERN = Pattern.compile("^/(.*)*");
+    private static final String INVALID_FILE_NAME_CHARACTERS = "[\\\\/:\"*?<>|]+";
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static String getExtension(Path path) {
@@ -1392,10 +1393,12 @@ public class FileUtilities {
                 Files.walkFileTree(path, new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
-                            while (channel.read(buffer) != -1) {
-                                shaDigest.update(buffer);
-                                buffer.clear();
+                        if (attrs != null && !attrs.isDirectory()) {
+                            try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
+                                while (channel.read(buffer) != -1) {
+                                    shaDigest.update(buffer);
+                                    buffer.clear();
+                                }
                             }
                         }
                         return FileVisitResult.CONTINUE;
@@ -1410,5 +1413,9 @@ public class FileUtilities {
             hash = builder.toString();
         }
         return hash;
+    }
+
+    public static String ensureValidFileName(String name) {
+        return name != null ? name.replaceAll(INVALID_FILE_NAME_CHARACTERS, "_") : null;
     }
 }
