@@ -156,9 +156,9 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     @Override
     public WorkflowDescriptor save(WorkflowDescriptor workflow) throws PersistenceException {
         // check method parameters
-        if(!checkEntity(workflow, false)) {
+        /*if(!checkEntity(workflow, false)) {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow !");
-        }
+        }*/
         // by default a new workflow is active
         workflow.setActive(true);
         // save the new WorkflowDescriptor entity and return it
