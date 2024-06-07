@@ -248,6 +248,8 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
 
     @Override
     protected boolean checkId(Long entityId, boolean existingEntity) {
-        return entityId != null && (existingEntity == (get(entityId) != null));
+        return existingEntity
+               ? entityId != null && (get(entityId) != null)
+               : entityId == null;
     }
 }
