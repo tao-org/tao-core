@@ -218,7 +218,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     public int getActiveNodes() throws TopologyException {
-        return listNodes().size();
+        return (int) listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).count();
     }
 
     /**
@@ -500,7 +500,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected final void addInitialActiveNodes() {
         List<NodeDescription> nodes = listNodes();
         for (NodeDescription node : nodes) {
-            if (node.getActive() != null && node.getActive()) {
+            if (node.getActive() != null && node.getActive() && !NodeRole.K8S.equals(node.getRole())) {
                 addNode(node, new RuntimeInfo());
                 if (node.getVolatile()) {
                     nodeUpdates.put(node.getId(), LocalDateTime.now());
@@ -510,7 +510,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected List<NodeDescription> listNodes() throws TopologyException {
-        return this.nodeProvider.listNodes();
+        return this.nodeProvider.listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).collect(Collectors.toList());
     }
 
     protected NodeData getSubscriptionNodeCandidate(ResourceSubscription subscription, int cpus, long memory) {
@@ -535,9 +535,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             // Second, try to find an instance of a flavor
             for (Map.Entry<NodeFlavor, Integer> entry : suitableFlavors.entrySet()) {
                 final List<Map.Entry<String, NodeRuntime>> list = this.nodes.entrySet().stream()
-                                                                               .filter(e -> subscription.getUserId().equals(e.getValue().getNode().getOwner()) &&
-                                                                                       e.getValue().getNode().getFlavor().equals(entry.getKey()))
-                                                                               .collect(Collectors.toList());
+                                                                            .filter(e -> subscription.getUserId().equals(e.getValue().getNode().getOwner()) &&
+                                                                                    e.getValue().getNode().getFlavor().equals(entry.getKey()))
+                                                                            .collect(Collectors.toList());
                 if (!list.isEmpty()) {
                     for (Map.Entry<String, NodeRuntime> candidate : list) {
                         final NodeRuntime nodeRuntime = candidate.getValue();
@@ -584,9 +584,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected NodeDescription createNodeIfMatchingFlavor(List<Map.Entry<String, NodeRuntime>> userNodes, String userId, int cpus, long memory) throws Exception {
         List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
         NodeFlavor matchingFlavor = nodeFlavors.stream()
-                .filter(f -> f.getCpu() >= cpus && f.getMemory() >= 1.5 * memory)
-                .min(Comparator.comparingInt(NodeFlavor::getCpu))
-                .orElse(null);
+                                               .filter(f -> f.getCpu() >= cpus && f.getMemory() >= 1.5 * memory)
+                                               .min(Comparator.comparingInt(NodeFlavor::getCpu))
+                                               .orElse(null);
         if (matchingFlavor != null) {
             return createNode(userId, matchingFlavor, userNodes.size());
         }
@@ -627,6 +627,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
+        if (NodeRole.K8S.equals(node.getRole())) return null;
+
         AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
         final NodeRuntimeInspector inspector = RuntimeInspectorFactory.getInstance()
                                                                       .get(node.getId(),
