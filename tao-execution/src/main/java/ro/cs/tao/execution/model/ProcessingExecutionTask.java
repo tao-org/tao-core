@@ -31,6 +31,7 @@ import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 /**
@@ -168,11 +169,6 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 ParameterDescriptor descriptor = parameterDescriptors.stream()
                                                                      .filter(d -> d.getName().equals(key))
                                                                      .findFirst().orElse(null);
-                if(descriptor instanceof TemplateParameterDescriptor){
-                    //create a map of every template parameter
-                    inputParams.put(key, new HashMap<>());
-                    continue;
-                }
                 if (descriptor == null) {
                     // maybe it is a sub-parameter of a template parameter
                     TemplateParameterDescriptor templateDescriptor = (TemplateParameterDescriptor) parameterDescriptors.stream()
@@ -180,12 +176,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                              ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> key.equals(d.getName() + "~" + p.getName())))
                                                      .findFirst().orElse(null);
                     if (templateDescriptor != null) {
+                        Map<String, Object> templateMap = (Map<String, Object>) inputParams.computeIfAbsent(templateDescriptor.getName(), k -> new HashMap<String, Object>());
                         //sub-parameter should be added to the appropriate map
                         descriptor = templateDescriptor.getParameters().stream()
                                                        .filter(d -> key.equals(templateDescriptor.getName() + "~" + d.getName())).findFirst().get();
                         value = getParameterTypedValue(descriptor, strValue);
-                        Object templateObj = inputParams.get(templateDescriptor.getName());
-                        Map<String, Object> templateMap = (Map<String, Object>) templateObj;
                         templateMap.put(key.split("~")[1], value);
                         continue;
                     } else {
