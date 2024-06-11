@@ -7,6 +7,7 @@ import ro.cs.tao.utils.executors.OutputAccumulator;
 import ro.cs.tao.utils.executors.ProcessExecutor;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,5 +70,48 @@ public class DockerHelper {
             }
         }
         return version;
+    }
+
+    public static void saveImage(String imageName, Path file) throws IOException {
+        if (isDockerFound) {
+            List<String> arguments = new ArrayList<>();
+            arguments.add("docker");
+            arguments.add("save");
+            arguments.add("-o");
+            arguments.add(FileUtilities.asUnixPath(file, true));
+            arguments.add(imageName);
+            try {
+                Executor<?> executor = ProcessExecutor.create(ExecutorType.PROCESS,
+                                                              InetAddress.getLocalHost().getHostName(),
+                                                              arguments);
+                OutputAccumulator accumulator = new OutputAccumulator();
+                executor.setOutputConsumer(accumulator);
+                if (executor.execute(true) != 0) {
+                    throw new IOException(accumulator.getOutput());
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    public static void loadImage(Path imageFile) throws IOException {
+        if (isDockerFound) {
+            List<String> arguments = new ArrayList<>();
+            arguments.add("docker");
+            arguments.add("load");
+            arguments.add("-i");
+            arguments.add(FileUtilities.asUnixPath(imageFile, true));
+            try {
+                Executor<?> executor = ProcessExecutor.create(ExecutorType.PROCESS,
+                                                              InetAddress.getLocalHost().getHostName(),
+                                                              arguments);
+                OutputAccumulator accumulator = new OutputAccumulator();
+                executor.setOutputConsumer(accumulator);
+                if (executor.execute(true) != 0) {
+                    throw new IOException(accumulator.getOutput());
+                }
+            } catch (Exception ignored) {
+            }
+        }
     }
 }
