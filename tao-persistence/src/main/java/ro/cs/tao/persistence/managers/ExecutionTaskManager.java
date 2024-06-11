@@ -404,7 +404,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     @Override
     public TransitionBehavior getTransitionBehavior(long taskId) {
-        return EnumUtils.getEnumConstantByValue(TransitionBehavior.class, repository.getTransitionBehavior(taskId));
+        Integer behavior = repository.getTransitionBehavior(taskId);
+        if (behavior == null) {
+            behavior = 1;
+        }
+        return EnumUtils.getEnumConstantByValue(TransitionBehavior.class, behavior);
     }
 
     //endregion
