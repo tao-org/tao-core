@@ -13,12 +13,11 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.datasource.util;
+package ro.cs.tao.utils;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
