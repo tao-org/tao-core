@@ -217,8 +217,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
-    public int getActiveNodes() throws TopologyException {
-        return (int) listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).count();
+    /**
+     * Returns the number of nodes that are active.
+     */
+    public int getActiveNodesCount() throws TopologyException {
+        return (int) nodeProvider.listNodes().stream().filter(n -> n.getActive()).count();
     }
 
     /**
@@ -510,7 +513,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected List<NodeDescription> listNodes() throws TopologyException {
-        return this.nodeProvider.listNodes().stream().filter(n -> NodeRole.K8S != n.getRole()).collect(Collectors.toList());
+        return this.nodeProvider.listNodes().stream().filter(n -> Boolean.TRUE.equals(n.getActive()) &&
+                                                                  NodeRole.K8S != n.getRole())
+                                .collect(Collectors.toList());
     }
 
     protected NodeData getSubscriptionNodeCandidate(ResourceSubscription subscription, int cpus, long memory) {
@@ -627,8 +632,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
-        if (NodeRole.K8S.equals(node.getRole())) return null;
-
         AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
         final NodeRuntimeInspector inspector = RuntimeInspectorFactory.getInstance()
                                                                       .get(node.getId(),
@@ -821,7 +824,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         public void run() {
             refreshInProgress = true;
             try {
-                List<NodeDescription> allNodes = listNodes();
+                List<NodeDescription> allNodes = nodeProvider.listNodes().stream()
+                                                             .filter(n -> Boolean.TRUE.equals(n.getActive()))
+                                                             .collect(Collectors.toList());
                 Set<String> allMap = new HashSet<>();
                 double cpuTotal = -1.0d;
                 for (NodeDescription node : allNodes) {
@@ -831,37 +836,32 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         NodeRuntime nodeRuntime = nodes.get(host);
                         if (nodeRuntime == null) {
                             // the node does not exist in the list
-                            if (node.getActive()) {
-                                addNode(node, buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
-                            }
+                            //if (node.getActive()) {
+                            addNode(node, buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
+                            //}
                         } else {
                             // the node already exists in the list
-                            final boolean isVolatile = Boolean.TRUE.equals(nodeRuntime.getNode().getVolatile());
-                            if (!node.getActive()) {
-                                nodeRuntime.setRuntimeInfo(buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
-                            } else {
-                                if (isVolatile) {
-                                    // Volatile nodes should be destroyed if no task is running on them for a while
-                                    final LocalDateTime now = LocalDateTime.now();
-                                    int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
-                                                                                         .getValue("topology.remove.node.after.execution.delay",
-                                                                                                   "1800"));
-                                    final LocalDateTime lastUpdated = NodeManager.this.nodeUpdates.get(host);
-                                    final int recentTasks = taskProvider.countByHostSince(host, now.minusSeconds(keepAlive));
-                                    if (recentTasks == 0 && lastUpdated != null && now.minusSeconds(keepAlive).isAfter(lastUpdated)) {
-                                        uninstallNode(nodeRuntime.getNode());
-                                        nodes.remove(host);
-                                    } else {
-                                        if (recentTasks > 0) {
-                                            NodeManager.this.nodeUpdates.put(host, taskProvider.getLastRunTask(host));
-                                        }
-                                        // refresh the node information
-                                        nodes.get(host).setNode(nodeProvider.getNode(host));
-                                    }
+                            if (Boolean.TRUE.equals(nodeRuntime.getNode().getVolatile())) {
+                                // Volatile nodes should be destroyed if no task is running on them for a while
+                                final LocalDateTime now = LocalDateTime.now();
+                                int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
+                                                                                     .getValue("topology.remove.node.after.execution.delay",
+                                                                                               "1800"));
+                                final LocalDateTime lastUpdated = NodeManager.this.nodeUpdates.get(host);
+                                final int recentTasks = taskProvider.countByHostSince(host, now.minusSeconds(keepAlive));
+                                if (recentTasks == 0 && lastUpdated != null && now.minusSeconds(keepAlive).isAfter(lastUpdated)) {
+                                    uninstallNode(nodeRuntime.getNode());
+                                    nodes.remove(host);
                                 } else {
+                                    if (recentTasks > 0) {
+                                        NodeManager.this.nodeUpdates.put(host, taskProvider.getLastRunTask(host));
+                                    }
                                     // refresh the node information
                                     nodes.get(host).setNode(nodeProvider.getNode(host));
                                 }
+                            } else {
+                                // refresh the node information
+                                nodes.get(host).setNode(nodeProvider.getNode(host));
                             }
                         }
                     }

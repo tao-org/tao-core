@@ -109,7 +109,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
         this.queue = new LinkedBlockingDeque<>();
         this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl,
-                                                     NodeManager.isAvailable() ? NodeManager.getInstance().getActiveNodes() : 1);
+                                                     NodeManager.isAvailable() ? NodeManager.getInstance().getActiveNodesCount() : 1);
         final Set<TaskListener> services = ServiceRegistryManager.getInstance().getServiceRegistry(TaskListener.class).getServices();
         this.taskListeners = new ArrayList<>();
         if (services != null) {
