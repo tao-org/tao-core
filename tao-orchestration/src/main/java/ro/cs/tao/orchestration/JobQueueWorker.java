@@ -23,7 +23,7 @@ public class JobQueueWorker extends Thread {
         this.queue = queue;
         this.setName("job-queue-worker");
         this.logger = Logger.getLogger(JobQueueWorker.class.getName());
-        this.maxJobs = NodeManager.getInstance().getActiveNodes() * 2;
+        this.maxJobs = NodeManager.getInstance().getActiveNodesCount() * 2;
         this.monitor = new Object();
     }
 

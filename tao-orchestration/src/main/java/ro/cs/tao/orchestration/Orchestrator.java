@@ -503,7 +503,7 @@ public class Orchestrator extends Notifiable {
     int getMaximumAllowedJobs() {
         final boolean shouldPoolNodes = !ConfigurationManager.getInstance().getBooleanValue("topology.dedicated.user.nodes");
         int nodeUserLimit = Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.node.user.limit", "1"));
-        return shouldPoolNodes ? NodeManager.getInstance().getActiveNodes() * 2 : (int) userProvider.count();
+        return shouldPoolNodes ? NodeManager.getInstance().getActiveNodesCount() * 2 : (int) userProvider.count();
     }
 
     public int purgeJobs(String user) {
