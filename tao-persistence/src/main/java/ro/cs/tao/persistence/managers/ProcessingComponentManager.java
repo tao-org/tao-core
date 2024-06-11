@@ -70,6 +70,11 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     }
 
     @Override
+    public List<ProcessingComponent> listByContainer(String containerId) {
+        return repository.getByContainer(containerId);
+    }
+
+    @Override
     public boolean hasCopyComponent(String containerId) {
         return getByLabel("Copy", containerId) != null;
     }
