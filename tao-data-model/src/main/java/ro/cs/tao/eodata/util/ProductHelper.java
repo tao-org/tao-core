@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 public interface ProductHelper {
     String URL_SEPARATOR = "/";
 
+    boolean isIntended(String name);
+
     String getName();
 
     void setName(String name);
