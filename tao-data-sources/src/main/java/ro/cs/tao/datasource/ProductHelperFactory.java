@@ -14,11 +14,10 @@ public class ProductHelperFactory {
         ProductHelper helper = null;
         if (helpers != null) {
             for (ProductHelper h : helpers) {
-                try {
+                if (h.isIntended(productName)) {
                     h.setName(productName);
                     helper = h.duplicate();
                     break;
-                } catch (Exception ignored) {
                 }
             }
         }

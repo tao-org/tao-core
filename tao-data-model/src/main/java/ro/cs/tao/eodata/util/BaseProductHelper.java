@@ -177,5 +177,10 @@ public abstract class BaseProductHelper implements ProductHelper {
         return tokens;
     }
 
+    @Override
+    public boolean isIntended(String name) {
+        return verifyProductName(name);
+    }
+
     protected abstract boolean verifyProductName(String name);
 }
