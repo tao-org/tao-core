@@ -12,7 +12,9 @@ public enum UserType implements TaoEnum<Integer> {
     @XmlEnumValue("2")
     LDAP(2, "LDAP"),
     @XmlEnumValue("3")
-    KEYCLOAK(3, "Keycloak");
+    KEYCLOAK(3, "Keycloak"),
+    @XmlEnumValue("4")
+    GITHUB(4, "Github");
 
     private final int value;
     private final String description;
