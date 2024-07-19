@@ -106,7 +106,7 @@ INSERT INTO usr.user_status (status) VALUES
 ('PENDING'), ('ACTIVE'), ('DISABLED');
 -- User type
 INSERT INTO usr.user_type (id, type) VALUES
-(1, 'LOCAL'), (2, 'LDAP'), (3, 'KEYCLOAK');
+(1, 'LOCAL'), (2, 'LDAP'), (3, 'KEYCLOAK'), (4, 'GITHUB');
 
 -- Users
 INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, user_type_id, created)
