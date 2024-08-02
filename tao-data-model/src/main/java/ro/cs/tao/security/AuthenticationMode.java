@@ -16,8 +16,10 @@ public enum AuthenticationMode implements TaoEnum<Integer> {
     LDAP(2, "Active Directory authentication"),
     @XmlEnumValue("4")
     KEYCLOAK(4, "Keycloak (OAuth2) authentication"),
-    @XmlEnumValue("7")
-    ANY(7, "All supported authentication providers, in order");
+    @XmlEnumValue("8")
+    GITHUB(8, "Github (OAuth2) authentication"),
+    @XmlEnumValue("15")
+    ANY(15, "All supported authentication providers, in order");
 
     private final int value;
     private final String description;

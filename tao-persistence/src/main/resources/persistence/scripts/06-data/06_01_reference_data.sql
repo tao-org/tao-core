@@ -250,7 +250,8 @@ INSERT INTO config.category (id, name, display_order) VALUES
 (6, 'OpenStack', 6),
 (7, 'Workspaces', 7),
 (8, 'Data Sources', 8),
-(9, 'Kubernetes', 9);
+(9, 'Kubernetes', 9),
+(10, 'Github', 10);
 
 -- Configuration items
 INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "values", last_updated) VALUES
@@ -324,7 +325,10 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (9, 'tao.kubernetes.master.url', 'https://127.0.0.1:6443', 'Cluster URL', 'string', 'Cluster URL', null, now()),
 (9, 'tao.kubernetes.token', null, 'Service account token', 'string', 'Service account token', null, now()),
 (9, 'tao.kubernetes.ca.cert.file', null, 'Service account certificate filepath', 'string', 'Service account certificate filepath', null, now()),
-(9, 'tao.kubernetes.pvc.mappings', '{"/mnt/tao":"tao-pvc","/home/taouser":"tao-user-pvc","/eodata":"tao-eodata-pvc"}', 'Cluster PVC mappings', 'string', 'Cluster PVC mappings', null, now());
+(9, 'tao.kubernetes.pvc.mappings', '{"/mnt/tao":"tao-pvc","/home/taouser":"tao-user-pvc","/eodata":"tao-eodata-pvc"}', 'Cluster PVC mappings', 'string', 'Cluster PVC mappings', null, now()),
+(10, 'github.auth.url', 'https://github.com/login/oauth/access_token', 'Github OAuth URL', 'string', 'Github OAuth URL', null, now()),
+(10, 'github.client.id', '', 'Github OAuth client ID', 'string', 'Github OAuth client ID', null, now()),
+(10, 'github.client.secret', '', 'Github OAuth client secret', 'string', 'Github OAuth client secret', null, now());
 
 -- Subscriptions
 INSERT INTO subscription.subscription_type VALUES
