@@ -860,7 +860,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         argsList.add("&&");
         argsList.add("cp");
         if (recursiveCondition) {
-            argsList.add("-r");
+            argsList.add("-fR");
         }
         // If the output is managed by the component, copy all the folder contents
         if (!isOutputManaged) {
