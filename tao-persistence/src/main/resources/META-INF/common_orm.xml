@@ -1575,6 +1575,33 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.subscription.ExternalResourceSubscription" access="PROPERTY">
+        <table name="subscription.external_resource_subscription"/>        
+        <convert converter="ro.cs.tao.persistence.convert.FlavorConverter" attribute-name="flavors"/>
+        <attributes>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="flavors">
+                <column name="flavors" nullable="true" column-definition="json"/>
+            </basic>
+            <basic name="objectStorageGB">
+                <column name="object_storage_GB" nullable="true" column-definition="smallint"/>
+            </basic>
+            
+            <many-to-many name="users" fetch="EAGER">
+                <join-table name="subscription.external_subscription_users">
+                    <join-column name="subscription_id" referenced-column-name="id"/>
+                    <inverse-join-column name="user_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-merge/>
+                </cascade>
+            </many-to-many>
+
+        </attributes>
+    </entity>
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">

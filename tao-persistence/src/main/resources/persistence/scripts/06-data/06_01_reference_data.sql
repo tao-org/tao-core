@@ -286,6 +286,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (4, 'tao.upload.to.bucket', 'false', 'Move the execution results to the object storage', 'bool', 'Move results to bucket', null, now()),
 (4, 'tao.remove.invalid.products', 'false', 'Delete local products with invalid location', 'bool', 'Delete invalid products', null, now()),
 (4, 'optimize.workflows', 'false', 'Try to combine nodes from the same container', 'bool', 'Optimize workflows', null, now()),
+(4, 'tao.remote.subscriptions.synchronize.rate', '1', 'Interval (in hours) to synchronize external subscriptions', 'int', 'Remote subscription synchronize rate', null, now()),
 (5, 'mail.smtp.auth', 'true', 'Enable SMTP authentication', 'bool', 'Enable SMTP authentication', null, now()),
 (5, 'mail.smtp.starttls.enable', 'true', 'SMTP uses TLS', 'bool', 'SMTP uses TLS', null, now()),
 (5, 'mail.smtp.host', 'smtp.gmail.com', 'SMTP server', 'string', 'SMTP server', null, now()),
