@@ -27,7 +27,11 @@ public abstract class BaseTest {
     }
 
     protected String getValue(String key) {
-        return this.properties != null ? this.properties.getProperty(prefix + key) : null;
+        String value = null;
+        if (this.properties != null) {
+            value = this.properties.getProperty(prefix + key, this.properties.getProperty(key));
+        }
+        return value;
     }
 
 }

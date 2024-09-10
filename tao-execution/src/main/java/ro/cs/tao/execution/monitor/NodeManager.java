@@ -2,6 +2,7 @@ package ro.cs.tao.execution.monitor;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
+import ro.cs.tao.execution.drmaa.DRMAAExecutor;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.execution.model.ExecutionStrategy;
 import ro.cs.tao.execution.model.ExecutionStrategyType;
@@ -682,6 +683,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         } catch (Exception e) {
             addNode(node, new RuntimeInfo());
         } finally {
+            DRMAAExecutor.setQueueWorkers(getActiveNodesCount());
             nodeUpdates.put(node.getId(), LocalDateTime.now());
         }
     }

@@ -97,6 +97,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
      */
     public static void setApplicationId(String id) { appId = id; }
 
+    public static void setQueueWorkers(int value) {
+        if (instance != null) {
+            instance.queueWorker.setParallelism(value);
+        }
+    }
+
     public static DRMAAExecutor getInstance() { return instance; }
 
     public DRMAAExecutor() {
@@ -814,10 +820,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                        : volumeMap.getHostWorkspaceFolder();
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
         if (finalPath.startsWith(workspaceFolder)) {
-            try {
-                FileUtilities.ensureExists(Paths.get(finalPath));
-            } catch (IOException e) {
-                logger.warning(e.getMessage());
+            if (isLocal) {
+                try {
+                    FileUtilities.ensureExists(Paths.get(finalPath));
+                } catch (IOException e) {
+                    logger.warning(e.getMessage());
+                }
             }
             final String replacement = containerWorkspaceFolder.endsWith("/")
                                        ? containerWorkspaceFolder
