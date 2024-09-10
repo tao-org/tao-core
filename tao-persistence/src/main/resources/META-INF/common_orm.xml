@@ -539,7 +539,7 @@
         <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
         <attributes>
             <basic name="name">
-                <column name="name" nullable="false" column-definition="varchar(512 NOT NULL"/>
+                <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
@@ -1572,6 +1572,33 @@
             <basic name="ended">
                 <column name="ended" nullable="true" column-definition="timestamp without time zone"/>
             </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.subscription.ExternalResourceSubscription" access="PROPERTY">
+        <table name="subscription.external_resource_subscription"/>        
+        <convert converter="ro.cs.tao.persistence.convert.FlavorConverter" attribute-name="flavors"/>
+        <attributes>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="flavors">
+                <column name="flavors" nullable="true" column-definition="json"/>
+            </basic>
+            <basic name="objectStorageGB">
+                <column name="object_storage_GB" nullable="true" column-definition="smallint"/>
+            </basic>
+            
+            <many-to-many name="users" fetch="EAGER">
+                <join-table name="subscription.external_subscription_users">
+                    <join-column name="subscription_id" referenced-column-name="id"/>
+                    <inverse-join-column name="user_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-merge/>
+                </cascade>
+            </many-to-many>
+
         </attributes>
     </entity>
 
