@@ -506,7 +506,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         for (NodeDescription node : nodes) {
             if (node.getActive() != null && node.getActive() && !NodeRole.K8S.equals(node.getRole())) {
                 addNode(node, new RuntimeInfo());
-                if (node.getVolatile()) {
+                if (node.getVolatile() != null && node.getVolatile()) {
                     nodeUpdates.put(node.getId(), LocalDateTime.now());
                 }
             }

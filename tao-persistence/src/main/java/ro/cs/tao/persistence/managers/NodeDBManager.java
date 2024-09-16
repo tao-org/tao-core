@@ -142,7 +142,7 @@ public class NodeDBManager extends EntityManager<NodeDescription, String, NodeRe
         if (nodeEnt == null) {
             throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
         }
-        if (nodeEnt.getVolatile() || nodeEnt.getServerId() != null) {
+        if ((nodeEnt.getVolatile() != null && nodeEnt.getVolatile()) || nodeEnt.getServerId() != null) {
             repository.delete(nodeEnt);
         } else {
             nodeEnt.setActive(false);
