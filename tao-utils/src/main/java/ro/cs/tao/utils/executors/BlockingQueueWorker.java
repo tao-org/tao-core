@@ -14,7 +14,6 @@ public class BlockingQueueWorker<E> extends Thread {
     private final Logger logger;
     private volatile boolean stopped;
     private volatile boolean paused;
-    private final Object monitor;
     private final int delay;
     private final AtomicInteger activeCounter;
 
@@ -35,7 +34,6 @@ public class BlockingQueueWorker<E> extends Thread {
         this.work = runnable;
         this.executor = new NamedThreadPoolExecutor(name, parallelism > 0 ? parallelism : 1);
         this.stopped = false;
-        this.monitor = new Object();
         this.delay = delay;
         this.activeCounter = new AtomicInteger(0);
         this.logger = Logger.getLogger(getClass().getName());
@@ -54,7 +52,6 @@ public class BlockingQueueWorker<E> extends Thread {
     @Override
     public void interrupt() {
         this.stopped = true;
-        this.monitor.notifyAll();
         super.interrupt();
     }
 
@@ -63,23 +60,21 @@ public class BlockingQueueWorker<E> extends Thread {
         while (!stopped) {
             try {
                 if (this.paused || (this.activeCounter.get() >= this.executor.getMaximumPoolSize())) {
-                    synchronized (this.monitor) {
-                        this.monitor.wait(this.delay);
-                    }
+                    Thread.sleep(this.delay);
                 } else {
                     if (this.statePersister != null) {
                         this.statePersister.accept(this.monitoredQueue);
                     }
                     E entry = this.monitoredQueue.take();
-                    this.executor.submit(() -> {
+                    this.activeCounter.incrementAndGet();
+                    this.executor.execute(() -> {
                         try {
-                            this.activeCounter.incrementAndGet();
                             this.work.apply(entry);
                             // Item was handled, re-persist the state without it
                             if (this.statePersister != null) {
                                 this.statePersister.accept(this.monitoredQueue);
                             }
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             logger.severe(e.getMessage());
                         } finally {
                             this.activeCounter.decrementAndGet();
