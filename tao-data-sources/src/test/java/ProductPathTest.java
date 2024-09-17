@@ -8,10 +8,12 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Properties;
 
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+
 public class ProductPathTest {
 
     public static void main(String[] args) {
-        Path repositoryPath = Paths.get("/mnt/products");
+        Path repositoryPath = IS_OS_WINDOWS ? Paths.get("C:\\mnt\\products") : Paths.get("/mnt/products");
         String localPathFormat = ".";
         Properties properties = new Properties();
         properties.put(ProductPathBuilder.LOCAL_ARCHIVE_PATH_FORMAT, ".");
