@@ -334,10 +334,19 @@ public class NetUtils {
     }
 
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
+        return openConnection(method, url, null, headers, parameters, timeoutMillis);
+    }
+
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials,List<Header> headers, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
             final URI uri = new URI(url);
-            final CloseableHttpClient httpClient = getOrCreateHttpClient(uri, "");
+            final CloseableHttpClient httpClient;
+            if (credentials == null) {
+                httpClient = getOrCreateHttpClient(uri, "");
+            } else {
+                httpClient = getOrCreateHttpClient(uri, credentials);
+            }
             final HttpRequestBase requestBase;
             switch (method) {
                 case GET:
