@@ -1577,7 +1577,7 @@
 
     <entity class="ro.cs.tao.subscription.ExternalResourceSubscription" access="PROPERTY">
         <table name="subscription.external_resource_subscription"/>        
-        <convert converter="ro.cs.tao.persistence.convert.FlavorConverter" attribute-name="flavors"/>
+        <convert converter="ro.cs.tao.persistence.convert.ExternalFlavorConverter" attribute-name="flavors"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar NOT NULL"/>

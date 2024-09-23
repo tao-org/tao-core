@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class ExternalResourceSubscription extends LongIdentifiable {
     private String name;
-    private Map<String, FlavorSubscription> flavors;
+    private Map<String, ExternalFlavorSubscription> flavors;
     private Integer objectStorageGB;
     private Set<User> users;
     public String getName() {
@@ -23,15 +23,15 @@ public class ExternalResourceSubscription extends LongIdentifiable {
         this.name = name;
     }
 
-    public Map<String, FlavorSubscription> getFlavors() {
+    public Map<String, ExternalFlavorSubscription> getFlavors() {
         return flavors;
     }
 
-    public void setFlavors(Map<String, FlavorSubscription> flavors) {
+    public void setFlavors(Map<String, ExternalFlavorSubscription> flavors) {
         this.flavors = flavors;
     }
 
-    public void addFlavor(FlavorSubscription flavorSubscription) {
+    public void addFlavor(ExternalFlavorSubscription flavorSubscription) {
         if (this.flavors == null) {
             this.flavors = new LinkedHashMap<>();
         }
