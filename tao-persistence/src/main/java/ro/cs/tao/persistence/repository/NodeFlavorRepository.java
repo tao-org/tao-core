@@ -17,8 +17,9 @@ public interface NodeFlavorRepository extends PagingAndSortingRepository<NodeFla
             nativeQuery = true)
     NodeFlavor getMatchingFlavor(@Param("cpu")int cpu, @Param("memory")int memory, @Param("disk")int disk);
 
-    @Query(value = "SELECT * FROM topology.node_flavor WHERE cpu >= :cpu AND (ABS(memory - :memory) / CAST(:memory AS float) <= 0.1 " +
-            "AND id NOT IN ('master', 'k8s') ORDER BY cpu, memory LIMIT 1",
+    @Query(value = "SELECT * FROM topology.node_flavor WHERE (cpu >= :cpu) AND ((ABS(memory - :memory) / CAST(:memory AS float) <= 0.1 OR memory > :memory) " +
+            "AND id NOT IN ('master', 'k8s') " +
+            "ORDER BY cpu, memory LIMIT 1",
             nativeQuery = true)
     NodeFlavor getMatchingFlavor(@Param("cpu")int cpu, @Param("memory")int memory);
 }
