@@ -1,7 +1,6 @@
 package ro.cs.tao.subscription;
 
 import ro.cs.tao.component.LongIdentifiable;
-import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.user.User;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -24,7 +23,10 @@ public class ExternalResourceSubscription extends LongIdentifiable {
     }
 
     public Map<String, ExternalFlavorSubscription> getFlavors() {
-        return flavors;
+        if (this.flavors == null) {
+            this.flavors = new LinkedHashMap<>();
+        }
+        return this.flavors;
     }
 
     public void setFlavors(Map<String, ExternalFlavorSubscription> flavors) {
