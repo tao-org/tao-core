@@ -54,12 +54,14 @@ public class Package {
         this.progressListener = progressListener;
     }
 
-    public Path toFile(Path targetDirectory) throws IOException, SerializationException {
+    public Path toFile(Path targetDirectory, boolean includeImageFile) throws IOException, SerializationException {
         final String validFileName = FileUtilities.ensureValidFileName(name);
         Path workDir = targetDirectory.resolve(validFileName);
         Files.createDirectories(workDir);
-        final Path imageFile = workDir.resolve(validFileName + ".tar");
-        DockerHelper.saveImage(name, imageFile);
+        if (includeImageFile) {
+            final Path imageFile = workDir.resolve(validFileName + ".tar");
+            DockerHelper.saveImage(name, imageFile);
+        }
         final BaseSerializer<Container> containerBaseSerializer = SerializerFactory.create(Container.class, MediaType.JSON);
         Files.writeString(workDir.resolve("container.json"), containerBaseSerializer.serialize(containerDescriptor));
         final BaseSerializer<ProcessingComponent> componentSerializer = SerializerFactory.create(ProcessingComponent.class, MediaType.JSON);
@@ -68,4 +70,27 @@ public class Package {
         return workDir;
     }
 
+    public static Package fromFile(Path file, Path targetFolder) throws IOException, SerializationException {
+        Package pack = null;
+        if (Files.exists(file)) {
+            Zipper.decompressZip(file, targetFolder, null);
+            final Path containerFile = targetFolder.resolve("container.json");
+            if (Files.exists(containerFile)) {
+                final BaseSerializer<Container> containerBaseSerializer = SerializerFactory.create(Container.class, MediaType.JSON);
+                final Container container = containerBaseSerializer.deserialize(Files.readString(containerFile));
+                pack = new Package(container.getName());
+                pack.setContainerDescriptor(container);
+                final Path componentsFile = targetFolder.resolve("components.json");
+                if (Files.exists(componentsFile)) {
+                    final BaseSerializer<ProcessingComponent> componentSerializer = SerializerFactory.create(ProcessingComponent.class, MediaType.JSON);
+                    pack.setComponentDescriptors(componentSerializer.deserialize(ProcessingComponent.class, Files.readString(componentsFile)));
+                }
+                final Path imageFile = targetFolder.resolve(file.getFileName().toString().replace(".zip", ".tar"));
+                if (Files.exists(imageFile)) {
+                    DockerHelper.loadImage(imageFile);
+                }
+            }
+        }
+        return pack;
+    }
 }

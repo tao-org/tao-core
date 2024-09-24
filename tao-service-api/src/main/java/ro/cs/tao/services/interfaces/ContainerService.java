@@ -85,9 +85,10 @@ public interface ContainerService extends CRUDService<Container, String> {
      * Exports the Docker image together with the container descriptor (and its associated components)
      * into a TAO package
      * @param descriptor    The container descriptor to be exported
+     * @param includeImageFile  Indicates if the docker image should be explicitly exported
      * @return  The path of the generated TAO package
      */
-    Path exportContainer(Container descriptor, Path targetFolder) throws IOException;
+    Path exportContainer(Container descriptor, boolean includeImageFile, Path targetFolder) throws IOException;
 
     /**
      * Imports a Docker container with its descriptors from a TAO package
