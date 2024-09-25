@@ -2,6 +2,8 @@ package ro.cs.tao.persistence;
 
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
@@ -62,20 +64,26 @@ public class TransactionalMethod<E extends Exception> {
      * @throws E    The checked exception to be (re-)thrown
      */
     public <V> V execute(Callable<V> inner) throws E {
-        TransactionStatus transaction = null;
+        TransactionTemplate transaction = null;
         try {
+            V retVal = null;
             if (transactionManager != null) {
-                transaction = transactionManager.getTransaction(null);
-            }
-            V retVal = inner.call();
-            if (transaction != null) {
-                transactionManager.commit(transaction);
+                transaction = new TransactionTemplate(this.transactionManager);
+                retVal = transaction.execute(new TransactionCallback<V>() {
+                    @Override
+                    public V doInTransaction(TransactionStatus status) {
+                        try {
+                            return inner.call();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } else {
+                retVal = inner.call();
             }
             return retVal;
         } catch (Exception e) {
-            if (transaction != null) {
-                transactionManager.rollback(transaction);
-            }
             if (e.getClass().isAssignableFrom(this.exceptionType)) {
                 throw (E) e;
             } else {
@@ -96,19 +104,21 @@ public class TransactionalMethod<E extends Exception> {
      * @throws E    The checked exception to be (re-)thrown
      */
     public void execute(Runnable inner) throws E {
-        TransactionStatus transaction = null;
+        TransactionTemplate transaction = null;
         try {
             if (transactionManager != null) {
-                transaction = transactionManager.getTransaction(null);
-            }
-            inner.run();
-            if (transaction != null) {
-                transactionManager.commit(transaction);
+                transaction = new TransactionTemplate(transactionManager);
+                transaction.execute(new TransactionCallback<Void>() {
+                    @Override
+                    public Void doInTransaction(TransactionStatus status) {
+                        inner.run();
+                        return null;
+                    }
+                });
+            } else {
+                inner.run();
             }
         } catch (Exception e) {
-            if (transaction != null) {
-                transactionManager.rollback(transaction);
-            }
             if (e.getClass().isAssignableFrom(this.exceptionType)) {
                 throw (E) e;
             } else {
