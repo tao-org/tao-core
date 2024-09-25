@@ -560,7 +560,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
             try {
                 repo = repositoryJPARepository.getByUserAndName(user.getId(), type.name());
                 if (repo == null) {
-                    if (preferences != null) {
+                    if (preferences != null && !preferences.isEmpty()) {
                         dbParams = preferences.stream()
                                               .filter(p -> p.getKey().startsWith("workspace." + type.name().toLowerCase()))
                                               .collect(Collectors.toMap(p -> p.getKey().replace("workspace.", ""),
