@@ -69,7 +69,7 @@ public class RepositoryFactory {
                         value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(key);
                     }
                     if (value == null) {
-                        throw new TopologyException("Values for default workspace of type" + type.name() + " not configured");
+                        throw new TopologyException("Values for default workspace of type " + type.name() + " not configured");
                     }
                     parameters.replace(key, value);
                 }
@@ -104,6 +104,7 @@ public class RepositoryFactory {
                 break;
             case AWS:
                 final HashMap<String, String> parameters = workspace.getParameters();
+                final Map<String, Boolean> typeParameters = type.getParameters();
                 String value;
                 for (String key : parameters.keySet()) {
                     if (type.rootKey().equals(key)) {
@@ -114,8 +115,8 @@ public class RepositoryFactory {
                     } else {
                         value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(key);
                     }
-                    if (value == null) {
-                        throw new TopologyException("Values for default workspace of type" + type.name() + " not configured");
+                    if (value == null && typeParameters.get(key)) {
+                        throw new TopologyException("Value [" + key + "] for default workspace of type " + type.name() + " not configured");
                     }
                     parameters.replace(key, value);
                 }
@@ -145,6 +146,7 @@ public class RepositoryFactory {
             case AWS:
             case SWIFT:
                 final HashMap<String, String> parameters = workspace.getParameters();
+                final Map<String, Boolean> typeParameters = type.getParameters();
                 String value;
                 for (String key : parameters.keySet()) {
                     if (type.rootKey().equals(key)) {
@@ -155,8 +157,8 @@ public class RepositoryFactory {
                     } else {
                         value = cfgProvider.getValue(key);
                     }
-                    if (value == null) {
-                        throw new TopologyException("Values for default workspace of type" + type.name() + " not configured");
+                    if (value == null && typeParameters.get(key)) {
+                        throw new TopologyException("Value [" + key + "] for default workspace of type " + type.name() + " not configured");
                     }
                     parameters.replace(key, value);
                 }
