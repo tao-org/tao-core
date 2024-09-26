@@ -1,5 +1,7 @@
 package ro.cs.tao.utils.executors.monitoring;
 
+import ro.cs.tao.utils.FileUtilities;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +34,7 @@ public class RollingFile {
         Path currentFile = currentFile(bytes.length);
         logger.finest(String.format("Current log file is %s", currentFile));
         if (!Files.exists(currentFile)) {
-            Files.createDirectories(currentFile.getParent());
+            FileUtilities.createDirectories(currentFile.getParent());
             Files.write(currentFile, bytes, StandardOpenOption.CREATE);
         } else {
             Files.write(currentFile, bytes, StandardOpenOption.APPEND);

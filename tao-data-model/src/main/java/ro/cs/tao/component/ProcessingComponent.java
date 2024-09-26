@@ -477,7 +477,7 @@ public class ProcessingComponent extends TaoComponent {
             case SCRIPT:
                 try {
                     Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
-                    Files.createDirectories(scriptPath);
+                    FileUtilities.createDirectories(scriptPath);
                     Path scriptFile = scriptPath.resolve(this.id + "-script");
                     Files.write(scriptFile, transformedTemplate.getBytes());
                     cmdBuilder.append(scriptFile).append("\n");
@@ -493,7 +493,7 @@ public class ProcessingComponent extends TaoComponent {
             case AGGREGATE:
                 try {
                     final Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
-                    Files.createDirectories(scriptPath);
+                    FileUtilities.createDirectories(scriptPath);
                     String scriptFileName = this.template.getName().replace(" ", "_") + "-" + System.currentTimeMillis();
                     final boolean velocityTemplate = this.templateType == TemplateType.VELOCITY;
                     if (velocityTemplate) {

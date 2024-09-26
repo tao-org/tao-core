@@ -57,7 +57,7 @@ public class Package {
     public Path toFile(Path targetDirectory, boolean includeImageFile) throws IOException, SerializationException {
         final String validFileName = FileUtilities.ensureValidFileName(name);
         Path workDir = targetDirectory.resolve(validFileName);
-        Files.createDirectories(workDir);
+        FileUtilities.createDirectories(workDir);
         if (includeImageFile) {
             final Path imageFile = workDir.resolve(validFileName + ".tar");
             DockerHelper.saveImage(name, imageFile);
