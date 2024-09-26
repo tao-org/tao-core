@@ -110,7 +110,7 @@ public class Zipper {
             return null;
         }
         try {
-            Files.createDirectories(target);
+            FileUtilities.createDirectories(target);
             byte[] buffer = new byte[65536];
             try (InputStream is = Files.newInputStream(source);
                  ZipInputStream zis = new ZipInputStream(is)) {
@@ -118,9 +118,9 @@ public class Zipper {
                 while (entry != null) {
                     Path newFile = target.resolve(entry.getName());
                     if (entry.isDirectory()) {
-                        Files.createDirectories(newFile);
+                        FileUtilities.createDirectories(newFile);
                     } else {
-                        Files.createDirectories(newFile.getParent());
+                        FileUtilities.createDirectories(newFile.getParent());
                         try (OutputStream outputStream = Files.newOutputStream(newFile)) {
                             int read;
                             while ((read = zis.read(buffer)) > 0) {
@@ -147,7 +147,7 @@ public class Zipper {
             return null;
         }
         try {
-            Files.createDirectories(target);
+            FileUtilities.createDirectories(target);
             byte[] buffer = new byte[MemoryUnit.MB.value().intValue()];
             double totalRead = 0;
             long total = Files.size(source);
@@ -161,9 +161,9 @@ public class Zipper {
                 while (entry != null) {
                     Path newFile = target.resolve(entry.getName());
                     if (entry.isDirectory()) {
-                        Files.createDirectories(newFile);
+                        FileUtilities.createDirectories(newFile);
                     } else {
-                        Files.createDirectories(newFile.getParent());
+                        FileUtilities.createDirectories(newFile.getParent());
                         try (OutputStream outputStream = Files.newOutputStream(newFile)) {
                             int read;
                             while ((read = zis.read(buffer)) > 0) {
@@ -197,17 +197,17 @@ public class Zipper {
         final AtomicBoolean hasError = new AtomicBoolean(false);
         final Path root = createFolderFromName ? target : target.getParent();
         try (ZipFile zipFile = new ZipFile(source.toFile())) {
-            Files.createDirectories(root);
+            FileUtilities.createDirectories(root);
             zipFile.stream().parallel().forEach(entry -> {
                 final Path newFile = root.toAbsolutePath().resolve(entry.getName());
                 try {
                     if (entry.isDirectory()) {
-                        Files.createDirectories(newFile);
+                        FileUtilities.createDirectories(newFile);
                     } else {
                         int read;
                         final byte[] buffer = new byte[65536];
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
-                            Files.createDirectories(newFile.getParent());
+                            FileUtilities.createDirectories(newFile.getParent());
                             try (OutputStream outputStream = Files.newOutputStream(newFile)) {
                                 while ((read = inputStream.read(buffer)) > 0) {
                                     outputStream.write(buffer, 0, read);
@@ -246,18 +246,18 @@ public class Zipper {
             return null;
         }
         try {
-            Files.createDirectories(target);
+            FileUtilities.createDirectories(target);
             try (InputStream is = Files.newInputStream(source);
                  TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(is))) {
                 TarArchiveEntry entry;
                 while ((entry = tarStream.getNextTarEntry()) != null) {
                     final Path currentPath = target.resolve(entry.getName());
                     if (entry.isDirectory()) {
-                        Files.createDirectories(currentPath);
+                        FileUtilities.createDirectories(currentPath);
                     } else {
                         int count;
                         final byte[] buffer = new byte[65536];
-                        Files.createDirectories(currentPath.getParent());
+                        FileUtilities.createDirectories(currentPath.getParent());
                         try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
                             while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
                                 outputStream.write(buffer, 0, count);
@@ -273,11 +273,11 @@ public class Zipper {
                         while ((entry = tarStream.getNextTarEntry()) != null) {
                             final Path currentPath = target.resolve(entry.getName());
                             if (entry.isDirectory()) {
-                                Files.createDirectories(currentPath);
+                                FileUtilities.createDirectories(currentPath);
                             } else {
                                 int count;
                                 final byte[] buffer = new byte[65536];
-                                Files.createDirectories(currentPath.getParent());
+                                FileUtilities.createDirectories(currentPath.getParent());
                                 try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
                                     while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
                                         outputStream.write(buffer, 0, count);

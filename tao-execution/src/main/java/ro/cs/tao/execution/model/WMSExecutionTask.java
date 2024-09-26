@@ -127,7 +127,7 @@ public class WMSExecutionTask extends ExecutionTask {
                 path = jobPath.resolve(folderName);
                 if (!Files.exists(path)) {
                     try {
-                        Files.createDirectories(path);
+                        FileUtilities.createDirectories(path);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

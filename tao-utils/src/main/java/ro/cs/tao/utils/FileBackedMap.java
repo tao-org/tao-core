@@ -40,7 +40,7 @@ public class FileBackedMap<K, V>  implements Map<K, V> {
         this.file = file;
         this.map = new LinkedHashMap<>();
         try {
-            Files.createDirectories(this.file.getParent());
+            FileUtilities.createDirectories(this.file.getParent());
             if (Files.exists(this.file) && Files.size(this.file) > 2) {
                 final ObjectReader reader = new ObjectMapper().readerFor(LinkedHashMap.class);
                 this.map.putAll(reader.readValue(this.file.toFile()));

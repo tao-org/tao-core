@@ -160,7 +160,7 @@ public class FileUtilities {
         env.put("create", "false");
         Path destination = zipFile.getParent().resolve(getFilenameWithoutExtension(zipFile.toFile()));
         if (Files.notExists(destination)) {
-            Files.createDirectories(destination);
+            createDirectories(destination);
         }
         FileSystem zipFileSystem;
         try {
@@ -228,7 +228,7 @@ public class FileUtilities {
                     logger.severe(ExceptionUtils.getStackTrace(logger, inner));
                 }
             } else {
-                folder = Files.createDirectories(folder);
+                folder = createDirectories(folder);
             }
         }
         return folder;
@@ -644,12 +644,12 @@ public class FileUtilities {
                 Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
             } else {
                 Path targetFolder = destination.resolve(source.getFileName());
-                Files.createDirectories(targetFolder);
+                createDirectories(targetFolder);
                 Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                         Path target = targetFolder.resolve(source.relativize(dir));
-                        Files.createDirectories(target);
+                        createDirectories(target);
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -691,14 +691,14 @@ public class FileUtilities {
                     copyFileWithProgress(source, destination, listener);
                 } else {
                     Path targetFolder = destination.resolve(source.getFileName());
-                    Files.createDirectories(targetFolder);
+                    createDirectories(targetFolder);
                     double total = folderSize(source);
                     AtomicLong current = new AtomicLong(0);
                     Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                             Path target = targetFolder.resolve(source.relativize(dir));
-                            Files.createDirectories(target);
+                            createDirectories(target);
                             return FileVisitResult.CONTINUE;
                         }
 
@@ -803,7 +803,7 @@ public class FileUtilities {
     public static void move(Path source, Path destination) throws IOException {
         if (source != null && destination != null) {
             if (!Files.exists(destination)) {
-                Files.createDirectories(destination);
+                createDirectories(destination);
             }
             if (Files.isRegularFile(source)) {
                 Files.move(source,
@@ -811,12 +811,12 @@ public class FileUtilities {
                            StandardCopyOption.REPLACE_EXISTING);
             } else {
                 Path targetFolder = destination.resolve(source.getFileName());
-                Files.createDirectories(targetFolder);
+                createDirectories(targetFolder);
                 Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                         Path target = targetFolder.resolve(source.relativize(dir));
-                        Files.createDirectories(target);
+                        createDirectories(target);
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -857,7 +857,7 @@ public class FileUtilities {
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                         if (!dir.equals(source)) {
                             Path subFolder = target.resolve(source.relativize(dir));
-                            Files.createDirectories(subFolder);
+                            createDirectories(subFolder);
                         }
                         return FileVisitResult.CONTINUE;
                     }
@@ -888,7 +888,7 @@ public class FileUtilities {
     public static void copyAndDelete(Path source, Path destination) throws IOException {
         if (source != null && destination != null) {
             if (!Files.exists(destination)) {
-                Files.createDirectories(destination);
+                createDirectories(destination);
             }
             if (Files.isRegularFile(source)) {
                 Files.deleteIfExists(destination);
@@ -896,12 +896,12 @@ public class FileUtilities {
                 Files.delete(source);
             } else {
                 Path targetFolder = destination.resolve(source.getFileName());
-                Files.createDirectories(targetFolder);
+                createDirectories(targetFolder);
                 Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                         Path target = targetFolder.resolve(source.relativize(dir));
-                        Files.createDirectories(target);
+                        createDirectories(target);
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -1072,7 +1072,7 @@ public class FileUtilities {
             throw new IllegalArgumentException("One of the arguments is null");
         }
         try (InputStream inputStream = sourceURL.openStream()) {
-            Files.createDirectories(destinationFile.getParent());
+            createDirectories(destinationFile.getParent());
             try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(destinationFile))) {
                 byte[] buffer = new byte[65536];
                 int read;
@@ -1115,7 +1115,7 @@ public class FileUtilities {
                 Path strippedFilePath = destination.resolve(filePath.getFileName());
                 if (!Files.exists(filePath)) {
                     if (entry.isDirectory()) {
-                        Files.createDirectories(filePath);
+                        createDirectories(filePath);
                     } else {
                         int read;
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
@@ -1264,6 +1264,24 @@ public class FileUtilities {
         } catch (SftpException e) {
             throw new IOException(e);
         }
+    }
+
+    /**
+     * Creates a directory by creating all nonexistent parent directories first.
+     * Any symbolic links in the path is first resolved.
+     *
+     * @param path  The path for which to create directories
+     */
+    public static Path createDirectories(Path path) throws IOException {
+        if (path == null) {
+            throw new NullPointerException("path");
+        }
+        if (Files.exists(path)) {
+            return path;
+        }
+        final Path realPath = resolveSymLinks(path);
+        Files.createDirectories(realPath);
+        return path;
     }
 
     /**

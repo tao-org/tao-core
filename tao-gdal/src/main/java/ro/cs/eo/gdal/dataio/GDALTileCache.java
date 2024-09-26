@@ -41,7 +41,7 @@ public final class GDALTileCache {
         }
         if (!Files.exists(this.cacheDirPath)) {
             try {
-                Files.createDirectories(this.cacheDirPath);
+                FileUtilities.createDirectories(this.cacheDirPath);
             } catch (IOException e) {
                 System.err.println("Fail to init cache from: " + this.cacheDirPath);
             }

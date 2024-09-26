@@ -844,9 +844,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             Path p = Path.of(tmpPath);
             try {
                 if (Files.isDirectory(p)) {
-                    Files.createDirectories(p);
+                    FileUtilities.createDirectories(p);
                 } else {
-                    Files.createDirectories(p.getParent());
+                    FileUtilities.createDirectories(p.getParent());
                 }
             } catch (IOException e) {
                 logger.warning(e.getMessage());
