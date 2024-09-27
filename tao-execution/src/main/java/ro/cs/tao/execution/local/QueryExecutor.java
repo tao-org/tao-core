@@ -16,6 +16,7 @@
 
 package ro.cs.tao.execution.local;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.*;
@@ -23,6 +24,7 @@ import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
+import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.ProductStatus;
@@ -476,8 +478,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         try {
         	// check input quota before download
         	if (product.getRefs() != null && !product.getRefs().contains(principal.getName()) && !UserQuotaManager.getInstance().checkUserInputQuota(principal, product.getApproximateSize())) {
-        		// do not allow for the download to start
-        		return false;
+                // For symlinks, the quota is not affected and hence should continue
+                final String fetchMode = product.getAttributeValue("fetch");
+                if (fetchMode != null && EnumUtils.getEnumConstantByName(FetchMode.class, fetchMode).value() < 4) {
+                    // do not allow for the download to start
+                    return false;
+                } else {
+                    product.removeAttribute("fetch");
+                }
         	}
         	
         	// check if the product already exists

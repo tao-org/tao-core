@@ -502,6 +502,8 @@ public class DataSourceComponent extends TaoComponent {
             try {
                 if (!cancelled) {
                     if (this.productStatusListener != null) {
+                        // The fetch mode is needed if the listener checks quota
+                        product.addAttribute("fetch", this.fetchMode.name());
                         if (!this.productStatusListener.downloadStarted(product)) {
                             continue;
                         }
