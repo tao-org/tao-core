@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ro.c-s.tao</groupId>
+    <artifactId>tao-core</artifactId>
+    <packaging>pom</packaging>
+    <version>1.5.2</version>
+
+    <name>TAO Core</name>
+    <description>Core modules of the TAO framework</description>
+
+    <modules>
+        <module>tao-data-model</module>
+        <module>tao-config</module>
+        <module>tao-utils</module>
+        <module>tao-service-registry</module>
+        <module>tao-data-sources</module>
+        <module>tao-persistence</module>
+        <module>tao-topology</module>
+<!--        <module>tao-execution-model</module>-->
+        <module>tao-execution</module>
+        <module>tao-spring-bridge</module>
+        <module>tao-notification</module>
+        <module>tao-service-api</module>
+        <module>tao-drmaa-api</module>
+        <module>tao-workflow-optimizer</module>
+        <module>tao-orchestration</module>
+        <module>tao-scheduling</module>
+        <module>tao-quota</module>
+        <module>tao-execution-api</module>
+        <module>tao-service-base-api</module>
+        <module>tao-mail</module>
+        <module>tao-transfer</module>
+        <module>tao-gdal</module>
+        <module>tao-core-kit</module>
+    </modules>
+
+    <properties>
+        <java.version>11</java.version>
+        <maven.compiler.release>11</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.deploy.root.path>file://C:/ssd/releases</project.deploy.root.path>
+        <geotools.version>29.1</geotools.version>
+        <spring.version>5.3.32</spring.version>
+        <spring.data.version>2.7.18</spring.data.version>
+        <jackson.version>2.17.1</jackson.version>
+        <resteasy.version>5.0.6.Final</resteasy.version>
+        <postgresql.version>42.7.2</postgresql.version>
+        <hibernate.version>5.6.15.Final</hibernate.version>
+        <jts.version>1.19.0</jts.version>
+        <jna.version>5.14.0</jna.version>
+        <jsch.version>0.2.17</jsch.version>
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
+        <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
+        <maven.dependency.plugin.version>3.5.0</maven.dependency.plugin.version>
+        <maven.deploy.plugin.version>3.1.0</maven.deploy.plugin.version>
+        <maven.install.plugin.version>3.1.0</maven.install.plugin.version>
+        <!-- maven -->
+        <mavenPublicUrl>https://repo1.maven.org/maven2/</mavenPublicUrl>
+        <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>
+        <hibernatespatialUrl>https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial/</hibernatespatialUrl>
+        <springio-milestoneUrl>https://repo.spring.io/milestone/</springio-milestoneUrl>
+        <!--<geotoolsUrl>https://repo.osgeo.org/repository/release/</geotoolsUrl>-->
+        <geotoolsUrl>https://repo.osgeo.org/repository/geotools-releases/</geotoolsUrl>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>maven-public</id>
+            <name>Maven public</name>
+            <url>${mavenPublicUrl}/</url>
+        </repository>
+        <repository>
+            <id>Geomajas</id>
+            <name>Geomajas Repository</name>
+            <url>${geotoolsUrl}</url>
+        </repository>
+        <repository>
+            <id>hibernatespatial</id>
+            <name>Hibernate Spatial</name>
+            <url>${hibernatespatialUrl}</url>
+        </repository>
+        <repository>
+            <id>springio-milestone</id>
+            <url>${springio-milestoneUrl}</url>
+        </repository>
+        <repository>
+            <id>jetbrains-intellij-dependencies</id>
+            <url>https://packages.jetbrains.team/maven/p/ij/intellij-dependencies</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <site>
+            <id>${project.artifactId}-site</id>
+            <url>${project.baseUri}</url>
+        </site>
+        <repository>
+            <id>tao-releases</id>
+            <name>TAO releases</name>
+            <url>${taoReleasesUrl}</url>
+        </repository>
+    </distributionManagement>
+
+    <profiles>
+        <profile>
+            <id>postgres</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <build.profile.id>postgres</build.profile.id>
+            </properties>
+        </profile>
+        <profile>
+            <id>h2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <build.profile.id>h2</build.profile.id>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <directory>${project.basedir}/target</directory>
+        <outputDirectory>${project.build.directory}/classes</outputDirectory>
+        <testOutputDirectory>${project.build.directory}/test-classes</testOutputDirectory>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <release>${maven.compiler.release}</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven.jar.plugin.version}</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <addClasspath>true</addClasspath>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            </manifest>
+                            <manifestEntries>
+                                <Bundle-Name>TAO Core</Bundle-Name>
+                                <Version>${project.version}</Version>
+                                <Build-Time>${maven.build.timestamp}</Build-Time>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven.source.plugin.version}</version>
+                    <configuration>
+                        <attach>true</attach>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>compile</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.5.0</version>
+                    <configuration>
+                        <attach>true</attach>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven.deploy.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${maven.install.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>3.3.0.603</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <developers>
+        <developer>
+            <id>kraftek</id>
+            <name>Cosmin Cara</name>
+            <email>kraftek@c-s.ro</email>
+            <organization>CS GROUP ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>cosmin</id>
+            <name>Cosmin Udroiu</name>
+            <email>cosmin.udroiu@c-s.ro</email>
+            <organization>CS GROUP ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>oana</id>
+            <name>Oana Hogoiu</name>
+            <email>oana.hogoiu@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>ailioiu</id>
+            <name>Alexandru Ilioiu</name>
+            <email>alexandru.ilioiu@c-s.ro</email>
+            <organization>CS GROUP ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>tyty</id>
+            <name>Florin Tutunaru</name>
+            <email>florin.tutunaru@c-s.ro</email>
+            <organization>CS GROUP ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>apirlea</id>
+            <name>Alexandru Pirlea</name>
+            <email>alex.pirlea@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License v3.0</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.en.html</url>
+        </license>
+    </licenses>
+
+</project>
