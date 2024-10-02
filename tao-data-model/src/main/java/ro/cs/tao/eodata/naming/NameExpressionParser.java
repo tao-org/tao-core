@@ -78,4 +78,16 @@ public class NameExpressionParser {
         }
         return transformed;
     }
+
+    /**
+     * Replaces any custom functions with their result.
+     */
+    public static String resolve(String expression) throws ParseException {
+        String transformed = expression;
+        final Iterator<TokenResolver> iterator = resolvers.iterator();
+        while (iterator.hasNext()) {
+            transformed = iterator.next().resolve(transformed);
+        }
+        return transformed;
+    }
 }
