@@ -27,6 +27,7 @@ import org.apache.velocity.runtime.resource.util.StringResourceRepository;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.eodata.naming.NameExpressionParser;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -121,7 +122,8 @@ public class VelocityTemplateEngine extends TemplateEngine {
             }
             StringWriter writer = new StringWriter();
             veloTemplate.merge(veloContext, writer);
-            return writer.toString();
+            // Use NameExpressionParser to expand any custom functions used in the template
+            return NameExpressionParser.resolve(writer.toString());
         } catch (Exception inner) {
             throw new TemplateException(inner);
         }
