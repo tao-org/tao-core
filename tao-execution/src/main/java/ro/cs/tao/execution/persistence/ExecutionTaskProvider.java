@@ -24,6 +24,7 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     ExecutionTask getByGroupAndNode(long groupId, long nodeId, int instanceId);
     ExecutionTask getByResourceId(String id);
     int getRunningParents(long jobId, long taskId);
+    List<Long> getParentIds(long taskId);
     ExecutionTask save(ExecutionTask task, ExecutionJob job) throws PersistenceException;
     ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) throws PersistenceException;
     ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException;

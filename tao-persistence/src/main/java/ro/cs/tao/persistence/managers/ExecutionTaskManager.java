@@ -238,7 +238,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         });
     }
 
-        @Override
+    @Override
     public ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId) {
         return repository.findByJobAndWorkflowNode(jobId, nodeId, instanceId);
     }
@@ -251,6 +251,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public ExecutionTask getByResourceId(String id) {
         return repository.findByResourceId(id);
+    }
+
+    @Override
+    public List<Long> getParentIds(long taskId) {
+        return repository.findParentTaskIds(taskId);
     }
 
     @Override
