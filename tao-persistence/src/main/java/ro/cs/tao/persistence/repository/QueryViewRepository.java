@@ -6,6 +6,7 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.JacksonUtil;
+import ro.cs.tao.utils.logger.Logger;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class QueryViewRepository extends NonMappedRepository<Query, Long> {
             try {
                 preparedStatement.setString(1, userId);
             } catch (SQLException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
             return preparedStatement;
         }, null);

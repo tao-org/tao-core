@@ -149,7 +149,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         } else {
             workflows.addAll(repository.getOtherPublicWorkflows(userId));
         }
-        workflows.removeIf(w -> w.isTemporary());
+        workflows.removeIf(WorkflowDescriptor::isTemporary);
         return workflows;
     }
 
@@ -197,7 +197,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
 
         // retrieve WorkflowDescriptor after its identifier
         final Optional<WorkflowDescriptor> workflow = repository.findById(workflowId);
-        if (!workflow.isPresent()) {
+        if (workflow.isEmpty()) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + workflowId);
         }
 

@@ -871,9 +871,10 @@ public class DefaultJobFactory {
 //                                              .stream()
 //                                              .filter(v -> v.getKey().equals(DataSourceComponent.RESULTS_PARAMETER))
 //                                              .findFirst().orElse(null);
-                    if (sourceDescriptor != null && sourceDescriptor.getDataDescriptor() != null) {
+                    if (sourceDescriptor != null && sourceDescriptor.getDataDescriptor() != null
+                            && sourceDescriptor.getDataDescriptor().getLocation() != null) {
                         List<String> list = Arrays.asList(sourceDescriptor.getDataDescriptor().getLocation().split(","));
-                        if (list != null && list.size() > 1) {
+                        if (list.size() > 1) {
                             final int size = list.size();
                             for (int i = 1; i < size; i++) {
                                 ExecutionJob clonedJob = cloneJob(job, i + 1, size);

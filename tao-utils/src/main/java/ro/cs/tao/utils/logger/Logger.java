@@ -80,7 +80,14 @@ public class Logger {
         return rootLogger;
     }
 
+    public static java.util.logging.Logger getLogger(Class clazz) {
+        return java.util.logging.Logger.getLogger(clazz.getName());
+    }
+
     private static Handler registerHandler(String logFile, boolean verbose) throws IOException {
+        if (logFile == null) {
+            return null;
+        }
         Handler fileHandler = new FileHandler(logFile, true);
         fileHandler.setFormatter(new LogFormatter());
         logger.addHandler(fileHandler);

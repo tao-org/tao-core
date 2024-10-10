@@ -22,7 +22,6 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
-import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
@@ -68,7 +67,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                                         currentTask.getWorkflowNodeId()));
             return null;
         }
-        WorkflowDescriptor workflow = workflowNode.getWorkflow();
+        //WorkflowDescriptor workflow = workflowNode.getWorkflow();
         /*List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
         return job.getTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
                                                    t instanceof DataSourceExecutionTask)
@@ -158,7 +157,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
         WorkflowNodeGroupDescriptor nodeGroup =
                 (WorkflowNodeGroupDescriptor) this.workflowProvider.apply(group.getWorkflowNodeId());
         List<WorkflowNodeDescriptor> childNodes = nodeGroup.findChildren(nodeGroup.getNodes(), workflowNode);
-        if (childNodes == null || childNodes.size() == 0) {
+        if (childNodes == null || childNodes.isEmpty()) {
             return null;
         }
 
