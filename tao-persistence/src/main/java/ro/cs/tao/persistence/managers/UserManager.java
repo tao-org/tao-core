@@ -194,8 +194,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     public User update(User updatedInfo, boolean fromAdmin) throws PersistenceException {
         User user = repository.findByUsername(updatedInfo.getUsername());
         if (user != null && user.getUsername().equalsIgnoreCase(updatedInfo.getUsername()) &&
-                Objects.equals(user.getId(), updatedInfo.getId()))
-        {
+                Objects.equals(user.getId(), updatedInfo.getId())) {
             // copy updated info (it's dangerous to save whatever received)
             transferUpdates(user, updatedInfo, fromAdmin);
             // update the modified date on user

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.subscription.FlavorSubscription;
-import tech.units.indriya.format.SimpleUnitFormat;
+import ro.cs.tao.utils.logger.Logger;
 
 import javax.persistence.AttributeConverter;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ public class FlavorConverter implements AttributeConverter<Map<String, FlavorSub
             try {
                 dbValue = JsonMapper.instance().writerFor(template.getClass()).writeValueAsString(map);
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         return dbValue;
@@ -38,7 +38,7 @@ public class FlavorConverter implements AttributeConverter<Map<String, FlavorSub
                     returnMap.put(entry.getKey(), flavorSubscription);
                 }
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         return returnMap;

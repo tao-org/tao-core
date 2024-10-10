@@ -22,6 +22,7 @@ import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
+import ro.cs.tao.utils.logger.Logger;
 
 import java.beans.Transient;
 import java.time.LocalDateTime;
@@ -66,16 +67,6 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
 
     public ExecutionTask() { }
 
-    @Override
-    public Long defaultId() { return null; }
-
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public ExecutionGroup getGroupTask() { return groupTask; }
     public void setGroupTask(ExecutionGroup groupTask) { this.groupTask = groupTask; }
 
@@ -110,13 +101,13 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
             try {
                 this.internalState = this.stateHandler.serializeState();
             } catch (SerializationException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         } else {
             try {
                 this.stateHandler.setCurrentState(this.internalState);
             } catch (SerializationException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         this.stateHandler.assignTask(this);

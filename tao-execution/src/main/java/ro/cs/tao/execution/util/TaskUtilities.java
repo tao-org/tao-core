@@ -137,7 +137,7 @@ public class TaskUtilities {
         TaoComponent component = null;
         if (task != null) {
             WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-            return getComponentFor(node);
+            component = getComponentFor(node);
         }
         return component;
     }
@@ -479,7 +479,7 @@ public class TaskUtilities {
             final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
             result = mountPoint + (mountPoint.endsWith("/") ? "" : "/") + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
         } catch (Exception e1) {
-            e1.printStackTrace();
+            logger.warning(e1.getMessage());
             result = strPath;
         }
         return result;

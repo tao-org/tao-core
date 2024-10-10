@@ -108,29 +108,29 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
                             String value = message.substring(idx + 14, message.indexOf(",", idx));
                             runtimeInfo.setCpuTotal(Double.parseDouble(value));
                         }
-                        if (runtimeInfo instanceof RuntimeInfoEx) {
-                            RuntimeInfoEx rex = (RuntimeInfoEx) runtimeInfo;
+                        //if (runtimeInfo instanceof RuntimeInfoEx) {
+                            //RuntimeInfoEx rex = (RuntimeInfoEx) runtimeInfo;
                             if (message.startsWith("Buffers")) {
                                 message = message.replace("Buffers:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
-                                rex.setBuffers(Long.parseLong(value) / MemoryUnit.KB.value());
+                                runtimeInfo.setBuffers(Long.parseLong(value) / MemoryUnit.KB.value());
                             } else if (message.startsWith("Cached")) {
                                 message = message.replace("Cached:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
-                                rex.setCached(Long.parseLong(value) / MemoryUnit.KB.value());
+                                runtimeInfo.setCached(Long.parseLong(value) / MemoryUnit.KB.value());
                                 //break;
                             } else if (message.startsWith("SwapTotal")) {
                                 message = message.replace("SwapTotal:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
-                                rex.setSwapTotal(Long.parseLong(value) / MemoryUnit.KB.value());
+                                runtimeInfo.setSwapTotal(Long.parseLong(value) / MemoryUnit.KB.value());
                                 //break;
                             } else if (message.startsWith("SwapFree")) {
                                 message = message.replace("SwapFree:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
-                                rex.setSwapFree(Long.parseLong(value) / MemoryUnit.KB.value());
+                                runtimeInfo.setSwapFree(Long.parseLong(value) / MemoryUnit.KB.value());
                                 //break;
                             }
-                        }
+                        //}
                     }
                 }
             } else {

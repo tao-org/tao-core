@@ -15,7 +15,7 @@ public class DefaultRuntimeInspector implements NodeRuntimeInspector {
     boolean isRemote;
     NodeRuntimeInspector inspector;
     AuthenticationType authenticationType;
-    Logger logger;
+    final Logger logger;
 
     public DefaultRuntimeInspector() {
         this.logger = Logger.getLogger(DefaultRuntimeInspector.class.getName());

@@ -89,11 +89,6 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
     }
 
     @Override
-    protected boolean checkId(String entityId, boolean existingEntity) {
-        return entityId != null && !entityId.isEmpty();
-    }
-
-    @Override
     protected boolean checkEntity(DataSourceComponentGroup entity) {
         return entity != null && entity.getLabel() != null;
     }

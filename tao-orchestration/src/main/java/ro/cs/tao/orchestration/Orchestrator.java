@@ -225,7 +225,7 @@ public class Orchestrator extends Notifiable {
             }
             
             // add jobs for processing
-            jobs.stream().forEach(j -> this.jobQueue.put(j));
+            jobs.forEach(j -> this.jobQueue.put(j));
             
             return job;
         } catch (Exception e) {
@@ -754,7 +754,7 @@ public class Orchestrator extends Notifiable {
                             taskNode instanceof WorkflowNodeGroupDescriptor && taskNode.getPreserveOutput()) {
                             persistOutputProducts(task);
                         }
-                        WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
+                        //WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
                         Duration time = null;
                         if (job.getStartTime() != null && job.getEndTime() != null) {
                             time = Duration.between(job.getStartTime(), job.getEndTime());
@@ -1156,7 +1156,7 @@ public class Orchestrator extends Notifiable {
                                     groupTask.setInternalState(handler.serializeState());
                                 }
                             } catch (SerializationException e) {
-                                e.printStackTrace();
+                                logger.warning(e.getMessage());
                             }
                         } else {
                             groupTask.setExecutionStatus(ExecutionStatus.DONE);
@@ -1181,7 +1181,7 @@ public class Orchestrator extends Notifiable {
                                     groupTask.setInternalState(handler.serializeState());
                                 }
                             } catch (SerializationException e) {
-                                e.printStackTrace();
+                                logger.warning(e.getMessage());
                             }
                         } else {
                             groupTask.setExecutionStatus(ExecutionStatus.DONE);
@@ -1271,7 +1271,7 @@ public class Orchestrator extends Notifiable {
         List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
         if (originatingTasks != null && !originatingTasks.isEmpty()) {
             boolean succeeded = false;
-            String error = "";
+            StringBuilder error = new StringBuilder();
             for (DataSourceExecutionTask originatingTask : originatingTasks) {
                 String targetOutput = overriddenOutParam.getValue();
                 String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
@@ -1299,7 +1299,7 @@ public class Orchestrator extends Notifiable {
                             nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
                             succeeded = true;
                         } catch (ParseException ex) {
-                            error += ex.getMessage() + ";";
+                            error.append(ex.getMessage()).append(";");
                         }
                     }
                 } else {
@@ -1307,7 +1307,7 @@ public class Orchestrator extends Notifiable {
                 }
             }
             if (!succeeded) {
-                changeStatus(nextTask, ExecutionStatus.FAILED, error);
+                changeStatus(nextTask, ExecutionStatus.FAILED, error.toString());
             }
         }
     }
@@ -1318,7 +1318,7 @@ public class Orchestrator extends Notifiable {
             List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
             if (originatingTasks != null && !originatingTasks.isEmpty()) {
                 boolean succeeded = false;
-                String error = "";
+                StringBuilder error = new StringBuilder();
                 for (DataSourceExecutionTask originatingTask : originatingTasks) {
                     String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
                     List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
@@ -1347,13 +1347,13 @@ public class Orchestrator extends Notifiable {
                                 variable.setValue(parser.resolve(value, oValuesList.toArray(new String[0])));
                                 succeeded = true;
                             } catch (ParseException ex) {
-                                error += ex.getMessage() + ";";
+                                error.append(ex.getMessage()).append(";");
                             }
                         }
                     }
                 }
                 if (!succeeded) {
-                    changeStatus(nextTask, ExecutionStatus.FAILED, error);
+                    changeStatus(nextTask, ExecutionStatus.FAILED, error.toString());
                 }
             }
         }
@@ -1813,13 +1813,10 @@ public class Orchestrator extends Notifiable {
                                        job.getUserId(),
                                        job.getExecutionStatus().friendlyName(),
                                        time != null ? time.getSeconds() : "<n/a>");
-            switch (job.getExecutionStatus()) {
-                case DONE:
-                    logger.info(msg);
-                    break;
-                default:
-                    logger.warning(msg);
-                    break;
+            if (ExecutionStatus.DONE.equals(job.getExecutionStatus())) {
+                logger.info(msg);
+            } else {
+                logger.warning(msg);
             }
             Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
         }

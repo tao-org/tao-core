@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.convert;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.configuration.Values;
+import ro.cs.tao.utils.logger.Logger;
 
 import javax.persistence.AttributeConverter;
 
@@ -14,7 +15,7 @@ public class ValuesConverter implements AttributeConverter<Values, String> {
         try {
             return values != null ? mapper.writerFor(Values.class).writeValueAsString(values) : null;
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            Logger.getLogger(getClass()).warning(e.getMessage());
             return null;
         }
     }
@@ -27,7 +28,7 @@ public class ValuesConverter implements AttributeConverter<Values, String> {
         try {
             return mapper.readerFor(Values.class).readValue(value);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            Logger.getLogger(getClass()).warning(e.getMessage());
             return null;
         }
     }

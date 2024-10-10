@@ -2,6 +2,7 @@ package ro.cs.tao.persistence.convert;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import ro.cs.tao.serialization.JsonMapper;
+import ro.cs.tao.utils.logger.Logger;
 
 import javax.persistence.AttributeConverter;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class JsonTaskDependenciesConverter implements AttributeConverter<Map<Str
             try {
                 dbValue = JsonMapper.instance().writerFor(template.getClass()).writeValueAsString(map);
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         return dbValue;
@@ -31,7 +32,7 @@ public class JsonTaskDependenciesConverter implements AttributeConverter<Map<Str
             try {
                 descriptor = JsonMapper.instance().readerFor(template.getClass()).readValue(value);
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         return descriptor;

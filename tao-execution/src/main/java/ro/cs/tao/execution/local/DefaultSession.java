@@ -347,22 +347,23 @@ public class DefaultSession implements Session, JobExitHandler {
         }
         try {
             final CountDownLatch singleLatch = new CountDownLatch(runners.size());
-            final ExecutorService threadPool = Executors.newCachedThreadPool();
-            final boolean[] timeoutOccured = {false};
-            runners.stream()
-                    .map(Executor::getWaitObject)
-                    .forEach(w -> threadPool.execute(() -> {
-                        try {
-                            w.await(timeout, TimeUnit.SECONDS);
-                        } catch (InterruptedException e) {
-                            timeoutOccured[0] = true;
-                            logger.warning(e.getMessage());
-                        } finally {
-                            singleLatch.countDown();
-                        }
-                    }));
-            if (timeoutOccured[0]) {
-                throw new ExitTimeoutException();
+            try (ExecutorService threadPool = Executors.newCachedThreadPool()) {
+                final boolean[] timeoutOccured = {false};
+                runners.stream()
+                       .map(Executor::getWaitObject)
+                       .forEach(w -> threadPool.execute(() -> {
+                           try {
+                               w.await(timeout, TimeUnit.SECONDS);
+                           } catch (InterruptedException e) {
+                               timeoutOccured[0] = true;
+                               logger.warning(e.getMessage());
+                           } finally {
+                               singleLatch.countDown();
+                           }
+                       }));
+                if (timeoutOccured[0]) {
+                    throw new ExitTimeoutException();
+                }
             }
         } finally {
             for (Object obj : jobIds) {

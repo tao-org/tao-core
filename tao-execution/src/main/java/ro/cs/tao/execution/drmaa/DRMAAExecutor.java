@@ -530,7 +530,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 : container.getApplications().stream().mapToLong(Application::getMemoryRequirements).min().orElse(0L);
             setMemoryConstraint(jt, memory);
 
-            NodeDescription node = null;
+            NodeDescription node;
             final int cpu;
             final long mem;
             if(job.getEnvironment() == Environment.DEFAULT) {

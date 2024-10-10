@@ -210,7 +210,7 @@ public class ArrayUtil {
         } else if (char[].class.equals(arrayClass)) {
             char[] array = new char[length];
             for (int i = 0; i < tokens.length; i++) {
-                array[i] = tokens[i].length() > 0 ? tokens[i].charAt(0) : Character.MIN_VALUE;
+                array[i] = !tokens[i].isEmpty() ? tokens[i].charAt(0) : Character.MIN_VALUE;
             }
             return (T) array;
         } else {

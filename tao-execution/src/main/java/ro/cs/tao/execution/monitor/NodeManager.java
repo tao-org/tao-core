@@ -309,7 +309,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     public NodeData getAvailableNode(String userId, int cpus, long memory, ExecutionStrategy strategy) {
 
         final ResourceSubscription subscription = this.resourceSubscriptionProvider.getUserOpenSubscription(userId);
-        NodeData nodeData = null;
+        NodeData nodeData;
         if (subscription != null) {
             // User has a subscription, will try to use only nodes from it
             do {

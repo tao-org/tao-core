@@ -68,7 +68,7 @@ public class TransactionalMethod<E extends Exception> {
         try {
             V retVal = null;
             if (transactionManager != null) {
-                transaction = new TransactionTemplate(this.transactionManager);
+                transaction = new TransactionTemplate(transactionManager);
                 retVal = transaction.execute(new TransactionCallback<V>() {
                     @Override
                     public V doInTransaction(TransactionStatus status) {
@@ -85,7 +85,7 @@ public class TransactionalMethod<E extends Exception> {
             return retVal;
         } catch (Exception e) {
             if (e.getClass().isAssignableFrom(this.exceptionType)) {
-                throw (E) e;
+                throw this.exceptionType.cast(e);
             } else {
                 try {
                     throw this.exceptionType.getConstructor(Throwable.class).newInstance(e);
@@ -120,7 +120,7 @@ public class TransactionalMethod<E extends Exception> {
             }
         } catch (Exception e) {
             if (e.getClass().isAssignableFrom(this.exceptionType)) {
-                throw (E) e;
+                throw this.exceptionType.cast(e);
             } else {
                 try {
                     throw this.exceptionType.getConstructor(Throwable.class).newInstance(e);
