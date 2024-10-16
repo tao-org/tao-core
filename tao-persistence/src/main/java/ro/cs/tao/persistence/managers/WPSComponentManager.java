@@ -1,6 +1,8 @@
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.ogc.WPSComponent;
 import ro.cs.tao.persistence.PersistenceException;
@@ -8,7 +10,8 @@ import ro.cs.tao.persistence.WPSComponentProvider;
 import ro.cs.tao.persistence.repository.WPSComponentRepository;
 
 import java.util.Optional;
-
+@Configuration
+@EnableTransactionManagement
 @Component("wpsComponentManager")
 public class WPSComponentManager extends TaoComponentManager<WPSComponent, WPSComponentRepository>
         implements WPSComponentProvider {

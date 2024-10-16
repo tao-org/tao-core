@@ -17,7 +17,9 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ParameterExpansionRule;
 import ro.cs.tao.component.ProcessingComponent;
@@ -34,6 +36,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Configuration
+@EnableTransactionManagement
 @Component("processingComponentManager")
 public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository>
                                         implements ProcessingComponentProvider {

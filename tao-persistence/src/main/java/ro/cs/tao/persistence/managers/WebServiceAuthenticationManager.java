@@ -1,6 +1,8 @@
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.WebServiceAuthentication;
 import ro.cs.tao.component.enums.AuthenticationType;
 import ro.cs.tao.persistence.PersistenceException;
@@ -8,7 +10,8 @@ import ro.cs.tao.persistence.WebServiceAuthenticationProvider;
 import ro.cs.tao.persistence.repository.WebServiceAuthenticationRepository;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.StringUtilities;
-
+@Configuration
+@EnableTransactionManagement
 @Component("webServiceAuthenticationManager")
 public class WebServiceAuthenticationManager
         extends EntityManager<WebServiceAuthentication, String, WebServiceAuthenticationRepository>
