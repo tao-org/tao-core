@@ -1,7 +1,9 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.configuration.ConfigurationCategory;
 import ro.cs.tao.configuration.ConfigurationItem;
 import ro.cs.tao.configuration.PersistentConfigurationProvider;
@@ -12,7 +14,8 @@ import ro.cs.tao.utils.StringUtilities;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Configuration
+@EnableTransactionManagement
 @Component("configurationManager")
 public class ConfigurationManager
         extends EntityManager<ConfigurationItem, String, ConfigurationRepository>

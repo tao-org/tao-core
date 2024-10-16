@@ -17,8 +17,10 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.*;
@@ -36,7 +38,8 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+@Configuration
+@EnableTransactionManagement
 @Component("executionManager")
 public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository>
                                   implements ExecutionTaskProvider {

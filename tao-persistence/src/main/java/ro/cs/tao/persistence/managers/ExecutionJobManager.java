@@ -16,7 +16,9 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
@@ -28,7 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+@Configuration
+@EnableTransactionManagement
 @Component("executionJobManager")
 public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, ExecutionJobRepository>
                                  implements ExecutionJobProvider {
