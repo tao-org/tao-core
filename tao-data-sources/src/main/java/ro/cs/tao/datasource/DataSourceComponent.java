@@ -474,22 +474,9 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private List<EOProduct> doFetchImpl(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        DataSource<?, ?> dataSource = null;
         String errorMessage;
-        Object token = null;
         long tokenRenewTimeMillis = System.currentTimeMillis() % 1000;
         int retries = 0;
-        if (products != null && !products.isEmpty()) {
-            dataSource = createDataSource(products.get(0));
-            if (fetchMode == FetchMode.OVERWRITE || fetchMode == FetchMode.RESUME) {
-                try {
-                    token = dataSource.authenticate();
-                    tokenRenewTimeMillis = System.currentTimeMillis() % 1000;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
         int idx = 0;
         final int size = products.size();
         while (idx < size) {
@@ -509,6 +496,7 @@ public class DataSourceComponent extends TaoComponent {
                         }
                     }
                     currentProduct = product;
+                    final DataSource<?, ? > dataSource = createDataSource(products.get(0));
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (templateFetcher == null) {
                         final String collection = product.getAttributeValue("collection");
@@ -522,8 +510,10 @@ public class DataSourceComponent extends TaoComponent {
                         throw new NoSuchElementException("Product type '" + product.getProductType() + "' doesn't have an associated download strategy!");
                     }
                     if (templateFetcher instanceof DownloadStrategy) {
-                        ((DownloadStrategy) templateFetcher).setAuthentication(token);
+                        final Object token = dataSource.authenticate();
+                        tokenRenewTimeMillis = System.currentTimeMillis() % 1000;
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
+                        downloadStrategy.setAuthentication(token);
                         downloadStrategy.setDestination(destinationPath);
                         downloadStrategy.setFetchMode(this.fetchMode);
                         if (additionalProperties != null) {
@@ -553,6 +543,7 @@ public class DataSourceComponent extends TaoComponent {
                     } else {
                         currentFetcher.setProgressListener(this.progressListener);
                     }
+
                     Path productPath = currentFetcher.fetch(product);
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());
@@ -588,14 +579,8 @@ public class DataSourceComponent extends TaoComponent {
                 // maybe the token has just expired, retry one more time
                 final long tokenRenewElapsedTimeMillis = (System.currentTimeMillis() % 1000) - tokenRenewTimeMillis;
                 if (tokenRenewElapsedTimeMillis > 1990 && retries < this.maxRetries && (fetchMode == FetchMode.OVERWRITE || fetchMode == FetchMode.RESUME)) {
-                    try {
-                        token = dataSource.authenticate();
-                        tokenRenewTimeMillis = System.currentTimeMillis() % 1000;
-                        retries++;
-                        idx--;
-                    } catch (IOException inner) {
-                        errorMessage = inner.getMessage();
-                    }
+                    retries++;
+                    idx--;
                 }
             } finally {
                 idx++;
