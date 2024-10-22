@@ -111,6 +111,8 @@ public interface OrchestratorService extends TAOService {
 
     List<ExecutionJobSummary> getRunningJobs(String userId);
 
+    ExecutionJobSummary getJobInfo(long jobId);
+
     List<ExecutionJobSummary> getCompletedJobs(String userId);
 
     Queue<ExecutionJobSummary> getQueuedJobs();
