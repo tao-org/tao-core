@@ -49,16 +49,15 @@ public class GenericComparator implements Comparator<Object>  {
         for (Field f : list) {
             fields.put(f.getName(), f);
         }
-        list = this.objectClass.getSuperclass().getDeclaredFields();
-        for (Field f : list) {
-            fields.put(f.getName(), f);
-        }
-        Class superSuperClass = this.objectClass.getSuperclass().getSuperclass();
-        if (superSuperClass != null) {
-            list = superSuperClass.getDeclaredFields();
-            for (Field f : list) {
-                fields.put(f.getName(), f);
+        Class parent = this.objectClass.getSuperclass();
+        while (!parent.equals(Object.class)) {
+            list = parent.getDeclaredFields();
+            if (list != null) {
+                for (Field f : list) {
+                    fields.put(f.getName(), f);
+                }
             }
+            parent = parent.getSuperclass();
         }
     }
 
@@ -71,17 +70,17 @@ public class GenericComparator implements Comparator<Object>  {
         if (o2 == null) {
             return -retValue;
         }
-        if (Byte.class.equals(o1.getClass())) {
+        if (Byte.class.equals(o1.getClass()) || byte.class.equals(o1.getClass())) {
             retValue = Byte.compare((Byte)o1, (Byte)o2);
-        } else if (Short.class.equals(o1.getClass())) {
+        } else if (Short.class.equals(o1.getClass()) || short.class.equals(o1.getClass())) {
             retValue = Short.compare((Short)o1, (Short)o2);
-        } else if (Integer.class.equals(o1.getClass())) {
+        } else if (Integer.class.equals(o1.getClass()) || int.class.equals(o1.getClass())) {
             retValue = Integer.compare((Integer)o1, (Integer)o2);
-        } else if (Long.class.equals(o1.getClass())) {
+        } else if (Long.class.equals(o1.getClass()) || long.class.equals(o1.getClass())) {
             retValue = Long.compare((Long)o1, (Long)o2);
-        } else if (Float.class.equals(o1.getClass())) {
+        } else if (Float.class.equals(o1.getClass()) || float.class.equals(o1.getClass())) {
             retValue = Float.compare((Float)o1, (Float)o2);
-        } else if (Double.class.equals(o1.getClass())) {
+        } else if (Double.class.equals(o1.getClass()) || double.class.equals(o1.getClass())) {
             retValue = Double.compare((Double)o1, (Double)o2);
         } else if (String.class.equals(o1.getClass())) {
             retValue = ((String)o1).compareTo((String)o2);
