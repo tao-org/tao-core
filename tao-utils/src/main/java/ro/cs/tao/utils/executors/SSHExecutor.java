@@ -427,10 +427,10 @@ public class SSHExecutor extends Executor<Channel> {
         if (execCommand.contains("docker ") && execCommand.contains(" run ")) {
         	this.dockerAsyncCommand = true;
         }
-        // build the command line that will be executed within the screen session
+        // build the command line that will be executed within the screen session along with the exit command from screen
         // the pattern of the line containing the return code has the format :
         // ***===***RESULT_CODE***===***
-        String cmdLine = "( " + execCommand + "; echo '***===***'$?'***===***'; ) > " +this.asyncFileName+ " 2>&1\n";
+        String cmdLine = "( " + execCommand + "; echo '***===***'$?'***===***'; ) > " +this.asyncFileName+ " 2>&1 ; exit\n";
         if (logMessages) {
             logger.fine("[" + host + "] " + cmdLine);
         }
@@ -454,9 +454,7 @@ public class SSHExecutor extends Executor<Channel> {
                 }
                 writeSudoPassword(channel, this.password);
             }
-            // Send the screen exit
-            writeCommand(channel, "exit\n".getBytes());
-            
+
             // exit screen session with CTRL+a, d
             writeCommand(channel, "\01d".getBytes());
             
