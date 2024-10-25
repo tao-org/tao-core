@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.serialization;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,6 +31,7 @@ import java.util.*;
 public abstract class BaseSerializer<T> implements Serializer<T, String> {
     private Class<T> tClass;
     boolean formatOutput;
+    boolean ignoreNullFields;
     private Set<ConfigFeature> enabledConfigFeatures;
     private Set<ConfigFeature> disabledConfigFeatures;
     private Set<JsonParser.Feature> enabledParserFeatures;
@@ -42,6 +44,10 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     protected abstract ObjectMapper createMapper();
 
     public void setFormatOutput(boolean value) { this.formatOutput = value; }
+
+    public void setIgnoreNullFields() {
+        this.ignoreNullFields = true;
+    }
 
     public void enable(ConfigFeature feature) {
         if (this.enabledConfigFeatures == null) {
@@ -179,5 +185,9 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
                 mapper.disable(feature);
             }
         }
+        if (this.ignoreNullFields) {
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        }
+        mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
     }
 }
