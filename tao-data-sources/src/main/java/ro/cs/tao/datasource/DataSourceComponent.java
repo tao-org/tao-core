@@ -496,7 +496,7 @@ public class DataSourceComponent extends TaoComponent {
                         }
                     }
                     currentProduct = product;
-                    final DataSource<?, ? > dataSource = createDataSource(products.get(0));
+                    final DataSource<?, ? > dataSource = createDataSource(currentProduct);
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (templateFetcher == null) {
                         final String collection = product.getAttributeValue("collection");
