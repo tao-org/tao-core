@@ -166,6 +166,15 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
     public abstract T authenticate() throws IOException;
 
     /**
+     * Obtains a new access token from a refresh token.
+     * This method should be overridden by implementors that support refresh tokens.
+     * @param refreshToken  The refresh token
+     */
+    public T reauthenticate(String refreshToken) throws IOException {
+        return null;
+    }
+
+    /**
      * Tests that the datasource source is reachable.
      * Must return <code>true</code> if the source is reachable, <code>false</code> otherwise.
      */
