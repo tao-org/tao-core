@@ -73,7 +73,9 @@ public class DockerManager {
         dockerRunningInstanceCmd = "docker ps --filter \"ancestor=%s\" --filter \"name=%s\" --filter \"status=running\"";
         dockerRunningInstanceByIdCmd = "docker ps --filter \"id=%s\" --filter \"status=running\"";
         dockerRunningInstancesCmd = "docker ps --filter \"ancestor=%s\" --filter \"status=running\"";
-        dockerHubCheckImageCmd = "docker manifest inspect %s > /dev/null ; echo $?";
+        dockerHubCheckImageCmd = SystemUtils.IS_OS_WINDOWS
+                                 ? "docker manifest inspect %s > NUL & echo %%ERRORLEVEL%%"
+                                 : "docker manifest inspect %s > /dev/null ; echo $?";
         instance = new DockerManager();
     }
 
