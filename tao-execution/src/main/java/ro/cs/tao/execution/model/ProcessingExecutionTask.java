@@ -24,6 +24,7 @@ import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
@@ -31,7 +32,6 @@ import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Logger;
 
 /**
@@ -164,33 +164,35 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (inputParameterValues != null) {
             for (Variable input : inputParameterValues) {
                 String strValue = input.getValue();
-                final String key = input.getKey();
-                Object value;
-                ParameterDescriptor descriptor = parameterDescriptors.stream()
-                                                                     .filter(d -> d.getName().equals(key))
-                                                                     .findFirst().orElse(null);
-                if (descriptor == null) {
-                    // maybe it is a sub-parameter of a template parameter
-                    TemplateParameterDescriptor templateDescriptor = (TemplateParameterDescriptor) parameterDescriptors.stream()
-                                                     .filter(d -> d.getType() == ParameterType.TEMPLATE &&
-                                                             ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> key.equals(d.getName() + "~" + p.getName())))
-                                                     .findFirst().orElse(null);
-                    if (templateDescriptor != null) {
-                        Map<String, Object> templateMap = (Map<String, Object>) inputParams.computeIfAbsent(templateDescriptor.getName(), k -> new HashMap<String, Object>());
-                        //sub-parameter should be added to the appropriate map
-                        descriptor = templateDescriptor.getParameters().stream()
-                                                       .filter(d -> key.equals(templateDescriptor.getName() + "~" + d.getName())).findFirst().get();
-                        value = getParameterTypedValue(descriptor, strValue);
-                        templateMap.put(key.split("~")[1], value);
-                        continue;
+                if (!StringUtilities.isNullOrEmpty(strValue)) {
+                    final String key = input.getKey();
+                    Object value;
+                    ParameterDescriptor descriptor = parameterDescriptors.stream()
+                                                                         .filter(d -> d.getName().equals(key))
+                                                                         .findFirst().orElse(null);
+                    if (descriptor == null) {
+                        // maybe it is a sub-parameter of a template parameter
+                        TemplateParameterDescriptor templateDescriptor = (TemplateParameterDescriptor) parameterDescriptors.stream()
+                                                                                                                           .filter(d -> d.getType() == ParameterType.TEMPLATE &&
+                                                                                                                                   ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> key.equals(d.getName() + "~" + p.getName())))
+                                                                                                                           .findFirst().orElse(null);
+                        if (templateDescriptor != null) {
+                            Map<String, Object> templateMap = (Map<String, Object>) inputParams.computeIfAbsent(templateDescriptor.getName(), k -> new HashMap<String, Object>());
+                            //sub-parameter should be added to the appropriate map
+                            descriptor = templateDescriptor.getParameters().stream()
+                                                           .filter(d -> key.equals(templateDescriptor.getName() + "~" + d.getName())).findFirst().get();
+                            value = getParameterTypedValue(descriptor, strValue);
+                            templateMap.put(key.split("~")[1], value);
+                            continue;
+                        } else {
+                            // If it's not a parameter or a sub-parameter, it must be a source
+                            value = getParameterTypedValue(descriptor, strValue);
+                        }
                     } else {
-                        // If it's not a parameter or a sub-parameter, it must be a source
                         value = getParameterTypedValue(descriptor, strValue);
                     }
-                } else {
-                    value = getParameterTypedValue(descriptor, strValue);
+                    inputParams.put(key, value);
                 }
-                inputParams.put(key, value);
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
