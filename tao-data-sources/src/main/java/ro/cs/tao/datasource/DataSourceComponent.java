@@ -510,9 +510,15 @@ public class DataSourceComponent extends TaoComponent {
                         throw new NoSuchElementException("Product type '" + product.getProductType() + "' doesn't have an associated download strategy!");
                     }
                     if (templateFetcher instanceof DownloadStrategy) {
-                        final Object token = dataSource.authenticate();
-                        tokenRenewTimeMillis = System.currentTimeMillis() % 1000;
+                        Object token = null;
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
+                        if (fetchMode == FetchMode.OVERWRITE || fetchMode == FetchMode.RESUME) {
+                            try {
+                                token = dataSource.authenticate();
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
                         downloadStrategy.setAuthentication(token);
                         downloadStrategy.setDestination(destinationPath);
                         downloadStrategy.setFetchMode(this.fetchMode);
