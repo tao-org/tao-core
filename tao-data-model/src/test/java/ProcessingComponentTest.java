@@ -217,7 +217,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
             setCopyright("(C) Camelot Productions");
             setFileLocation("E:\\OTB\\otbcli_Segmentation.bat");
             setWorkingDirectory("E:\\OTB");
-            setNodeAffinity("Any");
+            setNodeAffinity(NodeAffinity.Any);
             addSource(sourceDescriptor);
             addTarget(targetDescriptor);
             setVersion("1.0");

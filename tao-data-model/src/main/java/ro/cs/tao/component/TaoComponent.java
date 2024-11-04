@@ -36,7 +36,7 @@ public abstract class TaoComponent extends StringIdentifiable {
     protected String description;
     protected String authors;
     protected String copyright;
-    protected String nodeAffinity;
+    protected NodeAffinity nodeAffinity;
 
     /*protected int cardinality;
     protected int targetCardinality = 1;*/
@@ -110,12 +110,12 @@ public abstract class TaoComponent extends StringIdentifiable {
     /**
      * Returns the node name for which this component has affinity.
      */
-    public String getNodeAffinity() { return nodeAffinity; }
+    public NodeAffinity getNodeAffinity() { return nodeAffinity; }
     /**
      * Sets the node for which this component has affinity
      * @param nodeAffinity  The name of the topology node
      */
-    public void setNodeAffinity(String nodeAffinity) { this.nodeAffinity = nodeAffinity; }
+    public void setNodeAffinity(NodeAffinity nodeAffinity) { this.nodeAffinity = nodeAffinity; }
 
     /**
      * Returns the inputs of this component

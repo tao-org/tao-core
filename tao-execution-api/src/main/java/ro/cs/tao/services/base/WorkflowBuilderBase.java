@@ -16,10 +16,7 @@
 
 package ro.cs.tao.services.base;
 
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.SourceDescriptor;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.remote.FetchMode;
@@ -76,7 +73,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             dataSourceComponent.setDescription(dataSourceComponent.getId());
             dataSourceComponent.setAuthors("TAO Team");
             dataSourceComponent.setCopyright("(C) TAO Team");
-            dataSourceComponent.setNodeAffinity("Any");
+            dataSourceComponent.setNodeAffinity(NodeAffinity.Any);
             persistenceManager.dataSourceComponents().save(dataSourceComponent);
         }
         return dataSourceComponent;
