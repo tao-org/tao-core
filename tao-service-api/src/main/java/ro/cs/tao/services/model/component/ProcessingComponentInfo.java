@@ -34,7 +34,7 @@ public class ProcessingComponentInfo {
         this.description = component.getDescription();
         this.authors = component.getAuthors();
         this.copyright = component.getCopyright();
-        this.nodeAffinity = component.getNodeAffinity();
+        this.nodeAffinity = component.getNodeAffinity() != null ? component.getNodeAffinity().getValue() : null;
         this.containerId = component.getContainerId();
         this.visibility = component.getVisibility();
         this.active = component.getActive();

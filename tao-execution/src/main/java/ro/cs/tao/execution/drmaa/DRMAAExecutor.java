@@ -540,7 +540,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 nodeData = strategy.getNode(memory);
                 while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
                     try {
-                        TimeUnit.SECONDS.sleep(20);
+                        TimeUnit.SECONDS.sleep(15);
                     } catch (InterruptedException ignored) { }
                     if (nodeData == null) {
                         nodeData = strategy.getNode(memory);
@@ -580,15 +580,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 path += location;
                 task.getComponent().setExpandedFileLocation(path);
             }
-            // if parallel flags are defined, use them
-            if (app != null && app.hasParallelFlag()) {
+            // if parallel flags are defined, use them (but not for Kubernetes since we don't know the worker flavor)
+            if (app != null && app.hasParallelFlag() && job.getEnvironment() != Environment.KUBERNETES) {
                 Class<?> type = app.parallelArgumentType();
-                if (type.isAssignableFrom(Integer.class)) {
-                    pArgs = app.parallelArguments(Integer.class,
-                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 + 2 : cpu);
-                } else if (type.isAssignableFrom(Long.class)) {
-                    pArgs = app.parallelArguments(Integer.class,
-                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 + 2 : cpu);
+                if (type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Long.class)) {
+                    pArgs = app.parallelArguments(Integer.class, node.getFlavor().getCpu());
                 } else {
                     pArgs = app.parallelArguments(Boolean.class, true);
                 }

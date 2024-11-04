@@ -27,7 +27,7 @@ public class DataSourceInfo {
         this.description = component.getDescription();
         this.authors = component.getAuthors();
         this.copyright = component.getCopyright();
-        this.nodeAffinity = component.getNodeAffinity();
+        this.nodeAffinity = component.getNodeAffinity() != null ? component.getNodeAffinity().getValue() : null;
         this.sensorName = component.getSensorName();
         this.dataSourceName = component.getDataSourceName();
         this.tags = component.getTags();

@@ -64,6 +64,7 @@
             </basic>
             <basic name="nodeAffinity">
                 <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.NodeAffinityConverter"/>
             </basic>
             <basic name="tags">
                 <column name="tags" nullable="true" column-definition="text NULL"/>
@@ -1577,7 +1578,7 @@
 
     <entity class="ro.cs.tao.subscription.ExternalResourceSubscription" access="PROPERTY">
         <table name="subscription.external_resource_subscription"/>        
-        <convert converter="ro.cs.tao.persistence.convert.FlavorConverter" attribute-name="flavors"/>
+        <convert converter="ro.cs.tao.persistence.convert.ExternalFlavorConverter" attribute-name="flavors"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar NOT NULL"/>
@@ -1757,4 +1758,5 @@
     <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ComponentCategoryConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.NodeAffinityConverter"/>
 </entity-mappings>

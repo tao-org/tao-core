@@ -40,8 +40,8 @@ public abstract class DataSourceTest<T extends DataSource> extends BaseTest {
     protected Path destination;
 
     static {
-        pageSize = 50;
-        maxResults = 50;
+        pageSize = 100;
+        maxResults = 10000;
         rowTemplate = "ID=%s, NAME=%s, LOCATION=%s, QUICKLOOK=%s";
         listener = new DownloadProgressListener() {
             @Override

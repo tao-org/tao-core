@@ -505,7 +505,7 @@ public class PersistenceManagerTest {
         component.setTemplateType(TemplateType.VELOCITY);
 
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
-        component.setNodeAffinity("Any");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setActive(true);
 
         component.setContainerId(containerId);
@@ -733,7 +733,7 @@ public class PersistenceManagerTest {
         component.setAuthors("component authors");
         component.setCopyright("component copyright");
 
-        component.setNodeAffinity("Any");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setTargetCardinality(0);
         component.setFetchMode(FetchMode.RESUME);
 
@@ -1933,7 +1933,7 @@ public class PersistenceManagerTest {
         component.setAuthors("component authors");
         component.setCopyright("component copyright");
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
-        component.setNodeAffinity("Any");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setCapabilityName("remote name");
         component.setOwner("avl1");
         Container container = persistenceManager.containers().get("container01");
@@ -2020,7 +2020,7 @@ public class PersistenceManagerTest {
         component.setAuthors("component authors");
         component.setCopyright("component copyright");
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
-        component.setNodeAffinity("Any");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setCapabilityName("remote name");
         component.setOwner("avl1");
         Container container = persistenceManager.containers().get("container01");

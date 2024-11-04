@@ -28,11 +28,9 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
+import ro.cs.tao.utils.StringUtilities;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -104,6 +102,9 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
         Map<ParameterDescriptor, ParameterExpansionRule> map = new HashMap<>();
         if (descriptors != null) {
             descriptors.forEach(d -> {
+                if (StringUtilities.isNullOrEmpty(d.getId())) {
+                    d.setId(UUID.randomUUID().toString());
+                }
                 ParameterExpansionRule expansionRule = d.getExpansionRule();
                 if (expansionRule != null && !d.getId().equals(expansionRule.getId())) {
                     expansionRule.setId(d.getId());
@@ -142,9 +143,17 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             throw new PersistenceException(String.format("Invalid parameters provided for updating entity of type %s!",
                                                          entity.getClass().getSimpleName()));
         }
-        Map<ParameterDescriptor, ParameterExpansionRule> rules = entity.getParameterDescriptors().stream()
-                                                                       .filter(p -> p.getExpansionRule() != null)
-                                                                       .collect(Collectors.toMap(Function.identity(),
+        final Set<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
+        if (descriptors != null) {
+            for (ParameterDescriptor descriptor : descriptors) {
+                if (StringUtilities.isNullOrEmpty(descriptor.getId())) {
+                    descriptor.setId(UUID.randomUUID().toString());
+                }
+            }
+        }
+        Map<ParameterDescriptor, ParameterExpansionRule> rules = descriptors.stream()
+                                                                            .filter(p -> p.getExpansionRule() != null)
+                                                                            .collect(Collectors.toMap(Function.identity(),
                                                                                                  ParameterDescriptor::getExpansionRule));
         for (Map.Entry<ParameterDescriptor, ParameterExpansionRule> entry : rules.entrySet()) {
             ParameterExpansionRule rule = entry.getValue();
