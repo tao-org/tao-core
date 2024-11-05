@@ -161,14 +161,58 @@
 
         <association-override name="sources">
             <join-table name="component.wps_component_sources">
-                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <join-column name="component_id" referenced-column-name="id"/>
                 <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
             </join-table>
         </association-override>
 
         <association-override name="targets">
             <join-table name="component.wps_component_targets">
-                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <join-column name="component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter" attribute-name="parameters" />
+        <attributes>
+            <basic name="remoteAddress">
+                <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+            <basic name="capabilityName">
+                <column name="capability" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="owner">
+                <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="parameters">
+                <column name="parameters" nullable="true" column-definition="json NULL" />
+            </basic>
+            <many-to-one name="service" fetch="EAGER" target-entity="ro.cs.tao.docker.Container">
+                <join-column name="container_id" nullable="true"/>
+            </many-to-one>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.component.ogc.WMSComponent" access="PROPERTY">
+        <table name="component.wms_component"/>
+
+        <association-override name="sources">
+            <join-table name="component.wms_component_sources">
+                <join-column name="component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="component.wms_component_targets">
+                <join-column name="component_id" referenced-column-name="id"/>
                 <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
             </join-table>
         </association-override>
@@ -212,6 +256,18 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.execution.model.WMSExecutionTask" access="PROPERTY">
+
+        <discriminator-value>34</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ogc.WMSComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+            <transient name="externalCommonParameters"/>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.eodata.naming.NamingRule" access="PROPERTY">
         <table name="product.naming_rule"/>
         <attributes>
@@ -227,6 +283,9 @@
             </basic>
             <basic name="description">
                 <column name="description" nullable="false" column-definition="varchar(100) NOT NULL"/>
+            </basic>
+            <basic name="synonyms">
+                <column name="synonyms" nullable="true" column-definition="varchar"/>
             </basic>
             <element-collection name="tokens" target-class="ro.cs.tao.eodata.naming.NameToken" access="PROPERTY" fetch="EAGER">
                 <collection-table name="product.naming_rule_token">

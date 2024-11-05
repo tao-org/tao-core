@@ -21,6 +21,7 @@ import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
 import ro.cs.tao.docker.ContainerVisibility;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -79,5 +80,21 @@ public interface ContainerService extends CRUDService<Container, String> {
      * @param components    The list of components contained in this container
      */
     String registerContainer(Path dockerFile, Container descriptor, ProcessingComponent[] components);
+
+    /**
+     * Exports the Docker image together with the container descriptor (and its associated components)
+     * into a TAO package
+     * @param descriptor    The container descriptor to be exported
+     * @param includeImageFile  Indicates if the docker image should be explicitly exported
+     * @return  The path of the generated TAO package
+     */
+    Path exportContainer(Container descriptor, boolean includeImageFile, Path targetFolder) throws IOException;
+
+    /**
+     * Imports a Docker container with its descriptors from a TAO package
+     * @param taoPackage    The TAO package to be imported
+     * @return              The ID of the created ContainerDescriptor
+     */
+    String importContainer(Path taoPackage) throws IOException;
 
 }

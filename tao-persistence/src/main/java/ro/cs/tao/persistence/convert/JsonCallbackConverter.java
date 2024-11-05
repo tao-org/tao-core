@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.convert;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.serialization.JsonMapper;
+import ro.cs.tao.utils.logger.Logger;
 
 import javax.persistence.AttributeConverter;
 
@@ -14,7 +15,7 @@ public class JsonCallbackConverter implements AttributeConverter<EndpointDescrip
             try {
                 dbValue = JsonMapper.instance().writerFor(EndpointDescriptor.class).writeValueAsString(descriptor);
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         return dbValue;
@@ -27,7 +28,7 @@ public class JsonCallbackConverter implements AttributeConverter<EndpointDescrip
             try {
                 descriptor = JsonMapper.instance().readerFor(EndpointDescriptor.class).readValue(value);
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         return descriptor;

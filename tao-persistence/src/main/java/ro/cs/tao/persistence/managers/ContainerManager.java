@@ -16,7 +16,9 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
@@ -26,6 +28,8 @@ import ro.cs.tao.persistence.repository.ContainerRepository;
 
 import java.util.List;
 
+@Configuration
+@EnableTransactionManagement
 @Component("containerManager")
 public class ContainerManager extends EntityManager<Container, String, ContainerRepository> implements ContainerProvider {
 

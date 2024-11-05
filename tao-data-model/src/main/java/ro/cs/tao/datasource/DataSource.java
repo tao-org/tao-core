@@ -116,8 +116,22 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
      * Instructs this datasource to use the alternate connection string instead of the primary one.
      */
     public abstract void useAlternateConnectionString(boolean value);
+
+    /**
+     * Indicates if this datasource requires credentials to be accessed
+     */
     public boolean requiresAuthentication() { return false; }
+
+    /**
+     * Indicates if this datasource has 2-factor authentication enabled
+     * @return
+     */
     public boolean is2FAEnabled() { return false; }
+
+    /**
+     * Indicates if a bearer token is supported by this datasource
+     */
+    public boolean isBearerTokenSupported() { return false; }
     /**
      * Sets the credentials needed to connect to this data source
      * @param username  The user id
@@ -129,11 +143,36 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
      */
     public abstract UsernamePasswordCredentials getCredentials();
 
+    /**
+     * Sets the bearer token to be used. The default implementation does nothing,
+     * so extenders should override this if a bearer token is needed.
+     * @param token The bearer token
+     */
+    public void setBearerToken(String token) { }
+
+    public String getBearerToken() { return null; }
+
+    /**
+     * Authenticates using OTP, if 2FA is enabled.
+     * @param oneTimePassword   The OTP
+     */
     public T authenticate(String oneTimePassword) throws IOException {
         return authenticate();
     }
 
+    /**
+     * Performs authentication using the set Credentials
+     */
     public abstract T authenticate() throws IOException;
+
+    /**
+     * Obtains a new access token from a refresh token.
+     * This method should be overridden by implementors that support refresh tokens.
+     * @param refreshToken  The refresh token
+     */
+    public T reauthenticate(String refreshToken) throws IOException {
+        return null;
+    }
 
     /**
      * Tests that the datasource source is reachable.

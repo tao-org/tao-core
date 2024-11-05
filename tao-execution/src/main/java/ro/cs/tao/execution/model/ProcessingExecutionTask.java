@@ -24,6 +24,7 @@ import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
@@ -70,11 +71,14 @@ public class ProcessingExecutionTask extends ExecutionTask {
         final boolean descriptorExists =
                 this.component.getParameterDescriptors().stream().anyMatch(d -> d.getName().equals(parameterName)) ||
                 this.component.getSources().stream().anyMatch(s -> s.getName().equals(parameterName)) ||
-                this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName));
+                this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName)) ||
+                this.component.getParameterDescriptors().stream().filter(p -> p instanceof TemplateParameterDescriptor)
+                              .map(p -> (TemplateParameterDescriptor) p)
+                              .anyMatch(p -> p.getParameters().stream().anyMatch(d -> parameterName.equals(p.getName()+"~"+d.getName())));
         if (!descriptorExists) {
             if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterName)) {
-                throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
-                                                            parameterName, component.getLabel()));
+                throw new ValidationException(String.format("The parameter [%s] does not exists in the component '%s'",
+                        parameterName, component.getLabel()));
             }
         }
         if (this.inputParameterValues == null) {
@@ -156,33 +160,39 @@ public class ProcessingExecutionTask extends ExecutionTask {
             return null;
         }
         Map<String, Object> inputParams = new HashMap<>();
-        final List<ParameterDescriptor> parameterDescriptors = this.component.getParameterDescriptors();
+        final Set<ParameterDescriptor> parameterDescriptors = this.component.getParameterDescriptors();
         if (inputParameterValues != null) {
             for (Variable input : inputParameterValues) {
                 String strValue = input.getValue();
-                final String key = input.getKey();
-                Object value;
-                ParameterDescriptor descriptor = parameterDescriptors.stream()
-                                                                     .filter(d -> d.getName().equals(key))
-                                                                     .findFirst().orElse(null);
-                if (descriptor == null) {
-                    // maybe it is a sub-parameter of a template parameter
-                    TemplateParameterDescriptor templateDescriptor = (TemplateParameterDescriptor) parameterDescriptors.stream()
-                                                     .filter(d -> d.getType() == ParameterType.TEMPLATE &&
-                                                             ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> p.getName().equals(key)))
-                                                     .findFirst().orElse(null);
-                    if (templateDescriptor != null) {
-                        descriptor = templateDescriptor.getParameters().stream()
-                                                       .filter(d -> templateDescriptor.getName().equals(key)).findFirst().get();
-                        value = getParameterTypedValue(descriptor, strValue);
+                if (!StringUtilities.isNullOrEmpty(strValue)) {
+                    final String key = input.getKey();
+                    Object value;
+                    ParameterDescriptor descriptor = parameterDescriptors.stream()
+                                                                         .filter(d -> d.getName().equals(key))
+                                                                         .findFirst().orElse(null);
+                    if (descriptor == null) {
+                        // maybe it is a sub-parameter of a template parameter
+                        TemplateParameterDescriptor templateDescriptor = (TemplateParameterDescriptor) parameterDescriptors.stream()
+                                                                                                                           .filter(d -> d.getType() == ParameterType.TEMPLATE &&
+                                                                                                                                   ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> key.equals(d.getName() + "~" + p.getName())))
+                                                                                                                           .findFirst().orElse(null);
+                        if (templateDescriptor != null) {
+                            Map<String, Object> templateMap = (Map<String, Object>) inputParams.computeIfAbsent(templateDescriptor.getName(), k -> new HashMap<String, Object>());
+                            //sub-parameter should be added to the appropriate map
+                            descriptor = templateDescriptor.getParameters().stream()
+                                                           .filter(d -> key.equals(templateDescriptor.getName() + "~" + d.getName())).findFirst().get();
+                            value = getParameterTypedValue(descriptor, strValue);
+                            templateMap.put(key.split("~")[1], value);
+                            continue;
+                        } else {
+                            // If it's not a parameter or a sub-parameter, it must be a source
+                            value = getParameterTypedValue(descriptor, strValue);
+                        }
                     } else {
-                        // If it's not a parameter or a sub-parameter, it must be a source
                         value = getParameterTypedValue(descriptor, strValue);
                     }
-                } else {
-                    value = getParameterTypedValue(descriptor, strValue);
+                    inputParams.put(key, value);
                 }
-                inputParams.put(key, value);
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {

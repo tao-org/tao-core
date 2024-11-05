@@ -2,6 +2,7 @@ package ro.cs.tao.utils.executors.monitoring;
 
 import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.Triple;
 import ro.cs.tao.utils.executors.MemoryUnit;
 
@@ -32,7 +33,7 @@ public class ActivityListener implements ProcessActivityListener {
         if (file != null) {
             if (!Files.exists(file)) {
                 try {
-                    Files.createDirectories(file.getParent());
+                    FileUtilities.createDirectories(file.getParent());
                     Files.write(file,
                                 (StringUtils.rightPad("Time", 19, " ") + "\t" +
                                  StringUtils.rightPad("Read [kB/s]", 15, " ") +

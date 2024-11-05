@@ -165,13 +165,12 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         final Map<String, Integer> results = new HashMap<>();
         jdbcTemplate.query(con -> {
-              final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, end_time, extract(epoch from coalesce(end_time, now()) - start_time) as minutes " +
-                                                                               "from execution.task) " +
-                                                                               "select j.user_id, sum(d.minutes) as total from execution.task t " +
-                                                                               "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
-                                                                               "where ((d.end_time is NULL and t.execution_status_id = 2) or (d.end_time is not null)) " +
-                                                                               "group by j.user_id order by j.user_id, total desc;");
-              return statement;
+              return con.prepareStatement("with task_duration as ( select id, end_time, extract(epoch from coalesce(end_time, now()) - start_time) as minutes " +
+                                               "from execution.task) " +
+                                               "select j.user_id, sum(d.minutes) as total from execution.task t " +
+                                               "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
+                                               "where ((d.end_time is NULL and t.execution_status_id = 2) or (d.end_time is not null)) " +
+                                               "group by j.user_id order by j.user_id, total desc;");
           },
           (rs, rowNum) -> {
               final AbstractMap.SimpleEntry<String, Integer> entry = new AbstractMap.SimpleEntry<>(rs.getString(1), rs.getInt(2));

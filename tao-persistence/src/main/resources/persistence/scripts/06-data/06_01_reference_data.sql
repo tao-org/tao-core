@@ -56,7 +56,7 @@ INSERT INTO component.parameter_type (type) VALUES
 
 -- Pixel types
 INSERT INTO product.pixel_type (type) VALUES
-('UINT8'), ('INT8'), ('UINT16'), ('INT16'), ('UINT32'), ('INT32'), ('FLOAT32'), ('FLOAT64');
+('UINT8'), ('INT8'), ('UINT16'), ('INT16'), ('UINT32'), ('INT32'), ('FLOAT32'), ('FLOAT64'), ('UNKNOWN');
 
 -- Sensor types
 INSERT INTO product.sensor_type (type) VALUES
@@ -106,7 +106,7 @@ INSERT INTO usr.user_status (status) VALUES
 ('PENDING'), ('ACTIVE'), ('DISABLED');
 -- User type
 INSERT INTO usr.user_type (id, type) VALUES
-(1, 'LOCAL'), (2, 'LDAP'), (3, 'KEYCLOAK');
+(1, 'LOCAL'), (2, 'LDAP'), (3, 'KEYCLOAK'), (4, 'GITHUB');
 
 -- Users
 INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, user_type_id, created)
@@ -119,12 +119,17 @@ INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='SystemAccount'), 1);
 
 -- Node flavor
-INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx)
-VALUES ('master', 8, 32, 1024, 32, 1.0);
+INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx) VALUES
+('master', 8, 32, 1024, 32, 1.0),
+('k8s', 8, 32, 1024, 32, 1.0);
 
 -- localhost execution node
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)
 VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
+
+-- Kubernetes execution node
+INSERT INTO topology.node (id, username, password, flavor_id, description, role)
+VALUES ('k8s-master', '', '', 'k8s', 'K8s Node', 'k8s');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUES
@@ -205,7 +210,7 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 INSERT INTO workspace.repository_type (id, name, params) VALUES
 (1, 'Local repository', '{"root":true}'),
 (2, 'AWS S3 repository', '{"aws.region":true,"aws.access.key":false,"aws.secret.key":false,"aws.bucket":true,"aws.endpoint":false}'),
-(3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true}'),
+(3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true,"openstack.public.url":false}'),
 (4, 'STAC repository', '{"stac.url":true, "page.size":false}'),
 (5, 'Network share repository', '{"smb.server":true,"smb.domain":false,"smb.share":true,"smb.user":false,"smb.password":false}'),
 (6, 'FTP repository', '{"ftp.server":true,"ftp.user":false,"ftp.password":false}'),
@@ -245,7 +250,8 @@ INSERT INTO config.category (id, name, display_order) VALUES
 (6, 'OpenStack', 6),
 (7, 'Workspaces', 7),
 (8, 'Data Sources', 8),
-(9, 'Kubernetes', 9);
+(9, 'Kubernetes', 9),
+(10, 'Github', 10);
 
 -- Configuration items
 INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "values", last_updated) VALUES
@@ -279,6 +285,8 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (4, 'tao.remove.intermediate.files', 'false', 'Remove the intermediate files when the execution finished successfuly', 'bool', 'Remove intermediate files', null, now()),
 (4, 'tao.upload.to.bucket', 'false', 'Move the execution results to the object storage', 'bool', 'Move results to bucket', null, now()),
 (4, 'tao.remove.invalid.products', 'false', 'Delete local products with invalid location', 'bool', 'Delete invalid products', null, now()),
+(4, 'optimize.workflows', 'false', 'Try to combine nodes from the same container', 'bool', 'Optimize workflows', null, now()),
+(4, 'tao.remote.subscriptions.synchronize.rate', '1', 'Interval (in hours) to synchronize external subscriptions', 'int', 'Remote subscription synchronize rate', null, now()),
 (5, 'mail.smtp.auth', 'true', 'Enable SMTP authentication', 'bool', 'Enable SMTP authentication', null, now()),
 (5, 'mail.smtp.starttls.enable', 'true', 'SMTP uses TLS', 'bool', 'SMTP uses TLS', null, now()),
 (5, 'mail.smtp.host', 'smtp.gmail.com', 'SMTP server', 'string', 'SMTP server', null, now()),
@@ -306,6 +314,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (6, 'openstack.volume.ssd.device', '/dev/sds', 'Linux device for SSD', 'string', 'SSD device', null, now()),
 (6, 'openstack.execute.installers', 'false', 'Run post-install steps', 'bool', 'Run post-install steps', null, now()),
 (6, 'openstack.node.user', 'eouser', 'Default account on a new node', 'string', 'Default account', null, now()),
+(6, 'openstack.public.url', '', 'HTTPS URL for accessing the user bucket', 'string', 'HTTPS Swift URL', null, now()),
 (7, 'aws.region', 'eu-central-1', 'AWS region', 'string', 'AWS region', null, now()),
 (7, 'aws.access.key', null, 'AWS access key', 'string', 'Access key', null, now()),
 (7, 'aws.secret.key', null, 'AWS secret key', 'string', 'Secret key', null, now()),
@@ -317,7 +326,10 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (9, 'tao.kubernetes.master.url', 'https://127.0.0.1:6443', 'Cluster URL', 'string', 'Cluster URL', null, now()),
 (9, 'tao.kubernetes.token', null, 'Service account token', 'string', 'Service account token', null, now()),
 (9, 'tao.kubernetes.ca.cert.file', null, 'Service account certificate filepath', 'string', 'Service account certificate filepath', null, now()),
-(9, 'tao.kubernetes.pvc.mappings', '{"/mnt/tao":"tao-pvc","/home/taouser":"tao-user-pvc","/eodata":"tao-eodata-pvc"}', 'Cluster PVC mappings', 'string', 'Cluster PVC mappings', null, now());
+(9, 'tao.kubernetes.pvc.mappings', '{"/mnt/tao":"tao-pvc","/home/taouser":"tao-user-pvc","/eodata":"tao-eodata-pvc"}', 'Cluster PVC mappings', 'string', 'Cluster PVC mappings', null, now()),
+(10, 'github.auth.url', 'https://github.com/login/oauth/access_token', 'Github OAuth URL', 'string', 'Github OAuth URL', null, now()),
+(10, 'github.client.id', '', 'Github OAuth client ID', 'string', 'Github OAuth client ID', null, now()),
+(10, 'github.client.secret', '', 'Github OAuth client secret', 'string', 'Github OAuth client secret', null, now());
 
 -- Subscriptions
 INSERT INTO subscription.subscription_type VALUES

@@ -41,7 +41,7 @@ import java.util.zip.ZipOutputStream;
  */
 public interface StorageService<T, U> extends TAOService {
 
-    String FOLDER_PLACEHOLDER = ".folder";
+    String FOLDER_PLACEHOLDER = ".s3keep";
     String CONTENTS_ATTRIBUTE = "contents";
     String REMOTE_PATH_ATTRIBUTE = "remotePath";
     String ROOT_TITLE = "__root";

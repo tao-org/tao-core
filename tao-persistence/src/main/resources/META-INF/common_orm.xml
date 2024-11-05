@@ -64,6 +64,7 @@
             </basic>
             <basic name="nodeAffinity">
                 <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.NodeAffinityConverter"/>
             </basic>
             <basic name="tags">
                 <column name="tags" nullable="true" column-definition="text NULL"/>
@@ -539,7 +540,7 @@
         <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
         <attributes>
             <basic name="name">
-                <column name="name" nullable="false" column-definition="varchar(512 NOT NULL"/>
+                <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
@@ -651,6 +652,7 @@
 
             <transient name="userName"/>
             <transient name="password"/>
+            <transient name="secret"/>
             <transient name="overriddenParameters"/>
             <transient name="currentProduct"/>
             <transient name="principal"/>
@@ -1200,6 +1202,9 @@
             <basic name="password">
                 <column name="password" nullable="true" column-definition="varchar NULL"/>
             </basic>
+            <basic name="secret">
+                <column name="secret" nullable="true" column-definition="varchar NULL"/>
+            </basic>
             <basic name="pageSize">
                 <column name="page_size" nullable="true" column-definition="integer NULL"/>
             </basic>
@@ -1545,6 +1550,7 @@
     <entity class="ro.cs.tao.subscription.ResourceSubscription" access="PROPERTY">
         <table name="subscription.resource_subscription"/>
         <convert converter="ro.cs.tao.persistence.convert.SubscriptionTypeConverter" attribute-name="type"/>
+        <convert converter="ro.cs.tao.persistence.convert.FlavorConverter" attribute-name="flavors"/>
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
@@ -1552,14 +1558,8 @@
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
-            <basic name="flavorQuantity">
-                <column name="flavor_quantity" nullable="false" column-definition="smallint NOT NULL"/>
-            </basic>
-            <basic name="flavorHddSizeGB">
-                <column name="flavor_hdd_quantity_GB" nullable="true" column-definition="smallint"/>
-            </basic>
-            <basic name="flavorSsdSizeGB">
-                <column name="flavor_ssd_quantity_GB" nullable="true" column-definition="smallint"/>
+            <basic name="flavors">
+                <column name="flavors" nullable="true" column-definition="json"/>
             </basic>
             <basic name="objectStorageGB">
                 <column name="object_storage_GB" nullable="true" column-definition="smallint"/>
@@ -1573,9 +1573,33 @@
             <basic name="ended">
                 <column name="ended" nullable="true" column-definition="timestamp without time zone"/>
             </basic>
-            <many-to-one name="flavor" fetch="EAGER" target-entity="ro.cs.tao.topology.NodeFlavor">
-                <join-column name="flavor_id" nullable="false"/>
-            </many-to-one>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.subscription.ExternalResourceSubscription" access="PROPERTY">
+        <table name="subscription.external_resource_subscription"/>        
+        <convert converter="ro.cs.tao.persistence.convert.ExternalFlavorConverter" attribute-name="flavors"/>
+        <attributes>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="flavors">
+                <column name="flavors" nullable="true" column-definition="json"/>
+            </basic>
+            <basic name="objectStorageGB">
+                <column name="object_storage_GB" nullable="true" column-definition="smallint"/>
+            </basic>
+            
+            <many-to-many name="users" fetch="EAGER">
+                <join-table name="subscription.external_subscription_users">
+                    <join-column name="subscription_id" referenced-column-name="id"/>
+                    <inverse-join-column name="user_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-merge/>
+                </cascade>
+            </many-to-many>
+
         </attributes>
     </entity>
 
@@ -1734,4 +1758,5 @@
     <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ComponentCategoryConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.NodeAffinityConverter"/>
 </entity-mappings>

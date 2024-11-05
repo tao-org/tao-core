@@ -38,7 +38,7 @@ public abstract class FileBackedCollection<E, V extends Collection<E>> implement
         this.elementClass = elementClass;
         this.collection = newCollection();
         try {
-            Files.createDirectories(this.file.getParent());
+            FileUtilities.createDirectories(this.file.getParent());
             if (Files.exists(this.file) && Files.size(this.file) > 2) {
                 final List<E> items = readItems();
                 if (items != null) {

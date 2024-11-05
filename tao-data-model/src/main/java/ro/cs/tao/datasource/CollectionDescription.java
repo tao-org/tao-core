@@ -8,6 +8,7 @@ public class CollectionDescription {
     private String description;
     private String temporalCoverage;
     private String spatialCoverage;
+    private Boolean tokenNeeded;
 
     public String getMission() {
         return mission;
@@ -47,5 +48,13 @@ public class CollectionDescription {
 
     public void setSpatialCoverage(String spatialCoverage) {
         this.spatialCoverage = spatialCoverage;
+    }
+
+    public Boolean isTokenNeeded() {
+        return tokenNeeded != null ? tokenNeeded : false;
+    }
+
+    public void setTokenNeeded(boolean tokenNeeded) {
+        this.tokenNeeded = tokenNeeded;
     }
 }

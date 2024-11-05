@@ -149,6 +149,9 @@ public class PersistenceManager {
     @Autowired
     private ResourceSubscriptionManager resourceSubscriptionManager;
 
+    @Autowired
+    private ExternalResourceSubscriptionManager externalResourceSubscriptionManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -232,4 +235,6 @@ public class PersistenceManager {
     public DataSubscriptionManager dataSubscription() { return dataSubscriptionManager; }
 
     public ResourceSubscriptionManager resourceSubscription() { return resourceSubscriptionManager; }
+
+    public ExternalResourceSubscriptionManager externalResourceSubscription() { return externalResourceSubscriptionManager; }
 }

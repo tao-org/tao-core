@@ -6,8 +6,8 @@ import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.eodata.enums.DataFormat;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -27,7 +27,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "            \"id\" : \"sourceProductFile\",\n" +
                 "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
                 "            \"dataDescriptor\" : {\n" +
-                "                   \"formatType\" : \"RASTER\"" +
+                "                   \"formatType\" : \"1\"" +
                 "             },\n" +
 //                "            \"constraints\" : {\n" +
                 "               \"constraint\" : [ \"Only rasters\" ]\n" +
@@ -37,7 +37,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "            \"id\" : \"out_str\",\n" +
                 "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
                 "            \"dataDescriptor\" : {\n" +
-                "                   \"formatType\" : \"RASTER\"" +
+                "                   \"formatType\" : \"1\"" +
                 "             },\n" +
 //                "            \"constraints\" : {\n" +
                 "               \"constraint\" : [ ]\n" +
@@ -88,10 +88,10 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "            <id>sourceProductFile</id>\n" +
                 "            <parentId>OTB-Segmentation-CC</parentId>\n" +
                 "            <dataDescriptor>\n" +
-                "               <formatType>RASTER</formatType>\n" +
+                "               <formatType>1</formatType>\n" +
                 "            </dataDescriptor>\n" +
                 "            <constraints>\n" +
-                "                <constraint>Only rasters</constraint>/>\n" +
+                "                <constraint>Only rasters</constraint>\n" +
                 "            </constraints>\n" +
                 "        </sources>\n" +
                 "    </inputs>\n" +
@@ -100,7 +100,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "            <id>out_str</id>\n" +
                 "            <parentId>OTB-Segmentation-CC</parentId>\n" +
                 "            <dataDescriptor>\n" +
-                "               <formatType>RASTER</formatType>\n" +
+                "               <formatType>1</formatType>\n" +
                 "            </dataDescriptor>\n" +
                 "            <constraints/>\n" +
                 "        </targets>\n" +
@@ -162,7 +162,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        ArrayList<ParameterDescriptor> parameters = new ArrayList<>();
+        Set<ParameterDescriptor> parameters = new LinkedHashSet<>();
         parameters.add(newParameter("outmode_string",
                                     String.class,
                                     "ulco",
@@ -217,7 +217,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
             setCopyright("(C) Camelot Productions");
             setFileLocation("E:\\OTB\\otbcli_Segmentation.bat");
             setWorkingDirectory("E:\\OTB");
-            setNodeAffinity("Any");
+            setNodeAffinity(NodeAffinity.Any);
             addSource(sourceDescriptor);
             addTarget(targetDescriptor);
             setVersion("1.0");

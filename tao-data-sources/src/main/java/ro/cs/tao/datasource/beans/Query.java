@@ -48,6 +48,7 @@ public class Query extends LongIdentifiable {
     private String dataSource;
     private String user;
     private String password;
+    private String secret;
     private int pageSize;
     private int pageNumber;
     private int limit;
@@ -87,6 +88,9 @@ public class Query extends LongIdentifiable {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getSecret() { return secret; }
+    public void setSecret(String secret) { this.secret = secret; }
 
     public int getPageSize() {
         return pageSize;
@@ -139,7 +143,7 @@ public class Query extends LongIdentifiable {
                 }
                 DataSourceComponent dsComponent = componentPool.get(key);
                 if (webQuery.getUser() != null && webQuery.getPassword() != null) {
-                    dsComponent.setUserCredentials(webQuery.getUser(), webQuery.getPassword());
+                    dsComponent.setUserCredentials(webQuery.getUser(), webQuery.getPassword(), webQuery.getSecret());
                 }
                 final Map<String, DataSourceParameter> parameterDescriptorMap =
                         DataSourceManager.getInstance().getSupportedParameters(webQuery.getSensor(), webQuery.getDataSource());

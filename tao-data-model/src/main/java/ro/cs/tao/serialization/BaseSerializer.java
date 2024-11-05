@@ -15,13 +15,15 @@
  */
 package ro.cs.tao.serialization;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.cfg.ConfigFeature;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author  Cosmin Cara
@@ -29,6 +31,11 @@ import java.util.List;
 public abstract class BaseSerializer<T> implements Serializer<T, String> {
     private Class<T> tClass;
     boolean formatOutput;
+    boolean ignoreNullFields;
+    private Set<ConfigFeature> enabledConfigFeatures;
+    private Set<ConfigFeature> disabledConfigFeatures;
+    private Set<JsonParser.Feature> enabledParserFeatures;
+    private Set<JsonParser.Feature> disabledParserFeatures;
 
     BaseSerializer(Class<T> tClass) {
         this.tClass = tClass;
@@ -38,6 +45,50 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
 
     public void setFormatOutput(boolean value) { this.formatOutput = value; }
 
+    public void setIgnoreNullFields() {
+        this.ignoreNullFields = true;
+    }
+
+    public void enable(ConfigFeature feature) {
+        if (this.enabledConfigFeatures == null) {
+            this.enabledConfigFeatures = new HashSet<>();
+        }
+        this.enabledConfigFeatures.add(feature);
+        if (this.disabledConfigFeatures != null) {
+            this.disabledConfigFeatures.remove(feature);
+        }
+    }
+
+    public void disable(ConfigFeature feature) {
+        if (this.disabledConfigFeatures == null) {
+            this.disabledConfigFeatures = new HashSet<>();
+        }
+        this.disabledConfigFeatures.add(feature);
+        if (this.enabledConfigFeatures != null) {
+            this.enabledConfigFeatures.remove(feature);
+        }
+    }
+
+    public void enable(JsonParser.Feature feature) {
+        if (this.enabledParserFeatures == null) {
+            this.enabledParserFeatures = new HashSet<>();
+        }
+        this.enabledParserFeatures.add(feature);
+        if (this.disabledParserFeatures != null) {
+            this.disabledParserFeatures.remove(feature);
+        }
+    }
+
+    public void disable(JsonParser.Feature feature) {
+        if (this.disabledParserFeatures == null) {
+            this.disabledParserFeatures = new HashSet<>();
+        }
+        this.disabledParserFeatures.add(feature);
+        if (this.enabledParserFeatures != null) {
+            this.enabledParserFeatures.remove(feature);
+        }
+    }
+
     @Override
     public T deserialize(String source) throws SerializationException {
         if (source == null || "null".equalsIgnoreCase(source)) {
@@ -45,6 +96,7 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
         try {
             ObjectMapper mapper = createMapper();
+            applyConfiguration(mapper);
             return mapper.readerFor(this.tClass).readValue(source);
         } catch (Exception e) {
             throw new SerializationException(e);
@@ -57,6 +109,7 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
         try {
             ObjectMapper mapper = createMapper();
+            applyConfiguration(mapper);
             final JsonNode jsonNode = mapper.readTree(source);
             final List<T> results = new ArrayList<>();
             if (!jsonNode.isArray()) {
@@ -86,6 +139,7 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     public String serialize(T object) throws SerializationException {
         try {
             ObjectMapper mapper = createMapper();
+            applyConfiguration(mapper);
             return mapper.writerFor(this.tClass).writeValueAsString(object);
         } catch (Exception e) {
             throw new SerializationException(e);
@@ -95,9 +149,45 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     public String serialize(List<T> objects, String name) throws SerializationException {
         try {
             ObjectMapper mapper = createMapper();
+            applyConfiguration(mapper);
             return mapper.enable(SerializationFeature.WRAP_ROOT_VALUE).writer().withRootName(name).writeValueAsString(objects);
         } catch (Exception e) {
             throw new SerializationException(e);
         }
+    }
+
+    private void applyConfiguration(ObjectMapper mapper) {
+        if (this.enabledConfigFeatures != null) {
+            for (ConfigFeature feature : this.enabledConfigFeatures) {
+                if (feature instanceof SerializationFeature) {
+                    mapper.enable((SerializationFeature) feature);
+                } else if (feature instanceof DeserializationFeature) {
+                    mapper.enable((DeserializationFeature) feature);
+                }
+            }
+        }
+        if (this.disabledConfigFeatures != null) {
+            for (ConfigFeature feature : this.disabledConfigFeatures) {
+                if (feature instanceof SerializationFeature) {
+                    mapper.disable((SerializationFeature) feature);
+                } else if (feature instanceof DeserializationFeature) {
+                    mapper.disable((DeserializationFeature) feature);
+                }
+            }
+        }
+        if (this.enabledParserFeatures != null) {
+            for (JsonParser.Feature feature : this.enabledParserFeatures) {
+                mapper.enable(feature);
+            }
+        }
+        if (this.disabledParserFeatures != null) {
+            for (JsonParser.Feature feature : this.disabledParserFeatures) {
+                mapper.disable(feature);
+            }
+        }
+        if (this.ignoreNullFields) {
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        }
+        mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
     }
 }

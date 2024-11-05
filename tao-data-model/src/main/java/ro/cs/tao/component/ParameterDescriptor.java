@@ -25,6 +25,7 @@ import ro.cs.tao.component.enums.DependencyType;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
 import ro.cs.tao.datasource.param.JavaType;
+import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.reflect.Array;
@@ -248,15 +249,17 @@ public class ParameterDescriptor extends StringIdentifiable {
             this.expansionRule.setJoinValues(true);
             this.expansionRule.setSeparator(" ");
         }
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         final int length = Array.getLength(values);
         final String separator = this.expansionRule.getSeparator();
         final boolean joinValues = this.expansionRule.isJoinValues();
         for (int i = 0; i < length; i++) {
-            builder.append(Array.get(values, i)).append(separator);
-            if (i > 0 && i < length - 1 && !joinValues) {
-                builder.append("-").append(this.id).append(this.expansionRule.getSeparator());
+            if (i > 0 && !joinValues) {
+                builder.append("-")
+                       .append(StringUtilities.isGUID(this.id) ? this.label : this.id)
+                       .append(this.expansionRule.getSeparator());
             }
+            builder.append(Array.get(values, i)).append(separator);
         }
         builder.setLength(builder.length() - 1);
         return builder.toString();

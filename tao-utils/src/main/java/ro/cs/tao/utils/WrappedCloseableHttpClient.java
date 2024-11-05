@@ -7,6 +7,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.*;
+import org.apache.http.message.BasicHeader;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -15,6 +16,7 @@ import javax.net.ssl.X509TrustManager;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 public final class WrappedCloseableHttpClient {
 
@@ -66,7 +68,8 @@ public final class WrappedCloseableHttpClient {
                 .setDefaultCookieStore(cookieStore)
                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                 .setSSLSocketFactory(sslConnectionSocketFactory())
-                .setRedirectStrategy(new LaxRedirectStrategy());
+                .setRedirectStrategy(new LaxRedirectStrategy())
+                .setDefaultHeaders(List.of(new BasicHeader("Accept", "*/*")));
     }
 
     private static SSLConnectionSocketFactory sslConnectionSocketFactory() {

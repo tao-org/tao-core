@@ -53,6 +53,7 @@ public class DockerManager {
     private static final String dockerRunningInstanceCmd;
     private static final String dockerRunningInstanceByIdCmd;
     private static final String dockerRunningInstancesCmd;
+    private static final String dockerHubCheckImageCmd;
     private static final DockerManager instance;
 
     private final ContainerProvider containerProvider;
@@ -72,6 +73,9 @@ public class DockerManager {
         dockerRunningInstanceCmd = "docker ps --filter \"ancestor=%s\" --filter \"name=%s\" --filter \"status=running\"";
         dockerRunningInstanceByIdCmd = "docker ps --filter \"id=%s\" --filter \"status=running\"";
         dockerRunningInstancesCmd = "docker ps --filter \"ancestor=%s\" --filter \"status=running\"";
+        dockerHubCheckImageCmd = SystemUtils.IS_OS_WINDOWS
+                                 ? "docker manifest inspect %s > NUL & echo %%ERRORLEVEL%%"
+                                 : "docker manifest inspect %s > /dev/null ; echo $?";
         instance = new DockerManager();
     }
 
@@ -89,6 +93,10 @@ public class DockerManager {
 
     public static Container getDockerImage(String name) {
         return instance.get(name);
+    }
+
+    public static boolean publicImageExists(String name) {
+        return instance.checkExists(name);
     }
 
     public static Container pullImage(String name) {
@@ -284,6 +292,29 @@ public class DockerManager {
             }
         }
         return id;
+    }
+
+    private boolean checkExists(String name) {
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerHubCheckImageCmd, name);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(false);
+        int retCode;
+        final Executor<?> executor = Executor.execute(accumulator, job);
+        waitFor(executor, 10, TimeUnit.SECONDS);
+        if ((retCode = executor.getReturnCode()) == 0) {
+            final String output = accumulator.getOutput();
+            return "0".equals(output.substring(output.length() - 1));
+        } else {
+            String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                           retCode, accumulator.getOutput());
+            logger.severe(message);
+            return false;
+        }
     }
 
     private Container pull(String name) {

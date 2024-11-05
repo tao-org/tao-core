@@ -59,8 +59,10 @@ public class Logger {
         logger = java.util.logging.Logger.getLogger(java.util.logging.Logger.GLOBAL_LOGGER_NAME);
         java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
         Handler[] handlers = rootLogger.getHandlers();
-        if (handlers[0] instanceof ConsoleHandler) {
-            handlers[0].setFormatter(new LogFormatter());
+        if (handlers != null && handlers.length > 0) {
+            if (handlers[0] instanceof ConsoleHandler) {
+                handlers[0].setFormatter(new LogFormatter());
+            }
         }
         logger.setLevel(Level.ALL);
     }
@@ -78,7 +80,14 @@ public class Logger {
         return rootLogger;
     }
 
+    public static java.util.logging.Logger getLogger(Class clazz) {
+        return java.util.logging.Logger.getLogger(clazz.getName());
+    }
+
     private static Handler registerHandler(String logFile, boolean verbose) throws IOException {
+        if (logFile == null) {
+            return null;
+        }
         Handler fileHandler = new FileHandler(logFile, true);
         fileHandler.setFormatter(new LogFormatter());
         logger.addHandler(fileHandler);

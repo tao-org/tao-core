@@ -17,15 +17,12 @@
 package ro.cs.tao.datasource.remote;
 
 import org.apache.http.Header;
+import org.apache.http.auth.Credentials;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.QueryException;
-import ro.cs.tao.datasource.util.Zipper;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.utils.CloseableHttpResponse;
-import ro.cs.tao.utils.FileUtilities;
-import ro.cs.tao.utils.HttpMethod;
-import ro.cs.tao.utils.NetUtils;
+import ro.cs.tao.utils.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,7 +74,7 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
             extension = productUrl.endsWith(".zip") ? ".zip" : productUrl.endsWith(".tar.gz") ? ".tar.gz" : "";
         }
         boolean isArchive = !extension.isEmpty();
-        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, productUrl, null)) {
+        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, productUrl, (Credentials) null)) {
             int statusCode = response.getStatusLine().getStatusCode();
             logger.finest(String.format("%s returned http code %s", productUrl, statusCode));
             switch (statusCode) {

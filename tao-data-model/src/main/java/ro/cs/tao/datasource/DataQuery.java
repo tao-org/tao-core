@@ -125,6 +125,12 @@ public abstract class DataQuery extends StringIdentifiable {
         return parameter;
     }
 
+    private <V> QueryParameter<V> replaceParameter(String name, Class<V> type, V value) {
+        QueryParameter<V> parameter = createParameter(name, type, value);
+        this.parameters.replace(name, parameter);
+        return parameter;
+    }
+
     public <V> QueryParameter<V> addParameter(String name, V value) {
         Class<V> clazz = this.dataSourceParameters.get(name).getType();
         QueryParameter<V> parameter = createParameter(name, clazz, value);
@@ -196,7 +202,7 @@ public abstract class DataQuery extends StringIdentifiable {
                         final double areaPercentage = productArea > footprintArea
                                                       ? intersection.getArea() / footprintArea
                                                       : intersection.getArea() / productArea;
-                        final boolean toRemove = Math.abs(areaPercentage - coverage) > 0.0001;
+                        final boolean toRemove = areaPercentage < coverage;
                         if (toRemove) {
                             logger.finest(String.format("Product %s removed due to coverage (%.2f%%)", p.getName(), areaPercentage));
                         }
@@ -243,8 +249,8 @@ public abstract class DataQuery extends StringIdentifiable {
                 } else {
                     QueryParameter<?> queryParameter = parameters.get(entry.getKey());
                     if (queryParameter.getType().equals(String.class) &&
-                            (queryParameter.getValue() == null || ((String) queryParameter.getValue()).trim().isEmpty())) {
-                        addParameter(entry.getKey(), parameter.getType(), parameter.getDefaultValue());
+                            (queryParameter.getValue() == null || ((String) queryParameter.getValue()).trim().isEmpty()) && !((String) parameter.getDefaultValue()).trim().isEmpty()) {
+                        replaceParameter(entry.getKey(), parameter.getType(), parameter.getDefaultValue());
                     }
                 }
             }

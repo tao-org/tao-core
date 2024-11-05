@@ -220,7 +220,7 @@ public class ExecutionsManagerTest {
         parameterDescriptor.setUnit("m");
         parameterDescriptor.setValueSet(valueSet);
 
-        List<ParameterDescriptor> descriptors = component.getParameterDescriptors();
+        Set<ParameterDescriptor> descriptors = component.getParameterDescriptors();
         descriptors.add(parameterDescriptor);
         component.setParameterDescriptors(descriptors);
     }

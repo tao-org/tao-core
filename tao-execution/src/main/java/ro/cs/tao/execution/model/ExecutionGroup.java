@@ -17,6 +17,7 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.utils.logger.Logger;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ public class ExecutionGroup extends ExecutionTask {
             try {
                 this.stateHandler.setCurrentState(this.internalState);
             } catch (SerializationException e) {
-                e.printStackTrace();
+                Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
     }

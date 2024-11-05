@@ -6,5 +6,5 @@ public interface NodeFlavorProvider extends EntityProvider<NodeFlavor, String> {
 
     NodeFlavor getMasterFlavor();
     NodeFlavor getMatchingFlavor(NodeFlavor flavor);
-
+    NodeFlavor getMatchingFlavor(int cpu, int memoryMB);
 }

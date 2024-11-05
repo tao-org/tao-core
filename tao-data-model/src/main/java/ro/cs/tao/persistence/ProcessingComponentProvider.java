@@ -15,6 +15,7 @@ public interface ProcessingComponentProvider extends EntityProvider<ProcessingCo
     List<ProcessingComponent> listUserScriptComponents(String userName);
     List<ProcessingComponent> listOtherComponents(Set<String> ids);
     List<ProcessingComponent> listByLabel(String label);
+    List<ProcessingComponent> listByContainer(String containerId);
     boolean hasCopyComponent(String containerId);
     boolean hasMoveComponent(String containerId);
     boolean hasDeleteComponent(String containerId);

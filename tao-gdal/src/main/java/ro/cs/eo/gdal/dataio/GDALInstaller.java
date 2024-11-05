@@ -245,7 +245,7 @@ class GDALInstaller {
     private static void copyDistributionArchiveAndInstall(Path gdalDistributionRootFolderPath, GDALVersion gdalVersion) throws IOException {
         if (!Files.exists(gdalDistributionRootFolderPath)) {
             logger.fine("create the distribution root folder '" + gdalDistributionRootFolderPath + "'.");
-            Files.createDirectories(gdalDistributionRootFolderPath);
+            FileUtilities.createDirectories(gdalDistributionRootFolderPath);
         }
         logger.fine("The distribution root folder '" + gdalDistributionRootFolderPath + "' exists on the local disk.");
         final Path zipFilePath = gdalVersion.getZipFilePath();
@@ -339,7 +339,7 @@ class GDALInstaller {
 
         if (canCopyGDALDistribution) {
             logger.fine("create the folder '" + this.gdalNativeLibrariesFolderPath + "' to copy the GDAL distribution.");
-            Files.createDirectories(this.gdalNativeLibrariesFolderPath);
+            FileUtilities.createDirectories(this.gdalNativeLibrariesFolderPath);
             copyEnvironmentVariablesNativeLibrary(gdalVersion);
             copyLoaderLibrary(gdalVersion);
             copyDistributionArchiveAndInstall(gdalDistributionRootFolderPath, gdalVersion);
@@ -390,11 +390,11 @@ class GDALInstaller {
                 if (Files.exists(filePath))
                     return;
                 if (entry.isDirectory()) {
-                    Files.createDirectories(filePath);
+                    FileUtilities.createDirectories(filePath);
                 } else if(!wasSymlink(zipFile, entry, sourceFile)) {
                     int read;
                     try (final InputStream inputStream = zipFile.getInputStream((ZipArchiveEntry) entry)) {
-                        Files.createDirectories(filePath.getParent());
+                        FileUtilities.createDirectories(filePath.getParent());
                         try (final BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(filePath))) {
                             while ((read = inputStream.read(buffer)) > 0) {
                                 bos.write(buffer, 0, read);

@@ -23,7 +23,7 @@ public interface JobQueue {
     /**
      * Removes a job from the queue, regardless its position in the queue.
      *
-     * @param job The job object
+     * @param jobId The job identifier
      */
     boolean removeJob(long jobId);
 

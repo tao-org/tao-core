@@ -1,6 +1,7 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.component.NodeAffinity;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.enums.ProcessingComponentType;
@@ -51,11 +52,11 @@ public class ScriptJobFactory extends DefaultJobFactory {
                 }
             }
         }
-        final String nodeAffinity = affinityParam != null
-                ? affinityParam.getParameterValue()
+        final NodeAffinity nodeAffinity = affinityParam != null
+                ? NodeAffinity.of(affinityParam.getParameterValue())
                 : component.getNodeAffinity();
-        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
-            task.setExecutionNodeHostName(nodeAffinity);
+        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) || !NodeAffinity.SameNode.equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
         if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
             task.setCommand(component.buildExecutionCommand(customValues.stream().collect(Collectors.toMap(ParameterValue::getParameterName, ParameterValue::getParameterValue)),

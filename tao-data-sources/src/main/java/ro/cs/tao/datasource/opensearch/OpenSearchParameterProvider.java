@@ -16,6 +16,7 @@
 
 package ro.cs.tao.datasource.opensearch;
 
+import org.apache.http.auth.Credentials;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.QueryException;
@@ -101,7 +102,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
     }
 
     private OpenSearchService parseDescription(String url) {
-        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, null)) {
+        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, (Credentials) null)) {
             switch (response.getStatusLine().getStatusCode()) {
                 case 200:
                     DescriptionParser parser = new DescriptionParser();

@@ -35,6 +35,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -94,7 +95,7 @@ public abstract class AbstractSessionFactory extends SessionFactory {
             final Path libraryPath = Paths.get(path, getJniLibraryName()).toAbsolutePath();
             try {
                 if (!Files.exists(libraryPath) || Files.size(libraryPath) == 0) {
-                    Files.createDirectories(libraryPath.getParent());
+                    FileUtilities.createDirectories(libraryPath.getParent());
                     Files.deleteIfExists(libraryPath);
                     logger.info(String.format("Copy library %s to %s",
                                               libraryPath.getFileName(),

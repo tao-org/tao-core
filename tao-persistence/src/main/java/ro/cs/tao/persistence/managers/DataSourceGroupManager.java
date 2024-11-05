@@ -1,7 +1,9 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -16,7 +18,8 @@ import ro.cs.tao.persistence.repository.TargetDescriptorRepository;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+@Configuration
+@EnableTransactionManagement
 @Component("dataSourceGroupManager")
 public class DataSourceGroupManager extends TaoComponentManager<DataSourceComponentGroup, DataSourceGroupRepository>
                                     implements DataSourceComponentGroupProvider {
@@ -86,11 +89,6 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
             }
         }
         return super.update(entity);
-    }
-
-    @Override
-    protected boolean checkId(String entityId, boolean existingEntity) {
-        return entityId != null && !entityId.isEmpty();
     }
 
     @Override

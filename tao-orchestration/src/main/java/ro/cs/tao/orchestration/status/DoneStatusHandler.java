@@ -33,7 +33,7 @@ public class DoneStatusHandler extends TaskStatusHandler {
             jobProvider.update(job);
         }
         if (task instanceof ProcessingExecutionTask) {
-            final String strMsg = "Task " + TaskUtilities.getTaskName(task) +
+            final String strMsg = "Task " + TaskUtilities.getTaskDescriptiveName(task) +
                     (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "") +
                     " changed to " + ExecutionStatus.DONE.friendlyName();
             final Message message = Message.create(task.getJob().getUserId(), task.getId(),

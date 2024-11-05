@@ -16,7 +16,9 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.persistence.repository.DataSourceComponentRepository;
@@ -24,7 +26,8 @@ import ro.cs.tao.utils.StringUtilities;
 
 import java.util.List;
 import java.util.Set;
-
+@Configuration
+@EnableTransactionManagement
 @Component("dataSourceComponentManager")
 public class DataSourceComponentManager extends TaoComponentManager<DataSourceComponent, DataSourceComponentRepository>
                                         implements DataSourceComponentProvider {
@@ -73,11 +76,6 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
     @Override
     public DataSourceComponent getQueryDataSourceComponent(long queryId) {
         return this.repository.getQueryDataSourceComponent(queryId);
-    }
-
-    @Override
-    protected boolean checkId(String entityId, boolean existingEntity) {
-        return entityId != null && !entityId.isEmpty();
     }
 
     @Override

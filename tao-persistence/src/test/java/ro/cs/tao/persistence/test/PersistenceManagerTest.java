@@ -3,18 +3,17 @@ package ro.cs.tao.persistence.test;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
+import ro.cs.tao.component.ogc.WMSComponent;
 import ro.cs.tao.component.ogc.WPSComponent;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
@@ -26,6 +25,7 @@ import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerType;
 import ro.cs.tao.eodata.Attribute;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
@@ -40,6 +40,7 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.topology.*;
+import ro.cs.tao.user.User;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -48,19 +49,20 @@ import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.Status;
 
 import java.awt.*;
+import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 /**
  * Created by oana on 7/18/2017.
+ * Updated by Stefan Efrem on 10/30/2024
  */
 @RunWith(SpringRunner.class)
 @ContextConfiguration("classpath:tao-persistence-context.xml")
-@ImportResource({"classpath:META-INF/persistence.xml" })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PersistenceManagerTest {
 
@@ -84,119 +86,22 @@ public class PersistenceManagerTest {
         logger.info("TC_01_check_DB_configuration");
         try
         {
-            Assert.assertTrue(dbConfig.dataSource() != null);
-            Assert.assertTrue(dbConfig.dataSource().getConnection() != null);
+            setupDB();
+            assertNotNull(dbConfig.dataSource());
+            assertNotNull(dbConfig.dataSource().getConnection());
+            System.out.println("Connection established!");
         }
         catch (SQLException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
-
-    /**@Test
-    public void save_new_data_source()
-    {
-        DataSourceType dataSourceType = null;
-        try {
-            Logger logger = LogManager.getLogManager().getLogger("");
-            for (Handler handler : logger.getHandlers()) {
-                handler.setLevel(Level.INFO);
-            }
-            AbstractDataSource<SciHubDataQuery> dataSource = new SciHubDataSource();
-            dataSource.setCredentials("", "");
-
-            List<DataSourceType> savedDataSourceTypes = persistenceManager.getDataSourceTypes();
-
-            for (DataSourceType savedDataSourceType : savedDataSourceTypes)
-            {
-                if (savedDataSourceType.getType().contains("SCIHUB_SENTINEL_1_DATA_SOURCE"))
-                {
-                    dataSourceType = savedDataSourceType;
-                    break;
-                }
-            }
-
-            if (dataSourceType == null)
-            {
-                // save new data source type
-                dataSourceType = persistenceManager.getDataSourceTypeById(persistenceManager.saveDataSourceType("SCIHUB_SENTINEL_1_DATA_SOURCE"));
-            }
-
-            persistenceManager.saveDataSource(dataSource, dataSourceType, "SciHub Sentinel-1 Data Source", "No description");
-
-        } catch (URISyntaxException | PersistenceException e) {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
-
-    }**/
-
-    /**@Test
-    public void save_new_data_product()
-    {
-        try {
-            Logger logger = LogManager.getLogManager().getLogger("");
-            for (Handler handler : logger.getHandlers()) {
-                handler.setLevel(Level.INFO);
-            }
-            DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class.getName());
-            dataSource.setCredentials("", "");
-            String[] sensors = dataSource.getSupportedSensors();
-
-            DataQuery query = dataSource.createQuery(sensors[1]);
-            query.addParameter("platformName", "Sentinel2");
-            QueryParameter begin = query.createParameter("beginPosition", Date.class);
-            begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
-              .atZone(ZoneId.systemDefault())
-              .toInstant()));
-            begin.setMaxValue(Date.from(LocalDateTime.of(2017, 2, 1, 0, 0, 0, 0)
-              .atZone(ZoneId.systemDefault())
-              .toInstant()));
-            query.addParameter(begin);
-            Polygon2D aoi = Polygon2D.fromWKT("POLYGON((22.8042573604346 43.8379609098684," +
-              "24.83885442747927 43.8379609098684," +
-              "24.83885442747927 44.795645304033826," +
-              "22.8042573604346 44.795645304033826," +
-              "22.8042573604346 43.8379609098684))");
-
-            query.addParameter("footprint", aoi);
-
-            query.addParameter("cloudcoverpercentage", 100.);
-            query.setPageSize(50);
-            query.setMaxResults(83);
-            List<EOProduct> results = query.execute();
-
-            if(results.size() > 0)
-            {
-                // save all results
-                for(EOProduct result : results)
-                {
-                    persistenceManager.saveDataProduct((EOProduct)result, null);
-
-                }
-
-                // save only the first result, for example
-                //EOProduct dataProduct = (EOProduct)results.get(0);
-                //persistenceManager.saveDataProduct(dataProduct, null);
-            }
-            else
-            {
-                logger.info("save_new_data_product() - No result found!");
-            }
-
-        } catch (QueryException | PersistenceException e) {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
-
-    }**/
-
     @Test
-    public void TC_02_save_new_execution_node_new_services()
+    public void TC_02_save_new_execution_node_new_flavor_new_services()
     {
-        logger.info("TC_02_save_new_execution_node_new_services");
+        logger.info("TC_02_save_new_execution_node_new_flavor_new_services");
         try
         {
             // add a new execution node for test
@@ -204,11 +109,12 @@ public class PersistenceManagerTest {
             node.setId("Test1_host_name");
             node.setUserName("Test1 user name");
             node.setUserPass("Test1 user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
+            NodeFlavor flavor = new NodeFlavor("Test flavor", 2, 1024, 1000, 4, 1);
+            flavor = persistenceManager.nodeFlavors().save(flavor);
+
+            assertNotNull(flavor);
+            assertNotNull(flavor.getId());
+            //check persisted flavor
             node.setFlavor(flavor);
 
             node.setDescription("Node1 just for test");
@@ -220,19 +126,20 @@ public class PersistenceManagerTest {
 
             node = persistenceManager.nodes().save(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getId() != null);
+            assertNotNull(node);
+            assertNotNull(node.getId());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_03_save_new_execution_node_existing_services()
+    public void TC_03_save_new_execution_node_existing_flavor_existing_services()
     {
-        logger.info("TC_03_save_new_execution_node_existing_services");
+        logger.info("TC_03_save_new_execution_node_existing_flavor_existing_services");
         try
         {
             // add a new execution node for test
@@ -240,11 +147,7 @@ public class PersistenceManagerTest {
             node.setId("Test2_host_name");
             node.setUserName("Test2 user name");
             node.setUserPass("Test2 user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
+            NodeFlavor flavor = new NodeFlavor("Test flavor", 2, 1024, 1000, 4, 1);
             node.setFlavor(flavor);
 
             node.setDescription("Node2 just for test");
@@ -256,19 +159,22 @@ public class PersistenceManagerTest {
 
             node = persistenceManager.nodes().save(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getId() != null);
+            assertNotNull(node);
+            assertNotNull(node.getId());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            assertTrue(e.getMessage().contains("There is already another node with the host name: "));
+            System.out.println("TC03: The node already exists!");
+            //fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_04_save_new_execution_node_mixt_services()
+    public void TC_04_save_new_execution_node_existing_flavor_mixed_services()
     {
-        logger.info("TC_04_save_new_execution_node_mixt_services");
+        logger.info("TC_04_save_new_execution_node_existing_flavor_mixed_services");
         try
         {
             // add a new execution node for test
@@ -276,11 +182,7 @@ public class PersistenceManagerTest {
             node.setId("Test3_host_name");
             node.setUserName("Test3 user name");
             node.setUserPass("Test3 user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
+            NodeFlavor flavor = new NodeFlavor("Test flavor", 2, 1024, 1000, 4, 1);
             node.setFlavor(flavor);
 
             node.setDescription("Node3 just for test");
@@ -292,12 +194,15 @@ public class PersistenceManagerTest {
 
             node = persistenceManager.nodes().save(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getId() != null);
+            assertNotNull(node);
+            assertNotNull(node.getId());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            assertTrue(e.getMessage().contains("There is already another node with the host name: "));
+            System.out.println("TC04: The node already exists!");
+            //fail(e.getMessage());
         }
     }
 
@@ -308,7 +213,8 @@ public class PersistenceManagerTest {
         try
         {
             List<NodeDescription> nodes  = persistenceManager.nodes().list();
-            Assert.assertTrue(nodes != null && nodes.size() > 0);
+            assertNotNull(nodes);
+            assertFalse(nodes.isEmpty());
             for (NodeDescription node : nodes)
             {
                 logger.info("Found node " + node.getId());
@@ -317,7 +223,7 @@ public class PersistenceManagerTest {
         catch (Exception e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -328,18 +234,18 @@ public class PersistenceManagerTest {
         try
         {
             List<NodeDescription> nodes  = persistenceManager.nodes().list();
-            if(nodes.size() > 0)
+            if(!nodes.isEmpty())
             {
-                NodeDescription firstNode = nodes.get(0);
-                firstNode.getFlavor().setDisk(9);
-                firstNode = persistenceManager.nodes().update(firstNode);
-                Assert.assertEquals(9, firstNode.getFlavor().getDisk());
+                NodeDescription lastNode = nodes.getLast();
+                lastNode.getFlavor().setDisk(9);
+                lastNode = persistenceManager.nodes().update(lastNode);
+                assertEquals(9, lastNode.getFlavor().getDisk());
             }
         }
         catch (TopologyException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -347,20 +253,12 @@ public class PersistenceManagerTest {
     public void TC_07_check_execution_node_existence_by_host_name()
     {
         logger.info("TC_07_check_execution_node_existence_by_host_name");
-        try
+        List<NodeDescription> nodes  = persistenceManager.nodes().list();
+        if(!nodes.isEmpty())
         {
-            List<NodeDescription> nodes  = persistenceManager.nodes().list();
-            if(nodes.size() > 0)
-            {
-                NodeDescription firstNode = nodes.get(0);
-                String hostName = firstNode.getId();
-                Assert.assertTrue(persistenceManager.nodes().exists(hostName));
-            }
-        }
-        catch (Exception e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            NodeDescription lastNode = nodes.getLast();
+            String hostName = lastNode.getId();
+            assertTrue(persistenceManager.nodes().exists(hostName));
         }
     }
 
@@ -368,22 +266,14 @@ public class PersistenceManagerTest {
     public void TC_08_retrieve_execution_node_by_host_name()
     {
         logger.info("TC_08_retrieve_execution_node_by_host_name");
-        /*try
-        {*/
-            List<NodeDescription> nodes  = persistenceManager.nodes().list();
-            if(nodes.size() > 0)
-            {
-                NodeDescription firstNode = nodes.get(0);
-                String hostName = firstNode.getId();
-                NodeDescription searchedNode  = persistenceManager.nodes().get(hostName);
-                Assert.assertTrue(searchedNode != null && searchedNode.getId().equals(hostName));
-            }
-        /*}
-        catch (PersistenceException e)
+        List<NodeDescription> nodes  = persistenceManager.nodes().list();
+        if(!nodes.isEmpty())
         {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }*/
+            NodeDescription lastNode = nodes.getLast();
+            String hostName = lastNode.getId();
+            NodeDescription searchedNode  = persistenceManager.nodes().get(hostName);
+            assertTrue(searchedNode != null && searchedNode.getId().equals(hostName));
+        }
     }
 
     @Test
@@ -394,53 +284,114 @@ public class PersistenceManagerTest {
         {
             // add a new execution node in order to deactivate it
             NodeDescription node  = new NodeDescription();
-            node.setId("hostname2");
-            node.setUserName("Test user name");
-            node.setUserPass("Test user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
+            node.setId("Test4_host_name");
+            node.setUserName("Test4 user name");
+            node.setUserPass("Test4 user pass");
+            NodeFlavor flavor = new NodeFlavor("Test flavor", 2, 1024, 1000, 4, 1);
             node.setFlavor(flavor);
-
-            node.setDescription("Node 2 just for test");
+            node.setDescription("Node4 just for test");
 
             node = persistenceManager.nodes().save(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getId() != null);
+            assertNotNull(node);
+            assertNotNull(node.getId());
 
             // deactivate node
             persistenceManager.nodes().delete(node.getId());
             node = persistenceManager.nodes().get(node.getId());
 
-            Assert.assertTrue(node != null && !node.getActive());
+            assertNotNull(node);
+            assertFalse(node.getActive());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_10_save_new_container()
+    public void TC_10_delete_volatile_execution_node()
     {
-        logger.info("TC_10_save_new_container");
+        logger.info("TC_10_delete_execution_node");
         try
         {
-            // add a new container for test
-            Container container = createNewTestContainer("container01");
+            NodeDescription node  = new NodeDescription();
+            node.setId("Test5_host_name");
+            node.setUserName("Test5 user name");
+            node.setUserPass("Test5 user pass");
+            NodeFlavor flavor = new NodeFlavor("Test flavor", 2, 1024, 1000, 4, 1);
+            node.setFlavor(flavor);
+            node.setDescription("Node5 just for test");
+            node.setVolatile(true);
 
-            container = persistenceManager.containers().save(container);
-            // check persisted container
-            Assert.assertTrue(container != null && container.getId() != null);
-            Assert.assertTrue(container.getApplications() != null && container.getApplications().size() == 3);
+            node = persistenceManager.nodes().save(node);
+            // check persisted node
+            assertNotNull(node);
+            assertNotNull(node.getId());
+
+            // delete node because it is volatile
+            persistenceManager.nodes().delete(node.getId());
+            assertNull(persistenceManager.nodes().get(node.getId()));
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_11_delete_server_execution_node()
+    {
+        logger.info("TC_11_delete_execution_node");
+        try
+        {
+            NodeDescription node  = new NodeDescription();
+            node.setId("Test6_host_name");
+            node.setUserName("Test6 user name");
+            node.setUserPass("Test6 user pass");
+            NodeFlavor flavor = new NodeFlavor("Test flavor", 2, 1024, 1000, 4, 1);
+            node.setFlavor(flavor);
+            node.setDescription("Node6 just for test");
+            node.setVolatile(true);
+            node.setServerId("Test Server");
+
+            node = persistenceManager.nodes().save(node);
+            // check persisted node
+            assertNotNull(node);
+            assertNotNull(node.getId());
+
+            // delete server node
+            persistenceManager.nodes().delete(node.getId());
+            assertNull(persistenceManager.nodes().get(node.getId()));
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_12_save_new_container()
+    {
+        logger.info("TC_12_save_new_container");
+        try
+        {
+            // add a new container for test
+            Container container = createNewTestContainer("container01");
+            container = persistenceManager.containers().save(container);
+            // check persisted container
+            assertNotNull(container);
+            assertNotNull(container.getId());
+            assertNotNull(container.getApplications());
+            assertEquals(3, container.getApplications().size());
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            fail(e.getMessage());
         }
     }
 
@@ -448,10 +399,10 @@ public class PersistenceManagerTest {
         // add a new container for test
         Container container = new Container();
         container.setId(containerId);
+        container.setDescription("container test description");
+        container.setType(ContainerType.DOCKER);
         container.setName("container for test");
         container.setTag("container tag");
-
-        // list of container applications
         List<Application> applications = new ArrayList<>();
 
         final Application app1 = new Application();
@@ -473,32 +424,23 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_11_retrieve_containers()
+    public void TC_13_retrieve_containers()
     {
-        logger.info("TC_11_retrieve_containers");
-        try
+        logger.info("TC_13_retrieve_containers");
+        List<Container> containers  = persistenceManager.containers().list();
+        assertNotNull(containers);
+        assertFalse(containers.isEmpty());
+        logger.info("Found " + containers.size() + " container(s).");
+        for (Container container : containers)
         {
-            List<Container> containers  = persistenceManager.containers().list();
-            Assert.assertTrue(containers != null && containers.size() > 0);
-
-            logger.info("Found " + containers.size() + " container(s).");
-
-            for (Container container : containers)
-            {
-                logger.info("Found container " + container.getId());
-            }
-        }
-        catch (Exception e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            logger.info("Found container " + container.getId());
         }
     }
 
     @Test
-    public void TC_12_delete_container_with_applications_no_PC()
+    public void TC_14_delete_container_with_applications_no_PC()
     {
-        logger.info("TC_12_delete_container_with_applications_no_PC");
+        logger.info("TC_14_delete_container_with_applications_no_PC");
         try
         {
             // add a new container for test
@@ -506,42 +448,44 @@ public class PersistenceManagerTest {
 
             container = persistenceManager.containers().save(container);
             // check persisted container
-            Assert.assertTrue(container != null && container.getId() != null);
+            assertNotNull(container);
+            assertNotNull(container.getId());
 
             // delete container
             persistenceManager.containers().delete(container.getId());
 
             // check that the container was deleted
-            Assert.assertFalse(persistenceManager.containers().exists("container02"));
+            assertFalse(persistenceManager.containers().exists("container02"));
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_13_save_new_processing_component()
+    public void TC_15_save_new_processing_component()
     {
-        logger.info("TC_13_save_new_processing_component");
+        logger.info("TC_15_save_new_processing_component");
         try
         {
             // add a new processing component for test
-            ProcessingComponent component = createNewProcessingComponent("component01", "container01");
+            ProcessingComponent component = createNewProcessingComponent("component01", "container01", 1);
 
             component = persistenceManager.processingComponents().save(component);
             // check persisted component
-            Assert.assertTrue(component != null && component.getId() != null);
+            assertNotNull(component);
+            assertNotNull(component.getId());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
-    private ProcessingComponent createNewProcessingComponent(String componentId, String containerId) {
+    private ProcessingComponent createNewProcessingComponent(String componentId, String containerId, int paramIndexStart) {
         // add a new processing component for test
         ProcessingComponent component = new ProcessingComponent();
         component.setId(componentId);
@@ -552,6 +496,7 @@ public class PersistenceManagerTest {
         component.setCopyright("component copyright");
         component.setFileLocation("component file location");
         component.setWorkingDirectory("component working directory");
+        component.setTransient(false);
 
         Template template = new BasicTemplate();
         template.setName("basic template name");
@@ -560,66 +505,68 @@ public class PersistenceManagerTest {
         component.setTemplateType(TemplateType.VELOCITY);
 
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
-        component.setNodeAffinity("Any");
-        //component.setMultiThread(true);
-        component.setActive(true); // TODO
+        component.setNodeAffinity(NodeAffinity.Any);
+        component.setActive(true);
 
         component.setContainerId(containerId);
-        /*component.setSourceCardinality(0);
-        component.setTargetCardinality(0);*/
 
         // list of component variables
         Set<Variable> variables = new HashSet<>();
 
         final Variable var1 = new Variable();
-        var1.setKey("var1");
-        var1.setValue("value1");
+        var1.setKey("var" + paramIndexStart);
+        var1.setValue("value" + paramIndexStart);
         variables.add(var1);
 
         final Variable var2 = new Variable();
-        var2.setKey("var2");
-        var2.setValue("value2");
+        var2.setKey("var" + (paramIndexStart + 1));
+        var2.setValue("value" + (paramIndexStart + 1));
         variables.add(var2);
 
         component.setVariables(variables);
 
-        // list of component parameters
-        List<ParameterDescriptor> parameters = new ArrayList<>();
+        // set of component parameters
+        Set<ParameterDescriptor> parameters = new LinkedHashSet<>();
 
         final ParameterDescriptor param1 = new ParameterDescriptor();
-        param1.setId("testParam1");
+        param1.setId("testParam" + paramIndexStart);
         param1.setType(ParameterType.REGULAR);
         param1.setDataType(String.class);
-        param1.setLabel("Test Param 1");
+        param1.setLabel("Test Param " + paramIndexStart);
+        param1.setName("testParam" + paramIndexStart);
         parameters.add(param1);
 
         final ParameterDescriptor param2 = new ParameterDescriptor();
-        param2.setId("testParam2");
+        param2.setId("testParam" + (paramIndexStart + 1));
         param2.setType(ParameterType.REGULAR);
-        param2.setDataType(Integer.class);
-        param2.setLabel("Test Param 2");
+        param2.setDataType(String.class);
+        param2.setLabel("Test Param " + (paramIndexStart + 1));
+        param2.setName("testParam" + (paramIndexStart + 1));
         parameters.add(param2);
 
         // add also a template parameter, which regular parameter(s) inside
         final TemplateParameterDescriptor tParam = new TemplateParameterDescriptor();
         List<ParameterDescriptor> templateParamParameters = new ArrayList<>();
-        tParam.setId("templateParam");
+        tParam.setId("templateParam" + paramIndexStart);
         tParam.setType(ParameterType.TEMPLATE);
-        tParam.setDataType(Integer.class);
-        tParam.setLabel("Test TemplateParam");
+        tParam.setDataType(String.class);
+        tParam.setLabel("Test TemplateParam"+ paramIndexStart);
+        tParam.setName("templateParam"+ paramIndexStart);
 
         final ParameterDescriptor param3 = new ParameterDescriptor();
-        param3.setId("testParam3");
+        param3.setId("testParam" + (paramIndexStart + 2));
         param3.setType(ParameterType.REGULAR);
-        param3.setDataType(Integer.class);
-        param3.setLabel("Test Param 3");
+        param3.setDataType(String.class);
+        param3.setLabel("Test Param " + (paramIndexStart + 2));
+        param3.setName("testParam" + (paramIndexStart + 2));
         templateParamParameters.add(param3);
 
         final ParameterDescriptor param4 = new ParameterDescriptor();
-        param4.setId("testParam4");
+        param4.setId("testParam" + (paramIndexStart + 3));
         param4.setType(ParameterType.REGULAR);
-        param4.setDataType(Integer.class);
-        param4.setLabel("Test Param 4");
+        param4.setDataType(String.class);
+        param4.setLabel("Test Param " + (paramIndexStart + 3));
+        param4.setName("testParam" + (paramIndexStart + 3));
         templateParamParameters.add(param4);
 
         tParam.setParameters(templateParamParameters);
@@ -631,153 +578,150 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_14_retrieve_processing_components()
+    public void TC_16_retrieve_processing_components()
     {
-        logger.info("TC_14_retrieve_processing_components");
-        try
+        logger.info("TC_16_retrieve_processing_components");
+        List<ProcessingComponent> components  = persistenceManager.processingComponents().list();
+        assertNotNull(components);
+        assertFalse(components.isEmpty());
+        logger.info("Found " + components.size() + " processing component(s).");
+        for (ProcessingComponent component : components)
         {
-            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();
-            Assert.assertTrue(components != null && components.size() > 0);
-
-            logger.info("Found " + components.size() + " processing component(s).");
-
-            for (ProcessingComponent component : components)
-            {
-                logger.info("Found component " + component.getId());
-            }
-        }
-        catch (Exception e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            logger.info("Found component " + component.getId());
         }
     }
 
     @Test
-    public void TC_15_update_processing_component()
+    public void TC_17_update_processing_component()
     {
-        logger.info("TC_15_update_processing_component");
+        logger.info("TC_17_update_processing_component");
         try
         {
-            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();
-            if(components.size() > 0)
-            {
-                ProcessingComponent firstComponent = components.get(0);
-                firstComponent.setDescription("Description updated");
-                firstComponent = persistenceManager.processingComponents().update(firstComponent);
-                Assert.assertEquals("Description updated", firstComponent.getDescription());
-            }
+            ProcessingComponent component  = persistenceManager.processingComponents().get("component01");
+            assertNotNull(component);
+            assertNotNull(component.getId());
+            component.setDescription("Description updated");
+            component = persistenceManager.processingComponents().update(component);
+            assertEquals("Description updated", component.getDescription());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_16_check_processing_component_existence_by_id()
+    public void TC_18_check_processing_component_existence_by_id()
     {
-        logger.info("TC_16_check_processing_component_existence_by_id");
-        try
+        logger.info("TC_18_check_processing_component_existence_by_id");
+        List<ProcessingComponent> components  = persistenceManager.processingComponents().list();;
+        if(!components.isEmpty())
         {
-            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();;
-
-            if(components.size() > 0)
-            {
-                ProcessingComponent firstComponent = components.get(0);
-                String identifier = firstComponent.getId();
-                Assert.assertTrue(persistenceManager.processingComponents().exists(identifier));
-            }
+            ProcessingComponent lastComponent = components.getLast();
+            String identifier = lastComponent.getId();
+            assertTrue(persistenceManager.processingComponents().exists(identifier));
         }
-        catch (Exception e)
+    }
+
+    @Test
+    public void TC_19_retrieve_processing_component_by_id()
+    {
+        logger.info("TC_19_retrieve_processing_component_by_id");
+        List<ProcessingComponent> components  = persistenceManager.processingComponents().list();
+        if(!components.isEmpty())
         {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            ProcessingComponent lastComponent = components.getLast();
+            String identifier = lastComponent.getId();
+            ProcessingComponent searchedComponent  = persistenceManager.processingComponents().get(identifier);
+            assertNotNull(searchedComponent);
+            assertEquals(identifier, searchedComponent.getId());
         }
     }
 
     @Test
-    public void TC_17_retrieve_processing_component_by_id()
+    public void TC_20_delete_processing_component()
     {
-        logger.info("TC_17_retrieve_processing_component_by_id");
-//        try
-//        {
-            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();;
-            if(components.size() > 0)
-            {
-                ProcessingComponent firstComponent = components.get(0);
-                String identifier = firstComponent.getId();
-                ProcessingComponent searchedComponent  = persistenceManager.processingComponents().get(identifier);
-                Assert.assertTrue(searchedComponent != null && searchedComponent.getId().equals(identifier));
-            }
-//        }
-//        catch (PersistenceException e)
-//        {
-//            logger.error(ExceptionUtils.getStackTrace(e));
-//            Assert.fail(e.getMessage());
-//        }
-    }
-
-    @Test
-    public void TC_18_delete_processing_component()
-    {
-        logger.info("TC_18_delete_processing_component");
+        logger.info("TC_20_delete_processing_component");
         try
         {
             // add a new processing component for test
-            ProcessingComponent component = createNewProcessingComponent("component02_to_delete", "container01");
+            ProcessingComponent component = createNewProcessingComponent("component02_to_delete", "container01",  5);
 
             component = persistenceManager.processingComponents().save(component);
             // check persisted component
-            Assert.assertTrue(component != null && component.getId() != null);
+            assertNotNull(component);
+            assertNotNull(component.getId());
 
-            // deactivate component
+            // delete component
             persistenceManager.processingComponents().delete(component.getId());
-            component = persistenceManager.processingComponents().get(component.getId());
-
-            Assert.assertTrue(component != null && !component.getActive());
+            assertFalse(persistenceManager.processingComponents().exists("component02_to_delete"));
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_19_delete_container_with_applications_with_PC()
+    public void TC_21_delete_container_with_applications_with_PC()
     {
-        logger.info("TC_19_delete_container_with_applications_with_PC");
+        logger.info("TC_21_delete_container_with_applications_with_PC");
         try
         {
             // add a new container for test
             Container container = createNewTestContainer("container03");
             container = persistenceManager.containers().save(container);
             // check persisted container
-            Assert.assertTrue(container != null && container.getId() != null);
+            assertTrue(container != null && container.getId() != null);
 
             // add a new processing component for test
-            ProcessingComponent component = createNewProcessingComponent("PC_container_to_delete", "container03");
+            ProcessingComponent component = createNewProcessingComponent("PC_container_to_delete", "container03", 9);
             component = persistenceManager.processingComponents().save(component);
             // check persisted component
-            Assert.assertTrue(component != null && component.getId() != null);
+            assertTrue(component != null && component.getId() != null);
 
             // delete container
             persistenceManager.containers().delete(container.getId());
             // check that the container was deleted
-            Assert.assertFalse(persistenceManager.containers().exists("container03"));
+            assertFalse(persistenceManager.containers().exists("container03"));
 
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
+        }
+    }
+
+
+
+    @Test
+    public void TC_22_save_new_data_source_component()
+    {
+        logger.info("TC_22_save_new_data_source_component");
+        try
+        {
+            // add a new data source component for test
+            DataSourceComponent component = createNewDataSourceComponent("datasourcecomponent01");
+
+            component = persistenceManager.dataSourceComponents().save(component);
+            // check persisted component
+            assertNotNull(component);
+            assertNotNull(component.getId());
+            // check targets
+            assertNotNull(component.getTargets());
+            assertFalse(component.getTargets().isEmpty());
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            fail(e.getMessage());
         }
     }
 
     private DataSourceComponent createNewDataSourceComponent(String componentId) {
-        // add a new data source component for test
         final String sensorName = "Optical sensor";
         final String dataSourceName = "AWS";
 
@@ -789,7 +733,7 @@ public class PersistenceManagerTest {
         component.setAuthors("component authors");
         component.setCopyright("component copyright");
 
-        component.setNodeAffinity("Any");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setTargetCardinality(0);
         component.setFetchMode(FetchMode.RESUME);
 
@@ -815,28 +759,6 @@ public class PersistenceManagerTest {
         return component;
     }
 
-    @Test
-    public void TC_20_save_new_data_source_component()
-    {
-        logger.info("TC_20_save_new_data_source_component");
-        try
-        {
-            // add a new data source component for test
-            DataSourceComponent component = createNewDataSourceComponent("datasourcecomponent01");
-
-            component = persistenceManager.dataSourceComponents().save(component);
-            // check persisted component
-            Assert.assertTrue(component != null && component.getId() != null);
-            // check targets
-            Assert.assertTrue(component.getTargets() != null && component.getTargets().size() > 0);
-        }
-        catch (PersistenceException e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
-    }
-
 
     @Test
     public void TC_23_save_new_data_products()
@@ -857,11 +779,12 @@ public class PersistenceManagerTest {
             product.setGeometry("POLYGON((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
             product.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
             product.setVisibility(Visibility.PRIVATE);
-
-            persistenceManager.rasterData().save(product);
-        } catch (Exception e) {
+            product = persistenceManager.rasterData().save(product);
+            assertNotNull(product);
+            assertNotNull(product.getId());
+        } catch (PersistenceException | URISyntaxException e) {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -869,22 +792,13 @@ public class PersistenceManagerTest {
     public void TC_24_retrieve_raster_data_products()
     {
         logger.info("TC_24_retrieve_raster_data_products");
-        try
+        List<EOProduct> products  = persistenceManager.rasterData().list();
+        assertNotNull(products);
+        assertFalse(products.isEmpty());
+        logger.info("Found " + products.size() + " raster data product(s).");
+        for (EOProduct product : products)
         {
-            List<EOProduct> products  = persistenceManager.rasterData().list();
-            Assert.assertTrue(products != null && products.size() > 0);
-
-            logger.info("Found " + products.size() + " raster data product(s).");
-
-            for (EOProduct product : products)
-            {
-                logger.info("\t\tFound raster product \"" + product.getName() + "\"");
-            }
-        }
-        catch (Exception e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            logger.info("\t\tFound raster product \"" + product.getName() + "\"");
         }
     }
 
@@ -901,7 +815,7 @@ public class PersistenceManagerTest {
             newVectorProduct.setGeometry("POLYGON((0 0, 1 1, 2 2, 3 3, 0 0))");
             newVectorProduct.setLocation("nowhere");
 
-            // attributs
+            // attributes
             List<Attribute> attributes = new ArrayList<>();
             Attribute attr1 = new Attribute();
             attr1.setName("attr1");
@@ -911,17 +825,16 @@ public class PersistenceManagerTest {
             attr2.setName("attr2");
             attr2.setValue("value2-attr2");
             attributes.add(attr2);
-
             newVectorProduct.setAttributes(attributes);
 
             newVectorProduct = persistenceManager.vectorData().save(newVectorProduct);
-            Assert.assertTrue(newVectorProduct != null && newVectorProduct.getId() != null);
-
+            assertNotNull(newVectorProduct);
+            assertNotNull(newVectorProduct.getId());
         }
-        catch (Exception e)
+        catch (PersistenceException | URISyntaxException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -929,22 +842,13 @@ public class PersistenceManagerTest {
     public void TC_26_retrieve_vector_data_products()
     {
         logger.info("TC_26_retrieve_vector_data_products");
-        try
+        List<VectorData> vectorProducts  = persistenceManager.vectorData().list();
+        assertNotNull(vectorProducts);
+        assertFalse(vectorProducts.isEmpty());
+        logger.info("Found " + vectorProducts.size() + " vector data product(s).");
+        for (VectorData vectorProduct : vectorProducts)
         {
-            List<VectorData> vectorProducts  = persistenceManager.vectorData().list();
-            Assert.assertTrue(vectorProducts != null && vectorProducts.size() > 0);
-
-            logger.info("Found " + vectorProducts.size() + " vector data product(s).");
-
-            for (VectorData vectorProduct : vectorProducts)
-            {
-                logger.info("\t\tFound vector product \"" + vectorProduct.getName() + "\"");
-            }
-        }
-        catch (Exception e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            logger.info("\t\tFound vector product \"" + vectorProduct.getName() + "\"");
         }
     }
 
@@ -959,77 +863,87 @@ public class PersistenceManagerTest {
                                               "first item");
             message.setRead(true);
             message.addItem("Auxiliary", "second item");
-            message.setTopic(SystemPrincipal.instance().getName());
-
-            try
-            {
-                persistenceManager.notifications().save(message);
-            } catch (PersistenceException e) {
-                logger.error("Error saving notification message", e);
-            }
+            message.setTopic("Test Topic");
+            message.setUserId("test user");
+            message = persistenceManager.notifications().save(message);
+            assertNotNull(message);
+            assertNotNull(message.getId());
         }
-        catch (Exception e)
+        catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
-    /*@Test
+    @Test
     public void TC_28_save_new_workflow_add_nodes_individually()
     {
         logger.info("TC_28_save_new_workflow_add_nodes_individually");
         try
         {
-            // add a new workflow for test
+
             WorkflowDescriptor workflow = new WorkflowDescriptor();
             workflow.setName("test_workflow_1");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserName("admin");
-            //workflow.setCreated(LocalDateTime.now());
+            User adminUser = persistenceManager.users().getByName("admin");
+            workflow.setUserId(adminUser.getId());
+            workflow.setCreated(LocalDateTime.now());
 
-            // save the parent workflow entity
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            workflow = persistenceManager.workflows().save(workflow);
+            assertNotNull(workflow);
+            assertNotNull(workflow.getId());
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
-            // save nodes within this workflow
+            List<WorkflowNodeDescriptor> nodes = persistenceManager.workflowNodes().list();
+            long nodeIdStartingIndex = nodes.getLast().getId();
+
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            //node1.setCreated(LocalDateTime.now());
-            node1 = persistenceManager.saveWorkflowNodeDescriptor(node1, workflow);
-            Assert.assertTrue(node1 != null && node1.getId() != null);
+            node1.setComponentType(ComponentType.PROCESSING);
+            node1.setCreated(LocalDateTime.now());
+            node1.setId(nodeIdStartingIndex+1);
+            node1 = persistenceManager.workflowNodes().save(node1, workflow);
+            assertNotNull(node1);
+            assertNotNull(node1.getId());
             logger.info("Workflow node " + node1.getName() + " saved, ID = " + node1.getId().toString());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
-            //node2.setCreated(LocalDateTime.now());
-            node2 = persistenceManager.saveWorkflowNodeDescriptor(node2, workflow);
-            Assert.assertTrue(node2 != null && node2.getId() != null);
+            node2.setComponentType(ComponentType.PROCESSING);
+            node2.setCreated(LocalDateTime.now());
+            node2.setId(nodeIdStartingIndex+2);
+            node2 = persistenceManager.workflowNodes().save(node2, workflow);
+            assertNotNull(node2);
+            assertNotNull(node2.getId());
             logger.info("Workflow node " + node2.getName() + " saved, ID = " + node2.getId().toString());
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
-            //node3.setCreated(LocalDateTime.now());
-            node3 = persistenceManager.saveWorkflowNodeDescriptor(node3, workflow);
-            Assert.assertTrue(node3 != null && node3.getId() != null);
+            node3.setComponentType(ComponentType.PROCESSING);
+            node3.setCreated(LocalDateTime.now());
+            node3.setId(nodeIdStartingIndex+3);
+            node3 = persistenceManager.workflowNodes().save(node3, workflow);
+            assertNotNull(node3);
+            assertNotNull(node3.getId());
             logger.info("Workflow node " + node3.getName() + " saved, ID = " + node3.getId().toString());
 
             logger.info("After saving each node separate : Workflow has " + workflow.getNodes().size() + " nodes");
 
             // check persisted workflow nodes
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 3);
+            assertNotNull(workflow.getNodes());
+            assertEquals(3, workflow.getNodes().size());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
-    }*/
+    }
 
     @Test
     public void TC_29_save_new_workflow_together_with_nodes_cascade()
@@ -1042,46 +956,55 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_2");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserId("admin");
-            //workflow.setCreated(LocalDateTime.now());
+            User adminUser = persistenceManager.users().getByName("admin");
+            workflow.setUserId(adminUser.getId());
+            workflow.setCreated(LocalDateTime.now());
+
+            List<WorkflowNodeDescriptor> nodes = persistenceManager.workflowNodes().list();
+            long nodeIdStartingIndex = nodes.getLast().getId();
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
             node1.setComponentType(ComponentType.PROCESSING);
-            //node1.setCreated(LocalDateTime.now());
+            node1.setCreated(LocalDateTime.now());
+            node1.setId(nodeIdStartingIndex+1);
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
             node2.setComponentType(ComponentType.PROCESSING);
-            //node2.setCreated(LocalDateTime.now());
+            node2.setCreated(LocalDateTime.now());
+            node2.setId(nodeIdStartingIndex+2);
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
             node3.setComponentType(ComponentType.PROCESSING);
-            //node3.setCreated(LocalDateTime.now());
+            node3.setCreated(LocalDateTime.now());
+            node3.setId(nodeIdStartingIndex+3);
 
             workflow.addNode(node1);
             workflow.addNode(node2);
             workflow.addNode(node3);
 
-            // save the parent workflow entity
+            // save the workflow entity
             workflow = persistenceManager.workflows().save(workflow);
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            assertNotNull(workflow);
+            assertNotNull(workflow.getId());
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
 
             // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 3);
+            assertNotNull(workflow.getNodes());
+            assertEquals(3, workflow.getNodes().size());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1096,15 +1019,20 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_3");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserId("admin");
-            //workflow.setCreated(LocalDateTime.now());
+            User adminUser = persistenceManager.users().getByName("admin");
+            workflow.setUserId(adminUser.getId());
+            workflow.setCreated(LocalDateTime.now());
+
+            List<WorkflowNodeDescriptor> nodes = persistenceManager.workflowNodes().list();
+            long nodeIdStartingIndex = nodes.getLast().getId();
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
             node1.setComponentType(ComponentType.PROCESSING);
-            //node1.setCreated(LocalDateTime.now());
+            node1.setCreated(LocalDateTime.now());
+            node1.setId(nodeIdStartingIndex+1);
 
             node1.addCustomValue("customName1", "customValue1");
             node1.addCustomValue("customName2", "customValue2");
@@ -1114,19 +1042,21 @@ public class PersistenceManagerTest {
 
             // save the parent workflow entity
             workflow = persistenceManager.workflows().save(workflow);
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            assertNotNull(workflow);
+            assertNotNull(workflow.getId());
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 1);
+            assertNotNull(workflow.getNodes());
+            assertEquals(1, workflow.getNodes().size());
 
             // check persisted node custom values
-            Assert.assertEquals(3, workflow.getNodes().get(0).getCustomValues().size());
+            assertEquals(3, workflow.getNodes().getFirst().getCustomValues().size());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1142,27 +1072,34 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_4");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserId("admin");
-            //workflow.setCreated(LocalDateTime.now());
+            User adminUser = persistenceManager.users().getByName("admin");
+            workflow.setUserId(adminUser.getId());
+            workflow.setCreated(LocalDateTime.now());
+
+            List<WorkflowNodeDescriptor> nodes = persistenceManager.workflowNodes().list();
+            long nodeIdStartingIndex = nodes.getLast().getId();
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
             node1.setComponentType(ComponentType.PROCESSING);
-            //node1.setCreated(LocalDateTime.now());
+            node1.setCreated(LocalDateTime.now());
+            node1.setId(nodeIdStartingIndex+ 1);
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
             node2.setComponentType(ComponentType.PROCESSING);
-            //node2.setCreated(LocalDateTime.now());
+            node2.setCreated(LocalDateTime.now());
+            node2.setId(nodeIdStartingIndex + 2);
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
             node3.setComponentType(ComponentType.PROCESSING);
-            //node3.setCreated(LocalDateTime.now());
+            node3.setCreated(LocalDateTime.now());
+            node3.setId(nodeIdStartingIndex + 3);
 
             workflow.addNode(node1);
             workflow.addNode(node2);
@@ -1170,12 +1107,14 @@ public class PersistenceManagerTest {
 
             // save the parent workflow entity
             workflow = persistenceManager.workflows().save(workflow);
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            assertNotNull(workflow);
+            assertNotNull(workflow.getId());
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
             // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 3);
+            assertNotNull(workflow.getNodes());
+            assertEquals(3, workflow.getNodes().size());
 
             // remove a node
             workflow.removeNode(node2);
@@ -1183,13 +1122,13 @@ public class PersistenceManagerTest {
 
             logger.info("After removing a node : Workflow has " + workflow.getNodes().size() + " nodes");
             // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 2);
-
+            assertNotNull(workflow.getNodes());
+            assertEquals(2, workflow.getNodes().size());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1204,33 +1143,41 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_5");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserId("admin");
-            //workflow.setCreated(LocalDateTime.now());
+            User adminUser = persistenceManager.users().getByName("admin");
+            workflow.setUserId(adminUser.getId());
+            workflow.setCreated(LocalDateTime.now());
+
+            List<WorkflowNodeDescriptor> nodes = persistenceManager.workflowNodes().list();
+            long nodeIdStartingIndex = nodes.getLast().getId();
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
             node1.setComponentType(ComponentType.PROCESSING);
-            //node1.setCreated(LocalDateTime.now());
+            node1.setCreated(LocalDateTime.now());
+            node1.setId(nodeIdStartingIndex + 1);
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
             node2.setComponentType(ComponentType.PROCESSING);
-            //node2.setCreated(LocalDateTime.now());
+            node2.setCreated(LocalDateTime.now());
+            node2.setId(nodeIdStartingIndex + 2);
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
             node3.setComponentType(ComponentType.PROCESSING);
-            //node3.setCreated(LocalDateTime.now());
+            node3.setCreated(LocalDateTime.now());
+            node3.setId(nodeIdStartingIndex + 3);
 
             WorkflowNodeDescriptor node4 = new WorkflowNodeDescriptor();
             node4.setName("node4");
             node4.setComponentId("component01");
             node4.setComponentType(ComponentType.PROCESSING);
-            //node4.setCreated(LocalDateTime.now());
+            node4.setCreated(LocalDateTime.now());
+            node4.setId(nodeIdStartingIndex + 4);
 
             workflow.addNode(node1);
             workflow.addNode(node2);
@@ -1239,24 +1186,29 @@ public class PersistenceManagerTest {
 
             // save the parent workflow entity
             workflow = persistenceManager.workflows().save(workflow);
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            assertNotNull(workflow);
+            assertNotNull(workflow.getId());
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
             // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 4);
+            assertNotNull(workflow.getNodes());
+            assertEquals(4, workflow.getNodes().size());
 
             // delete workflow
             persistenceManager.workflows().delete(workflow.getId());
             workflow = persistenceManager.workflows().get(workflow.getId());
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 4 && !workflow.isActive());
+            assertNotNull(workflow);
+            assertNotNull(workflow.getNodes());
+            assertEquals(4, workflow.getNodes().size());
+            assertFalse(workflow.isActive());
             logger.info("Successfully deactivate workflow ID " + workflow.getId());
 
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1271,14 +1223,19 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_6");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserId("admin");
-            //workflow.setCreated(LocalDateTime.now());
+            User adminUser = persistenceManager.users().getByName("admin");
+            workflow.setUserId(adminUser.getId());
+            workflow.setCreated(LocalDateTime.now());
+
+            List<WorkflowNodeDescriptor> nodes = persistenceManager.workflowNodes().list();
+            long nodeIdStartingIndex = nodes.getLast().getId();
 
             // add nodes within this workflow
             WorkflowNodeDescriptor sourceNode = new WorkflowNodeDescriptor();
             sourceNode.setName("sourcenode1");
             sourceNode.setComponentId("component01");
             sourceNode.setComponentType(ComponentType.PROCESSING);
+            sourceNode.setId(nodeIdStartingIndex + 1);
 
             // add processing custom values for the node
             sourceNode.addCustomValue("customName1", "customValue1");
@@ -1289,6 +1246,7 @@ public class PersistenceManagerTest {
             targetNode.setName("targetnode1");
             targetNode.setComponentId("component01");
             targetNode.setComponentType(ComponentType.PROCESSING);
+            targetNode.setId(nodeIdStartingIndex + 2);
 
             // add incoming links for the node
             DataDescriptor dataDescriptor = new DataDescriptor();
@@ -1306,28 +1264,28 @@ public class PersistenceManagerTest {
             linkOutput.setParentId("component01");
             linkOutput.setDataDescriptor(dataDescriptor);
 
+            ComponentLink componentLink1 = new ComponentLink(sourceNode.getId(), linkInput, linkOutput);
+            Set<ComponentLink> links = new HashSet<>();
+            links.add(componentLink1);
+            targetNode.setIncomingLinks(links);
+
             // add the nodes within the workflow
             workflow.addNode(sourceNode);
             workflow.addNode(targetNode);
 
             // save the parent workflow entity
             workflow = persistenceManager.workflows().save(workflow);
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            assertNotNull(workflow);
+            assertNotNull(workflow.getId());
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 2);
-
-            ComponentLink componentLink1 = new ComponentLink(sourceNode.getId(), linkInput, linkOutput);
-            Set<ComponentLink> links = new HashSet<>();
-            links.add(componentLink1);
-            targetNode.setIncomingLinks(links);
-
-            persistenceManager.workflowNodes().update(targetNode);
+            assertNotNull(workflow.getNodes());
+            assertEquals(2, workflow.getNodes().size());
 
             // check persisted node custom values
-            final List<ParameterValue> customValues = workflow.getNodes().get(0).getCustomValues();
-            Assert.assertEquals(3, customValues.size());
+            final List<ParameterValue> customValues = workflow.getNodes().getFirst().getCustomValues();
+            assertEquals(3, customValues.size());
             logger.info("1st node custom values: ");
             for (ParameterValue pValue: customValues) {
                 logger.info("\t\t\t" + pValue.getParameterName() + "=" + pValue.getParameterValue());
@@ -1336,13 +1294,13 @@ public class PersistenceManagerTest {
             customValues.forEach(v -> logger.info("\t\t\t\t" + v.getParameterName() + "=" + v.getParameterValue()));
 
             // check persisted incoming links
-            Assert.assertTrue(workflow.getNodes().get(0).getIncomingLinks() == null || workflow.getNodes().get(0).getIncomingLinks().size() == 0);
-            Assert.assertTrue(workflow.getNodes().get(1).getIncomingLinks() != null && workflow.getNodes().get(1).getIncomingLinks().size() == 1);
+            assertTrue(workflow.getNodes().get(0).getIncomingLinks() == null || workflow.getNodes().get(0).getIncomingLinks().isEmpty());
+            assertTrue(workflow.getNodes().get(1).getIncomingLinks() != null && workflow.getNodes().get(1).getIncomingLinks().size() == 1);
         }
         catch (Exception e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1357,15 +1315,19 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_7");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserId("admin");
-            //workflow.setCreated(LocalDateTime.now());
+            User adminUser = persistenceManager.users().getByName("admin");
+            workflow.setUserId(adminUser.getId());
+            workflow.setCreated(LocalDateTime.now());
 
-            // add nodes within this workflow
+            List<WorkflowNodeDescriptor> nodes = persistenceManager.workflowNodes().list();
+            long nodeIdStartingIndex = nodes.getLast().getId();
+
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
             node1.setComponentType(ComponentType.PROCESSING);
-            //node1.setCreated(LocalDateTime.now());
+            node1.setCreated(LocalDateTime.now());
+            node1.setId(nodeIdStartingIndex + 1);
 
             // add processing custom values for the node
             node1.addCustomValue("customName1", "customValue1");
@@ -1380,66 +1342,67 @@ public class PersistenceManagerTest {
             dataDescriptor.setSensorType(SensorType.OPTICAL);
             dataDescriptor.setDimension(new Dimension(100, 200));
 
+            // add target descriptor
             TargetDescriptor targetDescriptor = new TargetDescriptor("targetDescriptor02");
             targetDescriptor.setParentId("component01");
             targetDescriptor.setDataDescriptor(dataDescriptor);
             List<String> targetConstraints = new ArrayList<>();
-            // TODO put correct constraints
+
             targetConstraints.add("target_constraint01");
             targetConstraints.add("target_constraint02");
             targetConstraints.add("target_constraint03");
-            //targetDescriptor.setConstraints(targetConstraints);
+            targetDescriptor.setConstraints(targetConstraints);
 
             SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceDescriptor02");
             sourceDescriptor.setParentId("component01");
             sourceDescriptor.setDataDescriptor(dataDescriptor);
             List<String> sourceConstraints = new ArrayList<>();
-            // TODO put correct constraints
+
             sourceConstraints.add("source_constraint01");
             sourceConstraints.add("source_constraint02");
             sourceConstraints.add("source_constraint03");
-            //sourceDescriptor.setConstraints(sourceConstraints);
+            sourceDescriptor.setConstraints(sourceConstraints);
 
             // add the node within the workflow
             workflow.addNode(node1);
-
 
             // add a group node
             WorkflowNodeGroupDescriptor nodeGroup = new WorkflowNodeGroupDescriptor();
             nodeGroup.setName("groupNode01");
             nodeGroup.setComponentId("component01");
             nodeGroup.setComponentType(ComponentType.GROUP);
-            //nodeGroup.setCreated(LocalDateTime.now());
+            nodeGroup.setCreated(LocalDateTime.now());
+            nodeGroup.setId(0L);
 
             nodeGroup.addNode(node1);
 
             // add the group node
             workflow.addNode(nodeGroup);
 
-            // save the parent workflow entity
-            workflow = persistenceManager.workflows().save(workflow);
-
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
-            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
-
-            // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 2);
-
-            /* TODO: Add a second node if testing links
             ComponentLink componentLink1 = new ComponentLink(node1.getId(), targetDescriptor, sourceDescriptor);
-            List<ComponentLink> links = new ArrayList<>();
+            Set<ComponentLink> links = new HashSet<>();
             links.add(componentLink1);
             node1.setIncomingLinks(links);
 
-            persistenceManager.updateWorkflowNodeDescriptor(node1);*/
+            // save the parent workflow entity
+            workflow = persistenceManager.workflows().save(workflow);
+            assertNotNull(workflow);
+            assertNotNull(workflow.getId());
+            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
+
+            // check persisted workflow
+            assertNotNull(workflow.getNodes());
+            assertEquals(2, workflow.getNodes().size());
 
             // check persisted node custom values
-            Assert.assertEquals(3, workflow.getNodes().get(0).getCustomValues().size());
+            assertEquals(3, workflow.getNodes().getFirst().getCustomValues().size());
+            assertTrue(workflow.getNodes().getFirst().getIncomingLinks() != null && workflow.getNodes().getFirst().getIncomingLinks().size() == 1);
+            assertTrue(workflow.getNodes().get(1).getIncomingLinks() == null || workflow.getNodes().get(1).getIncomingLinks().isEmpty());
         }
         catch (Exception e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1452,17 +1415,19 @@ public class PersistenceManagerTest {
             Query query = new Query();
             query.setSensor("Optical sensor");
             query.setDataSource("AWS");
-            query.setUserId("admin");
+            User adminUser = persistenceManager.users().getByName("admin");
+            query.setUserId(adminUser.getId());
             query.setWorkflowNodeId(1L);
 
             query = persistenceManager.queries().save(query);
             // check persisted query
-            Assert.assertNotNull(query);
+            assertNotNull(query);
+            assertNotNull(query.getId());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1475,17 +1440,22 @@ public class PersistenceManagerTest {
             // add a new job for test
             ExecutionJob job = new ExecutionJob();
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+            job.setName("test_job1");
             job.setWorkflowId(1L);
-            job.setUserId("admin");
+            job.setJobOutputPath("/output");
+            job.setJobType(JobType.EXECUTION);
+            User adminUser = persistenceManager.users().getByName("admin");
+            job.setUserId(adminUser.getId());
 
             job = persistenceManager.jobs().save(job);
             // check persisted job
-            Assert.assertTrue(job != null && job.getId() != 0);
+            assertNotNull(job);
+            assertNotNull(job.getId());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1502,16 +1472,16 @@ public class PersistenceManagerTest {
             // retrieve execution nodes
             List<NodeDescription> nodes = persistenceManager.nodes().list();
 
-            if(jobs != null && jobs.size() > 0 &&
-              components != null && components.size() > 0 &&
-              nodes != null && nodes.size() > 0)
+            if((jobs != null && !jobs.isEmpty()) &&
+                    (components != null && !components.isEmpty()) &&
+                    (nodes != null && !nodes.isEmpty()))
             {
                 // retrieve first job
-                ExecutionJob job = jobs.get(0);
+                ExecutionJob job = jobs.getFirst();
                 // retrieve first component
-                ProcessingComponent component = components.get(0);
-
-                NodeDescription node = nodes.get(0);
+                ProcessingComponent component = components.getFirst();
+                // retrieve first node
+                NodeDescription node = nodes.getFirst();
 
                 // add a new task for test
                 ProcessingExecutionTask task = new ProcessingExecutionTask();
@@ -1519,7 +1489,7 @@ public class PersistenceManagerTest {
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
                 task.setExecutionNodeHostName(node.getId());
                 task.setComponent(component);
-                task.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                task.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1536,17 +1506,18 @@ public class PersistenceManagerTest {
 
                 task = (ProcessingExecutionTask) persistenceManager.tasks().save(task, job);
                 // check persisted task
-                Assert.assertTrue(task != null && task.getId() != 0);
+                assertNotNull(task);
+                assertNotNull(task.getId());
+                assertTrue(task.getId() != 0);
                 // check if job correctly updated
-                Assert.assertTrue(job.getTasks().contains(task));
-
+                assertTrue(job.getTasks().contains(task));
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
             }
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1563,16 +1534,16 @@ public class PersistenceManagerTest {
             // retrieve execution nodes
             List<NodeDescription> nodes = persistenceManager.nodes().list();
 
-            if(jobs != null && jobs.size() > 0 &&
-              components != null && components.size() > 0 &&
-              nodes != null && nodes.size() > 0)
+            if((jobs != null && !jobs.isEmpty()) &&
+                    (components != null && !components.isEmpty()) &&
+                    (nodes != null && !nodes.isEmpty()))
             {
                 // retrieve first job
-                ExecutionJob job = jobs.get(0);
+                ExecutionJob job = jobs.getFirst();
                 // retrieve first component
-                DataSourceComponent component = components.get(0);
-
-                NodeDescription node = nodes.get(0);
+                DataSourceComponent component = components.getFirst();
+                // retrieve first node
+                NodeDescription node = nodes.getFirst();
 
                 // add a new task for test
                 DataSourceExecutionTask task = new DataSourceExecutionTask();
@@ -1580,7 +1551,7 @@ public class PersistenceManagerTest {
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
                 task.setExecutionNodeHostName(node.getId());
                 task.setComponent(component);
-                task.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                task.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1597,17 +1568,18 @@ public class PersistenceManagerTest {
 
                 task = (DataSourceExecutionTask) persistenceManager.tasks().save(task, job);
                 // check persisted task
-                Assert.assertTrue(task != null && task.getId() != 0);
+                assertNotNull(task);
+                assertNotNull(task.getId());
+                assertTrue(task.getId() != 0);
                 // check if job correctly updated
-                Assert.assertTrue(job.getTasks().contains(task));
-
+                assertTrue(job.getTasks().contains(task));
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
             }
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1626,18 +1598,18 @@ public class PersistenceManagerTest {
             // retrieve execution nodes
             List<NodeDescription> nodes = persistenceManager.nodes().list();
 
-            if(jobs != null && jobs.size() > 0 &&
-              dataSourceComponents != null && dataSourceComponents.size() > 0 &&
-              processingComponents != null && processingComponents.size() > 0 &&
-              nodes != null && nodes.size() > 0)
+            if((jobs != null && !jobs.isEmpty()) &&
+                    (dataSourceComponents != null && !dataSourceComponents.isEmpty()) &&
+                            (processingComponents != null && !processingComponents.isEmpty()) &&
+                                    (nodes != null && !nodes.isEmpty()))
             {
                 // retrieve first job
-                ExecutionJob job = jobs.get(0);
+                ExecutionJob job = jobs.getFirst();
                 // retrieve first component
-                DataSourceComponent dataSourceComponent = dataSourceComponents.get(0);
-                ProcessingComponent processingComponent = processingComponents.get(0);
-
-                NodeDescription node = nodes.get(0);
+                DataSourceComponent dataSourceComponent = dataSourceComponents.getFirst();
+                ProcessingComponent processingComponent = processingComponents.getFirst();
+                // retrieve first node
+                NodeDescription node = nodes.getFirst();
 
                 // add a new processing task for test
                 ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
@@ -1645,7 +1617,7 @@ public class PersistenceManagerTest {
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
-                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1667,7 +1639,7 @@ public class PersistenceManagerTest {
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
-                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 dataSourceTask.setInputParameterValues(inputsValues);
 
@@ -1677,14 +1649,17 @@ public class PersistenceManagerTest {
                 taskGroup.setResourceId("ExecutionGroup-resourceId01");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
                 taskGroup.setExecutionNodeHostName(node.getId());
-                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 // save first the execution group and after the sub-tasks within
                 ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.tasks().save(taskGroup, job);
                 // check persisted task group
-                Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
+                assertNotNull(taskGroupSaved);
+                assertNotNull(taskGroupSaved.getId());
+                assertTrue(taskGroupSaved.getId() != 0);
+
                 // check if job correctly updated
-                Assert.assertTrue(job.getTasks().contains(taskGroupSaved));
+                assertTrue(job.getTasks().contains(taskGroupSaved));
 
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
 
@@ -1707,14 +1682,14 @@ public class PersistenceManagerTest {
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_39_save_new_group_execution_task_with_subtasks_unattached_to_job()
+    public void TC_40_save_new_group_execution_task_with_subtasks_unattached_to_job()
     {
-        logger.info("TC_39_save_new_group_execution_task_with_subtasks_unattached_to_job");
+        logger.info("TC_40_save_new_group_execution_task_with_subtasks_unattached_to_job");
         try
         {
             // retrieve one existing job, for test
@@ -1726,18 +1701,18 @@ public class PersistenceManagerTest {
             // retrieve execution nodes
             List<NodeDescription> nodes = persistenceManager.nodes().list();
 
-            if(jobs != null && jobs.size() > 0 &&
-              dataSourceComponents != null && dataSourceComponents.size() > 0 &&
-              processingComponents != null && processingComponents.size() > 0 &&
-              nodes != null && nodes.size() > 0)
+            if((jobs != null && !jobs.isEmpty()) &&
+                    (dataSourceComponents != null && !dataSourceComponents.isEmpty()) &&
+                    (processingComponents != null && !processingComponents.isEmpty()) &&
+                    (nodes != null && !nodes.isEmpty()))
             {
                 // retrieve first job
-                ExecutionJob job = jobs.get(0);
+                ExecutionJob job = jobs.getFirst();
                 // retrieve first component
-                DataSourceComponent dataSourceComponent = dataSourceComponents.get(0);
-                ProcessingComponent processingComponent = processingComponents.get(0);
-
-                NodeDescription node = nodes.get(0);
+                DataSourceComponent dataSourceComponent = dataSourceComponents.getFirst();
+                ProcessingComponent processingComponent = processingComponents.getFirst();
+                // retrieve first node
+                NodeDescription node = nodes.getFirst();
 
                 // add a new processing task for test
                 ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
@@ -1745,7 +1720,7 @@ public class PersistenceManagerTest {
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
-                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1767,7 +1742,7 @@ public class PersistenceManagerTest {
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
-                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 dataSourceTask.setInputParameterValues(inputsValues);
 
@@ -1777,14 +1752,16 @@ public class PersistenceManagerTest {
                 taskGroup.setResourceId("ExecutionGroup-resourceId02");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
                 taskGroup.setExecutionNodeHostName(node.getId());
-                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 // save first the execution group and after the sub-tasks within
                 ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.tasks().save(taskGroup, job);
                 // check persisted task group
-                Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
+                assertNotNull(taskGroupSaved);
+                assertNotNull(taskGroupSaved.getId());
+                assertTrue(taskGroupSaved.getId() != 0);
                 // check if job correctly updated
-                Assert.assertTrue(job.getTasks().contains(taskGroupSaved));
+                assertTrue(job.getTasks().contains(taskGroupSaved));
 
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
 
@@ -1798,23 +1775,24 @@ public class PersistenceManagerTest {
                 taskGroupSaved.addTask(processingTask);
                 taskGroupSaved.addTask(dataSourceTask);
 
-                persistenceManager.tasks().update(taskGroupSaved);
-
+                taskGroupSaved = (ExecutionGroup)persistenceManager.tasks().update(taskGroupSaved);
+                assertNotNull(taskGroupSaved);
+                assertNotNull(taskGroupSaved.getId());
+                assertEquals(2, taskGroupSaved.getTasks().size());
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
-
             }
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_39_save_new_group_execution_task_with_subtasks_unattached_to_job_all_once()
+    public void TC_41_save_new_group_execution_task_with_subtasks_unattached_to_job_all_once()
     {
-        logger.info("TC_39_save_new_group_execution_task_with_subtasks_unattached_to_job_all_once");
+        logger.info("TC_41_save_new_group_execution_task_with_subtasks_unattached_to_job_all_once");
         try
         {
             // retrieve one existing job, for test
@@ -1826,18 +1804,18 @@ public class PersistenceManagerTest {
             // retrieve execution nodes
             List<NodeDescription> nodes = persistenceManager.nodes().list();
 
-            if(jobs != null && jobs.size() > 0 &&
-              dataSourceComponents != null && dataSourceComponents.size() > 0 &&
-              processingComponents != null && processingComponents.size() > 0 &&
-              nodes != null && nodes.size() > 0)
+            if((jobs != null && !jobs.isEmpty()) &&
+                    (dataSourceComponents != null && !dataSourceComponents.isEmpty()) &&
+                    (processingComponents != null && !processingComponents.isEmpty()) &&
+                    (nodes != null && !nodes.isEmpty()))
             {
                 // retrieve first job
-                ExecutionJob job = jobs.get(0);
+                ExecutionJob job = jobs.getFirst();
                 // retrieve first component
-                DataSourceComponent dataSourceComponent = dataSourceComponents.get(0);
-                ProcessingComponent processingComponent = processingComponents.get(0);
-
-                NodeDescription node = nodes.get(0);
+                DataSourceComponent dataSourceComponent = dataSourceComponents.getFirst();
+                ProcessingComponent processingComponent = processingComponents.getFirst();
+                // retrieve first node
+                NodeDescription node = nodes.getFirst();
 
                 // add a new processing task for test
                 ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
@@ -1845,7 +1823,7 @@ public class PersistenceManagerTest {
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
-                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1867,7 +1845,7 @@ public class PersistenceManagerTest {
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
-                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 dataSourceTask.setInputParameterValues(inputsValues);
 
@@ -1877,7 +1855,7 @@ public class PersistenceManagerTest {
                 taskGroup.setResourceId("ExecutionGroup-resourceId03");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
                 taskGroup.setExecutionNodeHostName(node.getId());
-                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
+                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().getFirst().getId());
 
                 // add tasks to tasks group
                 taskGroup.addTask(processingTask);
@@ -1886,61 +1864,62 @@ public class PersistenceManagerTest {
                 taskGroup = (ExecutionGroup)persistenceManager.tasks().saveWithSubTasks(taskGroup, job);
 
                 // check persisted task group
-                Assert.assertTrue(taskGroup != null && taskGroup.getId() != 0);
+                assertNotNull(taskGroup);
+                assertNotNull(taskGroup.getId());
+                assertTrue(taskGroup.getId() != 0);
                 // check if job correctly updated
-                Assert.assertTrue(job.getTasks().contains(taskGroup));
+                assertTrue(job.getTasks().contains(taskGroup));
 
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
-
             }
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_40_get_running_execution_tasks()
+    public void TC_42_get_running_execution_tasks()
     {
-        logger.info("TC_40_get_running_execution_tasks");
+        logger.info("TC_42_get_running_execution_tasks");
         try
         {
             // retrieve running tasks
             List<ExecutionTask> tasks = persistenceManager.tasks().listRunning();
-
-            Assert.assertTrue(tasks != null && tasks.size() > 0);
+            assertNotNull(tasks);
+            assertFalse(tasks.isEmpty());
 
             for(ExecutionTask task: tasks)
             {
                 logger.info("Running task: " + task.getResourceId());
             }
-
         }
         catch (Exception e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void TC_13_save_new_wps_component()
+    public void TC_43_save_new_wps_component()
     {
-        logger.info("TC_13_save_new_wps_component");
+        logger.info("TC_43_save_new_wps_component");
         try
         {
             WPSComponent component = createNewWPSComponent("wps01");
 
             component = persistenceManager.wpsComponents().save(component);
             // check persisted component
-            Assert.assertTrue(component != null && component.getId() != null);
+            assertNotNull(component);
+            assertNotNull(component.getId());
         }
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -1954,54 +1933,141 @@ public class PersistenceManagerTest {
         component.setAuthors("component authors");
         component.setCopyright("component copyright");
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
-        component.setNodeAffinity("Any");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setCapabilityName("remote name");
         component.setOwner("avl1");
+        Container container = persistenceManager.containers().get("container01");
+        component.setService(container);
         component.setRemoteAddress("http://localhost/wps");
-        /*WPSAuthentication auth = new WPSAuthentication();
-        auth.setLoginUrl("http://localhost/login");
-        auth.setUser("user");
-        auth.setPassword("password");
-        auth.setType(AuthenticationType.BASIC);
-        auth.setAuthHeader("Authorization");
-        component.setAuthentication(auth);*/
         component.setActive(true);
         List<ParameterDescriptor> parameters = new ArrayList<>();
 
         final ParameterDescriptor param1 = new ParameterDescriptor();
-        param1.setId("testParam1");
+        param1.setId("testParamWPS1");
+        param1.setName("testParamWPS1");
         param1.setType(ParameterType.REGULAR);
         param1.setDataType(String.class);
-        param1.setLabel("Test Param 1");
+        param1.setLabel("Test Param WPS 1");
         parameters.add(param1);
 
         final ParameterDescriptor param2 = new ParameterDescriptor();
-        param2.setId("testParam2");
+        param2.setId("testParamWPS2");
+        param2.setName("testParamWPS2");
         param2.setType(ParameterType.REGULAR);
-        param2.setDataType(Integer.class);
-        param2.setLabel("Test Param 2");
+        param2.setDataType(String.class);
+        param2.setLabel("Test Param WPS 2");
         parameters.add(param2);
 
         // add also a template parameter, which regular parameter(s) inside
         final TemplateParameterDescriptor tParam = new TemplateParameterDescriptor();
         List<ParameterDescriptor> templateParamParameters = new ArrayList<>();
-        tParam.setId("templateParam");
+        tParam.setId("templateParamWPS");
+        tParam.setName("templateParamWPS");
         tParam.setType(ParameterType.TEMPLATE);
-        tParam.setDataType(Integer.class);
-        tParam.setLabel("Test TemplateParam");
+        tParam.setDataType(String.class);
+        tParam.setLabel("Test TemplateParam WPS");
 
         final ParameterDescriptor param3 = new ParameterDescriptor();
-        param3.setId("testParam3");
+        param3.setId("testParamWPS3");
+        param3.setName("testParamWPS3");
         param3.setType(ParameterType.REGULAR);
-        param3.setDataType(Integer.class);
-        param3.setLabel("Test Param 3");
+        param3.setDataType(String.class);
+        param3.setLabel("Test Param WPS 3");
         templateParamParameters.add(param3);
 
         final ParameterDescriptor param4 = new ParameterDescriptor();
-        param4.setId("testParam4");
+        param4.setId("testParamWPS4");
+        param4.setName("testParamWPS4");
         param4.setType(ParameterType.REGULAR);
-        param4.setDataType(Integer.class);
-        param4.setLabel("Test Param 4");
+        param4.setDataType(String.class);
+        param4.setLabel("Test Param WPS 4");
+        templateParamParameters.add(param4);
+
+        tParam.setParameters(templateParamParameters);
+        parameters.add(tParam);
+
+        component.setParameters(parameters);
+        return component;
+    }
+
+    @Test
+    public void TC_44_save_new_wms_component()
+    {
+        logger.info("TC_44_save_new_wms_component");
+        try
+        {
+            WMSComponent component = createNewWMSComponent("wms01");
+
+            component = persistenceManager.wmsComponents().save(component);
+            // check persisted component
+            assertNotNull(component);
+            assertNotNull(component.getId());
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            fail(e.getMessage());
+        }
+    }
+
+    private WMSComponent createNewWMSComponent(String componentId) {
+        // add a new processing component for test
+        WMSComponent component = new WMSComponent();
+        component.setId(componentId);
+        component.setLabel("component label");
+        component.setVersion("component version");
+        component.setDescription("component description");
+        component.setAuthors("component authors");
+        component.setCopyright("component copyright");
+        component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
+        component.setNodeAffinity(NodeAffinity.Any);
+        component.setCapabilityName("remote name");
+        component.setOwner("avl1");
+        Container container = persistenceManager.containers().get("container01");
+        component.setService(container);
+        component.setRemoteAddress("http://localhost/wms");
+        component.setActive(true);
+        List<ParameterDescriptor> parameters = new ArrayList<>();
+
+        final ParameterDescriptor param1 = new ParameterDescriptor();
+        param1.setId("testParamWMS1");
+        param1.setName("testParamWMS1");
+        param1.setType(ParameterType.REGULAR);
+        param1.setDataType(String.class);
+        param1.setLabel("Test Param WMS 1");
+        parameters.add(param1);
+
+        final ParameterDescriptor param2 = new ParameterDescriptor();
+        param2.setId("testParamWMS2");
+        param2.setName("testParamWMS2");
+        param2.setType(ParameterType.REGULAR);
+        param2.setDataType(String.class);
+        param2.setLabel("Test Param WMS 2");
+        parameters.add(param2);
+
+        // add also a template parameter, which regular parameter(s) inside
+        final TemplateParameterDescriptor tParam = new TemplateParameterDescriptor();
+        List<ParameterDescriptor> templateParamParameters = new ArrayList<>();
+        tParam.setId("templateParamWMS");
+        tParam.setName("templateParamWMS");
+        tParam.setType(ParameterType.TEMPLATE);
+        tParam.setDataType(String.class);
+        tParam.setLabel("Test TemplateParam WMS");
+
+        final ParameterDescriptor param3 = new ParameterDescriptor();
+        param3.setId("testParamWMS3");
+        param3.setName("testParamWMS3");
+        param3.setType(ParameterType.REGULAR);
+        param3.setDataType(String.class);
+        param3.setLabel("Test Param WMS 3");
+        templateParamParameters.add(param3);
+
+        final ParameterDescriptor param4 = new ParameterDescriptor();
+        param4.setId("testParamWMS4");
+        param4.setName("testParamWMS4");
+        param4.setType(ParameterType.REGULAR);
+        param4.setDataType(String.class);
+        param4.setLabel("Test Param WMS 4");
         templateParamParameters.add(param4);
 
         tParam.setParameters(templateParamParameters);

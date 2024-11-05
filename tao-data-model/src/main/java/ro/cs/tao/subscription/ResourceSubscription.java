@@ -1,17 +1,15 @@
 package ro.cs.tao.subscription;
 
 import ro.cs.tao.component.LongIdentifiable;
-import ro.cs.tao.topology.NodeFlavor;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ResourceSubscription extends LongIdentifiable {
     private String userId;
     private SubscriptionType type;
-    private NodeFlavor flavor;
-    private int flavorQuantity;
-    private Integer flavorHddSizeGB;
-    private Integer flavorSsdSizeGB;
+    private Map<String, FlavorSubscription> flavors;
     private Integer objectStorageGB;
     private boolean paid;
     private LocalDateTime created;
@@ -33,36 +31,25 @@ public class ResourceSubscription extends LongIdentifiable {
         this.type = type;
     }
 
-    public NodeFlavor getFlavor() {
-        return flavor;
+    public Map<String, FlavorSubscription> getFlavors() {
+        return flavors;
     }
 
-    public void setFlavor(NodeFlavor flavor) {
-        this.flavor = flavor;
+    public void setFlavors(Map<String, FlavorSubscription> flavors) {
+        this.flavors = flavors;
     }
 
-    public int getFlavorQuantity() {
-        return flavorQuantity;
+    public void addFlavor(FlavorSubscription flavorSubscription) {
+        if (this.flavors == null) {
+            this.flavors = new LinkedHashMap<>();
+        }
+        this.flavors.put(flavorSubscription.getFlavorId(), flavorSubscription);
     }
 
-    public void setFlavorQuantity(int flavorQuantity) {
-        this.flavorQuantity = flavorQuantity;
-    }
-
-    public Integer getFlavorHddSizeGB() {
-        return flavorHddSizeGB;
-    }
-
-    public void setFlavorHddSizeGB(Integer flavorHddSizeGB) {
-        this.flavorHddSizeGB = flavorHddSizeGB;
-    }
-
-    public Integer getFlavorSsdSizeGB() {
-        return flavorSsdSizeGB;
-    }
-
-    public void setFlavorSsdSizeGB(Integer flavorSsdSizeGB) {
-        this.flavorSsdSizeGB = flavorSsdSizeGB;
+    public void removeFlavor(String flavorId) {
+        if (this.flavors != null) {
+            this.flavors.remove(flavorId);
+        }
     }
 
     public Integer getObjectStorageGB() {

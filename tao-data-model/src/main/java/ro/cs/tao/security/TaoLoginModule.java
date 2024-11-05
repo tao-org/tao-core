@@ -3,6 +3,7 @@ package ro.cs.tao.security;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.persistence.UserProvider;
+import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.utils.Crypto;
 
@@ -14,6 +15,7 @@ import javax.security.auth.spi.LoginModule;
 import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Base class for modules that handle the authentication of the callers.
@@ -120,7 +122,8 @@ public abstract class TaoLoginModule implements LoginModule {
             // add a Principal (authenticated identity) to the Subject
 
             // assume the user we authenticated is the SamplePrincipal
-            userPrincipal = new UserPrincipal(id);
+            userPrincipal = new UserPrincipal(id,
+                                              userProvider.get(id).getGroups().stream().map(Group::getName).collect(Collectors.toSet()));
             subject.getPrincipals().add(userPrincipal);
 
             // erase username and password values
