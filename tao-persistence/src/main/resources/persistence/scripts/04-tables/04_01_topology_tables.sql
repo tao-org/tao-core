@@ -96,6 +96,7 @@ CREATE TABLE topology.volatile_instance
     id bigint NOT NULL,
     node_id character varying NOT NULL,
     user_id character varying NOT NULL,
+    flavor_id character varying NOT NULL,
     created timestamp without time zone NOT NULL,
     destroyed timestamp without time zone,
     average_cpu_load real,

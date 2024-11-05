@@ -22,6 +22,7 @@ import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.subscription.FlavorSubscription;
 import ro.cs.tao.subscription.ResourceSubscription;
+import ro.cs.tao.subscription.SubscriptionType;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.async.Parallel;
@@ -314,7 +315,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             // User has a subscription, will try to use only nodes from it
             do {
                 nodeData = getSubscriptionNodeCandidate(subscription, cpus, memory);
-                waitBeforeNextRetry();
+                if (nodeData == null) {
+                    waitBeforeNextRetry();
+                }
             } while (nodeData == null);
             return nodeData;
         } else {
@@ -435,6 +438,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                     final NodeFlavor flavor = this.nodeProvider.listFlavors().stream().filter(f -> f.getId().equals(flavorId)).findFirst().get();
                     NodeDescription node = getNewNodeDescription(0, userId, flavor);
                     final NodeDescription finalNode = node;
+                    Messaging.send(userId, Topic.INFORMATION.value(), "Trying to provision node " + finalNode.getId());
                     final Future<NodeDescription> future = executor.submit(() -> TopologyManager.getInstance().addNode(finalNode));
                     try {
                         node = nodeCreationWaitTime > 0
@@ -574,8 +578,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                     final String userId = subscription.getUserId();
                     node = createNode(userId, flavor, (int) this.nodes.entrySet().stream()
                                                                       .filter(e -> userId.equals(e.getValue().getNode().getOwner()))
-                                                                      .count());
+                                                                      .count(), subscription.getType() == SubscriptionType.PAY_PER_USE);
                     // new node has been created
+                    node.setOwner(userId);
                     addNewInstalledNode(node);
                 } catch (Exception ignored) {
                     // The exception is logged in the createNode() method
@@ -594,14 +599,16 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                                .min(Comparator.comparingInt(NodeFlavor::getCpu))
                                                .orElse(null);
         if (matchingFlavor != null) {
-            return createNode(userId, matchingFlavor, userNodes.size());
+            return createNode(userId, matchingFlavor, userNodes.size(), true);
         }
         return null;
     }
 
-    protected NodeDescription createNode(String userId, NodeFlavor flavor, int userInstances) throws Exception {
+    protected NodeDescription createNode(String userId, NodeFlavor flavor, int userInstances, boolean isVolatile) throws Exception {
         NodeDescription node = getNewNodeDescription(userInstances, userId, flavor);
+        node.setVolatile(isVolatile);
         final NodeDescription finalNode = node;
+        Messaging.send(userId, Topic.INFORMATION.value(), "Trying to provision node " + finalNode.getId());
         final Future<NodeDescription> future = executor.submit(() -> TopologyManager.getInstance().addNode(finalNode));
         try {
             node = nodeCreationWaitTime > 0

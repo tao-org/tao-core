@@ -177,6 +177,7 @@ public class TopologyManager {
             if (Boolean.TRUE.equals(info.getVolatile())) {
                 VolatileInstance vi = new VolatileInstance();
                 vi.setNodeId(info.getId());
+                vi.setFlavorId(info.getFlavor().getId());
                 vi.setUserId(info.getOwner());
                 vi.setCreated(LocalDateTime.now());
                 try {
