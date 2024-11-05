@@ -167,7 +167,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
             final ExecutionJob job = task.getJob();
-            final String userId = job.getUserId();
+            /*final String userId = job.getUserId();
             if (job.getJobType() == JobType.EXECUTION && job.getEnvironment() == Environment.DEFAULT) {
                 logger.fine("Trying to provision a worker node for user " + userId);
                 NodeDescription node;
@@ -176,7 +176,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     logger.fine(message);
                     sendMessage(task, message);
                 }
-            }
+            }*/
             JobTemplate jt = createJobTemplate(task);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true, ExecutionStatus.QUEUED_ACTIVE.friendlyName());
             this.queue.put(new Tuple<>(jt, task));
