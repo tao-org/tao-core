@@ -256,7 +256,7 @@ public class ParameterDescriptor extends StringIdentifiable {
         for (int i = 0; i < length; i++) {
             if (i > 0 && !joinValues) {
                 builder.append("-")
-                       .append(StringUtilities.isGUID(this.id) ? this.label : this.id)
+                       .append(StringUtilities.isGUID(this.id) ? this.name : this.id)
                        .append(this.expansionRule.getSeparator());
             }
             builder.append(Array.get(values, i)).append(separator);
