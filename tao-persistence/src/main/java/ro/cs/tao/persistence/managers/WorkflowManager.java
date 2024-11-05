@@ -149,16 +149,16 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         } else {
             workflows.addAll(repository.getOtherPublicWorkflows(userId));
         }
-        workflows.removeIf(w -> w.isTemporary());
+        workflows.removeIf(WorkflowDescriptor::isTemporary);
         return workflows;
     }
 
     @Override
     public WorkflowDescriptor save(WorkflowDescriptor workflow) throws PersistenceException {
         // check method parameters
-        if(!checkEntity(workflow, false)) {
+        /*if(!checkEntity(workflow, false)) {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow !");
-        }
+        }*/
         // by default a new workflow is active
         workflow.setActive(true);
         // save the new WorkflowDescriptor entity and return it
@@ -197,7 +197,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
 
         // retrieve WorkflowDescriptor after its identifier
         final Optional<WorkflowDescriptor> workflow = repository.findById(workflowId);
-        if (!workflow.isPresent()) {
+        if (workflow.isEmpty()) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + workflowId);
         }
 
@@ -248,6 +248,8 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
 
     @Override
     protected boolean checkId(Long entityId, boolean existingEntity) {
-        return entityId != null && (existingEntity == (get(entityId) != null));
+        return existingEntity
+               ? entityId != null && (get(entityId) != null)
+               : entityId == null;
     }
 }

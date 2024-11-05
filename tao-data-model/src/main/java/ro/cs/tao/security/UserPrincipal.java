@@ -16,9 +16,12 @@
 
 package ro.cs.tao.security;
 
+import ro.cs.tao.utils.StringUtilities;
+
 import javax.security.auth.Subject;
 import java.io.Serializable;
 import java.security.Principal;
+import java.util.Set;
 
 public class UserPrincipal implements Principal, Serializable {
 
@@ -26,9 +29,19 @@ public class UserPrincipal implements Principal, Serializable {
 	private static final long serialVersionUID = -138887607776483992L;
 	
 	private final String id;
+    private final Set<String> roles;
 
     public UserPrincipal(String id) {
+        this(id, null);
+    }
+
+    public UserPrincipal(String id, Set<String> roles) {
         this.id = id;
+        this.roles = roles;
+    }
+
+    public boolean hasRole(String role) {
+        return this.roles != null && !StringUtilities.isNullOrEmpty(role) && this.roles.contains(role.toUpperCase());
     }
 
     @Override

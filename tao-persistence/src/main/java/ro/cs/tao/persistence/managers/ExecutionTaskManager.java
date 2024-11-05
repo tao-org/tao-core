@@ -17,14 +17,17 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -35,7 +38,8 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+@Configuration
+@EnableTransactionManagement
 @Component("executionManager")
 public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository>
                                   implements ExecutionTaskProvider {
@@ -237,7 +241,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         });
     }
 
-        @Override
+    @Override
     public ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId) {
         return repository.findByJobAndWorkflowNode(jobId, nodeId, instanceId);
     }
@@ -250,6 +254,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public ExecutionTask getByResourceId(String id) {
         return repository.findByResourceId(id);
+    }
+
+    @Override
+    public List<Long> getParentIds(long taskId) {
+        return repository.findParentTaskIds(taskId);
     }
 
     @Override
@@ -399,6 +408,15 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public boolean isTerminalTask(long taskId) {
         return repository.isTerminalTask(taskId);
+    }
+
+    @Override
+    public TransitionBehavior getTransitionBehavior(long taskId) {
+        Integer behavior = repository.getTransitionBehavior(taskId);
+        if (behavior == null) {
+            behavior = 1;
+        }
+        return EnumUtils.getEnumConstantByValue(TransitionBehavior.class, behavior);
     }
 
     //endregion

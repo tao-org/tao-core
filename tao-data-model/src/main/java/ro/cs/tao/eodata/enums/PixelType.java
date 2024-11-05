@@ -40,7 +40,9 @@ public enum PixelType implements TaoEnum<Integer> {
     @XmlEnumValue("7")
     FLOAT32(7, "Float"),
     @XmlEnumValue("8")
-    FLOAT64(8, "Double");
+    FLOAT64(8, "Double"),
+    @XmlEnumValue("9")
+    UNKNOWN(9, "Unknown");
 
     /**
      * Numerical value for enum constants

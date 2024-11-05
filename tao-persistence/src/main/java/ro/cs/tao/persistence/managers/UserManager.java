@@ -194,8 +194,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     public User update(User updatedInfo, boolean fromAdmin) throws PersistenceException {
         User user = repository.findByUsername(updatedInfo.getUsername());
         if (user != null && user.getUsername().equalsIgnoreCase(updatedInfo.getUsername()) &&
-                Objects.equals(user.getId(), updatedInfo.getId()))
-        {
+                Objects.equals(user.getId(), updatedInfo.getId())) {
             // copy updated info (it's dangerous to save whatever received)
             transferUpdates(user, updatedInfo, fromAdmin);
             // update the modified date on user
@@ -560,7 +559,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
             try {
                 repo = repositoryJPARepository.getByUserAndName(user.getId(), type.name());
                 if (repo == null) {
-                    if (preferences != null) {
+                    if (preferences != null && !preferences.isEmpty()) {
                         dbParams = preferences.stream()
                                               .filter(p -> p.getKey().startsWith("workspace." + type.name().toLowerCase()))
                                               .collect(Collectors.toMap(p -> p.getKey().replace("workspace.", ""),

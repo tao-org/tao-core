@@ -107,7 +107,7 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
     /**
      * Removes a job from the queue, regardless its position in the queue.
      *
-     * @param job  The job object
+     * @param jobId  The job identifier
      */
     @Override
     public synchronized boolean removeJob(long jobId) {

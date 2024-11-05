@@ -16,13 +16,16 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.datasource.DataSourceCredentials;
 import ro.cs.tao.persistence.DataSourceCredentialsProvider;
 import ro.cs.tao.persistence.repository.DataSourceConnectionRepository;
 
 import java.util.List;
-
+@Configuration
+@EnableTransactionManagement
 @Component("dataSourceConnectionManager")
 public class DataSourceConnectionManager
         extends EntityManager<DataSourceCredentials, Long, DataSourceConnectionRepository>

@@ -363,11 +363,11 @@ public class DefaultJobFactory {
                 }
             }
         }
-        final String nodeAffinity = affinityParam != null
-                ? affinityParam.getParameterValue()
+        final NodeAffinity nodeAffinity = affinityParam != null
+                ? NodeAffinity.of(affinityParam.getParameterValue())
                 : component.getNodeAffinity();
-        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
-            task.setExecutionNodeHostName(nodeAffinity);
+        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
         if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
             task.setCommand(component.buildExecutionCommand(customValues.stream().collect(Collectors.toMap(ParameterValue::getParameterName, ParameterValue::getParameterValue)),
@@ -558,11 +558,11 @@ public class DefaultJobFactory {
                 }
             }
         }
-        final String nodeAffinity = affinityParam != null
-                ? affinityParam.getParameterValue()
-                : component.getNodeAffinity();
-        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
-            task.setExecutionNodeHostName(nodeAffinity);
+        final NodeAffinity nodeAffinity = affinityParam != null
+                                          ? NodeAffinity.of(affinityParam.getParameterValue())
+                                          : component.getNodeAffinity();
+        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
         if (inputs != null) {
             for (Map.Entry<String, String> entry : inputs.entrySet()) {
@@ -581,9 +581,9 @@ public class DefaultJobFactory {
         if (targets != null) {
             targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
         }
-        final String nodeAffinity = component.getNodeAffinity();
-        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
-            task.setExecutionNodeHostName(nodeAffinity);
+        final NodeAffinity nodeAffinity = component.getNodeAffinity();
+        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
         if (inputs != null) {
             final Map<String, String> extraParams = new HashMap<>();
@@ -614,9 +614,9 @@ public class DefaultJobFactory {
         if (targets != null) {
             targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
         }
-        final String nodeAffinity = component.getNodeAffinity();
-        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
-            task.setExecutionNodeHostName(nodeAffinity);
+        final NodeAffinity nodeAffinity = component.getNodeAffinity();
+        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
         if (inputs != null) {
             for (Map.Entry<String, String> entry : inputs.entrySet()) {
@@ -871,9 +871,10 @@ public class DefaultJobFactory {
 //                                              .stream()
 //                                              .filter(v -> v.getKey().equals(DataSourceComponent.RESULTS_PARAMETER))
 //                                              .findFirst().orElse(null);
-                    if (sourceDescriptor != null && sourceDescriptor.getDataDescriptor() != null) {
+                    if (sourceDescriptor != null && sourceDescriptor.getDataDescriptor() != null
+                            && sourceDescriptor.getDataDescriptor().getLocation() != null) {
                         List<String> list = Arrays.asList(sourceDescriptor.getDataDescriptor().getLocation().split(","));
-                        if (list != null && list.size() > 1) {
+                        if (list.size() > 1) {
                             final int size = list.size();
                             for (int i = 1; i < size; i++) {
                                 ExecutionJob clonedJob = cloneJob(job, i + 1, size);

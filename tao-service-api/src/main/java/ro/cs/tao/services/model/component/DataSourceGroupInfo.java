@@ -28,7 +28,7 @@ public class DataSourceGroupInfo {
         this.description = group.getDescription();
         this.authors = group.getAuthors();
         this.copyright = group.getCopyright();
-        this.nodeAffinity = group.getNodeAffinity();
+        this.nodeAffinity = group.getNodeAffinity() != null ? group.getNodeAffinity().getValue() : null;
         this.tags = group.getTags();
         List<DataSourceComponent> dataSourceComponents = group.getDataSourceComponents();
         if (dataSourceComponents != null) {

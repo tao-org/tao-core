@@ -16,17 +16,22 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+@Configuration
+@EnableTransactionManagement
 @Component("executionJobManager")
 public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, ExecutionJobRepository>
                                  implements ExecutionJobProvider {
@@ -91,5 +96,27 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
     @Override
     protected boolean checkEntity(ExecutionJob entity) {
         return entity.getUserId() != null && entity.getExecutionStatus() != null;
+    }
+
+	@Override
+	public boolean isBatchRunning(String batchId) {
+        final Set<ExecutionStatus> statuses = new HashSet<>() {{
+            add(ExecutionStatus.QUEUED_ACTIVE);
+            add(ExecutionStatus.RUNNING);
+            add(ExecutionStatus.PENDING_FINALISATION);
+            add(ExecutionStatus.SUSPENDED);
+            add(ExecutionStatus.UNDETERMINED);
+        }};
+		return repository.countJobsByBatchAndStatus(batchId, statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet())) > 0;
+	}
+
+	@Override
+	public List<ExecutionJob> list(List<String> batchIds) {
+		return repository.finbByBatches(batchIds);
+	}
+
+    @Override
+    public List<DataSourceExecutionTask> getDatasourceTasks(long jobId) {
+        return repository.getDatasourceTasks(jobId);
     }
 }

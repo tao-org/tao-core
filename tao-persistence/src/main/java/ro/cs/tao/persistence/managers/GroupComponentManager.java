@@ -16,7 +16,9 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.persistence.GroupComponentProvider;
@@ -24,7 +26,8 @@ import ro.cs.tao.persistence.repository.GroupComponentRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+@Configuration
+@EnableTransactionManagement
 @Component("groupComponentManager")
 public class GroupComponentManager extends TaoComponentManager<GroupComponent, GroupComponentRepository>
                                     implements GroupComponentProvider {

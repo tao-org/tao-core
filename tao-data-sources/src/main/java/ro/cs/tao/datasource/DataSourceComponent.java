@@ -72,6 +72,8 @@ public class DataSourceComponent extends TaoComponent {
     @XmlTransient
     private String password;
     @XmlTransient
+    private String secret;
+    @XmlTransient
     private boolean cancelled;
     @XmlTransient
     private ProductFetchStrategy currentFetcher;
@@ -206,6 +208,14 @@ public class DataSourceComponent extends TaoComponent {
         this.password = password;
     }
 
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
+
     @Override
     public String defaultId() { return this.sensorName + "-" + this.dataSourceName; }
 
@@ -278,8 +288,9 @@ public class DataSourceComponent extends TaoComponent {
      * Sets the credentials of the account to be used by this component
      * @param userName  The user name
      * @param password  The password (preferably encrypted)
+     * @param secret    (optional) The secret (for 2FA) or the bearer token if required
      */
-    public void setUserCredentials(String userName, String password) {
+    public void setUserCredentials(String userName, String password, String secret) {
         this.userName = userName;
         this.password = password;
         if (password != null && userName != null) {
@@ -291,6 +302,17 @@ public class DataSourceComponent extends TaoComponent {
             }
             if (decryptedPass != null) {
                 this.password = decryptedPass;
+            }
+        }
+        if (secret != null) {
+            String decrypted = null;
+            try {
+                decrypted = Crypto.decrypt(secret, userName);
+            } catch (Exception ex) {
+                logger.warning(ex.getMessage());
+            }
+            if (decrypted != null) {
+                this.secret = decrypted;
             }
         }
     }
@@ -452,17 +474,9 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private List<EOProduct> doFetchImpl(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        DataSource<?, ?> dataSource = null;
         String errorMessage;
-        Object token = null;
-        if (products != null && !products.isEmpty()) {
-            dataSource = createDataSource(products.get(0));
-            try {
-                token = dataSource.authenticate();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        long tokenRenewTimeMillis = System.currentTimeMillis() % 1000;
+        int retries = 0;
         int idx = 0;
         final int size = products.size();
         while (idx < size) {
@@ -475,11 +489,16 @@ public class DataSourceComponent extends TaoComponent {
             try {
                 if (!cancelled) {
                     if (this.productStatusListener != null) {
+                        // The fetch mode is needed if the listener checks quota
+                        product.addAttribute("fetch", this.fetchMode.name());
+                        // The userId is needed in case of async executions
+                        product.addAttribute("principal", this.principal.getName());
                         if (!this.productStatusListener.downloadStarted(product)) {
                             continue;
                         }
                     }
                     currentProduct = product;
+                    final DataSource<?, ? > dataSource = createDataSource(currentProduct);
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (templateFetcher == null) {
                         final String collection = product.getAttributeValue("collection");
@@ -493,8 +512,16 @@ public class DataSourceComponent extends TaoComponent {
                         throw new NoSuchElementException("Product type '" + product.getProductType() + "' doesn't have an associated download strategy!");
                     }
                     if (templateFetcher instanceof DownloadStrategy) {
-                        ((DownloadStrategy) templateFetcher).setAuthentication(token);
+                        Object token = null;
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
+                        if (fetchMode == FetchMode.OVERWRITE || fetchMode == FetchMode.RESUME) {
+                            try {
+                                token = dataSource.authenticate();
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        downloadStrategy.setAuthentication(token);
                         downloadStrategy.setDestination(destinationPath);
                         downloadStrategy.setFetchMode(this.fetchMode);
                         if (additionalProperties != null) {
@@ -524,6 +551,7 @@ public class DataSourceComponent extends TaoComponent {
                     } else {
                         currentFetcher.setProgressListener(this.progressListener);
                     }
+
                     Path productPath = currentFetcher.fetch(product);
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());
@@ -557,11 +585,10 @@ public class DataSourceComponent extends TaoComponent {
             } catch (Exception e) {
                 errorMessage = e.getMessage();
                 // maybe the token has just expired, retry one more time
-                try {
-                    token = dataSource.authenticate();
+                final long tokenRenewElapsedTimeMillis = (System.currentTimeMillis() % 1000) - tokenRenewTimeMillis;
+                if (tokenRenewElapsedTimeMillis > 1990 && retries < this.maxRetries && (fetchMode == FetchMode.OVERWRITE || fetchMode == FetchMode.RESUME)) {
+                    retries++;
                     idx--;
-                } catch (IOException inner) {
-                    errorMessage = inner.getMessage();
                 }
             } finally {
                 idx++;
@@ -601,6 +628,9 @@ public class DataSourceComponent extends TaoComponent {
         }
         if (!StringUtilities.isNullOrEmpty(this.userName)) {
             dataSource.setCredentials(this.userName, this.password);
+        }
+        if (dataSource.isBearerTokenSupported()) {
+            dataSource.setBearerToken(this.secret);
         }
         return dataSource;
     }

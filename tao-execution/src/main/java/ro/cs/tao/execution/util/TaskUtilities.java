@@ -24,10 +24,12 @@ import ro.cs.tao.datasource.DataSourceTopic;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.ProgressNotifier;
@@ -38,6 +40,7 @@ import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.services.bridge.spring.SpringContextBridgedServices;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.ParameterValue;
@@ -67,6 +70,7 @@ public class TaskUtilities {
     private static final GroupComponentProvider groupComponentProvider;
     /*private static final ExecutionJobProvider jobProvider;*/
     private static final ExecutionTaskProvider taskProvider;
+    private static final ExecutionJobProvider jobProvider;
     private static final ContainerProvider containerProvider;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
@@ -74,16 +78,19 @@ public class TaskUtilities {
     private static final String DOCKER_EODATA_HOST_POINT;
 
     static {
-        DOCKER_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerWorkspaceFolder() + "/";
-        DOCKER_EODATA_HOST_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getHostEODataFolder();
-        DOCKER_EODATA_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerEoDataFolder();
-        workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
+        final DockerVolumeMap masterContainerVolumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
+        DOCKER_MOUNT_POINT = masterContainerVolumeMap.getContainerWorkspaceFolder() + "/";
+        DOCKER_EODATA_HOST_POINT = masterContainerVolumeMap.getHostEODataFolder();
+        DOCKER_EODATA_MOUNT_POINT = masterContainerVolumeMap.getContainerEoDataFolder();
+        final SpringContextBridgedServices context = SpringContextBridge.services();
+        workflowNodeProvider = context.getService(WorkflowNodeProvider.class);
         /*jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);*/
-        taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
-        processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
-        dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
-        groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
-        containerProvider = SpringContextBridge.services().getService(ContainerProvider.class);
+        taskProvider = context.getService(ExecutionTaskProvider.class);
+        jobProvider = context.getService(ExecutionJobProvider.class);
+        processingComponentProvider = context.getService(ProcessingComponentProvider.class);
+        dataSourceComponentProvider = context.getService(DataSourceComponentProvider.class);
+        groupComponentProvider = context.getService(GroupComponentProvider.class);
+        containerProvider = context.getService(ContainerProvider.class);
     }
 
     /**
@@ -117,8 +124,9 @@ public class TaskUtilities {
      * @param task  The task
      */
     public static TransitionBehavior getTransitionBehavior(ExecutionTask task) {
-        WorkflowNodeDescriptor node = getWorkflowNode(task);
-        return node != null ? node.getBehavior() : TransitionBehavior.FAIL_ON_ERROR;
+        /*WorkflowNodeDescriptor node = getWorkflowNode(task);
+        return node != null ? node.getBehavior() : TransitionBehavior.FAIL_ON_ERROR;*/
+        return taskProvider.getTransitionBehavior(task.getId());
     }
 
     /**
@@ -129,17 +137,7 @@ public class TaskUtilities {
         TaoComponent component = null;
         if (task != null) {
             WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-            switch (node.getComponentType()) {
-                case PROCESSING:
-                    component = processingComponentProvider.get(node.getComponentId());
-                    break;
-                case DATASOURCE:
-                    component = dataSourceComponentProvider.get(node.getComponentId());
-                    break;
-                case GROUP:
-                    component = groupComponentProvider.get(node.getComponentId());
-                    break;
-            }
+            component = getComponentFor(node);
         }
         return component;
     }
@@ -165,19 +163,12 @@ public class TaskUtilities {
         return component;
     }
 
-
     /**
      * Returns a list with identifiers of parent tasks for a given task, or null if the task doesn't have any parents
      * @param task  The task
      */
     public static List<Long> getParentIds(ExecutionTask task) {
-        List<Long> ids = null;
-        final WorkflowNodeDescriptor node = getWorkflowNode(task);
-        final Set<ComponentLink> links = node.getIncomingLinks();
-        if (links != null) {
-            ids = links.stream().map(l -> taskProvider.getByJobAndNode(task.getJob().getId(), l.getSourceNodeId(), task.getInstanceId()).getId()).distinct().collect(Collectors.toList());
-        }
-        return ids;
+        return taskProvider.getParentIds(task.getId());
     }
 
     /**
@@ -197,13 +188,9 @@ public class TaskUtilities {
         if (component != null) {
             List<SourceDescriptor> sources = component.getSources();
             if (sources != null && !sources.isEmpty()) {
-                /*if (sources.size() == 1) {
-                    cardinality = sources.get(0).getCardinality();
-                } else {*/
-                    cardinality = sources.stream()
-                            .max(Comparator.comparingInt(SourceDescriptor::getCardinality))
-                            .get().getCardinality();
-                /*}*/
+                cardinality = sources.stream()
+                        .max(Comparator.comparingInt(SourceDescriptor::getCardinality))
+                        .get().getCardinality();
             }
         }
         return cardinality;
@@ -229,11 +216,7 @@ public class TaskUtilities {
         if (component != null) {
             List<TargetDescriptor> targets = component.getTargets();
             if (targets != null && !targets.isEmpty()) {
-                /*if (targets.size() == 1) {
-                    cardinality = targets.get(0).getCardinality();
-                } else {*/
-                    cardinality = targets.stream().mapToInt(TargetDescriptor::getCardinality).sum();
-                /*}*/
+                cardinality = targets.stream().mapToInt(TargetDescriptor::getCardinality).sum();
             }
         }
         return cardinality;
@@ -259,10 +242,6 @@ public class TaskUtilities {
 
     public static boolean isTerminalTask(ExecutionTask task) {
         return taskProvider.isTerminalTask(task.getId());
-        /*final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-        final List<WorkflowNodeDescriptor> nodes = node.getWorkflow().getNodes();
-        return nodes.stream().noneMatch(n -> n.getIncomingLinks() != null &&
-                                         n.getIncomingLinks().stream().anyMatch(l -> node.getId() == l.getSourceNodeId()));*/
     }
 
     /**
@@ -280,11 +259,6 @@ public class TaskUtilities {
 
     public static boolean haveAllTasksCompleted(ExecutionJob job) {
         return taskProvider.countRunableTasks(job.getId()) == 0;
-        /*final List<ExecutionTask> tasks = job.orderedTasks();
-        return tasks != null &&
-                tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
-                                             t.getExecutionStatus() == ExecutionStatus.FAILED ||
-                                             t.getExecutionStatus() == ExecutionStatus.CANCELLED);*/
     }
 
     /**
@@ -297,7 +271,6 @@ public class TaskUtilities {
             throw new IllegalArgumentException("DataSourceExecutionTask cannot accept incoming links");
         }
         final WorkflowNodeDescriptor node = workflowNodeProvider.get(toTask.getWorkflowNodeId());
-        //final ExecutionJob job = toTask.getJob();
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null && !links.isEmpty()) {
             for (ComponentLink link : links) {
@@ -437,7 +410,7 @@ public class TaskUtilities {
      *      task_id (component_id, job job_id)
      * @param task  The task
      */
-    public static String getTaskName(ExecutionTask task) {
+    public static String getTaskDescriptiveName(ExecutionTask task) {
         final String component;
         if (task instanceof DataSourceExecutionTask) {
             component = ((DataSourceExecutionTask) task).getComponent().getId();
@@ -506,7 +479,7 @@ public class TaskUtilities {
             final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
             result = mountPoint + (mountPoint.endsWith("/") ? "" : "/") + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
         } catch (Exception e1) {
-            e1.printStackTrace();
+            logger.warning(e1.getMessage());
             result = strPath;
         }
         return result;

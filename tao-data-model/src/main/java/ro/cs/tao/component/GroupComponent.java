@@ -46,7 +46,7 @@ public class GroupComponent extends TaoComponent {
         component.setVersion("1.0");
         component.setAuthors("TAO Team");
         component.setCopyright("(C)TAO Team");
-        component.setNodeAffinity("Any");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setVisibility(ProcessingComponentVisibility.SYSTEM);
         component.setParallelism(1);
         if (sources != null) {

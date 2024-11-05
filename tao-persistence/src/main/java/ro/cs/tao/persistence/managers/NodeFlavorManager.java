@@ -46,6 +46,11 @@ public class NodeFlavorManager extends EntityManager<NodeFlavor, String, NodeFla
     }
 
     @Override
+    public NodeFlavor getMatchingFlavor(int cpu, int memoryMB) {
+        return repository.getMatchingFlavor(cpu, memoryMB);
+    }
+
+    @Override
     protected String identifier() {
         return "id";
     }

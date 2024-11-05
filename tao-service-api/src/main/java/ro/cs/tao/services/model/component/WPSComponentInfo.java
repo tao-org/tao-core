@@ -30,7 +30,7 @@ public class WPSComponentInfo {
         this.description = component.getDescription();
         this.authors = component.getAuthors();
         this.copyright = component.getCopyright();
-        this.nodeAffinity = component.getNodeAffinity();
+        this.nodeAffinity = component.getNodeAffinity() != null ? component.getNodeAffinity().getValue() : null;
         this.tags = component.getTags();
         this.visibility = component.getVisibility();
         final Container service = component.getService();

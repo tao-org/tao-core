@@ -52,10 +52,11 @@ CREATE TABLE IF NOT EXISTS subscription.resource_subscription
     id bigint NOT NULL,
     user_id varchar NOT NULL,
     type_id smallint NOT NULL,
-    flavor_id varchar NOT NULL,
-    flavor_quantity smallint NOT NULL,
-    flavor_hdd_quantity_GB smallint,
-    flavor_ssd_quantity_GB smallint,
+    --flavor_id varchar NOT NULL,
+    --flavor_quantity smallint NOT NULL,
+    --flavor_hdd_quantity_GB smallint,
+    --flavor_ssd_quantity_GB smallint,
+    flavors json, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
     object_storage_GB smallint,
     paid boolean NULL DEFAULT false,
     created timestamp without time zone NULL DEFAULT now(),
@@ -68,3 +69,33 @@ ALTER TABLE subscription.resource_subscription ALTER COLUMN id SET DEFAULT nextv
 ALTER SEQUENCE subscription.resource_subscription_id_seq OWNED BY subscription.resource_subscription.id;
 ALTER TABLE subscription.resource_subscription ADD CONSTRAINT FK_resource_subscription_type
     FOREIGN KEY (type_id) REFERENCES subscription.subscription_type (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: subscription.external_resource_subscription
+DROP TABLE IF EXISTS subscription.external_resource_subscription;
+CREATE TABLE IF NOT EXISTS subscription.external_resource_subscription
+(
+    id bigint NOT NULL,    
+    name varchar NOT NULL,
+    flavors json, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
+    object_storage_GB smallint,
+    UNIQUE(name)
+);
+ALTER TABLE subscription.external_resource_subscription ADD CONSTRAINT PK_external_resource_subscription PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS subscription.external_resource_subscription_id_seq CASCADE;
+CREATE SEQUENCE subscription.external_resource_subscription_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE subscription.external_resource_subscription ALTER COLUMN id SET DEFAULT nextval('subscription.external_resource_subscription_id_seq');
+ALTER SEQUENCE subscription.external_resource_subscription_id_seq OWNED BY subscription.external_resource_subscription.id;
+
+-- table: subscription.external_subscription_users
+DROP TABLE IF EXISTS subscription.external_subscription_users;
+CREATE TABLE IF NOT EXISTS subscription.external_subscription_users
+(    
+    subscription_id bigint,
+    user_id varchar NOT NULL
+);
+ALTER TABLE subscription.external_subscription_users ADD CONSTRAINT PK_external_subscription_users PRIMARY KEY (subscription_id, user_id);
+ALTER TABLE subscription.external_subscription_users ADD CONSTRAINT FK_external_subscription_users_subscription
+    FOREIGN KEY (subscription_id) REFERENCES subscription.external_resource_subscription (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE subscription.external_subscription_users ADD CONSTRAINT FK_external_subscription_users_user
+    FOREIGN KEY (user_id) REFERENCES usr.user (id) ON DELETE No Action ON UPDATE No Action;

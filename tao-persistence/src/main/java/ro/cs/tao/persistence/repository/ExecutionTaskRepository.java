@@ -40,6 +40,11 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
                                              @Param("nodeId") long nodeId,
                                              @Param("instanceId") int instanceId);
 
+    @Query(value = "SELECT p.id FROM execution.task p JOIN workflow.component_link l ON l.source_graph_node_id = p.graph_node_id " +
+            "JOIN execution.task c ON c.graph_node_id = l.target_graph_node_id AND c.job_id = p.job_id " +
+            "WHERE c.id = :taskId ORDER BY p.id", nativeQuery = true)
+    List<Long> findParentTaskIds(@Param("taskId") long taskId);
+
     @Query(value = "SELECT * from execution.task where execution_status_id = 2", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getRunningTasks();
@@ -102,5 +107,9 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Query(value = "SELECT COUNT(l.target_graph_node_id) = 0 FROM workflow.component_link l JOIN execution.task t ON t.graph_node_id = l.source_graph_node_id " +
             "WHERE t.id = :taskId", nativeQuery = true)
     boolean isTerminalTask(@Param("taskId") long taskId);
+
+    @Query(value = "SELECT COALESCE(n.behavior_id, 1) FROM execution.task t JOIN workflow.graph_node n ON n.id = t.graph_node_id WHERE t.id = :taskId",
+           nativeQuery = true)
+    Integer getTransitionBehavior(@Param("taskId") long taskId);
 
 }

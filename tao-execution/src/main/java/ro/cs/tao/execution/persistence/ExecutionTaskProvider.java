@@ -3,6 +3,7 @@ package ro.cs.tao.execution.persistence;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.EntityProvider;
 import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,7 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     ExecutionTask getByGroupAndNode(long groupId, long nodeId, int instanceId);
     ExecutionTask getByResourceId(String id);
     int getRunningParents(long jobId, long taskId);
+    List<Long> getParentIds(long taskId);
     ExecutionTask save(ExecutionTask task, ExecutionJob job) throws PersistenceException;
     ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) throws PersistenceException;
     ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException;
@@ -32,4 +34,5 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     void updateComponentTime(String id, int duration);
     int countRunableTasks(long jobId);
     boolean isTerminalTask(long taskId);
+    TransitionBehavior getTransitionBehavior(long taskId);
 }

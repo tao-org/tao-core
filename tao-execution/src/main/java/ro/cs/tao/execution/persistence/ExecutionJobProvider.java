@@ -1,5 +1,6 @@
 package ro.cs.tao.execution.persistence;
 
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.persistence.EntityProvider;
@@ -17,5 +18,7 @@ public interface ExecutionJobProvider extends EntityProvider<ExecutionJob, Long>
     int count(String userId, ExecutionStatus status);
     List<ExecutionJob> list(Set<ExecutionStatus> statuses);
     List<ExecutionJob> list(String userId, Set<ExecutionStatus> statuses);
-
+    boolean isBatchRunning(String batchId);
+    List<ExecutionJob> list(List<String> batchIds);
+    List<DataSourceExecutionTask> getDatasourceTasks(long jobId);
 }

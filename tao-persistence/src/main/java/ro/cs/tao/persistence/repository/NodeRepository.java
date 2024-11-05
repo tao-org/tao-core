@@ -33,4 +33,7 @@ public interface NodeRepository extends PagingAndSortingRepository<NodeDescripti
             "THEN j.user_id = :userId ELSE (n.owner_id IS NULL AND n.role != 'master') END)", nativeQuery = true)
     int countUsableNodes(@Param("userId") String userId);
 
+    @Query(value = "SELECT * FROM topology.node n " +
+            "WHERE n.owner_id = :userId AND n.flavor_id = :flavorId", nativeQuery = true)
+    List<NodeDescription> getNodesByUserAndFlavor(@Param("userId") String userId, @Param("flavorId") String flavorId);
 }

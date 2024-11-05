@@ -85,6 +85,7 @@ public class DownloadManager {
                                                 List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
         final String dataSourceName = dsInstance.getDataSourceName();
         DownloadQueueItem item = null;
+        // If there is a persistent queue available, use it
         if (instance.persister != null) {
             item = new DownloadQueueItem();
             item.setDataSourceName(dataSourceName);
@@ -106,8 +107,14 @@ public class DownloadManager {
                                                       .stream().filter(d -> d.getId().equals(dataSourceName)).findFirst().get());
                 //throw new Exception(String.format("No download worker for source %s found", dsInstance.getDataSourceName()));
             }
-            final Future<List<EOProduct>> task = executor.submit(() ->
-                         delegate.apply(products, tiles, destinationPath, localRootPath, additionalProperties));
+            final Future<List<EOProduct>> task = executor.submit(() -> {
+                try {
+                    return delegate.apply(products, tiles, destinationPath, localRootPath, additionalProperties);
+                } catch (Exception ex) {
+                    logger.warning(ex.getMessage());
+                    return new ArrayList<>();
+                }
+            });
             try {
                 instance.queuedDownloads.put(dataSourceName, task);
                 logger.fine(String.format("Download queued for data source [%s-%s]. There are %d queued downloads for this source",
@@ -199,8 +206,8 @@ public class DownloadManager {
             if (instance.persister != null) {
                 instance.persister.remove(item.getId());
             }
-            instance.queuedDownloads.remove(name);
         }
+        instance.queuedDownloads.remove(name);
     }
 
     private DownloadManager() {

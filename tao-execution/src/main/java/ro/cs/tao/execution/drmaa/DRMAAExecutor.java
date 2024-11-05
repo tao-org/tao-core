@@ -97,6 +97,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
      */
     public static void setApplicationId(String id) { appId = id; }
 
+    public static void setQueueWorkers(int value) {
+        if (instance != null) {
+            instance.queueWorker.setParallelism(value);
+        }
+    }
+
     public static DRMAAExecutor getInstance() { return instance; }
 
     public DRMAAExecutor() {
@@ -109,7 +115,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
         this.queue = new LinkedBlockingDeque<>();
         this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl,
-                                                     NodeManager.isAvailable() ? NodeManager.getInstance().getActiveNodes() : 1);
+                                                     NodeManager.isAvailable() ? NodeManager.getInstance().getActiveNodesCount() : 1);
         final Set<TaskListener> services = ServiceRegistryManager.getInstance().getServiceRegistry(TaskListener.class).getServices();
         this.taskListeners = new ArrayList<>();
         if (services != null) {
@@ -235,7 +241,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (tasks != null) {
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {
-                final String taskName = TaskUtilities.getTaskName(task);
+                final String taskName = TaskUtilities.getTaskDescriptiveName(task);
                 try {
                     Session session = getSession(task.getJob().getEnvironment());
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
@@ -462,7 +468,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         JobTemplate jt;
         try {
             logger.entering(getClass().getSimpleName(), "createJobTemplate(" + task.getId() + ")");
-            final String taskName = TaskUtilities.getTaskName(task);
+            final String taskName = TaskUtilities.getTaskDescriptiveName(task);
             String[] pArgs = null;
             final ProcessingComponent component = task.getComponent();
             final Container container = containerProvider.get(component.getContainerId());
@@ -523,31 +529,46 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 ? app.getMemoryRequirements()
                                 : container.getApplications().stream().mapToLong(Application::getMemoryRequirements).min().orElse(0L);
             setMemoryConstraint(jt, memory);
-            NodeData nodeData;
-            final Integer parallelism = component.getParallelism();
-            final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
-            nodeData = strategy.getNode(memory);
-            while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
-                try {
-                    TimeUnit.SECONDS.sleep(20);
-                } catch (InterruptedException ignored) { }
-                if (nodeData == null) {
-                    nodeData = strategy.getNode(memory);
+
+            NodeDescription node;
+            final int cpu;
+            final long mem;
+            if(job.getEnvironment() == Environment.DEFAULT) {
+                NodeData nodeData;
+                final Integer parallelism = component.getParallelism();
+                final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
+                nodeData = strategy.getNode(memory);
+                while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
+                    try {
+                        TimeUnit.SECONDS.sleep(15);
+                    } catch (InterruptedException ignored) { }
+                    if (nodeData == null) {
+                        nodeData = strategy.getNode(memory);
+                    }
                 }
-            }
-            final NodeDescription node = nodeData.getNode();
-            if (node == null) {
-                throw new TryLaterException("Cannot obtain an available node [null]");
+                node = nodeData.getNode();
+                if (node == null) {
+                    throw new TryLaterException("Cannot obtain an available node [null]");
+                } else {
+                    if (!(task instanceof ScriptTask)) {
+                        incrementMemory(node, memory);
+                    }
+                    logger.info("Task " + taskName + " will be submitted to host " + node.getId());
+                }
+                setHost(jt, node.getId());
+                task.setExecutionNodeHostName(node.getId());
+                cpu = Math.min(nodeData.getCpu(), parallelism != null ? parallelism : 4);
+                mem = nodeData.getMemory();
             } else {
-                if (!(task instanceof ScriptTask)) {
-                    incrementMemory(node, memory);
-                }
-                logger.info("Task " + taskName + " will be submitted to host " + node.getId());
+                // Kubernetes
+                node = new NodeDescription();
+                node.setId("k8s-master");
+                setHost(jt, node.getId());
+                task.setExecutionNodeHostName(node.getId());
+                cpu = 0;
+                mem = 0;
             }
-            setHost(jt, node.getId());
-            task.setExecutionNodeHostName(node.getId());
-            int cpu = Math.min(nodeData.getCpu(), parallelism != null ? parallelism : 4);
-            final long mem = nodeData.getMemory();
+
             String location = task.getComponent().getFileLocation();
             if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
                     (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
@@ -559,15 +580,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 path += location;
                 task.getComponent().setExpandedFileLocation(path);
             }
-            // if parallel flags are defined, use them
-            if (app != null && app.hasParallelFlag()) {
+            // if parallel flags are defined, use them (but not for Kubernetes since we don't know the worker flavor)
+            if (app != null && app.hasParallelFlag() && job.getEnvironment() != Environment.KUBERNETES) {
                 Class<?> type = app.parallelArgumentType();
-                if (type.isAssignableFrom(Integer.class)) {
-                    pArgs = app.parallelArguments(Integer.class,
-                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 + 2 : cpu);
-                } else if (type.isAssignableFrom(Long.class)) {
-                    pArgs = app.parallelArguments(Integer.class,
-                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 + 2 : cpu);
+                if (type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Long.class)) {
+                    pArgs = app.parallelArguments(Integer.class, node.getFlavor().getCpu());
                 } else {
                     pArgs = app.parallelArguments(Boolean.class, true);
                 }
@@ -698,7 +715,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                                   isLocal
                                                     ? task.getInstanceTargetOutput()
                                                     : task.getInstanceTargetOutput()
-                                                          .replace(ExecutionConfiguration.getMasterContainerVolumeMap()
+                                                          .replace(ExecutionConfiguration.getMasterContainerVolumeMap(job.getEnvironment() == Environment.KUBERNETES)
                                                                                          .getHostWorkspaceFolder(),
                                                                    volumeMount.getContainerWorkspaceFolder()),
                                                   isLocal);
@@ -794,15 +811,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
         String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
-        final String workspaceFolder = SystemUtils.IS_OS_WINDOWS
+        final String workspaceFolder = SystemUtils.IS_OS_WINDOWS && !volumeMap.getHostWorkspaceFolder().startsWith("/")
                                        ? volumeMap.getHostWorkspaceFolder().substring(2).replace("\\", "/")
                                        : volumeMap.getHostWorkspaceFolder();
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
         if (finalPath.startsWith(workspaceFolder)) {
-            try {
-                FileUtilities.ensureExists(Paths.get(finalPath));
-            } catch (IOException e) {
-                logger.warning(e.getMessage());
+            if (isLocal) {
+                try {
+                    FileUtilities.ensureExists(Paths.get(finalPath));
+                } catch (IOException e) {
+                    logger.warning(e.getMessage());
+                }
             }
             final String replacement = containerWorkspaceFolder.endsWith("/")
                                        ? containerWorkspaceFolder
@@ -821,9 +840,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             Path p = Path.of(tmpPath);
             try {
                 if (Files.isDirectory(p)) {
-                    Files.createDirectories(p);
+                    FileUtilities.createDirectories(p);
                 } else {
-                    Files.createDirectories(p.getParent());
+                    FileUtilities.createDirectories(p.getParent());
                 }
             } catch (IOException e) {
                 logger.warning(e.getMessage());
@@ -845,7 +864,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         argsList.add("&&");
         argsList.add("cp");
         if (recursiveCondition) {
-            argsList.add("-r");
+            argsList.add("-fR");
         }
         // If the output is managed by the component, copy all the folder contents
         if (!isOutputManaged) {

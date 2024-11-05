@@ -2,6 +2,7 @@ package ro.cs.tao.execution.model;
 
 import org.ggf.drmaa.DeniedByDrmException;
 import org.ggf.drmaa.DrmaaException;
+import ro.cs.tao.component.NodeAffinity;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.monitor.NodeManager;
@@ -26,7 +27,7 @@ public class ExecutionStrategy {
         final ExecutionTask tmpTask = task.getJob().getTasks().stream()
                 .filter(t -> t instanceof ProcessingExecutionTask &&
                              t.getExecutionNodeHostName() != null &&
-                             !t.getExecutionNodeHostName().equalsIgnoreCase("same"))
+                             !t.getExecutionNodeHostName().equalsIgnoreCase(NodeAffinity.SameNode.getValue()))
                 .findFirst().orElse(null);
         return create(task, strategyType, tmpTask != null ? tmpTask.getExecutionNodeHostName() : null);
     }

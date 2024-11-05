@@ -64,7 +64,7 @@ public class ProcessingComponent extends TaoComponent {
     private TemplateEngine templateEngine;
     private Template template;
     private Set<Variable> variables;
-    private List<ParameterDescriptor> parameters;
+    private Set<ParameterDescriptor> parameters;
     private boolean multiThread;
     private Integer parallelism;
     private ProcessingComponentVisibility visibility;
@@ -163,9 +163,9 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the parameter descriptors of this component.
      */
     @XmlElementWrapper(name = "parameters")
-    public List<ParameterDescriptor> getParameterDescriptors() {
+    public Set<ParameterDescriptor> getParameterDescriptors() {
         if (this.parameters == null) {
-            this.parameters = new ArrayList<>();
+            this.parameters = new LinkedHashSet<>();
         }
         return this.parameters;
     }
@@ -173,15 +173,13 @@ public class ProcessingComponent extends TaoComponent {
     /**
      * Sets the parameter descriptors of this component.
      */
-    public void setParameterDescriptors(List<ParameterDescriptor> parameters) {
+    public void setParameterDescriptors(Set<ParameterDescriptor> parameters) {
         this.parameters = parameters;
     }
 
     public void addParameter(ParameterDescriptor parameterDescriptor) {
-        final List<ParameterDescriptor> descriptors = getParameterDescriptors();
-        if (!descriptors.contains(parameterDescriptor)) {
-            descriptors.add(parameterDescriptor);
-        }
+        final Set<ParameterDescriptor> descriptors = getParameterDescriptors();
+        descriptors.add(parameterDescriptor);
     }
 
     /**
@@ -377,7 +375,7 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         if (this.parameters != null) {
-            newDescriptor.parameters = new ArrayList<>();
+            newDescriptor.parameters = new LinkedHashSet<>();
             for (ParameterDescriptor p : this.parameters) {
                 newDescriptor.parameters.add(p.clone());
             }
@@ -479,7 +477,7 @@ public class ProcessingComponent extends TaoComponent {
             case SCRIPT:
                 try {
                     Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
-                    Files.createDirectories(scriptPath);
+                    FileUtilities.createDirectories(scriptPath);
                     Path scriptFile = scriptPath.resolve(this.id + "-script");
                     Files.write(scriptFile, transformedTemplate.getBytes());
                     cmdBuilder.append(scriptFile).append("\n");
@@ -495,7 +493,7 @@ public class ProcessingComponent extends TaoComponent {
             case AGGREGATE:
                 try {
                     final Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
-                    Files.createDirectories(scriptPath);
+                    FileUtilities.createDirectories(scriptPath);
                     String scriptFileName = this.template.getName().replace(" ", "_") + "-" + System.currentTimeMillis();
                     final boolean velocityTemplate = this.templateType == TemplateType.VELOCITY;
                     if (velocityTemplate) {

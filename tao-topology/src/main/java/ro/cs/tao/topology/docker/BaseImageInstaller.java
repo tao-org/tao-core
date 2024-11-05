@@ -42,6 +42,7 @@ import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.TagProvider;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.JacksonUtil;
 import ro.cs.tao.utils.StringUtilities;
 
@@ -77,7 +78,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         } else {
             dockerImagesPath = Paths.get(cfgValue);
             try {
-                Files.createDirectories(dockerImagesPath);
+                FileUtilities.createDirectories(dockerImagesPath);
             } catch (IOException e) {
                 log.severe(e.getMessage());
             }
@@ -320,7 +321,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     containerApplications.stream().filter(a -> a.getName().equals(component.getId()) ||
                                                                a.getName().equals(component.getLabel())).findFirst()
                                          .ifPresent(application -> component.setFileLocation(application.getPath()));
-                    List<ParameterDescriptor> parameterDescriptors = component.getParameterDescriptors();
+                    Set<ParameterDescriptor> parameterDescriptors = component.getParameterDescriptors();
                     if (parameterDescriptors != null) {
                         parameterDescriptors.forEach(p -> {
                             if (p.getName() == null) {

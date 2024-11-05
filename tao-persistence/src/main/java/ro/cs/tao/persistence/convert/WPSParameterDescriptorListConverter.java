@@ -113,7 +113,7 @@ public class WPSParameterDescriptorListConverter implements AttributeConverter<L
         }
 
         @Override
-        public ParameterDescriptor deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+        public ParameterDescriptor deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
             if (parser.getCurrentToken() != JsonToken.START_OBJECT) {
                 throw new IOException("Invalid start marker");
             }
