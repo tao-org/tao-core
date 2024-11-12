@@ -1,4 +1,14 @@
 -------------------------------------------------------------------------------
+-- topology.memory_unit
+DROP TABLE IF EXISTS topology.memory_unit CASCADE;
+CREATE TABLE topology.memory_unit
+(
+	id smallint NOT NULL,
+	short_description varchar(3) NOT NULL
+);
+ALTER TABLE topology.memory_unit ADD CONSTRAINT PK_memory_unit PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
 -- topology.node_flavor
 DROP TABLE IF EXISTS topology.node_flavor CASCADE;
 CREATE TABLE topology.node_flavor
@@ -8,9 +18,12 @@ CREATE TABLE topology.node_flavor
 	memory integer NOT NULL,
 	disk integer NOT NULL,
 	swap integer NOT NULL,
-	rxtx real NOT NULL
+	rxtx real NOT NULL,
+	unit_id smallint NOT NULL
 );
 ALTER TABLE topology.node_flavor ADD CONSTRAINT PK_node_flavor PRIMARY KEY (id);
+ALTER TABLE topology.node_flavor ADD CONSTRAINT FK_node_flavor_memory_unit
+    FOREIGN KEY (unit_id) REFERENCES topology.memory_unit (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: topology.execution_node

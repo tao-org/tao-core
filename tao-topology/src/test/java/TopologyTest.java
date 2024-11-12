@@ -6,6 +6,7 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
 import ro.cs.tao.topology.ToolCommandsTokens;
 import ro.cs.tao.topology.TopologyManager;
+import ro.cs.tao.utils.executors.MemoryUnit;
 
 import java.util.List;
 
@@ -73,6 +74,7 @@ public class TopologyTest {
         flavor.setMemory(1024);
         flavor.setDisk(120);
         flavor.setRxtxFactor(1.0f);
+        flavor.setMemoryUnit(MemoryUnit.MB);
         nodeInfo.setFlavor(flavor);
         TopologyManager.getInstance().addNode(nodeInfo);
 

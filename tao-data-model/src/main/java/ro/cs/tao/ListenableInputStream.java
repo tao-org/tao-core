@@ -38,7 +38,7 @@ public class ListenableInputStream extends InputStream {
                 @Override
                 public void run() {
                     double speed = lastUpdated != null
-                                    ? (lastValue - lastRead) / MemoryUnit.MB.value().doubleValue() / (double) Duration.between(lastUpdated, LocalDateTime.now()).getSeconds()
+                                    ? (lastValue - lastRead) / (double) MemoryUnit.MB.value() / (double) Duration.between(lastUpdated, LocalDateTime.now()).getSeconds()
                                     : 0;
                     ((DownloadProgressListener) listener).notifyProgress(lastValue / total, speed);
                     lastRead = lastValue;

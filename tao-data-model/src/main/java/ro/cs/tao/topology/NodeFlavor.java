@@ -1,6 +1,7 @@
 package ro.cs.tao.topology;
 
 import ro.cs.tao.component.StringIdentifiable;
+import ro.cs.tao.utils.executors.MemoryUnit;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -12,6 +13,7 @@ public class NodeFlavor extends StringIdentifiable {
     private int disk;
     private int swap;
     private float rxtxFactor;
+    private MemoryUnit memoryUnit;
 
     public NodeFlavor() {
         super();
@@ -24,6 +26,17 @@ public class NodeFlavor extends StringIdentifiable {
         this.disk = disk;
         this.swap = swap;
         this.rxtxFactor = rxtxFactor;
+        this.memoryUnit = MemoryUnit.GB;
+    }
+
+    public NodeFlavor(String id, int cpu, int memory, int disk, int swap, float rxtxFactor, MemoryUnit unit) {
+        super(id);
+        this.cpu = cpu;
+        this.memory = memory;
+        this.disk = disk;
+        this.swap = swap;
+        this.rxtxFactor = rxtxFactor;
+        this.memoryUnit = unit;
     }
 
     @XmlElement(name = "cpu")
@@ -45,6 +58,10 @@ public class NodeFlavor extends StringIdentifiable {
     @XmlElement(name = "rxtxFactor")
     public float getRxtxFactor() { return rxtxFactor; }
     public void setRxtxFactor(float rxtxFactor) { this.rxtxFactor = rxtxFactor; }
+
+    @XmlElement(name = "unit")
+    public MemoryUnit getMemoryUnit() { return memoryUnit; }
+    public void setMemoryUnit(MemoryUnit memoryUnit) { this.memoryUnit = memoryUnit; }
 
     @Override
     public boolean equals(Object o) {

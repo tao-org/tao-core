@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
  */
 public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     protected static final String NAME_SEPARATOR = "_";
-    protected static final int BUFFER_SIZE = MemoryUnit.MB.value().intValue();
+    protected static final int BUFFER_SIZE = (int) MemoryUnit.MB.value();
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
