@@ -118,10 +118,18 @@ VALUES
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='admin'), 1);
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='SystemAccount'), 1);
 
+-- Memory units
+INSERT INTO topology.memory_unit (id, short_description) VALUES
+(1, 'B'),
+(2, 'KB'),
+(3, 'MB'),
+(4, 'GB'),
+(5, 'TB');
+
 -- Node flavor
-INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx) VALUES
-('master', 8, 32, 1024, 32, 1.0),
-('k8s', 8, 32, 1024, 32, 1.0);
+INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx, unit_id) VALUES
+('master', 8, 32, 1024, 32, 1.0, 4),
+('k8s', 8, 32, 1024, 32, 1.0, 4);
 
 -- localhost execution node
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)

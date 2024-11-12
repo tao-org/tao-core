@@ -78,7 +78,7 @@ public class Zipper {
                         ZipEntry entry = new ZipEntry(sp);
                         outputStream.putNextEntry(entry);
                         if (!Files.isDirectory(path)) {
-                            byte[] buffer = new byte[MemoryUnit.MB.value().intValue()];
+                            byte[] buffer = new byte[(int) MemoryUnit.MB.value()];
                             try (InputStream stream = Files.newInputStream(path)) {
                                 int r;
                                 while ((r = stream.read(buffer)) != -1) {
@@ -148,7 +148,7 @@ public class Zipper {
         }
         try {
             FileUtilities.createDirectories(target);
-            byte[] buffer = new byte[MemoryUnit.MB.value().intValue()];
+            byte[] buffer = new byte[(int) MemoryUnit.MB.value()];
             double totalRead = 0;
             long total = Files.size(source);
             int iterations = 0;

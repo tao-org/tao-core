@@ -1398,7 +1398,7 @@ public class FileUtilities {
         String hash = null;
         if (path != null) {
             final MessageDigest shaDigest = MessageDigest.getInstance(algo);
-            final ByteBuffer buffer = ByteBuffer.allocate(MemoryUnit.MB.value().intValue());
+            final ByteBuffer buffer = ByteBuffer.allocate((int) MemoryUnit.MB.value());
             int read;
             if (Files.isRegularFile(path)) {
                 try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {

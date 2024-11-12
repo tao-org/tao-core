@@ -100,6 +100,7 @@ public class DefaultSession implements Session, JobExitHandler {
                     flavor.setMemory((int) (Runtime.getRuntime().maxMemory() / 0x40000000));
                     flavor.setDisk(256);
                     flavor.setRxtxFactor(1.0f);
+                    flavor.setMemoryUnit(MemoryUnit.GB);
                     localNode.setDescription("Master node (localhost)");
                     NodeDescription[] newNodes = new NodeDescription[this.nodes.length + 1];
                     System.arraycopy(this.nodes, 0, newNodes, 1, this.nodes.length);

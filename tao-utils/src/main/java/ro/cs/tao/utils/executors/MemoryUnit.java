@@ -19,21 +19,55 @@ package ro.cs.tao.utils.executors;
  * @author Cosmin Cara
  */
 public enum MemoryUnit {
-    BYTE(1),
-    KB(BYTE.value * 1024),
-    MB(KB.value * 1024),
-    GB(MB.value * 1024),
-    TB(GB.value * 1024);
+    BYTE(1, 1),
+    KB(2, BYTE.value * 1024),
+    MB(3, KB.value * 1024),
+    GB(4, MB.value * 1024),
+    TB(5, GB.value * 1024);
 
+    private final int id;
     private final long value;
 
-    MemoryUnit(long value) { this.value = value; }
+    MemoryUnit(int id, long value) {
+        this.id = id;
+        this.value = value;
+    }
     @Override
     public String toString() { return String.valueOf(this.value); }
 
-    public Long value() { return this.value; }
+    public int id() { return id; }
+
+    public long value() { return this.value; }
 
     public static MemoryUnit getEnumConstantByName(String name) {
         return name != null ? MemoryUnit.valueOf(name.toUpperCase()) : null;
+    }
+
+    public static MemoryUnit getEnumConstantById(int value) {
+        return value == BYTE.id
+               ? BYTE
+               : value == KB.id
+                 ? KB
+                 : value == MB.id
+                   ? MB
+                   : value == GB.id
+                     ? GB
+                     : value == TB.id
+                       ? TB
+                       : null;
+    }
+
+    public static MemoryUnit getEnumConstantByValue(long value) {
+        return value == BYTE.value
+                 ? BYTE
+                 : value == KB.value
+                   ? KB
+                   : value == MB.value
+                     ? MB
+                     : value == GB.value
+                       ? GB
+                       : value == TB.value
+                         ? TB
+               : null;
     }
 }
