@@ -58,6 +58,9 @@ public interface UserRepository extends PagingAndSortingRepository<User, String>
     @Query(value = "SELECT * FROM usr.user WHERE id in (:ids) ORDER BY username", nativeQuery = true)
     List<User> getUsers(@Param("ids")Set<String> ids);
 
+    @Query(value = "SELECT * FROM usr.user WHERE status_id = :statusId AND id in (:ids) ORDER BY username", nativeQuery = true)
+    List<User> getUsers(@Param("ids")Set<String> ids, @Param("statusId") int statusId);
+
     @Query(value = "SELECT id FROM usr.user WHERE username = :usr and password = :pwd", nativeQuery = true)
     String login(@Param("usr") String user, @Param("pwd") String password);
 

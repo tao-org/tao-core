@@ -154,6 +154,17 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
+    public List<User> list(Set<String> ids, UserStatus userStatus) {
+        final List<User> users = repository.getUsers(ids, userStatus.value());
+        if (SystemPrincipal.instance().getName() == null) {
+            SystemPrincipal.refresh(this);
+        }
+        final String userId = SystemPrincipal.instance().getName();
+        users.removeIf(u -> userId.equals(u.getId()));
+        return users;
+    }
+
+    @Override
     public Map<String, String[]> listUnicityInfo() {
         Map<String, String[]> results = new HashMap<>();
         repository.findAll().forEach(user -> results.put(user.getUsername(), new String[] {user.getEmail(), user.getAlternativeEmail()}));
