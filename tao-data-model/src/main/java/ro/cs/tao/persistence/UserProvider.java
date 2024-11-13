@@ -16,6 +16,7 @@ public interface UserProvider extends EntityProvider<User, String> {
 
     boolean login(String user, String password);
     List<User> list(UserStatus status);
+    List<User> list(Set<String> ids, UserStatus status);
     List<User> listAdministrators();
     List<User> listUsers(Set<String> names);
     List<Group> listGroups();
