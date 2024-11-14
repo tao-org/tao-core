@@ -19,8 +19,7 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.TaoComponent;
-
-import java.util.UUID;
+import ro.cs.tao.utils.StringUtilities;
 
 public abstract class TaoComponentManager<T extends TaoComponent, R extends PagingAndSortingRepository<T, String>>
         extends EntityManager<T, String, R> {
@@ -45,14 +44,9 @@ public abstract class TaoComponentManager<T extends TaoComponent, R extends Pagi
     }
 
     protected boolean checkParameterDescriptor(ParameterDescriptor parameterDesc) {
-        if (parameterDesc != null) {
-            if (parameterDesc.getId() == null) {
-                parameterDesc.setId(UUID.randomUUID().toString());
-            }
-        }
-        return parameterDesc != null && (parameterDesc.getId() != null && !parameterDesc.getId().isEmpty()) &&
-                (parameterDesc.getName() != null && !parameterDesc.getName().isEmpty()) &&
+        return parameterDesc != null &&
+                !StringUtilities.isNullOrEmpty(parameterDesc.getName()) &&
                 parameterDesc.getType() != null && parameterDesc.getDataType() != null &&
-                parameterDesc.getLabel() != null && !parameterDesc.getLabel().isEmpty();
+                !StringUtilities.isNullOrEmpty(parameterDesc.getLabel());
     }
 }

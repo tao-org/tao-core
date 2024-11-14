@@ -434,9 +434,15 @@ public class ProcessingComponent extends TaoComponent {
                     }
                 } else {
                     try {
-                        if (paramValue instanceof String
-                                && (((String) paramValue).contains(SystemUtils.IS_OS_WINDOWS ? "\\" : "/"))) {
-                            clonedMap.put(paramName, FileUtilities.asUnixPath(FileUtilities.toPath((String) paramValue).toString(), true));
+                        if (paramValue instanceof String) {
+                            final String stringValue = (String) paramValue;
+                            if ((stringValue).contains(SystemUtils.IS_OS_WINDOWS ? "\\" : "/")) {
+                                clonedMap.put(paramName, FileUtilities.asUnixPath(FileUtilities.toPath(stringValue).toString(), true));
+                            }/* else if (stringValue.contains(" ") || stringValue.contains("(") || stringValue.contains(")")) {
+                                clonedMap.put(paramName, "\"" + stringValue + "\"");
+                            }*/ else {
+                                clonedMap.put(paramName, paramValue);
+                            }
                         } else {
                             clonedMap.put(paramName, paramValue);
                         }
@@ -447,12 +453,16 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {
-            if (!clonedMap.containsKey(parameterDescriptor.getName())) {
-                if (StringUtilities.isNullOrEmpty(parameterDescriptor.getDefaultValue())) {
+            final String name = parameterDescriptor.getName();
+            final String defaultValue = parameterDescriptor.getDefaultValue();
+            if (!clonedMap.containsKey(name)) {
+                if (!parameterDescriptor.isNotNull() || StringUtilities.isNullOrEmpty(defaultValue)) {
                     removeEmptyParameter(parameterDescriptor);
                 } else {
-                    clonedMap.put(parameterDescriptor.getName(), parameterDescriptor.getDefaultValue());
+                    clonedMap.put(name, defaultValue);
                 }
+            } else if (defaultValue.equals(clonedMap.get(name))) {
+                removeEmptyParameter(parameterDescriptor);
             }
         }
         if (variables != null) {
