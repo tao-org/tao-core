@@ -26,6 +26,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
 import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 import ro.cs.tao.utils.StringUtilities;
@@ -42,6 +43,9 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
 
     @Autowired
     private ParameterExpansionRuleRepository expansionRuleRepository;
+
+    @Autowired
+    private ParameterDescriptorRepository parameterDescriptorRepository;
 
     @Override
     public ProcessingComponent get(String id, String containerId) {
@@ -148,6 +152,7 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             for (ParameterDescriptor descriptor : descriptors) {
                 if (StringUtilities.isNullOrEmpty(descriptor.getId())) {
                     descriptor.setId(UUID.randomUUID().toString());
+                    descriptor = parameterDescriptorRepository.save(descriptor);
                 }
             }
         }
