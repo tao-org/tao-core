@@ -59,7 +59,7 @@ public class NodeFlavor extends StringIdentifiable {
     public float getRxtxFactor() { return rxtxFactor; }
     public void setRxtxFactor(float rxtxFactor) { this.rxtxFactor = rxtxFactor; }
 
-    @XmlElement(name = "unit")
+    @XmlElement(name = "memoryUnit")
     public MemoryUnit getMemoryUnit() { return memoryUnit; }
     public void setMemoryUnit(MemoryUnit memoryUnit) { this.memoryUnit = memoryUnit; }
 

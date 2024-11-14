@@ -158,7 +158,7 @@
 
     <entity class="ro.cs.tao.topology.NodeFlavor" access="PROPERTY">
         <table name="topology.node_flavor"/>
-        <convert converter="ro.cs.tao.persistence.convert.MemoryUnitConverter" attribute-name="unit"/>
+        <convert converter="ro.cs.tao.persistence.convert.MemoryUnitConverter" attribute-name="memoryUnit"/>
         <attributes>
             <basic name="cpu">
                 <column name="cpu" nullable="false" column-definition="integer NOT NULL"/>
@@ -175,7 +175,7 @@
             <basic name="rxtxFactor">
                 <column name="rxtx" nullable="false" column-definition="real NOT NULL"/>
             </basic>
-            <basic name="unit">
+            <basic name="memoryUnit">
                 <column name="unit_id" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
         </attributes>
