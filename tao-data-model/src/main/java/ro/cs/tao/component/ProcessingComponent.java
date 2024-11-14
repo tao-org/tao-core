@@ -461,7 +461,7 @@ public class ProcessingComponent extends TaoComponent {
                 } else {
                     clonedMap.put(name, defaultValue);
                 }
-            } else if (defaultValue.equals(clonedMap.get(name))) {
+            } else if (clonedMap.get(name) != null && clonedMap.get(name).equals(defaultValue)) {
                 removeEmptyParameter(parameterDescriptor);
             }
         }
