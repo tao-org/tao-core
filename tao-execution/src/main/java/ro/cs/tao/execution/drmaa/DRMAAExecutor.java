@@ -408,7 +408,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final Tuple<NodeDescription, AtomicLong> hostData = this.hostMemoryRequests.get(host);
         final boolean canSubmit;
         if (hostData != null) {
-            long installed = hostData.getKeyOne().getFlavor().getMemory() * MemoryUnit.KB.value();
+            long installed = hostData.getKeyOne().getFlavor().getMemory() * hostData.getKeyOne().getFlavor().getMemoryUnit().value() / MemoryUnit.MB.value();
             long requested = hostData.getKeyTwo().get();
             if (installed <= requested + newMemory) {
                 logger.finest(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",
