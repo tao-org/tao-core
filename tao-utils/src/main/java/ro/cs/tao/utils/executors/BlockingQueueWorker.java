@@ -1,6 +1,8 @@
 package ro.cs.tao.utils.executors;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -9,13 +11,14 @@ import java.util.logging.Logger;
 public class BlockingQueueWorker<E> extends Thread {
     private final BlockingQueue<E> monitoredQueue;
     private final Function<E, Void> work;
-    private final NamedThreadPoolExecutor executor;
+    private final ThreadPoolExecutor executor;
     private Consumer<BlockingQueue<E>> statePersister;
     private final Logger logger;
     private volatile boolean stopped;
     private volatile boolean paused;
     private final int delay;
     private final AtomicInteger activeCounter;
+    private final AtomicInteger parallelism;
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable) {
         this(monitoredQueue, runnable, 1);
@@ -32,10 +35,12 @@ public class BlockingQueueWorker<E> extends Thread {
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism, String name, int delay) {
         this.monitoredQueue = monitoredQueue;
         this.work = runnable;
-        this.executor = new NamedThreadPoolExecutor(name, parallelism > 0 ? parallelism : 1);
+        //this.executor = new NamedThreadPoolExecutor(name, parallelism > 0 ? parallelism : 1);
+        this.executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
         this.stopped = false;
         this.delay = delay;
         this.activeCounter = new AtomicInteger(0);
+        this.parallelism = new AtomicInteger(parallelism);
         this.logger = Logger.getLogger(getClass().getName());
     }
 
@@ -59,7 +64,7 @@ public class BlockingQueueWorker<E> extends Thread {
     public void run() {
         while (!stopped) {
             try {
-                if (this.paused || (this.activeCounter.get() >= this.executor.getMaximumPoolSize())) {
+                if (this.paused || (this.activeCounter.get() >= this.parallelism.get())) {
                     Thread.sleep(this.delay);
                 } else {
                     if (this.statePersister != null) {
@@ -92,8 +97,7 @@ public class BlockingQueueWorker<E> extends Thread {
     }
 
     public void setParallelism(int value) {
-        this.executor.setCorePoolSize(value);
-        this.executor.setMaximumPoolSize(value);
+        this.parallelism.set(value);
     }
 
     public boolean isPaused() {
