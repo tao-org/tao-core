@@ -602,6 +602,7 @@ public class ProcessingComponent extends TaoComponent {
         if (this.template != null) {
             String templateContents = this.template.getContents();
             int idx;
+            final String paramLabel = "$" + descriptor.getName();
             switch (this.templateType) {
                 case XSLT:
                 case JAVASCRIPT:
@@ -625,7 +626,7 @@ public class ProcessingComponent extends TaoComponent {
                     }
                     break;
                 case JSON:
-                    idx = templateContents.indexOf("$" + descriptor.getName());
+                    idx = templateContents.indexOf(paramLabel);
                     int sepIdx = templateContents.indexOf(",", idx);
                     int columnIdx = templateContents.lastIndexOf(":", idx);
                     int beforeIdx = templateContents.lastIndexOf("\"", columnIdx - 1);
@@ -638,8 +639,12 @@ public class ProcessingComponent extends TaoComponent {
                     final String[] lines = templateContents.split("\n");
                     final StringBuilder builder = new StringBuilder();
                     for (String line : lines) {
-                        if (!line.contains("$" + descriptor.getName()) && !line.contains(descriptor.getLabel())) {
+                        if (!line.contains(paramLabel) && !line.contains(descriptor.getLabel())) {
                             builder.append(line).append("\n");
+                        } else {
+                            if (StringUtilities.count("$", line) > 1) {
+                                builder.append(line.replace(paramLabel, descriptor.getDefaultValue())).append("\n");
+                            }
                         }
                     }
                     this.template.setContents(builder.toString(), false);

@@ -117,4 +117,18 @@ public class StringUtilities {
     public static boolean isGUID(String s) {
         return guidPattern.matcher(s).matches();
     }
+
+    public static int count(String substring, String inString) {
+        if (isNullOrEmpty(substring) || isNullOrEmpty(inString)) {
+            return 0;
+        }
+        int count = 0;
+        int idx = 0;
+        final int length = substring.length();
+        while ((idx = inString.indexOf(substring, idx)) >= 0) {
+            count++;
+            idx += length;
+        }
+        return count;
+    }
 }
