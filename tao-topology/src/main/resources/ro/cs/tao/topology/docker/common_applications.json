@@ -6,7 +6,9 @@
     "description": "Copies files and folders from one location to another location",
     "authors": "GNU",
     "copyright": "(C) GNU",
-    "nodeAffinity": "Any",
+    "nodeAffinity" : {
+      "value" : "Any"
+    },
     "sources": [
       {
         "id": null,
@@ -48,7 +50,9 @@
     "description": "Moves files and folders from one location to another location",
     "authors": "GNU",
     "copyright": "(C) GNU",
-    "nodeAffinity": "Any",
+    "nodeAffinity" : {
+      "value" : "Any"
+    },
     "sources": [
       {
         "id": null,
@@ -90,7 +94,9 @@
     "description": "Removes files and folders from a location",
     "authors": "GNU",
     "copyright": "(C) GNU",
-    "nodeAffinity": "Any",
+    "nodeAffinity" : {
+      "value" : "Any"
+    },
     "sources": [
       {
         "id": null,
