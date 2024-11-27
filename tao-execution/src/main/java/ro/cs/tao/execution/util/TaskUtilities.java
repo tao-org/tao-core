@@ -34,10 +34,7 @@ import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.ProgressNotifier;
 import ro.cs.tao.messaging.Topic;
-import ro.cs.tao.persistence.ContainerProvider;
-import ro.cs.tao.persistence.GroupComponentProvider;
-import ro.cs.tao.persistence.ProcessingComponentProvider;
-import ro.cs.tao.persistence.WorkflowNodeProvider;
+import ro.cs.tao.persistence.*;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.services.bridge.spring.SpringContextBridgedServices;
@@ -46,6 +43,7 @@ import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
+import ro.cs.tao.workspaces.RepositoryType;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,6 +70,7 @@ public class TaskUtilities {
     private static final ExecutionTaskProvider taskProvider;
     private static final ExecutionJobProvider jobProvider;
     private static final ContainerProvider containerProvider;
+    private static final RepositoryProvider repositoryProvider;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
     private static final String DOCKER_EODATA_MOUNT_POINT;
@@ -91,6 +90,7 @@ public class TaskUtilities {
         dataSourceComponentProvider = context.getService(DataSourceComponentProvider.class);
         groupComponentProvider = context.getService(GroupComponentProvider.class);
         containerProvider = context.getService(ContainerProvider.class);
+        repositoryProvider = context.getService(RepositoryProvider.class);
     }
 
     /**
@@ -492,5 +492,11 @@ public class TaskUtilities {
     public static List<DataSourceExecutionTask> findDataSourceTasks(ExecutionJob job) {
         List<ExecutionTask> tasks = taskProvider.getDataSourceTasks(job.getId());
         return tasks.stream().map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
+    }
+
+    public static String getUserWorkspace(ExecutionTask task) {
+        return repositoryProvider.getUserSystemRepositories(task.getJob().getUserId()).stream()
+                                 .filter(r -> r.getType() == RepositoryType.LOCAL)
+                                 .findFirst().get().root();
     }
 }
