@@ -192,8 +192,7 @@ public class DefaultSession implements Session, JobExitHandler {
 
     @Override
     public void cleanupJob(String jobId) {
-        this.jobOutputs.remove(jobId);
-        this.runningJobs.remove(jobId);
+        removeJob(jobId);
     }
 
     @Override
@@ -269,10 +268,11 @@ public class DefaultSession implements Session, JobExitHandler {
             if (node != null) {
                 unit.setCertificate(node.getSshKey());
             }
-            final String jobId = jt.getJobName() + ":" + System.nanoTime();
+            final String jobId = jt.getJobName();//jt.getJobName() + ":" + System.nanoTime();
             final OutputAccumulator consumer = new OutputAccumulator();
             this.runningJobs.put(jobId, Executor.execute(consumer, unit));
             this.jobOutputs.put(jobId, consumer);
+            logger.finest("Job " + jobId + " added");
             return jobId;
         }
     }
@@ -368,8 +368,7 @@ public class DefaultSession implements Session, JobExitHandler {
             }
         } finally {
             for (Object obj : jobIds) {
-                this.runningJobs.remove(obj);
-                this.jobOutputs.remove(obj);
+                removeJob(jobIds.toString());
             }
         }
     }
@@ -394,8 +393,7 @@ public class DefaultSession implements Session, JobExitHandler {
             }
             return new DefaultJobInfo(jobId, runner);
         } finally {
-            this.runningJobs.remove(jobId);
-            this.jobOutputs.remove(jobId);
+            removeJob(jobId);
         }
     }
 
@@ -479,5 +477,11 @@ public class DefaultSession implements Session, JobExitHandler {
         if (!this.jobTemplates.containsKey(jobName)) {
             throw new InvalidJobTemplateException();
         }
+    }
+
+    private void removeJob(String jobId) {
+        this.runningJobs.remove(jobId);
+        this.jobOutputs.remove(jobId);
+        logger.finest("Job " + jobId + " removed");
     }
 }
