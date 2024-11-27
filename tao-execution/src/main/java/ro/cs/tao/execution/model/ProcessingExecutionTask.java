@@ -23,6 +23,7 @@ import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
@@ -209,9 +210,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         Map<String, String> variables = new HashMap<>();
-        variables.put(SystemVariable.USER_WORKSPACE.key(), getContext().getWorkspace().toString());
+        final String workspace = TaskUtilities.getUserWorkspace(this);
+        variables.put(SystemVariable.USER_WORKSPACE.key(), workspace);
         variables.put(SystemVariable.SHARED_WORKSPACE.key(), SystemVariable.SHARED_WORKSPACE.value());
-        variables.put(SystemVariable.USER_FILES.key(), getContext().getWorkspace().resolve("files").toString());
+        variables.put(SystemVariable.USER_FILES.key(), Path.of(workspace).resolve("files").toString());
         variables.put(SystemVariable.SHARED_FILES.key(), SystemVariable.SHARED_FILES.value());
         String[] outPath = buildOutputPath();
         variables.put("$TEMPLATE_REAL_PATH", outPath != null ? outPath[0] : null);
