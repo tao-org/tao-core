@@ -7,6 +7,7 @@ import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Long> {
 
@@ -16,6 +17,7 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     List<ExecutionTask> listWMSExecuting();
     List<ExecutionTask> listByHost(String hostName);
     int countByHostSince(String hostName, LocalDateTime since);
+    Map<String, Integer> countRunning();
     LocalDateTime getLastRunTask(String hostName);
     List<ExecutionTask> getDataSourceTasks(long jobId);
     List<ExecutionTaskSummary> getTasksStatus(long jobId);
