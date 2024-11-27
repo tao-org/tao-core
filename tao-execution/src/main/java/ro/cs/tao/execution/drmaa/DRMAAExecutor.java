@@ -191,7 +191,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public void stop(ProcessingExecutionTask task)  throws ExecutionException {
         try {
             if (task.getResourceId() != null) {
-                this.sessions.get(task.getJob().getJobType()).control(task.getResourceId(), Session.TERMINATE);
+                final Session session = getSession(task.getJob().getEnvironment());
+                session.control(task.getResourceId(), Session.TERMINATE);
                 //session.control(task.getResourceId(), Session.TERMINATE);
             }
         } catch (DrmaaException e) {
@@ -293,6 +294,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
                                 // Only a running task can complete
+                                if (session instanceof JobExitHandler) {
+                                    final JobExitHandler handler = (JobExitHandler) session;
+                                    String resourceId = task.getResourceId();
+                                    handler.cleanupJob(resourceId);
+                                }
                                 markTaskFinished(task, ExecutionStatus.PENDING_FINALISATION, ExecutionStatus.PENDING_FINALISATION.friendlyName());
                             }
                             if (task instanceof ProcessingExecutionTask) {
@@ -311,11 +317,6 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                     }
                                     FileUtilities.takeOwnership(Paths.get(location).getParent());
                                 }
-                            }
-                            if (session instanceof JobExitHandler) {
-                                final JobExitHandler handler = (JobExitHandler) session;
-                                String resourceId = task.getResourceId();
-                                handler.cleanupJob(resourceId);
                             }
                             UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
@@ -542,9 +543,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     try {
                         TimeUnit.SECONDS.sleep(15);
                     } catch (InterruptedException ignored) { }
-                    if (nodeData == null) {
+                    //if (nodeData == null) {
                         nodeData = strategy.getNode(memory);
-                    }
+                    //}
                 }
                 node = nodeData.getNode();
                 if (node == null) {
