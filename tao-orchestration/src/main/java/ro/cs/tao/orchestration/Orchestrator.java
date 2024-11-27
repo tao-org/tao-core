@@ -626,10 +626,13 @@ public class Orchestrator extends Notifiable {
         try {
             currentContext.setPrincipal(new UserPrincipal(user));
             task.setContext(currentContext);
-            if (!(status == ExecutionStatus.QUEUED_ACTIVE && task.getExecutionStatus() == ExecutionStatus.RUNNING)) {
+            if (!(status == ExecutionStatus.QUEUED_ACTIVE &&
+                    (task.getExecutionStatus() == ExecutionStatus.RUNNING || task.getExecutionStatus() == ExecutionStatus.PENDING_FINALISATION))) {
                 // it may happen that the notification of Queue_Active to arrive after the task was actually put
                 // in Running state, hence we don't need to update the status
-                changeStatus(task, status, message.getMessage());
+                if (task.getExecutionStatus() != ExecutionStatus.PENDING_FINALISATION) {
+                    changeStatus(task, status, message.getMessage());
+                }
             }
             // A processing task can be successively in PENDING_FINALIZATION and DONE states, while a datasource task
             // can only transit to DONE (from RUNNING).
@@ -671,7 +674,7 @@ public class Orchestrator extends Notifiable {
                         logger.finest(String.format("Task %s about to start.", nextTask.getId()));
                         nextTask.getInputParameterValues().forEach(
                                 v -> logger.finest(String.format("Input: %s=%s", v.getKey(), v.getValue())));
-                       final ExecutionGroup parentGroupTask = nextTask.getGroupTask();
+                        final ExecutionGroup parentGroupTask = nextTask.getGroupTask();
                         if (parentGroupTask != null) {
                             String state = parentGroupTask.getInternalState();
                             if (state != null) {
@@ -1374,7 +1377,7 @@ public class Orchestrator extends Notifiable {
             }
             List<EOProduct> products = new ArrayList<>();
             for (Variable value : values) {
-                products.addAll(createProducts(component, value, task.getContext()));
+                products.addAll(createProducts(component, value, task.getJob().getUserId()));
             }
             OutputDataHandlerManager.getInstance().applyHandlers(products);
         } catch (Exception ex) {
@@ -1383,7 +1386,7 @@ public class Orchestrator extends Notifiable {
 
     }
 
-    private List<EOProduct> createProducts(TaoComponent component, Variable outParam, SessionContext context) {
+    private List<EOProduct> createProducts(TaoComponent component, Variable outParam, String userId) {
         List<EOProduct> products = new ArrayList<>();
         List<TargetDescriptor> targets = component.getTargets();
         String value = outParam.getValue();
@@ -1396,16 +1399,16 @@ public class Orchestrator extends Notifiable {
                 // first try to see if it's a list
                 List<String> list = this.listAdapter.marshal(value);
                 for (String v : list) {
-                    products.add(createProduct(descriptor, v, context));
+                    products.add(createProduct(descriptor, v, userId));
                 }
             } catch (Exception e) {
-                products.add(createProduct(descriptor, value, context));
+                products.add(createProduct(descriptor, value, userId));
             }
         }
         return products;
     }
 
-    private EOProduct createProduct(TargetDescriptor descriptor, String outValue, SessionContext context) {
+    private EOProduct createProduct(TargetDescriptor descriptor, String outValue, String userId) {
         EOProduct product = null;
         try {
             if (descriptor.getDataDescriptor().getFormatType() != DataFormat.VECTOR) {
@@ -1445,7 +1448,7 @@ public class Orchestrator extends Notifiable {
                         MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                         if (metadata != null) {
                             product = metadata.toProductDescriptor(path);
-                            product.addReference(context.getPrincipal().getName());
+                            product.addReference(userId);
                             product.setVisibility(Visibility.PRIVATE);
                             product.setAcquisitionDate(LocalDateTime.now());
                         } else {
