@@ -290,12 +290,17 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     // First try to replace any symlinks with actual data to avoid S3 read issues (if configured)
                     final StringBuilder builder = new StringBuilder();
                     final StringBuilder srcBuilder = new StringBuilder();
+                    final List<String> errList = new ArrayList<>();
                     final boolean shouldReplace = ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
                     final double total = list.length;
                     double counter = 0;
                     for (String item : list) {
                         try {
                             Path path = FileUtilities.toPath(item);
+                            if (!Files.exists(path)) {
+                                errList.add(item);
+                                continue;
+                            }
                             if (shouldReplace && Files.isSymbolicLink(path)) {
                                 sendMessage(task, "Product " + path.getFileName() + " is being copied locally.");
                                 counter += 1.0;
@@ -309,6 +314,10 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         } catch (IOException e) {
                             logger.warning(e.getMessage());
                         }
+                    }
+                    if (!errList.isEmpty()) {
+                        throw new QueryException(String.format("The product set contains one or more items that do not exist on the local repository [%s]",
+                                                               String.join(",", errList)));
                     }
                     if (builder.length() > 0) {
                         builder.setLength(builder.length() - 1);
