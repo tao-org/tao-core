@@ -17,6 +17,8 @@ public class ProductAssociationFactory {
         associationMap.put(association.friendlyName(), ProductBySameDateAssociation.class);
         association = new ProductByDateOffsetAssociation(0);
         associationMap.put(association.friendlyName(), ProductByDateOffsetAssociation.class);
+        association = new PreviousProductAssociation();
+        associationMap.put(association.friendlyName(), PreviousProductAssociation.class);
     }
 
     public static Association<EOProduct> getAssociation(String name) {
