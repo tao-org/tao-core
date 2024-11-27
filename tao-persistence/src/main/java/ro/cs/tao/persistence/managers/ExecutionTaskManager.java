@@ -27,6 +27,7 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import javax.sql.DataSource;
@@ -35,9 +36,12 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 @Configuration
 @EnableTransactionManagement
 @Component("executionManager")
@@ -104,6 +108,20 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     @Override
     public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
+
+    @Override
+    public Map<String, Integer> countRunning() {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        List<Tuple<String, Integer>> results = jdbcTemplate.query(
+                con -> con.prepareStatement("SELECT n.id, " +
+                                                    "(SELECT COUNT(t.id) FROM execution.task t WHERE t.execution_status_id IN (1, 2, 7) " +
+                                                    "AND t.execution_node_host_name = n.id) as cnt " +
+                                                    "FROM topology.node n")
+                , (rs, rowNum) -> {
+            return new Tuple<>(rs.getString(1), rs.getInt(2));
+        });
+        return results.stream().collect(Collectors.toMap(Tuple::getKeyOne, Tuple::getKeyTwo));
+    }
 
     @Override
     public int countByHostSince(String hostName, LocalDateTime since) { return repository.getRunningTaskCountByHostSince(hostName, since); }
