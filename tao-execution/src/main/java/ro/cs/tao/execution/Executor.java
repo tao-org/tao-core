@@ -212,7 +212,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
-                final String userId = task.getContext().getPrincipal().getName();
+                final String userId = task.getJob().getUserId();
                 final int cpu = task.getUsedCPU();
                 final long memory = task.getUsedRAM();
                 if (firstTime) {
