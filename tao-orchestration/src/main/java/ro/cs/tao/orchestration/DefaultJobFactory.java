@@ -944,11 +944,17 @@ public class DefaultJobFactory {
     public void removeVolatileComponents(final ExecutionJob job) throws PersistenceException {
         for (final ExecutionTask task : job.getTasks()) {
         	if (task instanceof DataSourceExecutionTask) {
-        		// get the component
-        		final DataSourceComponent dsc = ((DataSourceExecutionTask) task).getComponent();
-        		if (dsc != null && dsc.getVolatile()) {
-        			dataSourceComponentProvider.delete(dsc);
-        		}
+                try {
+                    // get the component
+                    DataSourceComponent dsc = ((DataSourceExecutionTask) task).getComponent();
+                    // The object might be a proxy, so check the actual entity
+                    dsc = dataSourceComponentProvider.get(dsc.getId());
+                    if (dsc != null && dsc.getVolatile()) {
+                        dataSourceComponentProvider.delete(dsc);
+                    }
+                } catch (Throwable e) {
+                    logger.warning(e.getMessage());
+                }
         	}
         }
     }
