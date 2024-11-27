@@ -22,11 +22,14 @@ import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.logger.Logger;
 
 import java.beans.Transient;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -252,6 +255,19 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         if (!values.contains(newValue) && newValue != null && !newValue.contains("[null]")) {
             values.add(newValue);
         }
+        values.sort(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                if (StringUtilities.isNullOrEmpty(o1) || StringUtilities.isNullOrEmpty(o2)) {
+                    return 0;
+                }
+                try {
+                    return Paths.get(o1).getFileName().compareTo(Paths.get(o2).getFileName());
+                } catch (Exception e) {
+                    return o1.compareTo(o2);
+                }
+            }
+        });
         return convertListToSingleValue(values);
     }
 }
