@@ -99,6 +99,34 @@ public class OutputDataHandlerManager {
         return retItem;
     }
 
+    public <T> T applyHandlers(T item, boolean isTerminal) throws DataHandlingException {
+        if (item == null) {
+            throw new DataHandlingException("Unhandled null value");
+        }
+        final Class<?> itemClass = item.getClass();
+        List<OutputDataHandler> handlers = this.handlers.get(itemClass);
+        if (handlers == null) { // maybe the item is a subclass of an existing one
+            handlers = this.handlers.entrySet().stream()
+                                    .filter(e -> e.getKey().isAssignableFrom(itemClass))
+                                    .map(Map.Entry::getValue).findFirst().orElse(null);
+        }
+        T retItem = null;
+        if (handlers != null) {
+            for (OutputDataHandler handler : handlers) {
+                retItem = (T) handler.handle(item, isTerminal);
+                // reset any fileProcessFactory set
+                //handler.setFileProcessFactory(null);
+                if (retItem != null && !handler.allowNext()) {
+                    break;
+                }
+            }
+        } else {
+            logger.warning(String.format("No output handler defined for type %s", itemClass));
+            return null;
+        }
+        return retItem;
+    }
+
     /**
      * Invokes the handlers registered for on the items of the given type and returns a list of updated items.
      * The order of handler invocation is given by the handler defined priority, in the ascending order of values.
@@ -121,6 +149,27 @@ public class OutputDataHandlerManager {
             if (handlers != null) {
                 for (OutputDataHandler handler : handlers) {
                     list = handler.handle(list);
+                }
+            } else {
+                logger.warning(String.format("No output handler defined for type %s", element.getClass()));
+            }
+        }
+        return list;
+    }
+
+    public <T> List<T> applyHandlers(List<T> list, boolean fromTerminalTask) throws DataHandlingException {
+        if (list == null) {
+            return null;
+        }
+        if (!list.isEmpty()) {
+            T element = list.get(0);
+            if (element == null) {
+                throw new DataHandlingException("Unhandled null value");
+            }
+            List<OutputDataHandler> handlers = this.handlers.get(element.getClass());
+            if (handlers != null) {
+                for (OutputDataHandler handler : handlers) {
+                    list = handler.handle(list, fromTerminalTask);
                 }
             } else {
                 logger.warning(String.format("No output handler defined for type %s", element.getClass()));

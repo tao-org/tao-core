@@ -1376,17 +1376,19 @@ public class Orchestrator extends Notifiable {
                 component = processingComponentProvider.get(node.getComponentId());
             }
             List<EOProduct> products = new ArrayList<>();
+            final boolean createMetadata = !ConfigurationManager.getInstance().getBooleanValue("tao.remove.intermediate.files")
+                                            || TaskUtilities.isTerminalTask(task);
             for (Variable value : values) {
-                products.addAll(createProducts(component, value, task.getJob().getUserId()));
+                products.addAll(createProducts(component, value, task.getJob().getUserId(), createMetadata));
             }
-            OutputDataHandlerManager.getInstance().applyHandlers(products);
+            OutputDataHandlerManager.getInstance().applyHandlers(products, createMetadata);
         } catch (Exception ex) {
             logger.severe(String.format("Error persisting products: %s", ex.getMessage()));
         }
 
     }
 
-    private List<EOProduct> createProducts(TaoComponent component, Variable outParam, String userId) {
+    private List<EOProduct> createProducts(TaoComponent component, Variable outParam, String userId, boolean withMetadata) {
         List<EOProduct> products = new ArrayList<>();
         List<TargetDescriptor> targets = component.getTargets();
         String value = outParam.getValue();
@@ -1399,16 +1401,16 @@ public class Orchestrator extends Notifiable {
                 // first try to see if it's a list
                 List<String> list = this.listAdapter.marshal(value);
                 for (String v : list) {
-                    products.add(createProduct(descriptor, v, userId));
+                    products.add(createProduct(descriptor, v, userId, withMetadata));
                 }
             } catch (Exception e) {
-                products.add(createProduct(descriptor, value, userId));
+                products.add(createProduct(descriptor, value, userId, withMetadata));
             }
         }
         return products;
     }
 
-    private EOProduct createProduct(TargetDescriptor descriptor, String outValue, String userId) {
+    private EOProduct createProduct(TargetDescriptor descriptor, String outValue, String userId, boolean withMetadata) {
         EOProduct product = null;
         try {
             if (descriptor.getDataDescriptor().getFormatType() != DataFormat.VECTOR) {
@@ -1435,27 +1437,29 @@ public class Orchestrator extends Notifiable {
                 }
                 path = Paths.get(strPath).toAbsolutePath();
                 if (Files.exists(path)) {
-                    MetadataInspector metadataInspector = this.metadataServices.stream()
-                                                                               .filter(s -> s.decodeQualification(path) == DecodeStatus.INTENDED)
-                                                                               .findFirst().orElse(null);
-                    if (metadataInspector == null) {
-                        metadataInspector = this.metadataServices.stream()
-                                                                 .filter(s -> s.decodeQualification(path) == DecodeStatus.SUITABLE)
-                                                                 .findFirst().orElse(null);
-                    }
-                    if (metadataInspector != null) {
-                        logger.fine("Creating metadata for " + path);
-                        MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
-                        if (metadata != null) {
-                            product = metadata.toProductDescriptor(path);
-                            product.addReference(userId);
-                            product.setVisibility(Visibility.PRIVATE);
-                            product.setAcquisitionDate(LocalDateTime.now());
-                        } else {
-                            throw new ExecutionException(String.format("Metadata for output %s could not be extracted", outValue));
+                    if (withMetadata) {
+                        MetadataInspector metadataInspector = this.metadataServices.stream()
+                                                                                   .filter(s -> s.decodeQualification(path) == DecodeStatus.INTENDED)
+                                                                                   .findFirst().orElse(null);
+                        if (metadataInspector == null) {
+                            metadataInspector = this.metadataServices.stream()
+                                                                     .filter(s -> s.decodeQualification(path) == DecodeStatus.SUITABLE)
+                                                                     .findFirst().orElse(null);
                         }
-                    } else {
-                        logger.warning(String.format("No suitable metadata inspector found for output %s", outValue));
+                        if (metadataInspector != null) {
+                            logger.fine("Creating metadata for " + path);
+                            MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
+                            if (metadata != null) {
+                                product = metadata.toProductDescriptor(path);
+                                product.addReference(userId);
+                                product.setVisibility(Visibility.PRIVATE);
+                                product.setAcquisitionDate(LocalDateTime.now());
+                            } else {
+                                throw new ExecutionException(String.format("Metadata for output %s could not be extracted", outValue));
+                            }
+                        } else {
+                            logger.warning(String.format("No suitable metadata inspector found for output %s", outValue));
+                        }
                     }
                 } else {
                     logger.warning("No such file: " + path);
