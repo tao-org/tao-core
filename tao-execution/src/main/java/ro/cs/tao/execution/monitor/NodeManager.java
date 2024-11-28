@@ -130,7 +130,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         runtimeInfo.setAvailableMemory(-1);
         runtimeInfo.setDiskTotal(diskTotal);
         runtimeInfo.setTotalMemory(totalMemory);
-        runtimeInfo.setCpuTotal(cpuTotal);
+        runtimeInfo.setCpuTotal(0);
         runtimeInfo.setDiskUsed(-1);
         return runtimeInfo;
     }
@@ -549,18 +549,27 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                                                                     e.getValue().getNode().getFlavor().equals(entry.getKey()))
                                                                             .collect(Collectors.toList());
                 if (!list.isEmpty()) {
+                    final Map<String, Integer> running = taskProvider.countRunning();
+                    // Sort the candidates by the number of running tasks, ascending
+                    list.sort(new Comparator<Map.Entry<String, NodeRuntime>>() {
+                        @Override
+                        public int compare(Map.Entry<String, NodeRuntime> o1, Map.Entry<String, NodeRuntime> o2) {
+                            return Integer.compare(running.getOrDefault(o1.getKey(), 0),
+                                                   running.getOrDefault(o2.getKey(), 0));
+                        }
+                    });
                     for (Map.Entry<String, NodeRuntime> candidate : list) {
                         final NodeRuntime nodeRuntime = candidate.getValue();
                         final NodeDescription n = nodeRuntime.getNode();
                         final NodeFlavor flavor = n.getFlavor();
                         // Consider an instance with <20% cpu load
-                        if (nodeRuntime.getRuntimeInfo().getCpuTotal() / flavor.getCpu() < 0.2) {
+                        if (nodeRuntime.getRuntimeInfo().getCpuTotal() <= 20.0) {
                             node = n;
                             break;
                         } else {
                             // Or else decrement the quantity of suitable flavors
                             // or remove the flavor if the quantity reached 0
-                            int quantity = suitableFlavors.get(flavor) - 1;
+                            int quantity = suitableFlavors.getOrDefault(flavor, 0) - 1;
                             if (quantity > 0) {
                                 suitableFlavors.put(flavor, quantity);
                             } else {
