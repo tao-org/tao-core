@@ -1369,19 +1369,24 @@ public class Orchestrator extends Notifiable {
             }
             List<Variable> values = task.getOutputParameterValues();
             WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-            TaoComponent component;
-            if (node instanceof WorkflowNodeGroupDescriptor) {
-                component = groupComponentProvider.get(node.getComponentId());
+            if (node != null) {
+                TaoComponent component;
+                if (node instanceof WorkflowNodeGroupDescriptor) {
+                    component = groupComponentProvider.get(node.getComponentId());
+                } else {
+                    component = processingComponentProvider.get(node.getComponentId());
+                }
+                List<EOProduct> products = new ArrayList<>();
+                final boolean createMetadata = !ConfigurationManager.getInstance().getBooleanValue("tao.remove.intermediate.files")
+                        || TaskUtilities.isTerminalTask(task);
+                for (Variable value : values) {
+                    products.addAll(createProducts(component, value, task.getJob().getUserId(), createMetadata));
+                }
+                OutputDataHandlerManager.getInstance().applyHandlers(products, createMetadata);
             } else {
-                component = processingComponentProvider.get(node.getComponentId());
+                logger.warning(String.format("Workflow node %d for task %s has been deleted before the task persisted output",
+                                             task.getWorkflowNodeId(), task.getId()));
             }
-            List<EOProduct> products = new ArrayList<>();
-            final boolean createMetadata = !ConfigurationManager.getInstance().getBooleanValue("tao.remove.intermediate.files")
-                                            || TaskUtilities.isTerminalTask(task);
-            for (Variable value : values) {
-                products.addAll(createProducts(component, value, task.getJob().getUserId(), createMetadata));
-            }
-            OutputDataHandlerManager.getInstance().applyHandlers(products, createMetadata);
         } catch (Exception ex) {
             logger.severe(String.format("Error persisting products: %s", ex.getMessage()));
         }
