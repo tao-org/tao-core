@@ -16,6 +16,7 @@
 package ro.cs.tao.component;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -30,6 +31,7 @@ import java.util.*;
  * @author Cosmin Cara
  */
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIgnoreProperties(value={ "nodeAffinity" }, allowGetters=true)
 public abstract class TaoComponent extends StringIdentifiable {
     protected String label;
     protected String version;
