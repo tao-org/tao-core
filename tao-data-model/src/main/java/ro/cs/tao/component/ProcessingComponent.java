@@ -236,7 +236,6 @@ public class ProcessingComponent extends TaoComponent {
      */
     public void setTemplateType(TemplateType templateType) {
         this.templateType = templateType;
-        // TODO LBU: TO VERIFY!!!!!
         if (this.templateEngine != null && !this.templateEngine.getTemplateType().equals(templateType)) {
             this.templateEngine = EngineFactory.createInstance(templateType);
         }
