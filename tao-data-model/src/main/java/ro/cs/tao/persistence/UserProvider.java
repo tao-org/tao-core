@@ -37,8 +37,11 @@ public interface UserProvider extends EntityProvider<User, String> {
     int updateProcessingQuota(String userId, int value) throws PersistenceException;
     Map<String, String[]> listUnicityInfo();
     Map<String, String> listNames();
-    default int defaultCPUQuota() { return 8; }
-    default int defaultMemoryQuota() { return 16; }
+    // Processing quota in GB
+    default int defaultProcessingQuota() { return 50; }
+    // Memory quota in MB
+    default int defaultMemoryQuota() { return 16384; }
+    default int defaultCPUQuota() { return 4; }
     default void createWorkspaces(User user, Consumer<Repository> rootFunctor) { }
     default void createWorkspaces(String userId, Consumer<Repository> rootFunctor) { }
 }

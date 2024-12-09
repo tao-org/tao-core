@@ -18,7 +18,6 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.ProductHelperFactory;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
@@ -763,7 +762,7 @@ public class Orchestrator extends Notifiable {
                             time = Duration.between(job.getStartTime(), job.getEndTime());
                         }
                         notifyJobListeners(job);
-                        tryRestoreSymlinks(job);
+                        //tryRestoreSymlinks(job);
                         tryRemoveTemporaryWorkflow(job);
                         cleanupTransientComponents(job);
                     } else {
@@ -830,7 +829,7 @@ public class Orchestrator extends Notifiable {
                     }
                 }
             });
-            tryRestoreSymlinks(job);
+            //tryRestoreSymlinks(job);
             cleanupTransientComponents(job);
         } finally {
             notifyJobListeners(job);
@@ -1574,7 +1573,7 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private void tryRestoreSymlinks(ExecutionJob job) {
+    /*private void tryRestoreSymlinks(ExecutionJob job) {
         if (job.getWorkflowId() != null) {
             final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
             if (workflow != null) {
@@ -1617,7 +1616,7 @@ public class Orchestrator extends Notifiable {
                 }
             }
         }
-    }
+    }*/
 
     public void addJobListener(JobCompletedListener listener) {
         this.jobListeners.add(listener);
@@ -1778,6 +1777,7 @@ public class Orchestrator extends Notifiable {
             } catch (PersistenceException e) {
                 logger.warning(e.getMessage());
             }
+            TaskUtilities.restoreLinks(job.getId());
             if (instance.jobQueue.hasMoreJobs(job.getUserId())) {
                 instance.jobQueueWorker.setLastUserId(job.getUserId());
             } else{

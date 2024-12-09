@@ -45,6 +45,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 import ro.cs.tao.workspaces.RepositoryType;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -71,6 +72,7 @@ public class TaskUtilities {
     private static final ExecutionJobProvider jobProvider;
     private static final ContainerProvider containerProvider;
     private static final RepositoryProvider repositoryProvider;
+    private static final Map<Long, List<Tuple<String, String>>> symLinks;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
     private static final String DOCKER_EODATA_MOUNT_POINT;
@@ -91,6 +93,7 @@ public class TaskUtilities {
         groupComponentProvider = context.getService(GroupComponentProvider.class);
         containerProvider = context.getService(ContainerProvider.class);
         repositoryProvider = context.getService(RepositoryProvider.class);
+        symLinks = Collections.synchronizedMap(new HashMap<>());
     }
 
     /**
@@ -498,5 +501,26 @@ public class TaskUtilities {
         return repositoryProvider.getUserSystemRepositories(task.getJob().getUserId()).stream()
                                  .filter(r -> r.getType() == RepositoryType.LOCAL)
                                  .findFirst().get().root();
+    }
+
+    public static void addLinkReplacement(long jobId, Path link, String resolvedLink) {
+        symLinks.computeIfAbsent(jobId, j -> new ArrayList<>()).add(new Tuple<>(link.toString(), resolvedLink));
+    }
+
+    public static int restoreLinks(long jobId) {
+        final List<Tuple<String, String>> list = symLinks.get(jobId);
+        int counter = 0;
+        if (list != null) {
+            for (Tuple<String, String> tuple : list) {
+                try {
+                    FileUtilities.replaceWithLink(Paths.get(tuple.getKeyOne()), Paths.get(tuple.getKeyTwo()));
+                    logger.fine("Symlink " + tuple.getKeyOne() + " restored");
+                    counter++;
+                } catch (IOException e) {
+                    logger.warning("Cannot replace " + tuple.getKeyOne() + " with " + tuple.getKeyTwo());
+                }
+            }
+        }
+        return counter;
     }
 }

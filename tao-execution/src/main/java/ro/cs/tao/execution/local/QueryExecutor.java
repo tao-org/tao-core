@@ -36,6 +36,7 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.quota.QuotaException;
@@ -305,7 +306,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                 sendMessage(task, "Product " + path.getFileName() + " is being copied locally.");
                                 counter += 1.0;
                                 sendProgressMessage(task, counter / total);
-                                builder.append(FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true));
+                                final String linkTarget = FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true);
+                                builder.append(linkTarget);
+                                TaskUtilities.addLinkReplacement(task.getJob().getId(), path, linkTarget);
                             } else {
                                 builder.append(FileUtilities.asUnixPath(path, true));
                             }
