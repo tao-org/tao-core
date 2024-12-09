@@ -1,8 +1,12 @@
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import ro.cs.tao.serialization.NodeAffinityDeserializer;
+
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
+@JsonDeserialize(using = NodeAffinityDeserializer.class)
 public final class NodeAffinity {
     public static final NodeAffinity Any = new NodeAffinity("Any");
     public static final NodeAffinity SameNode = new NodeAffinity("Same");
