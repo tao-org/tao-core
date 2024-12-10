@@ -37,4 +37,5 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     int countRunableTasks(long jobId);
     boolean isTerminalTask(long taskId);
     TransitionBehavior getTransitionBehavior(long taskId);
+    ExecutionTask getTaskByOutput(String outputPath);
 }

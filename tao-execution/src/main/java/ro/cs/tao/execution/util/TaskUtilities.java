@@ -497,6 +497,10 @@ public class TaskUtilities {
         return tasks.stream().map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
     }
 
+    public static ExecutionTask findTaskByOutput(String outputPath) {
+        return taskProvider.getTaskByOutput(outputPath);
+    }
+
     public static String getUserWorkspace(ExecutionTask task) {
         return repositoryProvider.getUserSystemRepositories(task.getJob().getUserId()).stream()
                                  .filter(r -> r.getType() == RepositoryType.LOCAL)

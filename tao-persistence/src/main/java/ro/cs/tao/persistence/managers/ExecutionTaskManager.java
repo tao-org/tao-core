@@ -27,6 +27,7 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
@@ -435,6 +436,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             behavior = 1;
         }
         return EnumUtils.getEnumConstantByValue(TransitionBehavior.class, behavior);
+    }
+
+    @Override
+    public ExecutionTask getTaskByOutput(String outputPath) {
+        return StringUtilities.isNullOrEmpty(outputPath) ? null : repository.getTaskByOutput(outputPath);
     }
 
     //endregion
