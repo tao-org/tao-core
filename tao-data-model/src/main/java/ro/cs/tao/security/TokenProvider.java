@@ -11,4 +11,5 @@ public interface TokenProvider {
     default Token newToken(String refreshToken) { return new Token(UUID.randomUUID().toString(), UUID.randomUUID().toString(), defaultExpiration()); }
     default Token newTokenFromCode(String code) { return new Token(UUID.randomUUID().toString(), UUID.randomUUID().toString(), defaultExpiration()); }
     default boolean validate(String token) { return true; }
+    default boolean logout(String user) { return true; }
 }
