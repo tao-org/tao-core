@@ -18,6 +18,17 @@ public class JavaTypeDeserializer extends StdDeserializer<JavaType> {
     public JavaType deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
         String value = node.textValue();
-        return EnumUtils.getEnumConstantByFriendlyName(JavaType.class, value);
+        JavaType javaType = null;
+        try {
+            Class<?> dataType = Class.forName(value);
+            javaType = EnumUtils.getEnumConstantByValue(JavaType.class, dataType);
+            if (javaType == null) {
+                // next try with a java class name
+                javaType = EnumUtils.getEnumConstantByFriendlyName(JavaType.class, dataType.getName());
+            }
+        } catch (ClassNotFoundException e) {
+            throw new IOException(e.getMessage());
+        }
+        return javaType;
     }
 }
