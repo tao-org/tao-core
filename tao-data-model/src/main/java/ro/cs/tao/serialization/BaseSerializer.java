@@ -22,6 +22,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.cfg.ConfigFeature;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import ro.cs.tao.utils.Tuple;
 
 import java.util.*;
 
@@ -36,6 +40,9 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     private Set<ConfigFeature> disabledConfigFeatures;
     private Set<JsonParser.Feature> enabledParserFeatures;
     private Set<JsonParser.Feature> disabledParserFeatures;
+    private Set<StdSerializer<?>> customSerializers;
+    private Map<Class, StdDeserializer> customDeserializers;
+    private Tuple<Class, Class> mixIn;
 
     BaseSerializer(Class<T> tClass) {
         this.tClass = tClass;
@@ -87,6 +94,24 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         if (this.enabledParserFeatures != null) {
             this.enabledParserFeatures.remove(feature);
         }
+    }
+
+    public void addSerializer(StdSerializer<?> serializer) {
+        if (this.customSerializers == null) {
+            this.customSerializers = new HashSet<>();
+        }
+        this.customSerializers.add(serializer);
+    }
+
+    public void addDeserializer(Class clazz, StdDeserializer deserializer) {
+        if (this.customDeserializers == null) {
+            this.customDeserializers = new HashMap<>();
+        }
+        this.customDeserializers.put(clazz, deserializer);
+    }
+
+    public void addMixIn(Class forClass, Class mixInClass) {
+        this.mixIn = new Tuple<>(forClass, mixInClass);
     }
 
     @Override
@@ -189,5 +214,29 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         }
         mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+        SimpleModule module = null;
+        if (this.customSerializers != null){
+            module = new SimpleModule();
+            for (StdSerializer<?> serializer : this.customSerializers) {
+                module.addSerializer(serializer);
+            }
+        }
+        if (this.customDeserializers != null) {
+            if (module == null) {
+                module = new SimpleModule();
+            }
+            for (Map.Entry<Class, StdDeserializer> entry : this.customDeserializers.entrySet()) {
+                module.addDeserializer(entry.getKey(), entry.getValue());
+            }
+        }
+        if (this.mixIn != null) {
+            if (module == null) {
+                module = new SimpleModule();
+            }
+            module.setMixInAnnotation(this.mixIn.getKeyOne(), this.mixIn.getKeyTwo());
+        }
+        if (module != null) {
+            mapper.registerModules(module);
+        }
     }
 }

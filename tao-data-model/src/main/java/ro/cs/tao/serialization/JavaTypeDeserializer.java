@@ -10,7 +10,7 @@ import ro.cs.tao.datasource.param.JavaType;
 import java.io.IOException;
 
 public class JavaTypeDeserializer extends StdDeserializer<JavaType> {
-    protected JavaTypeDeserializer() {
+    public JavaTypeDeserializer() {
         super(JavaType.class);
     }
 
