@@ -616,25 +616,7 @@ public class FileUtilities {
      * @param insideDocker  If <code>false</code>, on Windows it strips the partition letter.
      */
     public static String asUnixPath(String path, boolean insideDocker) {
-        if (SystemUtils.IS_OS_UNIX) {
-            return path;
-        } else {
-            String strPath;
-            Path pPath = Paths.get(path);
-            if (pPath.isAbsolute() || pPath.startsWith("\\")) {
-                final URI uri = pPath.toAbsolutePath().toUri();
-                final String stringValue = uri.getRawPath();
-                strPath = StringUtils.replaceEach(stringValue, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS);
-                if (insideDocker && strPath.charAt(2) == '/') {
-                    strPath = strPath.substring(2);
-                }
-            } else {
-                strPath = "/" +
-                        StringUtils.replaceEach(path, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
-                        (Files.isDirectory(pPath) ? "/" : "");
-            }
-            return strPath;
-        }
+        return asUnixPath(Paths.get(path), insideDocker);
     }
 
     public static int copy(Path source, Path destination) throws IOException {
@@ -1012,6 +994,56 @@ public class FileUtilities {
         }
     }
 
+    public static void deleteTreesUnix(Path[] roots) throws IOException {
+        if (roots != null && roots.length > 0) {
+            final List<String> commands = new ArrayList<>();
+            for (Path root : roots) {
+                commands.add("rm");
+                commands.add("-rf");
+                commands.add(root.toString());
+                commands.add(";");
+            }
+            Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                   null,
+                                                   commands,
+                                                   true);
+            OutputAccumulator accumulator = new OutputAccumulator();
+            executor.setOutputConsumer(accumulator);
+            try {
+                if (executor.execute(false) != 0) {
+                    throw new IOException(accumulator.getOutput());
+                }
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+    }
+
+    public static void deleteTreesUnix(String[] roots) throws IOException {
+        if (roots != null && roots.length > 0) {
+            final List<String> commands = new ArrayList<>();
+            for (String root : roots) {
+                commands.add("rm");
+                commands.add("-rf");
+                commands.add(root);
+                commands.add(";");
+            }
+            Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                   null,
+                                                   commands,
+                                                   true);
+            OutputAccumulator accumulator = new OutputAccumulator();
+            executor.setOutputConsumer(accumulator);
+            try {
+                if (executor.execute(false) != 0) {
+                    throw new IOException(accumulator.getOutput());
+                }
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+    }
+
     public static void remoteDeleteTree(Path root, ChannelSftp channel) throws IOException {
         if (root != null) {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
@@ -1296,9 +1328,10 @@ public class FileUtilities {
         }
         final int names = path1.getNameCount();
         Path common = null;
+        final Path name2 = path2.getName(0);
         for (int i = 0; i < names; i++) {
             if (common == null) {
-                if (path1.getName(i).equals(path2.getName(0))) {
+                if (path1.getName(i).equals(name2)) {
                     common = path1.getName(i);
                 }
             } else {
