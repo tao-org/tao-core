@@ -152,6 +152,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 if (primaryQuery == null) {
                     throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
                 }
+                task.setCommand(variable.getValue());
                 final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
                 final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
                 final List<EOProduct> results = future.get();
@@ -274,6 +275,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 } else {
                     message = "Query returned no results";
                     logger.warning(message);
+                    task.setLog(message);
                     status = ExecutionStatus.CANCELLED;
                 }
             } else {
@@ -343,11 +345,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     throw new QueryException("Empty product set");
                 }
                 task.setInstanceTargetOutput(strList);
+                task.setLog(strList);
                 status = ExecutionStatus.DONE;
             }
             markTaskFinished(task, status, message);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());
+            task.setLog(ex.getMessage());
             markTaskFinished(task, ExecutionStatus.FAILED, ex.getMessage());
         }
     }
