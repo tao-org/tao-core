@@ -1464,6 +1464,11 @@ public class Orchestrator extends Notifiable {
                         } else {
                             logger.warning(String.format("No suitable metadata inspector found for output %s", outValue));
                         }
+                    } else {
+                        product = new EOProduct();
+                        product.addReference(userId);
+                        product.setVisibility(Visibility.PRIVATE);
+                        product.setAcquisitionDate(LocalDateTime.now());
                     }
                 } else {
                     logger.warning("No such file: " + path);
