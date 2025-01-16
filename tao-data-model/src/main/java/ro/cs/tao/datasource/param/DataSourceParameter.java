@@ -16,7 +16,6 @@
 package ro.cs.tao.datasource.param;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.ParameterDependency;
@@ -131,7 +130,6 @@ public class DataSourceParameter {
         }
     }
 
-    @JsonGetter("type")
     public String typeFriendlyName() { return type != null ? type.friendlyName() : null; }
 
     @Override
