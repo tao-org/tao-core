@@ -369,7 +369,9 @@ public class Orchestrator extends Notifiable {
             }
             final Environment env = request.getEnvironment() != null
                                     ? Environment.valueOf(request.getEnvironment())
-                                    : Environment.DEFAULT;
+                                    : Environment.valueOf(ConfigurationManager.getInstance()
+                                                                              .getValue("execution.environment",
+                                                                                        Environment.DEFAULT.friendlyName()));
             return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized,
                                              request.getParameters(), 
                                              request.getJobType() == null ? JobType.EXECUTION : JobType.valueOf(request.getJobType()),
