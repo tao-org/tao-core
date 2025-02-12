@@ -440,7 +440,12 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     @Override
     public ExecutionTask getTaskByOutput(String outputPath) {
-        return StringUtilities.isNullOrEmpty(outputPath) ? null : repository.getTaskByOutput(outputPath);
+        try {
+            return StringUtilities.isNullOrEmpty(outputPath) ? null : repository.getTaskByOutput(outputPath);
+        } catch (Throwable t) {
+            logger.warning(t.getMessage());
+            return null;
+        }
     }
 
     //endregion
