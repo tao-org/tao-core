@@ -146,7 +146,8 @@ INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUE
 (3, 'Landsat8', 'L1T,L1GT,L1TP,L2SP', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming'),
 (4, 'GeoTIFF', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.(tif|TIF|tiff|TIFF+)', 'Generic GeoTIFF product'),
 (5, 'Generic', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.([A-Za-z.]+)', 'Generic product'),
-(6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming');
+(6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming'),
+(7, 'Enmap', 'ENMAP', '(ENMAP01)-____(L[1-2][A-C])-DT(\d{9,10})_(\d{8})T(\d{6})Z_(\d{3})_V(\d{6})_(\d{8}T\d{6})Z', 'ENMAP product naming');
 
 INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
 (1, 'MISSION', 1, 'Mission identifier'),
@@ -213,6 +214,16 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (6, 'TOOLKIT', 10, 'Toolkit version number'),
 (6, 'PDATE', 11, 'Processing date'),
 (6, 'PTIME', 12, 'Processing time');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(7, 'MISSION', 1, 'Mission identifier'),
+(7, 'LEVEL', 2, 'Processing level'),
+(7, 'DTAKE', 3, 'Datatake identifier'),
+(7, 'ADATE', 4, 'Acquisition date'),
+(7, 'ATIME', 5, 'Acquisition time'),
+(7, 'TILE', 6, 'Tile identifier'),
+(7, 'VERSION', 7, 'Product version'),
+(7, 'PDATE', 8, 'Processing date');
 
 -- Repository types
 INSERT INTO workspace.repository_type (id, name, params) VALUES
