@@ -43,7 +43,6 @@ public class AuxiliaryDataManager extends EntityManager<AuxiliaryData, String, A
     @Override
     protected boolean checkEntity(AuxiliaryData auxiliaryData) {
         return auxiliaryData != null && auxiliaryData.getLocation() != null && !auxiliaryData.getLocation().isEmpty() &&
-                auxiliaryData.getDescription() != null && !auxiliaryData.getDescription().isEmpty() &&
                 auxiliaryData.getUserId() != null && !auxiliaryData.getUserId().isEmpty();
     }
 }
