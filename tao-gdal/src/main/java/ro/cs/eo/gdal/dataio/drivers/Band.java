@@ -42,11 +42,17 @@ public class Band extends GDALBase implements Closeable {
     private final MethodHandle getMaskFlagsHandle;
     private final MethodHandle readBlockDirectHandle;
     private final MethodHandle readRasterDirectHandle;
+    private final MethodHandle readRasterByteHandle;
+    private final MethodHandle readRasterShortHandle;
+    private final MethodHandle readRasterIntHandle;
+    private final MethodHandle readRasterFloatHandle;
+    private final MethodHandle readRasterDoubleHandle;
     private final MethodHandle writeRasterByteHandle;
     private final MethodHandle writeRasterShortHandle;
     private final MethodHandle writeRasterIntHandle;
     private final MethodHandle writeRasterFloatHandle;
     private final MethodHandle writeRasterDoubleHandle;
+    private final MethodHandle writeRasterDirectHandle;
 
     /**
      * Creates new instance for this driver
@@ -76,6 +82,16 @@ public class Band extends GDALBase implements Closeable {
             readBlockDirectHandle = createHandle(bandClass, "ReadBlock_Direct", int.class, int.class, int.class, ByteBuffer.class);
             readRasterDirectHandle = createHandle(bandClass, "ReadRaster_Direct", int.class,
                                                   int.class, int.class, int.class, int.class, int.class, int.class, int.class, ByteBuffer.class);
+            readRasterByteHandle = createHandle(bandClass, "ReadRaster", int.class,
+                                                int.class, int.class, int.class, int.class, byte[].class);
+            readRasterShortHandle = createHandle(bandClass, "ReadRaster", int.class,
+                                                 int.class, int.class, int.class, int.class, short[].class);
+            readRasterIntHandle = createHandle(bandClass, "ReadRaster", int.class,
+                                               int.class, int.class, int.class, int.class, int[].class);
+            readRasterFloatHandle = createHandle(bandClass, "ReadRaster", int.class,
+                                                 int.class, int.class, int.class, int.class, float[].class);
+            readRasterDoubleHandle = createHandle(bandClass, "ReadRaster", int.class,
+                                                  int.class, int.class, int.class, int.class, double[].class);
             writeRasterByteHandle = createHandle(bandClass, "WriteRaster", int.class,
                                                  int.class, int.class, int.class, int.class, byte[].class);
             writeRasterShortHandle = createHandle(bandClass, "WriteRaster", int.class,
@@ -86,6 +102,8 @@ public class Band extends GDALBase implements Closeable {
                                                   int.class, int.class, int.class, int.class, float[].class);
             writeRasterDoubleHandle = createHandle(bandClass, "WriteRaster", int.class,
                                                    int.class, int.class, int.class, int.class, double[].class);
+            writeRasterDirectHandle = createHandle(bandClass, "WriteRaster_Direct", int.class,
+                                                   int.class, int.class, int.class, int.class, int.class, ByteBuffer.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -287,6 +305,54 @@ public class Band extends GDALBase implements Closeable {
         return (Integer) invoke(readRasterDirectHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufxsize, bufysize, buftype, nioBuffer);
     }
 
+    public byte[] readRasterByte(int xoff, int yoff, int xsize, int ysize) {
+        final ByteBuffer buffer = ByteBuffer.allocateDirect((xsize - xoff) * (ysize - yoff));
+        int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtByte(), buffer);
+        return buffer.array();
+    }
+    public short[] readRasterShort(int xoff, int yoff, int xsize, int ysize) {
+        //return (Integer) invoke(readRasterShortHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
+        final int bufSize = (xsize - xoff) * (ysize - yoff);
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 2);
+        int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtUint16(), buffer);
+        final short[] result = new short[bufSize];
+        buffer.asShortBuffer().get(result);
+        buffer.clear();
+        return result;
+    }
+    public int[] readRasterInt(int xoff, int yoff, int xsize, int ysize) {
+        //return (Integer) invoke(readRasterIntHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
+        final int bufSize = (xsize - xoff) * (ysize - yoff);
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 4);
+        int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtInt32(), buffer);
+        final int[] result = new int[bufSize];
+        buffer.asIntBuffer().get(result);
+        buffer.clear();
+        return result;
+    }
+
+    public float[] readRasterFloat(int xoff, int yoff, int xsize, int ysize) {
+        //return (Integer) invoke(readRasterFloatHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
+        final int bufSize = (xsize - xoff) * (ysize - yoff);
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 4);
+        int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtFloat32(), buffer);
+        final float[] result = new float[bufSize];
+        buffer.asFloatBuffer().get(result);
+        buffer.clear();
+        return result;
+    }
+
+    public double[] readRasterDouble(int xoff, int yoff, int xsize, int ysize) {
+        //return (Integer) invoke(readRasterDoubleHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
+        final int bufSize = (xsize - xoff) * (ysize - yoff);
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 8);
+        int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtFloat64(), buffer);
+        final double[] result = new double[bufSize];
+        buffer.asDoubleBuffer().get(result);
+        buffer.clear();
+        return result;
+    }
+
     /**
      * Calls the JNI GDAL Band class WriteRaster(int xoff, int yoff, int xsize, int ysize, int bufType, byte[] array) method
      *
@@ -360,6 +426,10 @@ public class Band extends GDALBase implements Closeable {
      */
     public Integer writeRaster(int xoff, int yoff, int xsize, int ysize, int bufType, double[] array) {
         return (Integer) invoke(writeRasterDoubleHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufType, array);
+    }
+
+    public Integer writeRasterDirect(int xoff, int yoff, int xsize, int ysize, int bufType, ByteBuffer buffer) {
+        return (Integer) invoke(writeRasterDirectHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufType, buffer);
     }
 
     /**
