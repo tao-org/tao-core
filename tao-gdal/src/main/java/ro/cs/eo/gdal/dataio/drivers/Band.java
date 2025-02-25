@@ -305,52 +305,40 @@ public class Band extends GDALBase implements Closeable {
         return (Integer) invoke(readRasterDirectHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufxsize, bufysize, buftype, nioBuffer);
     }
 
-    public byte[] readRasterByte(int xoff, int yoff, int xsize, int ysize) {
+    public ByteBuffer readRasterByte(int xoff, int yoff, int xsize, int ysize) {
         final ByteBuffer buffer = ByteBuffer.allocateDirect((xsize - xoff) * (ysize - yoff));
         int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtByte(), buffer);
-        return buffer.array();
+        return buffer;
     }
-    public short[] readRasterShort(int xoff, int yoff, int xsize, int ysize) {
+    public ByteBuffer readRasterShort(int xoff, int yoff, int xsize, int ysize) {
         //return (Integer) invoke(readRasterShortHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
         final int bufSize = (xsize - xoff) * (ysize - yoff);
         final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 2);
         int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtUint16(), buffer);
-        final short[] result = new short[bufSize];
-        buffer.asShortBuffer().get(result);
-        buffer.clear();
-        return result;
+        return buffer;
     }
-    public int[] readRasterInt(int xoff, int yoff, int xsize, int ysize) {
+    public ByteBuffer readRasterInt(int xoff, int yoff, int xsize, int ysize) {
         //return (Integer) invoke(readRasterIntHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
         final int bufSize = (xsize - xoff) * (ysize - yoff);
         final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 4);
         int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtInt32(), buffer);
-        final int[] result = new int[bufSize];
-        buffer.asIntBuffer().get(result);
-        buffer.clear();
-        return result;
+        return buffer;
     }
 
-    public float[] readRasterFloat(int xoff, int yoff, int xsize, int ysize) {
+    public ByteBuffer readRasterFloat(int xoff, int yoff, int xsize, int ysize) {
         //return (Integer) invoke(readRasterFloatHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
         final int bufSize = (xsize - xoff) * (ysize - yoff);
         final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 4);
         int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtFloat32(), buffer);
-        final float[] result = new float[bufSize];
-        buffer.asFloatBuffer().get(result);
-        buffer.clear();
-        return result;
+        return buffer;
     }
 
-    public double[] readRasterDouble(int xoff, int yoff, int xsize, int ysize) {
+    public ByteBuffer readRasterDouble(int xoff, int yoff, int xsize, int ysize) {
         //return (Integer) invoke(readRasterDoubleHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, array);
         final int bufSize = (xsize - xoff) * (ysize - yoff);
         final ByteBuffer buffer = ByteBuffer.allocateDirect(bufSize * 8);
         int retval = readRasterDirect(xoff, yoff, xsize, ysize, xsize - xoff, ysize - yoff, GDALConstConstants.gdtFloat64(), buffer);
-        final double[] result = new double[bufSize];
-        buffer.asDoubleBuffer().get(result);
-        buffer.clear();
-        return result;
+        return buffer;
     }
 
     /**
