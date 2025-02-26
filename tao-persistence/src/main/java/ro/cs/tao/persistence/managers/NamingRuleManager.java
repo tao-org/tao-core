@@ -9,8 +9,11 @@ import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.persistence.NamingRuleProvider;
 import ro.cs.tao.persistence.repository.NamingRuleRepository;
+import ro.cs.tao.utils.StringUtilities;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 @EnableTransactionManagement
@@ -23,6 +26,27 @@ public class NamingRuleManager extends EntityManager<NamingRule, Integer, Naming
     public List<NamingRule> listBySensor(String sensor) {
         final String search = "n/a".equalsIgnoreCase(sensor) ? "Generic" : sensor;
         return repository.getBySensor(search);
+    }
+
+    @Override
+    public Set<String> getSynonims(String sensor) {
+        final List<NamingRule> rules = listBySensor(sensor);
+        Set<String> synonims;
+        if (rules == null || rules.isEmpty()) {
+            synonims = Set.of();
+        } else {
+            synonims = new HashSet<>();
+            for (NamingRule rule : rules) {
+                synonims.add(rule.getSensor());
+                if (!StringUtilities.isNullOrEmpty(rule.getSynonyms())) {
+                    String[] syns = rule.getSynonyms().split(",");
+                    for (String syn : syns) {
+                        synonims.add(syn);
+                    }
+                }
+            }
+        }
+        return synonims;
     }
 
     @Override

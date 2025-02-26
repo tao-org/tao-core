@@ -16,6 +16,7 @@
 package ro.cs.tao.component.constraints;
 
 import org.reflections.Reflections;
+import ro.cs.tao.persistence.NamingRuleProvider;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -30,6 +31,7 @@ public final class ConstraintFactory {
 
     private static final Map<String, IOConstraint> cache;
     private static final Map<String, String> aliases;
+    private static NamingRuleProvider namingRuleProvider;
 
     static {
         cache = new HashMap<>();
@@ -41,16 +43,38 @@ public final class ConstraintFactory {
         String className = aliases.getOrDefault(name, name);
         try {
             if (!cache.containsKey(className)) {
-                Class<?> constraintClass = className.equals("Same sensor") ? SpecificSensorConstraint.class : Class.forName(className);
-                Constructor<?> constructor;
-                try {
-                    constructor = constraintClass.getDeclaredConstructor(String.class);
-                    cache.put(className, (IOConstraint) constructor.newInstance(name));
-                } catch (NoSuchMethodException ignored) {
-                    constructor = constraintClass.getDeclaredConstructor();
-                    cache.put(className, (IOConstraint) constructor.newInstance());
-                }
+                Class<?> constraintClass = Class.forName(className);
+                Constructor<?> constructor = constraintClass.getDeclaredConstructor();
+                cache.put(className, (IOConstraint) constructor.newInstance());
+            }
+            return cache.get(className);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
+    public static IOConstraint create(String name, String value) {
+        String className = aliases.getOrDefault(name, name);
+        try {
+            if (!cache.containsKey(className)) {
+                if (className.equals("Specific sensor")) {
+                    SpecificSensorConstraint constraint = new SpecificSensorConstraint(value);
+                    if (namingRuleProvider != null) {
+                        constraint.setSynonims(namingRuleProvider.getSynonims(value));
+                    }
+                    cache.put(className, constraint);
+                } else {
+                    Class<?> constraintClass = Class.forName(className);
+                    Constructor<?> constructor;
+                    try {
+                        constructor = constraintClass.getDeclaredConstructor(String.class);
+                        cache.put(className, (IOConstraint) constructor.newInstance(name));
+                    } catch (NoSuchMethodException ignored) {
+                        constructor = constraintClass.getDeclaredConstructor();
+                        cache.put(className, (IOConstraint) constructor.newInstance());
+                    }
+                }
             }
             return cache.get(className);
         } catch (Exception e) {
@@ -61,6 +85,10 @@ public final class ConstraintFactory {
 
     public static List<String> getAvailableConstraints() {
         return new ArrayList<>(aliases.keySet());
+    }
+
+    public static void setNamingRuleProvider(NamingRuleProvider provider) {
+        namingRuleProvider = provider;
     }
 
     private static void initAliases() {

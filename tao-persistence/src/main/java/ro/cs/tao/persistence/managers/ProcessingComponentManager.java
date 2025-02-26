@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ParameterExpansionRule;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -120,6 +121,13 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             final ProcessingComponent existing = repository.getByIdAndContainer(entity.getId(), entity.getContainerId());
             if (existing != null) {
                 throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
+            }
+        }
+        final List<SourceDescriptor> sources = entity.getSources();
+        for (SourceDescriptor descriptor : sources) {
+            final String formatName = descriptor.getDataDescriptor().getFormatName();
+            if (!StringUtilities.isNullOrEmpty(formatName) && descriptor.getConstraints().contains("Specific sensor")) {
+                descriptor.addConstraint("Specific sensor", formatName);
             }
         }
         repository.save(entity);
