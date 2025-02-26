@@ -112,7 +112,18 @@ public class SourceDescriptor extends StringIdentifiable {
         }
         this.constraints.add(constraint);
     }
-
+    /**
+     * Adds a constraint for the data of this instance.
+     *
+     * @param constraint    The constraint class name.
+     * @param value         The value of the constraint
+     */
+    public void addConstraint(String constraint, String value) {
+        if (this.constraints == null) {
+            this.constraints = new ArrayList<>();
+        }
+        this.constraints.add(constraint + "[" + value + "]");
+    }
     public void setConstraints(List<String> constraints) {
         this.constraints = constraints;
     }

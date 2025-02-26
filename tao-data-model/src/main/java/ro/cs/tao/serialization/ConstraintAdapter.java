@@ -26,11 +26,19 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 public class ConstraintAdapter extends XmlAdapter<IOConstraint, String> {
     @Override
     public String unmarshal(IOConstraint v) throws Exception {
-        return v == null ? null : v.getClass().getName();
+        return v == null ? null : v.toString();
     }
 
     @Override
     public IOConstraint marshal(String v) throws Exception {
-        return v == null ? null : ConstraintFactory.create(v);
+        if (v == null)
+            return null;
+        int idx = v.indexOf('[');
+        if (idx > 0) {
+            return ConstraintFactory.create(v.substring(0, idx),
+                                            v.substring(idx + 1, v.length() - 1));
+        } else {
+            return ConstraintFactory.create(v);
+        }
     }
 }
