@@ -72,6 +72,10 @@ public class Topic {
      * Topic for signaling publication of containers
      */
     public static final Topic CONTAINER = Topic.create("container");
+    /**
+     * Topic for signaling configuration changes at runtime
+     */
+    public static final Topic CONFIGURATION = Topic.create("configuration");
 
     public static Topic create(String category) {
         if (!topicRegistry.containsKey(category)) {
