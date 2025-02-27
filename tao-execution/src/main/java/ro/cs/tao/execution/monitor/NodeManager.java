@@ -66,8 +66,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final int concurrentCalls;
     private static final boolean isAvailable;
     private static final NodeManager instance;
-    private static final int nodeCreationWaitTime;
-    private static final long pollInterval;
+    private static int nodeCreationWaitTime;
+    private static long pollInterval;
     private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 20000;
 
@@ -103,6 +103,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         this.refreshInProgress = false;
         this.nodeLimit = 0;
         this.nodeUpdates = new HashMap<>();
+        Messaging.subscribe(this, Topic.CONFIGURATION.value());
     }
 
     /**
@@ -633,7 +634,17 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     @Override
     protected void onMessageReceived(Message message) {
-        // do nothing
+        final Map<String, String> items = message.getItems();
+        if (items != null) {
+            if (items.containsKey(NODE_POLLING_INTERVAL_KEY)) {
+                pollInterval = Integer.parseInt(ConfigurationManager.getInstance().getValue(NODE_POLLING_INTERVAL_KEY));
+                final long interval = pollInterval * 1000;
+                scheduleRefresh(0, interval);
+                scheduleInspection(interval, interval);
+            } else if (items.containsKey(NODE_CREATION_WAIT_TIME_KEY)) {
+                nodeCreationWaitTime = Integer.parseInt(ConfigurationManager.getInstance().getValue(NODE_CREATION_WAIT_TIME_KEY));
+            }
+        }
     }
 
     protected final void removeNode(String host) {
