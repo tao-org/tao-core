@@ -39,10 +39,7 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 
@@ -125,7 +122,7 @@ public abstract class SessionFactory {
         if (thisFactories == null) {
             readFactories();
         }
-        return thisFactories != null ? thisFactories.keySet() : null;
+        return thisFactories != null ? new HashSet<>(thisFactories.keySet()) : null;
     }
 
     /**
