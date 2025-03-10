@@ -528,8 +528,55 @@ public class Orchestrator extends Notifiable {
     protected void onMessageReceived(Message message) {
         if (message instanceof StartupCompletedMessage) {
             final boolean resumeJobs = ConfigurationManager.getInstance().getBooleanValue("resume.jobs.at.startup");
+            final List<ExecutionTask> tasks = prepareStalledTasks(resumeJobs);
             if (resumeJobs) {
-                final List<ExecutionTask> tasks = prepareStalledTasks();
+                messageWorker.submit(handleStalledTasks(tasks));
+            }
+        } else {
+            try {
+                final SessionContext context = new MessageContext(message);
+                messageQueue.put(new AbstractMap.SimpleEntry<>(message, context));
+            } catch (InterruptedException e) {
+                logger.severe(e.getMessage());
+            }
+        }
+    }
+
+    public List<ExecutionTask> prepareStalledTasks(boolean shouldRetry) {
+        List<ExecutionTask> runningTasks = null;
+        List<ExecutionJob> jobs = jobProvider.list(ExecutionStatus.RUNNING);
+        if (jobs != null) {
+            for (ExecutionJob job : jobs) {
+                runningTasks = job.getTasks().stream()
+                                                      .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
+                                                      .collect(Collectors.toList());
+                final Iterator<ExecutionTask> taskIterator = runningTasks.iterator();
+                while (taskIterator.hasNext()) {
+                    ExecutionTask t = taskIterator.next();
+                    try {
+                        if (t instanceof ProcessingExecutionTask) {
+                            ProcessingExecutionTask pt = (ProcessingExecutionTask) t;
+                            if (TaskUtilities.isAlive(pt) && shouldRetry) {
+                                t = taskProvider.updateStatus(t, ExecutionStatus.QUEUED_ACTIVE, "Stalled job");
+                            } else {
+                                t = taskProvider.updateStatus(t, ExecutionStatus.CANCELLED, "Not alive");
+                                taskIterator.remove();
+                            }
+                        }
+                    } catch (PersistenceException e) {
+                        logger.severe(String.format("Cannot reset status for task %s [job %s]",
+                                                    t.getId(), job.getId()));
+                    }
+                }
+            }
+        }
+        return runningTasks;
+    }
+
+    private Runnable handleStalledTasks(List<ExecutionTask> tasks) {
+        return new Runnable() {
+            @Override
+            public void run() {
                 if (tasks != null) {
                     for (ExecutionTask task : tasks) {
                         logger.fine(String.format("Resuming task [id=%s] from job [id=%d]",
@@ -542,35 +589,7 @@ public class Orchestrator extends Notifiable {
                     }
                 }
             }
-        } else {
-            try {
-                final SessionContext context = new MessageContext(message);
-                messageQueue.put(new AbstractMap.SimpleEntry<>(message, context));
-            } catch (InterruptedException e) {
-                logger.severe(e.getMessage());
-            }
-        }
-    }
-
-    private List<ExecutionTask> prepareStalledTasks() {
-        List<ExecutionTask> runningTasks = null;
-        List<ExecutionJob> jobs = jobProvider.list(ExecutionStatus.RUNNING);
-        if (jobs != null) {
-            for (ExecutionJob job : jobs) {
-                runningTasks = job.getTasks().stream()
-                                                      .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
-                                                      .collect(Collectors.toList());
-                for (ExecutionTask t : runningTasks) {
-                    try {
-                        t = taskProvider.updateStatus(t, ExecutionStatus.QUEUED_ACTIVE, "Stalled job");
-                    } catch (PersistenceException e) {
-                        logger.severe(String.format("Cannot reset status for task %s [job %s]",
-                                                    t.getId(), job.getId()));
-                    }
-                }
-            }
-        }
-        return runningTasks;
+        };
     }
 
     private void initializeGroupSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,

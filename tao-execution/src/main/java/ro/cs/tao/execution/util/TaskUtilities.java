@@ -38,8 +38,11 @@ import ro.cs.tao.persistence.*;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.services.bridge.spring.SpringContextBridgedServices;
+import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeProvider;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.Tuple;
+import ro.cs.tao.utils.executors.*;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
@@ -50,6 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,11 +76,13 @@ public class TaskUtilities {
     private static final ExecutionJobProvider jobProvider;
     private static final ContainerProvider containerProvider;
     private static final RepositoryProvider repositoryProvider;
+    private static final NodeProvider nodeProvider;
     private static final Map<Long, List<Tuple<String, String>>> symLinks;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
     private static final String DOCKER_EODATA_MOUNT_POINT;
     private static final String DOCKER_EODATA_HOST_POINT;
+    private static final String ALIVE_CMD = "ps -ef | grep '%s'";
 
     static {
         final DockerVolumeMap masterContainerVolumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
@@ -93,6 +99,7 @@ public class TaskUtilities {
         groupComponentProvider = context.getService(GroupComponentProvider.class);
         containerProvider = context.getService(ContainerProvider.class);
         repositoryProvider = context.getService(RepositoryProvider.class);
+        nodeProvider = context.getService(NodeProvider.class);
         symLinks = Collections.synchronizedMap(new HashMap<>());
     }
 
@@ -262,6 +269,34 @@ public class TaskUtilities {
 
     public static boolean haveAllTasksCompleted(ExecutionJob job) {
         return taskProvider.countRunableTasks(job.getId()) == 0;
+    }
+
+    public static boolean isAlive(ProcessingExecutionTask task) {
+        final NodeDescription node = nodeProvider.getNode(task.getExecutionNodeHostName());
+        if (node != null) {
+            final List<String> command = ProcessHelper.tokenizeCommands(ALIVE_CMD, task.getCommand());
+            ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
+                                                  node.getId(),
+                                                  node.getUserName(),
+                                                  node.getUserPass(),
+                                                  command, false, SSHMode.EXEC);
+            OutputAccumulator accumulator = new OutputAccumulator();
+            accumulator.preserveLineSeparator(true);
+            logger.fine("Executing " + String.join(" ", command));
+            int retCode = -1;
+            try {
+                retCode = Executor.execute(accumulator, job, 5, TimeUnit.SECONDS).getReturnCode();
+            } catch (Exception e) {
+                logger.warning("Process timed out: " + e.getMessage());
+            }
+            if (retCode == 0) {
+                final String output = accumulator.getOutput();
+                return output.split("\n").length > 1;
+            } else {
+                logger.warning(String.format("Command %s failed with code %d", String.join(" ", command), retCode));
+            }
+        }
+        return false;
     }
 
     /**
