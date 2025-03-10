@@ -121,6 +121,26 @@ public abstract class Executor<T> implements Runnable {
     public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job) {
         return execute(outputConsumer, job, null);
     }
+    /**
+     * Submits for execution the given command and returns the executor object either after it has completed it execution
+     * or if the timeout given by the wait time occured.
+     * This is a blocking call.
+     *
+     * @param outputConsumer    The counsumer of the process output
+     * @param job               The command (job) to be executed
+     * @param timeUnit          Time before timing out
+     * @param waitTime          Time units
+     * @return                  The Executor object that is responsible of execution
+     */
+    public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job, int waitTime, TimeUnit timeUnit) {
+        final Executor<?> executor = execute(outputConsumer, job, null);
+        try {
+            executor.getWaitObject().await(waitTime, timeUnit);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return executor;
+    }
 
     public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job, ActivityListener monitor) {
         Executor<?> executor = prepare(outputConsumer, job);
