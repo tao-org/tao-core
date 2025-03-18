@@ -81,7 +81,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private static DRMAAExecutor instance;
     private static String appId;
     //private Session session;
-    private final Map<Environment, Session> sessions;
+    private final EnumMap<Environment, Session> sessions;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
     private final List<TaskListener> taskListeners;
@@ -121,7 +121,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (services != null) {
             this.taskListeners.addAll(services);
         }
-        this.sessions = new HashMap<>();
+        this.sessions = new EnumMap<>(Environment.class);
         this.hostMemoryRequests = Collections.synchronizedMap(new HashMap<>());
         instance = this;
     }

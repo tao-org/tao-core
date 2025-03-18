@@ -39,7 +39,9 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 
@@ -69,7 +71,7 @@ public abstract class SessionFactory {
      * Right now, only one SessionFactory can exist at a time.  This is that
      * session factory.
      */
-    private static Map<Environment, SessionFactory> thisFactories = null;
+    private static EnumMap<Environment, SessionFactory> thisFactories = null;
     /**
      * The name of the property used to find the Session implementation
      * class name.
@@ -102,7 +104,7 @@ public abstract class SessionFactory {
         synchronized (SessionFactory.class) {
             if (thisFactories == null) {
                 final SessionFactory factory = newFactory();
-                thisFactories = new HashMap<>();
+                thisFactories = new EnumMap<>(Environment.class);
                 thisFactories.put(factory.getEnvironment(), factory);
             }
         }
@@ -122,7 +124,7 @@ public abstract class SessionFactory {
         if (thisFactories == null) {
             readFactories();
         }
-        return thisFactories != null ? new HashSet<>(thisFactories.keySet()) : null;
+        return thisFactories != null ? thisFactories.keySet() : null;
     }
 
     /**
@@ -218,7 +220,7 @@ public abstract class SessionFactory {
                 final Set<SessionFactory> services = registry.getServices();
                 for (SessionFactory factory : services) {
                     if (thisFactories == null) {
-                        thisFactories = new HashMap<>();
+                        thisFactories = new EnumMap<>(Environment.class);
                     }
                     final Environment environment = factory.getEnvironment();
                     if (environment != Environment.DEFAULT || factory.getClass().getName().equals(className)) {
