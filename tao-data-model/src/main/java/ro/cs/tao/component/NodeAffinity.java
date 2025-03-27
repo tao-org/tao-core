@@ -29,6 +29,11 @@ public final class NodeAffinity {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(getValue());
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof NodeAffinity) {
             return Objects.equals(this.value, ((NodeAffinity) obj).value);
