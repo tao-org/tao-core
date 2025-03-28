@@ -20,10 +20,7 @@ import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionJobSummary;
-import ro.cs.tao.execution.model.ExecutionRequest;
-import ro.cs.tao.execution.model.ExecutionTaskSummary;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.List;
@@ -45,10 +42,15 @@ public interface OrchestratorService extends TAOService {
     Map<String, List<Parameter>> getWorkflowParameters(long workflowId) throws PersistenceException;
 
     /**
-     * Returns the outputs (i.e. the target descriptors of terminal nodes) of a workflow.
+     * Returns the outputs of the executions of a workflow.
      * @param workflowId    The workflow identifier
      */
-    List<TargetDescriptor> getWorkflowOutputs(long workflowId) throws PersistenceException;
+    List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId) throws PersistenceException;
+    /**
+     * Returns the output descriptors of the executions of a workflow.
+     * @param workflowId    The workflow identifier
+     */
+    List<TargetDescriptor> getWorkflowOutputDescriptors(long workflowId) throws PersistenceException;
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
