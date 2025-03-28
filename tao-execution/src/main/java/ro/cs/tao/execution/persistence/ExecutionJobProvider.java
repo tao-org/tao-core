@@ -3,6 +3,7 @@ package ro.cs.tao.execution.persistence;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTaskOutput;
 import ro.cs.tao.persistence.EntityProvider;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public interface ExecutionJobProvider extends EntityProvider<ExecutionJob, Long>
 
     List<ExecutionJob> listByWorkflow(long workflowId);
     List<String> getWorkflowOutputKeys(long workflowId);
+    List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId);
     List<String> getOutputKeys(long jobId);
     List<ExecutionJob> list(ExecutionStatus status);
     int count(ExecutionStatus status);

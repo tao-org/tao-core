@@ -16,15 +16,21 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTaskOutput;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 
+import javax.sql.DataSource;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +42,9 @@ import java.util.stream.Collectors;
 public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, ExecutionJobRepository>
                                  implements ExecutionJobProvider {
 
+    @Autowired
+    private DataSource dataSource;
+
     @Override
     public List<ExecutionJob> listByWorkflow(long workflowId) {
         return repository.findByWorkflowId(workflowId);
@@ -44,6 +53,34 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
     @Override
     public List<String> getWorkflowOutputKeys(long workflowId) {
         return repository.getWorkflowJobsOutputs(workflowId);
+    }
+
+    @Override
+    public List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId) {
+        //return repository.getWorkflowJobsOutputs(workflowId);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return jdbcTemplate.query(con -> {
+            PreparedStatement statement =
+                    con.prepareStatement("SELECT t.job_id, t.id, t.end_time, " +
+                                                 "SUBSTRING(t.actual_target, LENGTH(t.actual_target) - POSITION('/' IN REVERSE(t.actual_target)) + 2, POSITION('/' IN REVERSE(t.actual_target))) AS file_name,\n" +
+                                                 "t.actual_target FROM execution.task t " +
+                                                 "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
+                                                 "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
+                                                 "WHERE e.workflow_id = ? ORDER BY t.job_id, t.end_time DESC");
+            statement.setLong(1, workflowId);
+            return statement;
+        }, (rs, rowNum) -> {
+            ExecutionTaskOutput result = new ExecutionTaskOutput();
+            result.setJobId(rs.getLong(1));
+            result.setTaskId(rs.getLong(2));
+            Timestamp timestamp = rs.getTimestamp(3);
+            if (timestamp != null) {
+                result.setEndTime(timestamp.toLocalDateTime());
+            }
+            result.setName(rs.getString(4));
+            result.setPath(rs.getString(5));
+            return result;
+        });
     }
 
     @Override
