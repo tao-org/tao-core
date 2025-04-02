@@ -39,7 +39,7 @@ import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.services.bridge.spring.SpringContextBridgedServices;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeProvider;
+import ro.cs.tao.topology.TopologyManager;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.*;
@@ -76,7 +76,6 @@ public class TaskUtilities {
     private static final ExecutionJobProvider jobProvider;
     private static final ContainerProvider containerProvider;
     private static final RepositoryProvider repositoryProvider;
-    private static final NodeProvider nodeProvider;
     private static final Map<Long, List<Tuple<String, String>>> symLinks;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
@@ -91,7 +90,6 @@ public class TaskUtilities {
         DOCKER_EODATA_MOUNT_POINT = masterContainerVolumeMap.getContainerEoDataFolder();
         final SpringContextBridgedServices context = SpringContextBridge.services();
         workflowNodeProvider = context.getService(WorkflowNodeProvider.class);
-        /*jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);*/
         taskProvider = context.getService(ExecutionTaskProvider.class);
         jobProvider = context.getService(ExecutionJobProvider.class);
         processingComponentProvider = context.getService(ProcessingComponentProvider.class);
@@ -99,7 +97,6 @@ public class TaskUtilities {
         groupComponentProvider = context.getService(GroupComponentProvider.class);
         containerProvider = context.getService(ContainerProvider.class);
         repositoryProvider = context.getService(RepositoryProvider.class);
-        nodeProvider = context.getService(NodeProvider.class);
         symLinks = Collections.synchronizedMap(new HashMap<>());
     }
 
@@ -272,7 +269,7 @@ public class TaskUtilities {
     }
 
     public static boolean isAlive(ProcessingExecutionTask task) {
-        final NodeDescription node = nodeProvider.getNode(task.getExecutionNodeHostName());
+        final NodeDescription node = TopologyManager.getInstance().getNode(task.getExecutionNodeHostName());
         if (node != null) {
             final List<String> command = ProcessHelper.tokenizeCommands(ALIVE_CMD, task.getCommand());
             ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
