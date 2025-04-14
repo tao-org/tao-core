@@ -81,7 +81,7 @@ INSERT INTO component.template_type (type) VALUES
 
 -- Component type
 INSERT INTO workflow.component_type (id, description) VALUES
-(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP'), (5, "WPS_COMPONENT"), (6, "CONDITION");
+(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP'), (5, 'WPS_COMPONENT'), (6, 'CONDITION');
 
 -- Behavior
 INSERT INTO workflow.node_behavior (id, description) VALUES
