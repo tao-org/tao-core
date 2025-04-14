@@ -96,15 +96,19 @@ public class ExecutionsManager {
         Optional<Executor> optional;
         if (task instanceof ProcessingExecutionTask) {
             optional = services.stream()
-                    .filter(x -> x.supports(((ProcessingExecutionTask) task).getComponent()))
-                    .findFirst();
+                               .filter(x -> x.supports(((ProcessingExecutionTask) task).getComponent()))
+                               .findFirst();
         } else if (task instanceof WPSExecutionTask) {
             optional = services.stream()
-                    .filter(x -> x.supports(((WPSExecutionTask) task).getComponent()))
-                    .findFirst();
+                               .filter(x -> x.supports(((WPSExecutionTask) task).getComponent()))
+                               .findFirst();
         } else if (task instanceof WMSExecutionTask) {
             optional = services.stream()
                                .filter(x -> x.supports(((WMSExecutionTask) task).getComponent()))
+                               .findFirst();
+        } else if (task instanceof ConditionExecutionTask) {
+            optional = services.stream()
+                               .filter(x -> x.supports(((ConditionExecutionTask) task).getComponent()))
                                .findFirst();
         } else {
             optional = services.stream()

@@ -8,7 +8,7 @@ INSERT INTO component.processing_component_type (id, type) VALUES
 
 -- Processing components category
 INSERT INTO component.component_category (id, category) VALUES
-(1, 'RASTER'), (2, 'VECTOR'), (3, 'OPTICAL'), (4, 'RADAR'), (5, 'MISC');
+(1, 'RASTER'), (2, 'VECTOR'), (3, 'OPTICAL'), (4, 'RADAR'), (5, 'MISC'), (6, 'CONDITION');
 
 -- Tag type
 INSERT INTO common.tag_type (id, description) VALUES
@@ -81,7 +81,7 @@ INSERT INTO component.template_type (type) VALUES
 
 -- Component type
 INSERT INTO workflow.component_type (id, description) VALUES
-(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP');
+(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP'), (5, "WPS_COMPONENT"), (6, "CONDITION");
 
 -- Behavior
 INSERT INTO workflow.node_behavior (id, description) VALUES

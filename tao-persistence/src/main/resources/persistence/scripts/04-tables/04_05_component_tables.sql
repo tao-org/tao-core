@@ -812,3 +812,84 @@ ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_p
     FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_parameter
     FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: condition_component
+DROP TABLE IF EXISTS component.condition_component CASCADE;
+CREATE TABLE component.condition_component
+(
+	id varchar(512) NOT NULL,
+	label varchar NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+    category_id int NULL DEFAULT 6,
+	template_type_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	visibility_id integer NOT NULL,
+	template_contents text NULL,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+	active boolean NULL DEFAULT true
+);
+ALTER TABLE component.condition_component ADD CONSTRAINT PK_condition_component
+	PRIMARY KEY (id);
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_template_type
+	FOREIGN KEY (template_type_id) REFERENCES component.template_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_user
+	FOREIGN KEY (owner_user_id) REFERENCES usr.user (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_component_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_component_category
+	FOREIGN KEY (category_id) REFERENCES component.component_category (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS component.condition_component_id_seq CASCADE;
+CREATE SEQUENCE component.condition_component_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.condition_component ALTER COLUMN id SET DEFAULT nextval('component.condition_component_id_seq');
+ALTER SEQUENCE component.condition_component_id_seq OWNED BY component.condition_component.id;
+
+-------------------------------------------------------------------------------
+-- table: component.condition_component_sources
+DROP TABLE IF EXISTS component.condition_component_sources CASCADE;
+CREATE TABLE component.condition_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.condition_component_sources ADD CONSTRAINT PK_condition_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.condition_component_sources ADD CONSTRAINT FK_condition_component_sources_condition_component
+	FOREIGN KEY (component_id) REFERENCES component.condition_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.condition_component_sources ADD CONSTRAINT FK_condition_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.condition_component_targets
+DROP TABLE IF EXISTS component.condition_component_targets CASCADE;
+CREATE TABLE component.condition_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.condition_component_targets ADD CONSTRAINT PK_condition_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.condition_component_targets ADD CONSTRAINT FK_condition_component_targets_condition_component
+	FOREIGN KEY (component_id) REFERENCES component.condition_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.condition_component_targets ADD CONSTRAINT FK_condition_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: condition_component_parameters
+DROP TABLE IF EXISTS component.condition_component_parameters CASCADE;
+CREATE TABLE component.condition_component_parameters
+(
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.condition_component_parameters ADD CONSTRAINT PK_condition_component_parameters
+    PRIMARY KEY (component_id, processing_parameter_id);
+ALTER TABLE component.condition_component_parameters ADD CONSTRAINT FK_condition_component_parameters_processing_component
+    FOREIGN KEY (component_id) REFERENCES component.condition_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component_parameters ADD CONSTRAINT FK_condition_component_parameters_processing_parameter
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
