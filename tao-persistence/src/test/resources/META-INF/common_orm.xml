@@ -158,7 +158,7 @@
 
     <entity class="ro.cs.tao.topology.NodeFlavor" access="PROPERTY">
         <table name="topology.node_flavor"/>
-        <convert converter="ro.cs.tao.persistence.convert.MemoryUnitConverter" attribute-name="unit"/>
+        <convert converter="ro.cs.tao.persistence.convert.MemoryUnitConverter" attribute-name="memoryUnit"/>
         <attributes>
             <basic name="cpu">
                 <column name="cpu" nullable="false" column-definition="integer NOT NULL"/>
@@ -175,7 +175,7 @@
             <basic name="rxtxFactor">
                 <column name="rxtx" nullable="false" column-definition="real NOT NULL"/>
             </basic>
-            <basic name="unit">
+            <basic name="memoryUnit">
                 <column name="unit_id" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
         </attributes>
@@ -663,6 +663,52 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.ConditionComponent" access="PROPERTY">
+        <table name="component.condition_component"/>
+
+        <association-override name="sources">
+            <join-table name="component.condition_component_sources">
+                <join-column name="condition_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="component.condition_component_targets">
+                <join-column name="condition_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.ComponentCategoryConverter" attribute-name="category" />
+
+        <attributes>
+            <basic name="templateType">
+                <column name="template_type_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="category">
+                <column name="category_id" nullable="true" column-definition="integer NULL DEFAULT 5"/>
+            </basic>
+            <basic name="templateContents">
+                <column name="template_contents" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="owner">
+                <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+
+            <transient name="template" />
+            <transient name="templateEngine" />
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.datasource.DataSourceCredentials" access="PROPERTY">
         <table name="execution.user_data_source_connection"/>
         <entity-listeners>
@@ -871,6 +917,18 @@
                     <cascade-all/>
                 </cascade>
             </many-to-many>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.execution.model.ConditionExecutionTask" access="PROPERTY">
+
+        <discriminator-value>15</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ConditionComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+            <transient name="rules"/>
         </attributes>
     </entity>
 

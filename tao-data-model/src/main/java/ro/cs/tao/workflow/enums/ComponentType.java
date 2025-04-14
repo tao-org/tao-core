@@ -47,7 +47,9 @@ public enum ComponentType implements TaoEnum<Integer> {
      * Designates a WPS component
      */
     @XmlEnumValue("5")
-    WPS_COMPONENT(5, "WPS Component");
+    WPS_COMPONENT(5, "WPS Component"),
+    @XmlEnumValue("6")
+    CONDITION(6, "Condition");
 
     private final int value;
     private final String description;

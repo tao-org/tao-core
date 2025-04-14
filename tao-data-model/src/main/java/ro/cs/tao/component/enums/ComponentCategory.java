@@ -35,7 +35,9 @@ public enum ComponentCategory implements TaoEnum<Integer> {
     @XmlEnumValue("4")
     RADAR(4, "Radar"),
     @XmlEnumValue("5")
-    MISC(5, "Miscellaneous");
+    MISC(5, "Miscellaneous"),
+    @XmlEnumValue("6")
+    CONDITION(6, "Condition");
 
     // Other component categories that can be used as input for this category
     private static final Map<ComponentCategory, EnumSet<ComponentCategory>> compatibilityMap;
@@ -47,6 +49,7 @@ public enum ComponentCategory implements TaoEnum<Integer> {
         compatibilityMap.put(OPTICAL, EnumSet.of(OPTICAL, RASTER));
         compatibilityMap.put(RADAR, EnumSet.of(RADAR, RASTER, MISC));
         compatibilityMap.put(MISC, EnumSet.of(MISC, RADAR, OPTICAL, VECTOR));
+        compatibilityMap.put(CONDITION, EnumSet.of(RASTER, VECTOR, OPTICAL, RADAR, MISC));
     }
 
     private final int value;

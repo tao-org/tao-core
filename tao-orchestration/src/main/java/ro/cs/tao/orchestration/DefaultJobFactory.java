@@ -61,6 +61,7 @@ public class DefaultJobFactory {
     protected final ExecutionTaskProvider taskProvider;
     protected final QueryProvider queryProvider;
     protected final ProcessingComponentProvider processingComponentProvider;
+    protected final ConditionComponentProvider conditionComponentProvider;
     protected final WPSComponentProvider wpsComponentProvider;
     protected final WMSComponentProvider wmsComponentProvider;
     protected final DataSourceComponentProvider dataSourceComponentProvider;
@@ -80,6 +81,7 @@ public class DefaultJobFactory {
         this.dataSourceComponentGroupProvider = SpringContextBridge.services().getService(DataSourceComponentGroupProvider.class);
         this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
         this.workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
+        this.conditionComponentProvider = SpringContextBridge.services().getService(ConditionComponentProvider.class);
         this.logger = Logger.getLogger(DefaultJobFactory.class.getName());
     }
 
@@ -324,6 +326,9 @@ public class DefaultJobFactory {
                 case DATASOURCE_GROUP:
                     task = createDataSourceGroupTask(job, workflowNode);
                     break;
+                case CONDITION:
+                    task = createConditionTask(workflowNode, links, inputs);
+                    break;
                 case GROUP:
                 default:
                     throw new PersistenceException("Wrong component type");
@@ -336,7 +341,7 @@ public class DefaultJobFactory {
     }
 
     protected ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
-                                                        Map<String, String> inputs) {
+                                                          Map<String, String> inputs) {
         final List<ParameterValue> customValues = workflowNode.getCustomValues();
         final ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
         final ProcessingExecutionTask task = new ProcessingExecutionTask();
@@ -629,6 +634,49 @@ public class DefaultJobFactory {
                 task.setInputParameterValue(parameter.getId(), parameter.getDefaultValue());
             }
         }
+        return task;
+    }
+
+    protected ConditionExecutionTask createConditionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
+                                                         Map<String, String> inputs) {
+        final List<ParameterValue> customValues = workflowNode.getCustomValues();
+        final ConditionComponent component = conditionComponentProvider.get(workflowNode.getComponentId());
+        final ConditionExecutionTask task = new ConditionExecutionTask();
+        task.setComponent(component);
+        // Placeholders for inputs of previous tasks
+        if (incomingLinks != null) {
+            incomingLinks.forEach(link -> {
+                String name = link.getOutput().getName();
+                task.setInputParameterValue(name, null);
+            });
+        }
+        // Placeholders for outputs of this task
+        final List<TargetDescriptor> targets = component.getTargets();
+        if (targets != null) {
+            targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
+        }
+        ParameterValue affinityParam = null;
+        if (customValues != null) {
+            for (ParameterValue param : customValues) {
+                if (!"nodeAffinity".equals(param.getParameterName())) {
+                    task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                } else {
+                    affinityParam = param;
+                }
+            }
+        }
+        final NodeAffinity nodeAffinity = affinityParam != null
+                                          ? NodeAffinity.of(affinityParam.getParameterValue())
+                                          : component.getNodeAffinity();
+        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity.getValue());
+        }
+        if (inputs != null) {
+            for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                task.setInputParameterValue(entry.getKey(), entry.getValue());
+            }
+        }
+        task.setCardinality(1);
         return task;
     }
 
