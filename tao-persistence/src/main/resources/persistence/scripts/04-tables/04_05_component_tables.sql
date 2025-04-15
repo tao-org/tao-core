@@ -822,7 +822,6 @@ CREATE TABLE component.condition_component
 	label varchar NOT NULL,
 	version varchar(50) NOT NULL,
 	description text NOT NULL,
-    node_affinity varchar(250) NULL,
 	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
     category_id int NULL DEFAULT 6,
