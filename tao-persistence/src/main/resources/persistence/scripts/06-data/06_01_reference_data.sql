@@ -28,7 +28,7 @@ INSERT INTO component.container_visibility (id, description) VALUES
 
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
-('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON');
+('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON'),('ANY');
 
 -- Data types
 INSERT INTO product.data_type (type) VALUES

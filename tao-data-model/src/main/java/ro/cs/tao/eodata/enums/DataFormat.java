@@ -54,7 +54,12 @@ public enum DataFormat implements TaoEnum<Integer> {
      *  JSON
      */
     @XmlEnumValue("6")
-    JSON(6, "JSON");
+    JSON(6, "JSON"),
+    /**
+     *  Any format
+     */
+    @XmlEnumValue("7")
+    ANY(7, "Any");
 
     /**
      * Numerical value for enum constants

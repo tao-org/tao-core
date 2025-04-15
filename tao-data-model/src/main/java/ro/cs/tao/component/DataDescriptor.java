@@ -44,6 +44,13 @@ public class DataDescriptor {
     private Dimension dimension;
     private String location;
 
+    public DataDescriptor() {
+    }
+
+    public DataDescriptor(DataFormat formatType) {
+        this.formatType = formatType;
+    }
+
     /**
      * Returns the format type of the component port.
      * @see DataFormat for possible values.
