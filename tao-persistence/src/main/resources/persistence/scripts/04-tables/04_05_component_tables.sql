@@ -829,6 +829,7 @@ CREATE TABLE component.condition_component
 	owner_user_id varchar NULL,
 	visibility_id integer NOT NULL,
 	template_contents text NULL,
+	node_affinity varchar(250) NULL,
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,

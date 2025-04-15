@@ -23,6 +23,11 @@ public class ConditionExecutor extends Executor<ConditionExecutionTask> {
     }
 
     @Override
+    public String defaultId() {
+        return "ConditionExecutor";
+    }
+
+    @Override
     public boolean supports(TaoComponent component) {
         return component instanceof ConditionComponent;
     }

@@ -19,6 +19,7 @@ import ro.cs.tao.component.constraints.Constraint;
 import ro.cs.tao.component.constraints.ConstraintException;
 import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
+import ro.cs.tao.eodata.enums.DataFormat;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -148,7 +149,10 @@ public class SourceDescriptor extends StringIdentifiable {
      */
     public boolean isCompatibleWith(TargetDescriptor other) {
         return other != null && this.dataDescriptor != null && other.getDataDescriptor() != null &&
-                this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) &&
+                (this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) ||
+                        DataFormat.ANY.equals(this.dataDescriptor.getFormatType()) ||
+                        DataFormat.ANY.equals(other.getDataDescriptor().getFormatType())
+                ) &&
                 (this.constraints == null || this.constraints.isEmpty() || this.constraints.stream().allMatch(c -> {
                     IOConstraint constraint = ConstraintFactory.create(c);
                     return constraint == null || constraint.check(this.dataDescriptor, other.getDataDescriptor());
@@ -170,7 +174,9 @@ public class SourceDescriptor extends StringIdentifiable {
         if (other.getDataDescriptor() == null) {
             throw new ConstraintException("TargetDescriptor is empty");
         }
-        if (!this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType())) {
+        if (!DataFormat.ANY.equals(this.dataDescriptor.getFormatType()) &&
+            !DataFormat.ANY.equals(other.getDataDescriptor().getFormatType()) &&
+            !this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType())) {
             throw new ConstraintException(String.format("Incompatible formats (%s, %s)",
                                                         this.dataDescriptor.getFormatType().friendlyName(),
                                                         other.getDataDescriptor().getFormatType().friendlyName()));

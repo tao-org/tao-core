@@ -13,6 +13,7 @@ import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.template.engine.VelocityTemplateEngine;
 import ro.cs.tao.datasource.param.JavaType;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.eodata.naming.ParseException;
@@ -50,19 +51,28 @@ public class ConditionComponent extends TaoComponent {
         final SourceDescriptor source = new SourceDescriptor(ONE_CONDITION_COMPONENT_ID + "-input");
         source.setName("input");
         source.setCardinality(1);
+        source.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
         component.addSource(source);
         final TargetDescriptor target1 = new TargetDescriptor(ONE_CONDITION_COMPONENT_ID + "-output-1");
         target1.setName("output1");
         target1.setCardinality(1);
+        target1.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
         component.addTarget(target1);
         final TargetDescriptor target2 = new TargetDescriptor(ONE_CONDITION_COMPONENT_ID + "-output-2");
         target2.setName("output2");
         target2.setCardinality(1);
+        target2.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
         component.addTarget(target2);
         component.addParameter(new ParameterDescriptor(ONE_CONDITION_COMPONENT_ID + "-condition",
                                                        "condition", ParameterType.REGULAR, JavaType.STRING, null, "Condition", "Condition", "n/a",
                                                        null, null, null, true));
         component.setTemplateContents("#if ($condition)\noutput1\n#else\noutput2\n#end");
+        component.setLabel("Single condition");
+        component.setDescription("Condition component that acts like an if-else");
+        component.setAuthors("CS GROUP");
+        component.setCopyright("(C)2025");
+        component.setVersion("1.0");
+        component.setVisibility(ProcessingComponentVisibility.SYSTEM);
         return component;
     }
 
@@ -72,18 +82,22 @@ public class ConditionComponent extends TaoComponent {
         final SourceDescriptor source = new SourceDescriptor(TWO_CONDITIONS_COMPONENT_ID + "-input");
         source.setName("input");
         source.setCardinality(1);
+        source.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
         component.addSource(source);
         final TargetDescriptor target1 = new TargetDescriptor(TWO_CONDITIONS_COMPONENT_ID + "-output-1");
         target1.setName("output1");
         target1.setCardinality(1);
+        target1.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
         component.addTarget(target1);
         final TargetDescriptor target2 = new TargetDescriptor(TWO_CONDITIONS_COMPONENT_ID + "-output-2");
         target2.setName("output2");
         target2.setCardinality(1);
+        target2.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
         component.addTarget(target2);
         final TargetDescriptor target3 = new TargetDescriptor(TWO_CONDITIONS_COMPONENT_ID + "-output-3");
         target3.setName("output3");
         target3.setCardinality(1);
+        target3.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
         component.addTarget(target3);
         component.addParameter(new ParameterDescriptor(TWO_CONDITIONS_COMPONENT_ID + "-condition-1",
                                                        "condition1", ParameterType.REGULAR, JavaType.STRING, null, "First Condition", "First Condition", "n/a",
@@ -92,6 +106,12 @@ public class ConditionComponent extends TaoComponent {
                                                        "condition2", ParameterType.REGULAR, JavaType.STRING, null, "Second Condition", "Second Condition", "n/a",
                                                        null, null, null, true));
         component.setTemplateContents("#if ($condition1)\noutput1\n#elseif ($condition2)\noutput2\n#else\noutput3\n#end");
+        component.setLabel("Double condition");
+        component.setDescription("Condition component that acts like an if-elseif-else");
+        component.setVersion("1.0");
+        component.setAuthors("CS GROUP");
+        component.setCopyright("(C)2025");
+        component.setVisibility(ProcessingComponentVisibility.SYSTEM);
         return component;
     }
 
