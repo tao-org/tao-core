@@ -668,14 +668,14 @@
 
         <association-override name="sources">
             <join-table name="component.condition_component_sources">
-                <join-column name="condition_component_id" referenced-column-name="id"/>
+                <join-column name="component_id" referenced-column-name="id"/>
                 <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
             </join-table>
         </association-override>
 
         <association-override name="targets">
             <join-table name="component.condition_component_targets">
-                <join-column name="condition_component_id" referenced-column-name="id"/>
+                <join-column name="component_id" referenced-column-name="id"/>
                 <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
             </join-table>
         </association-override>
