@@ -1,5 +1,9 @@
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.ConditionComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.enums.ComponentCategory;
@@ -10,6 +14,10 @@ import ro.cs.tao.persistence.repository.ConditionComponentRepository;
 
 import java.util.Optional;
 
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(basePackages = {"ro.cs.tao.persistence.repository" })
+@Component("conditionComponentManager")
 public class ConditionComponentManager extends TaoComponentManager<ConditionComponent, ConditionComponentRepository>
         implements ConditionComponentProvider {
 
