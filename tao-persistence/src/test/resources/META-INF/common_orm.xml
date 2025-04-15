@@ -704,6 +704,16 @@
                 <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
             </basic>
 
+            <many-to-many name="parameterDescriptors" fetch="EAGER">
+                <join-table name="component.condition_component_parameters">
+                    <join-column name="component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
             <transient name="template" />
             <transient name="templateEngine" />
         </attributes>
