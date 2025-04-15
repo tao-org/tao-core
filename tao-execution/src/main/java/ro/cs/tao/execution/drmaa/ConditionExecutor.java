@@ -21,6 +21,12 @@ public class ConditionExecutor extends Executor<ConditionExecutionTask> {
     public static void setTaskProvider(ExecutionTaskProvider taskProvider) {
         ConditionExecutor.taskProvider = taskProvider;
     }
+    public ConditionExecutor() {
+        super();
+        if (taskProvider == null) {
+            throw new ExecutionException("A TaskProvider is required to use this executor");
+        }
+    }
 
     @Override
     public boolean supports(TaoComponent component) {
@@ -49,6 +55,9 @@ public class ConditionExecutor extends Executor<ConditionExecutionTask> {
             markTaskFinished(task, ExecutionStatus.FAILED, ex.getMessage());
         }
     }
+
+    @Override
+    public String defaultId() { return "ConditionExecutor"; }
 
     @Override
     public void stop(ConditionExecutionTask task) throws ExecutionException {
