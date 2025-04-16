@@ -73,6 +73,7 @@ public class ConditionComponent extends TaoComponent {
         component.setCopyright("(C)2025");
         component.setVersion("1.0");
         component.setVisibility(ProcessingComponentVisibility.SYSTEM);
+        component.setCategory(ComponentCategory.CONDITION);
         return component;
     }
 
@@ -112,6 +113,7 @@ public class ConditionComponent extends TaoComponent {
         component.setAuthors("CS GROUP");
         component.setCopyright("(C)2025");
         component.setVisibility(ProcessingComponentVisibility.SYSTEM);
+        component.setCategory(ComponentCategory.CONDITION);
         return component;
     }
 
