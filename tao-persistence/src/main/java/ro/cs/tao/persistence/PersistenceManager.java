@@ -241,5 +241,5 @@ public class PersistenceManager {
 
     public ExternalResourceSubscriptionManager externalResourceSubscription() { return externalResourceSubscriptionManager; }
 
-    public ConditionComponentManager conditionComponentManager() { return conditionComponentManager; }
+    public ConditionComponentManager conditionComponents() { return conditionComponentManager; }
 }

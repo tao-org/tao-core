@@ -284,6 +284,9 @@ public class WorkflowUtilities {
             case DATASOURCE_GROUP:
                 component = persistenceManager.dataSourceGroups().get(id);
                 break;
+            case CONDITION:
+                component = persistenceManager.conditionComponents().get(id);
+                break;
         }
         if (component == null) {
             throw new PersistenceException(String.format("No such component [%s]", id));
