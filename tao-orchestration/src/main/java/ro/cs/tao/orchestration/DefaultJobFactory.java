@@ -327,7 +327,7 @@ public class DefaultJobFactory {
                     task = createDataSourceGroupTask(job, workflowNode);
                     break;
                 case CONDITION:
-                    task = createConditionTask(workflowNode, links, inputs);
+                    task = createConditionExecutionTask(workflowNode, links, inputs);
                     break;
                 case GROUP:
                 default:
@@ -637,8 +637,8 @@ public class DefaultJobFactory {
         return task;
     }
 
-    protected ConditionExecutionTask createConditionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
-                                                         Map<String, String> inputs) {
+    protected ConditionExecutionTask createConditionExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
+                                                                  Map<String, String> inputs) {
         final List<ParameterValue> customValues = workflowNode.getCustomValues();
         final ConditionComponent component = conditionComponentProvider.get(workflowNode.getComponentId());
         final ConditionExecutionTask task = new ConditionExecutionTask();
@@ -1060,6 +1060,8 @@ public class DefaultJobFactory {
             clone.setInputParameterValues(null);
         } else if (original instanceof ExecutionGroup) {
             clone = createTaskGroup(clonedJob, node.getWorkflow(), (WorkflowNodeGroupDescriptor) node, params);
+        } else if (original instanceof ConditionExecutionTask){
+            clone = createConditionExecutionTask(node, node.getIncomingLinks(), params);
         }
         if (clone == null) {
             throw new CloneNotSupportedException(String.valueOf(original.getId()));

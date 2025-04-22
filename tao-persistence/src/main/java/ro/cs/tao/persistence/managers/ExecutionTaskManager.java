@@ -330,7 +330,8 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             }
 
             if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask) {
+                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask
+                    || task instanceof ConditionExecutionTask) {
 
                 // set the task parent job
                 task.setJob(job);
