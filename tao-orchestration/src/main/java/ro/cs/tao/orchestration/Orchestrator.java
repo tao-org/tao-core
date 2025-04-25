@@ -714,7 +714,8 @@ public class Orchestrator extends Notifiable {
                             }
                         }
                         // If there is an overridden output parameter, it may be that we have a name expression
-                        if (overriddenOutParam != null) {
+                        // Or, if the next task is a condition, we may set the sensor naming rules
+                        if (overriddenOutParam != null || nextTask instanceof ConditionExecutionTask) {
                             resolveTargetName(nextTask, overriddenOutParam);
                         }
                         if (manyParents) {
@@ -1296,10 +1297,14 @@ public class Orchestrator extends Notifiable {
             boolean succeeded = false;
             StringBuilder error = new StringBuilder();
             for (DataSourceExecutionTask originatingTask : originatingTasks) {
-                String targetOutput = overriddenOutParam.getValue();
                 String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
                 List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
                 if (!rules.isEmpty()) {
+                    if (nextTask instanceof ConditionExecutionTask) {
+                        ((ConditionExecutionTask) nextTask).setRules(rules);
+                        succeeded = true;
+                        continue;
+                    }
                     NameExpressionParser parser = new NameExpressionParser(rules.get(0));
                     final List<Variable> oValues = originatingTask.getOutputParameterValues();
                     if (oValues != null && !oValues.isEmpty()) {
@@ -1318,6 +1323,7 @@ public class Orchestrator extends Notifiable {
                         }
                         final String key = overriddenOutParam.getKey();
                         try {
+                            String targetOutput = overriddenOutParam.getValue();
                             nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
                             nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
                             succeeded = true;
