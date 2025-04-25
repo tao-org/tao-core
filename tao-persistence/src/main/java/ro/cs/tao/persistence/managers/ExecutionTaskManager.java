@@ -281,6 +281,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
+    public List<ExecutionTask> getChildrenTasks(long taskId) {
+        return repository.getChildrenTasks(taskId);
+    }
+
+    @Override
     public int getCPUsForUser(String userId) {
         return repository.getCPUsForUser(userId);
     }    

@@ -71,6 +71,7 @@ public class TaskUtilities {
     private static final ProcessingComponentProvider processingComponentProvider;
     private static final DataSourceComponentProvider dataSourceComponentProvider;
     private static final GroupComponentProvider groupComponentProvider;
+    private static final ConditionComponentProvider conditionComponentProvider;
     /*private static final ExecutionJobProvider jobProvider;*/
     private static final ExecutionTaskProvider taskProvider;
     private static final ExecutionJobProvider jobProvider;
@@ -95,6 +96,7 @@ public class TaskUtilities {
         processingComponentProvider = context.getService(ProcessingComponentProvider.class);
         dataSourceComponentProvider = context.getService(DataSourceComponentProvider.class);
         groupComponentProvider = context.getService(GroupComponentProvider.class);
+        conditionComponentProvider = context.getService(ConditionComponentProvider.class);
         containerProvider = context.getService(ContainerProvider.class);
         repositoryProvider = context.getService(RepositoryProvider.class);
         symLinks = Collections.synchronizedMap(new HashMap<>());
@@ -164,6 +166,9 @@ public class TaskUtilities {
                     break;
                 case GROUP:
                     component = groupComponentProvider.get(node.getComponentId());
+                    break;
+                case CONDITION:
+                    component = conditionComponentProvider.get(node.getComponentId());
                     break;
             }
         }
@@ -455,6 +460,8 @@ public class TaskUtilities {
             component = ((WPSExecutionTask) task).getComponent().getId();
         } else if (task instanceof WMSExecutionTask) {
             component = ((WMSExecutionTask) task).getComponent().getId();
+        } else if (task instanceof ConditionExecutionTask) {
+            component = ((ConditionExecutionTask) task).getComponent().getId();
         } else {
             component = "unknown component";
         }
@@ -531,6 +538,50 @@ public class TaskUtilities {
 
     public static ExecutionTask findTaskByOutput(String outputPath) {
         return taskProvider.getTaskByOutput(outputPath);
+    }
+
+    public static void removeTask(ExecutionTask task) throws PersistenceException {
+        final ExecutionJob job = task.getJob();
+        final Long id = task.getId();
+        job.getTaskDependencies().remove(id.toString());
+        job.getTasks().removeIf(t -> t.getId().equals(id));
+        jobProvider.update(job);
+        taskProvider.delete(id);
+    }
+
+    public static void removeChildrenTasks(ExecutionJob job, ExecutionTask task) throws PersistenceException {
+        final Map<String, List<String>> dependencies = job.getTaskDependencies();
+        List<ExecutionTask> children = taskProvider.getChildrenTasks(task.getId());
+        boolean isDirty = false;
+        while (children != null && !children.isEmpty()) {
+            for (ExecutionTask child : children) {
+                removeTask(child);
+                children = taskProvider.getChildrenTasks(child.getId());
+            }
+        }
+    }
+
+    public static void removeUnmatchedConditionBranches(ConditionExecutionTask task) throws PersistenceException {
+        final List<ExecutionTask> children = taskProvider.getChildrenTasks(task.getId());
+        final List<Variable> outputParameterValues = task.getOutputParameterValues();
+        final Set<String> names = outputParameterValues.stream()
+                                                       .filter(v -> v.getValue() == null).map(Variable::getKey)
+                                                       .collect(Collectors.toSet());
+        final List<TargetDescriptor> descriptors = task.getComponent().getTargets().stream()
+                                                       .filter(t -> names.contains(t.getName()))
+                                                       .collect(Collectors.toList());
+        final Iterator<ExecutionTask> iterator = children.iterator();
+        while (iterator.hasNext()) {
+            ExecutionTask child = iterator.next();
+            final WorkflowNodeDescriptor node = getWorkflowNode(child);
+            if (node.getIncomingLinks().stream().noneMatch(l -> names.contains(l.getInput().getName()))) {
+                iterator.remove();
+            }
+        }
+        for (ExecutionTask child : children) {
+            removeChildrenTasks(task.getJob(), child);
+            removeTask(child);
+        }
     }
 
     public static String getUserWorkspace(ExecutionTask task) {
