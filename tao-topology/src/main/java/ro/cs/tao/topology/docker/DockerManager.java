@@ -79,62 +79,189 @@ public class DockerManager {
         instance = new DockerManager();
     }
 
+    /**
+     * Sets the `masterNode` for the DockerManager instance.
+     * The master node serves as the primary configuration or reference
+     * point for managing Docker containers within the application.
+     *
+     * @param master the {@code NodeDescription} object representing the master node to be set
+     */
     public static void setMasterNode(NodeDescription master) {
         instance.masterNode = master;
     }
 
+    /**
+     * Retrieves a list of available Docker container images.
+     * This method internally delegates to an instance-specific implementation
+     * to fetch the list of available Docker images.
+     *
+     * @return a list of {@code Container} objects representing available Docker container images,
+     *         or an empty list if no images are available.
+     */
     public static List<Container> getAvailableDockerImages() {
         return instance.listAvailableDockerImages();
     }
 
+    /**
+     * Lists Docker container images available on Docker Hub that match the specified filter.
+     * The method queries Docker Hub using the provided filter criteria and retrieves a list of
+     * container images that match the filter.
+     *
+     * @param filter a string representing the filter criteria to match the Docker images on Docker Hub
+     * @return a list of {@code Container} objects representing Docker images that match the filter criteria,
+     *         or an empty list if no images match the filter
+     * @throws IOException if an error occurs during communication with Docker Hub
+     */
     public static List<Container> listDockerHubImages(String filter) throws IOException {
         return instance.listFromDockerHub(filter);
     }
 
+    /**
+     * Retrieves a Docker container image by its name. If the image matches the provided name,
+     * the corresponding Container object is returned. If the image is not found, the method
+     * will return null.
+     *
+     * @param name the name of the Docker image to be retrieved
+     * @return a {@code Container} object representing the Docker image, or null if no Docker image matches the given name
+     */
     public static Container getDockerImage(String name) {
         return instance.get(name);
     }
 
+    /**
+     * Checks if a public Docker image with the specified name exists in the repository.
+     *
+     * @param name the name of the Docker image to check for existence
+     * @return {@code true} if the Docker image exists, {@code false} otherwise
+     */
     public static boolean publicImageExists(String name) {
         return instance.checkExists(name);
     }
 
+    /**
+     * Pulls a Docker image by its name. This method executes the necessary commands to fetch
+     * the specified image from the Docker repository and creates a corresponding Container object.
+     * If the image cannot be pulled or an error occurs, null is returned.
+     *
+     * @param name the name of the Docker image to pull, including the tag (e.g., "nginx:latest")
+     * @return a {@code Container} object representing the pulled Docker image, or null if the pull operation fails
+     */
     public static Container pullImage(String name) {
         return instance.pull(name);
     }
 
+    /**
+     * Runs a Docker container as a daemon using the specified image, name, port mapping, user, and additional arguments.
+     * This method delegates to an internal implementation to execute the command and manage the container lifecycle.
+     *
+     * @param imageName the name of the Docker image to use for the container
+     * @param name the name to assign to the running container, or null if no custom name is desired
+     * @param portMap a {@code Tuple} specifying the host and container ports to map (host port as key, container port as value), or null if no ports need mapping
+     * @param user the user associated with the container instance, typically for identification
+     * @param arguments a list of additional command-line arguments to pass to the Docker run command
+     * @return the unique identifier (ID) of the created container, or null if the operation fails
+     * @throws IOException if an error occurs during command execution or communication with the Docker engine
+     */
     public static String runDaemon(String imageName, String name, Tuple<Integer, Integer> portMap, String user, List<String> arguments) throws IOException {
         return instance.runAsDaemon(imageName, name, portMap, user, arguments);
     }
 
+    /**
+     * Runs a Docker container using the specified image and arguments, and waits for its completion
+     * or until the specified timeout expires.
+     *
+     * @param containerName the name of the Docker container to run
+     * @param arguments a list of additional command-line arguments to pass to the Docker run command
+     * @param timeoutMinutes the maximum time in minutes to wait for the container's execution to complete
+     * @return the output from the Docker command execution, or {@code null} if the container name or arguments are invalid
+     * @throws IOException if an error occurs during execution or if the Docker command fails
+     */
     public static String runWait(String containerName, List<String> arguments, long timeoutMinutes)  throws IOException {
         return instance.run(containerName, arguments, timeoutMinutes);
     }
 
+    /**
+     * Retrieves the IDs of Docker container instances currently running for the specified image name.
+     * The method queries the running instances based on the provided image name and returns their unique identifiers.
+     *
+     * @param imageName the name of the Docker image for which the running instances are to be fetched
+     * @return an array of strings containing the unique identifiers (IDs) of the running Docker container instances;
+     *         may return an empty array if no instances are found
+     */
     public static String[] getInstances(String imageName) {
         return instance.getRunningInstances(imageName);
     }
 
+    /**
+     * Retrieves the unique identifier (ID) of a running Docker container instance based on
+     * the specified image name and container name. If a running instance matching the
+     * provided parameters is found, its ID is returned.
+     *
+     * @param imageName the name of the Docker image for which the running instance is to be fetched
+     * @param containerName the name of the Docker container to query
+     * @return the unique identifier (ID) of the running Docker container instance,
+     *         or null if no matching instance is found
+     */
     public static String getInstance(String imageName, String containerName) {
         return instance.getRunningInstance(imageName, containerName);
     }
 
+    /**
+     * Retrieves the unique identifier (ID) of a running Docker container based on the provided container ID.
+     * This method queries the underlying Docker engine to fetch the running instance associated with the given container ID.
+     *
+     * @param containerId the identifier of the container for which the running instance ID is to be retrieved
+     * @return the unique identifier (ID) of the running Docker container instance, or null if no such instance is found
+     */
     public static String getInstance(String containerId) {
         return instance.getRunningInstance(containerId);
     }
 
+    /**
+     * Registers a new Docker image by providing the path to the image, a short name, and a description.
+     *
+     * @param imagePath   the {@code Path} to the Docker image file to be registered
+     * @param shortName   the short name to assign to the Docker image
+     * @param description a description of the Docker image
+     * @return the unique identifier (e.g., tag or name) of the registered Docker image
+     * @throws TopologyException if the image registration process fails
+     */
     public static String registerImage(Path imagePath, String shortName, String description) throws TopologyException {
         return instance.register(imagePath, shortName, description);
     }
 
+    /**
+     * Stops a running Docker container instance and removes it. This method identifies the
+     * container instance based on the provided container ID and user ID, stops the container,
+     * removes it from the Docker engine, and clears it from the internal instance provider.
+     *
+     * @param containerId the unique identifier of the Docker container instance to be stopped
+     * @param userId the user ID associated with the container instance
+     * @throws IOException if stopping or removing the container fails due to an execution error
+     */
     public static void stopInstance(String containerId, String userId) throws IOException {
         instance.stop(containerId, userId);
     }
 
+    /**
+     * Stops all running instances of a Docker container with the specified name.
+     * This method delegates to an internal implementation that halts all instances
+     * associated with the provided container name.
+     *
+     * @param containerName the name of the Docker container whose instances are to be stopped
+     * @throws IOException if an error occurs while stopping the instances
+     */
     public static void stopInstances(String containerName) throws IOException {
         instance.stopAll(containerName);
     }
 
+    /**
+     * Retrieves the next available free port that can be used for allocating a new Docker container.
+     * This method checks the currently allocated ports and calculates the next unused port
+     * starting from a predefined base port.
+     *
+     * @return the next free port number as an integer
+     */
     public static int getNextFreePort() {
         return instance.getAvailablePort();
     }

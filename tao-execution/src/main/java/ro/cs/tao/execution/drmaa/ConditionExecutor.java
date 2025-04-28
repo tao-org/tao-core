@@ -17,10 +17,21 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * The {@code ConditionExecutor} class is a specific implementation of {@code Executor}
+ * for handling condition-based execution tasks. It processes tasks of type
+ * {@code ConditionExecutionTask}, validates their configuration, and manages their
+ * execution lifecycle, including start, stop, and error handling.
+ */
 public class ConditionExecutor extends Executor<ConditionExecutionTask> {
 
     private static ExecutionTaskProvider taskProvider;
 
+    /**
+     * Sets the task provider for the {@code ConditionExecutor}.
+     *
+     * @param taskProvider the {@link ExecutionTaskProvider} to be set as the task provider
+     */
     public static void setTaskProvider(ExecutionTaskProvider taskProvider) {
         ConditionExecutor.taskProvider = taskProvider;
     }

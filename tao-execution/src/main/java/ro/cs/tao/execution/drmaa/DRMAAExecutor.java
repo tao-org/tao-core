@@ -87,6 +87,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private final List<TaskListener> taskListeners;
     private final Map<String, Tuple<NodeDescription, AtomicLong>> hostMemoryRequests;
 
+    /**
+     * Sets the container provider for the {@code DRMAAExecutor}.
+     * This allows the executor to manage and interact with the associated containers.
+     *
+     * @param provider the {@link ContainerProvider} instance to be set
+     */
     public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
 
     /**
@@ -97,12 +103,24 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
      */
     public static void setApplicationId(String id) { appId = id; }
 
+    /**
+     * Sets the number of workers that can process tasks in parallel within the queue.
+     * Adjusting this value modifies the level of parallelism for the task execution.
+     *
+     * @param value the number of parallel workers to be set for task processing
+     */
     public static void setQueueWorkers(int value) {
         if (instance != null) {
             instance.queueWorker.setParallelism(value);
         }
     }
 
+    /**
+     * Retrieves the singleton instance of the {@code DRMAAExecutor} class.
+     * This instance is used to manage and execute tasks using the DRMAA (Distributed Resource Management Application API) framework.
+     *
+     * @return the singleton instance of {@code DRMAAExecutor}
+     */
     public static DRMAAExecutor getInstance() { return instance; }
 
     public DRMAAExecutor() {
@@ -372,6 +390,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                : "n/a";
     }
 
+    /**
+     * Retrieves the output of a job associated with the specified resource ID.
+     *
+     * @param resourceId the unique identifier of the resource whose job output is to be retrieved
+     * @return the job's output as a string, or "n/a" if the session does not implement JobExitHandler
+     * @throws ExecutionException if no task is found for the provided resourceId
+     */
     public String getJobOutput(String resourceId) {
         String out;
         final ExecutionTask task = taskProvider.getByResourceId(resourceId);
@@ -387,6 +412,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return out;
     }
 
+    /**
+     * Increments the amount of memory requested for a specified node.
+     * If the node's host does not already exist in the memory tracking map,
+     * it is added with the specified memory amount. If the host exists, the
+     * memory amount is added to the existing value.
+     *
+     * @param node the {@link NodeDescription} representing a node, which contains
+     *        information about the host whose memory request is being tracked
+     * @param amount the amount of memory, in megabytes, to add to the requested memory
+     *        for the specified host
+     */
     private void incrementMemory(NodeDescription node, long amount) {
         String host = node.getId();
         if (!this.hostMemoryRequests.containsKey(host)) {
@@ -397,6 +433,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         logger.fine("Host " + host + " has " + this.hostMemoryRequests.get(host).getKeyTwo().get() + "MB requested memory");
     }
 
+    /**
+     * Reduces the amount of memory requested for a specified host.
+     * If the host exists in the memory tracking map, the method decrements
+     * the corresponding memory value by the specified amount.
+     *
+     * @param host the name of the host whose requested memory is to be decremented
+     * @param amount the amount of memory, in megabytes, to decrement from the host's requested memory
+     */
     private void decrementMemory(String host, long amount) {
         Tuple<NodeDescription, AtomicLong> tuple = this.hostMemoryRequests.get(host);
         if (tuple != null) {
@@ -405,6 +449,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
+    /**
+     * Determines whether a task can be submitted to a specified host based on its memory constraints.
+     *
+     * @param host the name of the host where the task is to be submitted
+     * @param newMemory the additional memory required by the task in MB
+     * @return true if the task can be submitted to the host based on available memory; false otherwise
+     */
     private boolean canSubmitTask(String host, long newMemory) {
         final Tuple<NodeDescription, AtomicLong> hostData = this.hostMemoryRequests.get(host);
         final boolean canSubmit;
@@ -424,6 +475,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return canSubmit;
     }
 
+    /**
+     * Executes a task by submitting its associated job template to the system,
+     * monitoring its status, and handling any errors or updates during execution.
+     *
+     * @param pair a tuple containing the {@link JobTemplate} associated with the task
+     *             and the {@link ProcessingExecutionTask} to be executed. The job template
+     *             defines the configuration for the execution, while the task represents
+     *             the execution unit.
+     * @return always returns {@code null}. The operation executes its logic without
+     *         returning a meaningful value.
+     */
     private Void executeImpl(Tuple<JobTemplate, ProcessingExecutionTask> pair) {
         final JobTemplate jt = pair.getKeyOne();
         final ProcessingExecutionTask task = pair.getKeyTwo();
@@ -464,6 +526,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return null;
     }
 
+    /**
+     * Creates a job template for the specified processing execution task.
+     *
+     * @param task the processing execution task for which the job template is to be created.
+     * @return the created JobTemplate instance configured based on the provided task and its associated parameters.
+     * @throws DrmaaException if there is an error while communicating with the DRMAA session.
+     * @throws IOException if an I/O error occurs during job template creation or configuration.
+     * @throws PersistenceException if there is an error persisting the task updates (e.g., updating the task command).
+     */
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException, PersistenceException {
         // Get from the component the execution command
         JobTemplate jt;
@@ -806,6 +877,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return jt;
     }
 
+    /**
+     * Prepares and wraps a shell invocation command for processing components.
+     *
+     * @param component the processing component that requires shell invocation
+     * @param argsList the list of arguments to be passed to the shell command
+     * @param initialCmd the initial command to run in the shell
+     * @param tempOutput the temporary output directory or file path
+     * @param finalOutput the final output directory or file path
+     * @param isLocal a boolean indicating whether the execution is local
+     * @return the shell executable (e.g., "/bin/bash") for the invocation
+     */
     private String wrapShellInvocation(ProcessingComponent component, final List<String> argsList, String initialCmd,
                                        final String tempOutput, final String finalOutput, final boolean isLocal) {
         final boolean isOutputManaged = component.isOutputManaged();
@@ -915,6 +997,16 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return "/bin/bash";
     }
 
+    /**
+     * Sets a memory constraint for a given job template.
+     * If the specified job template supports memory constraints and the memory value is positive
+     * and memory constraint enforcement is enabled, this method sets the memory requirement attribute
+     * based on the provided value.
+     *
+     * @param jt the job template to be configured. Must be an instance of {@code JobTemplateExtension}.
+     * @param memory the amount of memory to be set as a requirement for the job.
+     * @throws DrmaaException if an error occurs while setting the memory constraint.
+     */
     private void setMemoryConstraint(JobTemplate jt, long memory) throws DrmaaException {
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
@@ -925,6 +1017,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
+    /**
+     * Sets the host attribute for a given job template. If the job template is an instance of
+     * {@code JobTemplateExtension} and it supports the {@code NODE_ATTRIBUTE}, this method assigns
+     * the specified host value to the attribute.
+     *
+     * @param jt   the job template to configure. Must be an instance of {@code JobTemplateExtension}.
+     * @param host the host name or address to be set for the job.
+     * @throws DrmaaException if an error occurs while setting the host attribute.
+     */
     private void setHost(JobTemplate jt, String host) throws DrmaaException {
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
@@ -934,6 +1035,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
+    /**
+     * Sets the job ID for a given job template. If the job template is an instance of
+     * {@code JobTemplateExtension}, and it contains the {@code JOB_ID} attribute, this method
+     * assigns the provided job ID to that attribute.
+     *
+     * @param jt the job template to configure. Must be an instance of {@code JobTemplateExtension}.
+     * @param id the job ID to be assigned.
+     * @throws DrmaaException if an error occurs while setting the job ID attribute.
+     */
     private void setJobId(JobTemplate jt, Long id) throws DrmaaException {
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
@@ -943,6 +1053,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
+    /**
+     * Sets the task ID for a given job template. If the job template is an instance of
+     * {@code JobTemplateExtension} and it supports the {@code TASK_ID} attribute, this method assigns
+     * the provided task ID to that attribute.
+     *
+     * @param jt the job template to configure. Must be an instance of {@code JobTemplateExtension}.
+     * @param id the task ID to be assigned.
+     * @throws DrmaaException if an error occurs while setting the task ID attribute.
+     */
     private void setTaskId(JobTemplate jt, Long id) throws DrmaaException {
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
@@ -952,6 +1071,16 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
+    /**
+     * Notifies external task listeners based on the current execution status of the given task.
+     * The notification is sent only to the listeners supporting the protocol defined in the
+     * job's callback descriptor.
+     *
+     * @param task the {@link ProcessingExecutionTask} instance representing the task whose listeners need to be notified
+     * @param message a string message providing additional context, typically used in case of errors
+     * @param exitCode the exit code of the task process, relevant for error handling
+     * @param processOutput the output generated by the task's process
+     */
     private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
         final ExecutionJob job = task.getJob();
         final EndpointDescriptor jobCallback = job.getCallbackDescriptor();
@@ -977,6 +1106,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
+    /**
+     * Retrieves the {@code Session} associated with the specified {@code Environment}.
+     * If the provided {@code Environment} is {@code null}, the default environment is used.
+     * Throws an exception if no session is found for the given environment.
+     *
+     * @param environment the {@link Environment} instance for which to retrieve the session.
+     *                     If {@code null}, the default environment will be used.
+     * @return the {@link Session} associated with the specified or default environment.
+     * @throws DrmaaException if no session exists for the specified environment
+     *                        or if there is an issue retrieving the session.
+     */
     private Session getSession(Environment environment) throws DrmaaException {
         if (environment == null) {
             environment = Environment.DEFAULT;

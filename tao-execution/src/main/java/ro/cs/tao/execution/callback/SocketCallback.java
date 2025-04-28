@@ -6,6 +6,14 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 
+/**
+ * A concrete implementation of the {@link Callback} abstract class, designed to handle
+ * interactions with remote systems via sockets.
+ *
+ * This class facilitates the sending of data to a specified endpoint by establishing a
+ * socket connection, converting parameter data into the appropriate format, and writing it
+ * to the socket's output stream.
+ */
 public class SocketCallback extends Callback {
 
     public SocketCallback(EndpointDescriptor endpointDescriptor) {

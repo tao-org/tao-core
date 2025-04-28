@@ -84,20 +84,52 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
 
+    /**
+     * Sets the product provider for managing and retrieving EOProduct-related data.
+     *
+     * @param provider the instance of EOProductProvider to be used as the product provider
+     */
     public static void setProductProvider(EOProductProvider provider) {
         productProvider = provider;
     }
 
+    /**
+     * Sets the workflow provider responsible for managing and retrieving workflow-related data.
+     *
+     * @param provider the instance of WorkflowProvider to be set as the workflow provider
+     */
     public static void setWorkflowProvider(WorkflowProvider provider) { workflowProvider = provider; }
 
+    /**
+     * Sets the data source configuration provider responsible for managing and
+     * retrieving DataSourceConfiguration-related data.
+     *
+     * @param provider the instance of DataSourceConfigurationProvider to be used
+     *                 as the configuration provider
+     */
     public static void setDataSourceConfigurationProvider(DataSourceConfigurationProvider provider) { configurationProvider = provider; }
 
+    /**
+     * Sets the task provider responsible for managing and retrieving execution task-related data.
+     *
+     * @param provider the instance of ExecutionTaskProvider to be used as the task provider
+     */
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
+    /**
+     * Sets the job provider responsible for managing and retrieving execution job-related data.
+     *
+     * @param provider the instance of ExecutionJobProvider to be used as the job provider
+     */
     public static void setJobProvider(ExecutionJobProvider provider) {
         jobProvider = provider;
     }
 
+    /**
+     * Sets the component provider responsible for managing and retrieving data source component-related data.
+     *
+     * @param provider the instance of DataSourceComponentProvider to be used as the component provider
+     */
     public static void setComponentProvider(DataSourceComponentProvider provider) { componentProvider = provider; }
 
     public QueryExecutor() {
@@ -446,6 +478,18 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         return json;
     }
 
+    /**
+     * Filters a list of EOProducts based on comparison with another list and optional filters.
+     * This method performs the following operations:
+     * - Compares the acquisition dates of the products in the given list with the other list.
+     * - Groups products by acquisition date.
+     * - Applies filtering to retain specific products based on the provided filters or defaults to a "middle product" filter.
+     *
+     * @param products the list of EOProducts to be filtered
+     * @param otherProductsList a serialized string representation of another product list
+     *                          used as a reference for filtering
+     * @param filters an array of strings defining additional filter criteria for products
+     */
     private void filterByOtherList(List<EOProduct> products, String otherProductsList, String[] filters) {
         final List<String> names = deserializeResults(otherProductsList);
         final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));

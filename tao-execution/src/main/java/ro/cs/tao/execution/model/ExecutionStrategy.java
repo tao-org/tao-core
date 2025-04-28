@@ -19,6 +19,15 @@ public class ExecutionStrategy {
     private final String hostName;
     private final ExecutionTask task;
 
+    /**
+     * Retrieves the execution strategy for a given execution task based on the configured execution strategy type
+     * and the node affinity settings of associated tasks. Determines the appropriate host name, if applicable,
+     * to guide the task execution strategy.
+     *
+     * @param task the execution task for which the execution strategy should be determined
+     * @return an instance of {@code ExecutionStrategy} corresponding to the configured strategy type
+     *         and the associated node affinity, if any
+     */
     public static ExecutionStrategy getExecutionStrategy(ExecutionTask task) {
         final ExecutionStrategyType strategyType = Enum.valueOf(ExecutionStrategyType.class,
                                                                 ConfigurationManager.getInstance()
@@ -32,28 +41,72 @@ public class ExecutionStrategy {
         return create(task, strategyType, tmpTask != null ? tmpTask.getExecutionNodeHostName() : null);
     }
 
+    /**
+     * Constructs an execution strategy for a given execution task and strategy type.
+     *
+     * @param task the execution task to be mapped to a strategy
+     * @param type the type of execution strategy to apply
+     * @return an instance of {@code ExecutionStrategy} configured with the specified task and type
+     */
     static ExecutionStrategy create(ExecutionTask task, ExecutionStrategyType type) {
         return create(task, type, null);
     }
 
+    /**
+     * Creates an instance of {@code ExecutionStrategy} based on the provided execution task,
+     * strategy type, and host name.
+     *
+     * @param task the execution task to be associated with the created execution strategy
+     * @param type the type of execution strategy to apply
+     * @param hostName the host name associated with the execution strategy
+     * @return an instance of {@code ExecutionStrategy} configured with the specified task,
+     *         type, and host name
+     */
     static ExecutionStrategy create(ExecutionTask task, ExecutionStrategyType type, String hostName) {
         return new ExecutionStrategy(task, type, hostName);
     }
 
+    /**
+     * Constructs an instance of {@code ExecutionStrategy} based on the provided execution task,
+     * execution strategy type, and host name.
+     *
+     * @param task the execution task to be associated with the created execution strategy
+     * @param type the type of execution strategy to apply
+     * @param hostName the host name associated with the execution strategy
+     */
     ExecutionStrategy(ExecutionTask task, ExecutionStrategyType type, String hostName) {
         this.type = type;
         this.hostName = hostName;
         this.task = task;
     }
 
+    /**
+     * Retrieves the execution strategy type associated with this instance.
+     *
+     * @return the execution strategy type represented by an instance of {@code ExecutionStrategyType}
+     */
     public ExecutionStrategyType getType() {
         return type;
     }
 
+    /**
+     * Retrieves the host name associated with this execution strategy instance.
+     *
+     * @return the host name as a String, or null if no host name is configured
+     */
     public String getHostName() {
         return hostName;
     }
 
+    /**
+     * Retrieves a {@code NodeData} instance that represents the node where the task will execute,
+     * based on the provided memory constraints and configuration of the execution strategy.
+     * If the hostName is not set, it attempts to find an available node that satisfies the required specifications.
+     *
+     * @param memory the amount of memory required, used for node selection if memory constraints are applied
+     * @return a {@code NodeData} object containing details of the allocated node, its CPU count, and memory
+     * @throws DrmaaException if an error occurs during the process of retrieving or allocating the node
+     */
     public NodeData getNode(long memory) throws DrmaaException {
         NodeData nodeData = null;
         if (this.hostName != null) {

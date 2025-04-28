@@ -16,6 +16,18 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The WMTSExecutionTask class represents a specific type of execution task in the system,
+ * which is associated with a WMTS (Web Map Tile Service) component. This class extends
+ * the base functionality provided by the ExecutionTask superclass, adding specific features
+ * for handling WMTS component-related parameters and execution logic.
+ *
+ * Responsibilities of this class include:
+ * - Managing input and output parameters for the associated WMTS component.
+ * - Validating parameter IDs against the component's descriptors (parameters, sources, and targets).
+ * - Constructing the output path for the task's generated results.
+ * - Supporting extension and customization for execution-specific behaviors.
+ */
 public class WMTSExecutionTask extends ExecutionTask {
 
     private WMTSComponent component;

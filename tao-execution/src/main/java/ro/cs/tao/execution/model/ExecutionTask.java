@@ -98,6 +98,16 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     public String getLog() { return log; }
     public void setLog(String log) { this.log = log; }
 
+    /**
+     * Sets the state handler for the execution task. This method interacts with the provided
+     * {@link InternalStateHandler} to initialize or synchronize the internal state of the task.
+     * If the internal state is not already set, it attempts to serialize it using the provided handler.
+     * If the internal state is already defined, the handler sets the current state.
+     * Finally, the handler is assigned to the task for future operations.
+     *
+     * @param handler the {@link InternalStateHandler} responsible for managing the internal state of the task.
+     *                It should define methods for serializing, deserializing, and advancing the state.
+     */
     public void setStateHandler(InternalStateHandler<?> handler) {
         this.stateHandler = handler;
         if (this.internalState == null) {
@@ -116,6 +126,13 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.stateHandler.assignTask(this);
     }
 
+    /**
+     * Retrieves the internal state handler associated with the execution task.
+     * The state handler is responsible for managing and advancing the internal
+     * state of the task, including serialization and deserialization of the state.
+     *
+     * @return the {@link InternalStateHandler} managing the internal state of the task
+     */
     public InternalStateHandler<?> getStateHandler() { return this.stateHandler; }
 
     public String getInternalState() { return internalState; }
@@ -240,7 +257,14 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         return new StringListAdapter().unmarshal(values);
     }
 
-    // ATTENTION: index is 1-based, while the list is 0-based
+    /**
+     * Retrieves a specific value from a delimited string by its 1-based index.
+     *
+     * @param valuesAsString the string containing delimited values
+     * @param index the 1-based index of the value to retrieve
+     * @return the value at the specified index in the list
+     * @throws IndexOutOfBoundsException if the index is out of range
+     */
     @Transient
     protected String getListValue(String valuesAsString, int index) {
         List<String> values = getListParameterValues(valuesAsString);
