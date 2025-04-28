@@ -46,40 +46,89 @@ public class ExecutionsManager {
         postExecuteTaskActions = new HashMap<>();
     }
 
+    /**
+     * Retrieves the singleton instance of the ExecutionsManager class.
+     *
+     * @return the singleton instance of ExecutionsManager
+     */
     public static ExecutionsManager getInstance() {
         return instance;
     }
 
+    /**
+     * Executes the specified {@link ExecutionTask} using a determined {@link Executor}.
+     *
+     * @param task the execution task to be processed
+     */
     public void execute(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.execute(task);
     }
 
+    /**
+     * Stops the execution of the specified {@link ExecutionTask}.
+     *
+     * @param task the execution task to be stopped
+     */
     public void stop(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.stop(task);
     }
 
+    /**
+     * Suspends the execution of the specified {@link ExecutionTask}.
+     *
+     * @param task the execution task to be suspended
+     */
     public void suspend(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.suspend(task);
     }
 
+    /**
+     * Resumes the execution of the specified {@link ExecutionTask}.
+     *
+     * @param task the execution task to be resumed
+     */
     public void resume(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.resume(task);
     }
 
+    /**
+     * Retrieves the set of currently registered executors.
+     *
+     * @return a set of {@link Executor} objects representing the registered executors
+     */
     public Set<Executor> getRegisteredExecutors() { return this.services; }
 
+    /**
+     * Retrieves the output of a job that is identified by the specified ID.
+     *
+     * @param id the unique identifier of the job whose output is to be retrieved
+     * @return the output of the job as a String
+     */
     public String getJobOutput(long id) {
         return DRMAAExecutor.getInstance().getJobOutput(String.valueOf(id));
     }
 
+    /**
+     * Registers a post-execution action to be performed after the specified {@link ExecutionTask} completes execution.
+     *
+     * @param task   the execution task for which the post-execution action is registered
+     * @param action a {@link Callable} representing the post-execution action to be performed
+     */
     public void registerPostExecuteAction(ExecutionTask task, Callable<Void> action) {
         postExecuteTaskActions.put(task.getId(), action);
     }
 
+    /**
+     * Executes the post-execution action associated with the specified {@link ExecutionTask}, if one is registered.
+     * Once the action is executed, it is removed from the internal storage.
+     * If an error occurs during the execution of the action, it is logged as a warning.
+     *
+     * @param task the execution task whose associated post-execution action is to be executed
+     */
     public void doPostExecuteAction(ExecutionTask task) {
         Callable<Void> action = postExecuteTaskActions.get(task.getId());
         if (action != null) {

@@ -12,6 +12,16 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * The LinuxRuntimeInspector class is responsible for retrieving runtime information
+ * from a Linux-based node. It interacts with either remote or local nodes using
+ * specific authentication methods to execute system commands and parse their outputs.
+ * The class provides CPU usage, memory availability, and disk usage details, among
+ * other runtime metrics.
+ *
+ * This class implements the NodeRuntimeInspector interface and relies on various
+ * helper classes and components such as Executor and RuntimeInfo to perform its tasks.
+ */
 class LinuxRuntimeInspector implements NodeRuntimeInspector {
 
     final String node;
