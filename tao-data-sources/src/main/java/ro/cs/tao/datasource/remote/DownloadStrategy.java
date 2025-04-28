@@ -17,8 +17,8 @@ package ro.cs.tao.datasource.remote;
 
 import org.apache.http.Header;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
+import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.util.BaseProductHelper;
 import ro.cs.tao.utils.ExceptionUtils;
@@ -147,6 +147,13 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         this.cancelled = true;
     }
 
+    /**
+     * Sets the authentication details for the download strategy. This might be required
+     * for accessing protected resources or authenticating with the data source.
+     *
+     * @param authentication The authentication object that contains the required credentials or tokens
+     *                        to be used for authentication.
+     */
     public void setAuthentication(T authentication) {
 
     }
@@ -158,6 +165,15 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         return localArchiveRoot;
     }
 
+    /**
+     * Sets the root path of the local archive directory. The local archive root is used
+     * for storing products in a repository structure. Additionally, this method configures
+     * the {@link ProductPathBuilder} implementation for building product paths based on the
+     * provided local archive root and optional properties. If a custom path builder class
+     * is specified in the properties, it attempts to instantiate and use that class.
+     *
+     * @param localArchiveRoot The root directory path of the local archive.
+     */
     public void setLocalArchiveRoot(String localArchiveRoot) {
         this.localArchiveRoot = localArchiveRoot;
         String format = this.props != null ? this.props.getProperty(ProductPathBuilder.LOCAL_ARCHIVE_PATH_FORMAT, "yyyy/MM/dd") : "yyyy/MM/dd";
@@ -176,6 +192,13 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
     }
 
+    /**
+     * Generates a URL string from the location of the given EOProduct descriptor.
+     * If the location of the descriptor is invalid or undefined, the method returns null.
+     *
+     * @param descriptor the EOProduct instance containing the location information
+     * @return the URL string representation of the product's location, or null if the location is invalid
+     */
     public String getProductUrl(EOProduct descriptor){
         URI location = null;
         try {
