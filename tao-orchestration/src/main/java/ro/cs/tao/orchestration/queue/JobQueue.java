@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+/**
+ * The JobQueue interface defines operations for managing and processing jobs in a job queue system.
+ * It allows for adding, removing, and modifying jobs, as well as retrieving jobs based on their
+ * position or ownership by a specific user.
+ */
 public interface JobQueue {
     /**
      * Initializes the queue with the jobs that have not yet been executed.

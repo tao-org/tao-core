@@ -176,10 +176,28 @@ public class Orchestrator extends Notifiable {
         subscribe(Topic.EXECUTION.value(), Topic.SYSTEM.value());
     }
 
+    /**
+     * Retrieves the unique identifier of this instance
+     *
+     * @return the unique identifier as a String
+     */
     public String getId() {
         return uuid;
     }
 
+    /**
+     * Initializes and starts the orchestration service and its components.
+     *
+     * This method performs the following actions:
+     * 1. Sets up job and group selectors using the provided workflow and task providers.
+     * 2. Registers task status handlers with the respective providers.
+     * 3. Initializes the job factory with the default implementation.
+     * 4. Retrieves metadata services from the service registry.
+     * 5. Initializes and starts the orchestrator worker thread to monitor orchestration tasks.
+     * 6. Initializes the job queue and its associated worker.
+     *
+     * Upon completion, the orchestration service is fully operational and ready to handle tasks.
+     */
     public void start() {
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.workflowNodeProvider::get;
         initializeJobSelector(workflowProvider, this.taskProvider::getByJobAndNode);
@@ -493,20 +511,44 @@ public class Orchestrator extends Notifiable {
         JobCommand.RESUME.applyTo(job);
     }
 
+    /**
+     * Retrieves the count of currently active jobs with a status of RUNNING.
+     *
+     * @return the number of active jobs that are currently in the RUNNING state
+     */
     int getActiveJobsCount() {
         return jobProvider.count(ExecutionStatus.RUNNING);
     }
 
+    /**
+     * Retrieves the count of active jobs for a specific user.
+     *
+     * @param userId the unique identifier of the user whose active jobs are to be counted
+     * @return the total number of active jobs associated with the specified user
+     */
     int getActiveJobsCount(String userId) {
         return jobProvider.count(userId, ExecutionStatus.RUNNING);
     }
 
+    /**
+     * Determines the maximum number of jobs that are allowed based on the system configuration and current active nodes.
+     * The value is computed dynamically depending on whether node pooling is enabled and other configuration parameters.
+     *
+     * @return the maximum number of jobs allowed in the system.
+     */
     int getMaximumAllowedJobs() {
         final boolean shouldPoolNodes = !ConfigurationManager.getInstance().getBooleanValue("topology.dedicated.user.nodes");
         int nodeUserLimit = Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.node.user.limit", "1"));
         return shouldPoolNodes ? NodeManager.getInstance().getActiveNodesCount() * 2 : (int) userProvider.count();
     }
 
+    /**
+     * Purges all jobs associated with the specified user. This includes removing the jobs
+     * from the job queue and stopping any active, queued, or undetermined jobs.
+     *
+     * @param user the identifier of the user whose jobs will be purged
+     * @return the total number of jobs purged
+     */
     public int purgeJobs(String user) {
         final List<Long> jobIds = this.jobQueue.removeUserJobs(user);
         int purged = 0;
@@ -542,6 +584,16 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Prepares stalled tasks by evaluating their status and updating them based on their execution state.
+     * If the task is determined to be stalled and the retry condition is met, the status will be updated accordingly.
+     * Otherwise, tasks that are no longer alive will be canceled and removed from the list.
+     *
+     * @param shouldRetry a boolean flag indicating whether stalled tasks should be retried.
+     *                    If true, eligible tasks will have their status updated to queued for re-execution.
+     * @return a list of execution tasks that were evaluated and stayed in a running state after processing.
+     *         If no tasks are running, returns null.
+     */
     public List<ExecutionTask> prepareStalledTasks(boolean shouldRetry) {
         List<ExecutionTask> runningTasks = null;
         List<ExecutionJob> jobs = jobProvider.list(ExecutionStatus.RUNNING);
@@ -826,6 +878,17 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Cancels the specified execution job and updates its state along with associated tasks.
+     * If the job has not already been cancelled, its execution status will be set to FAILED.
+     * Also sets the end time of the job if it is not previously set.
+     * Updates the execution status of associated tasks to CANCELLED unless their status
+     * is DONE or FAILED. Persists changes to the job and tasks using the respective providers.
+     * Finally, triggers cleanup of transient components and notifies any job listeners.
+     *
+     * @param job The execution job to be cancelled. Must not be null.
+     * @throws PersistenceException If an error occurs during the update of the job or tasks.
+     */
     public void cancelJob(ExecutionJob job) throws PersistenceException {
         try {
             if (job.getExecutionStatus() != ExecutionStatus.CANCELLED) {
@@ -858,6 +921,12 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Adds an execution job to the queue if it is not already present.
+     *
+     * @param job the execution job to be added to the queue
+     * @throws ExecutionException if the job is already present in the queue
+     */
     public void queueJob(ExecutionJob job) {
         if (this.jobQueue.getAllJobs().stream().noneMatch(t -> t.getKeyOne().equals(job.getId()))) {
             this.jobQueue.put(job);
@@ -866,6 +935,13 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Cleans up transient components associated with a given job if the job is marked as external.
+     * This involves deleting workflow nodes and transient processing components linked to the job's tasks.
+     *
+     * @param job The execution job for which transient components are to be cleaned up.
+     *            It includes the workflow ID and associated tasks whose components may need to be deleted.
+     */
     private void cleanupTransientComponents(ExecutionJob job) {
         if (job.isExternal()) {
             try {
@@ -890,6 +966,14 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Handles the execution and processing of a given task, managing its output, updating its status,
+     * and performing necessary actions based on its execution type.
+     *
+     * @param pcTask the processing execution task to handle
+     * @param keepOutput a flag indicating whether the output generated by the task should be preserved
+     * @throws PersistenceException if there is an error during persistence operations
+     */
     private void handleProcessingTask(ProcessingExecutionTask pcTask, boolean keepOutput) throws PersistenceException {
         List<TargetDescriptor> targets = pcTask.getComponent().getTargets();
         ExecutionGroup groupTask = pcTask.getGroupTask();
@@ -1267,6 +1351,16 @@ public class Orchestrator extends Notifiable {
         });
     }
 
+    /**
+     * Determines the next set of execution tasks to be processed based on the current task's
+     * execution context, completion status, and related grouping.
+     *
+     * @param task The current execution task for which the next set of tasks is to be identified.
+     *             This task can either represent a standalone task or part of an execution group.
+     * @return A list of the next execution tasks to be processed. If the task is part of an execution
+     *         group and the group is not complete, the group-specific tasks are selected. Otherwise,
+     *         the next tasks are determined based on the job-level execution context.
+     */
     private List<ExecutionTask> findNextTasks(ExecutionTask task) {
         ExecutionGroup groupTask = task instanceof ExecutionGroup ? (ExecutionGroup) task : task.getGroupTask();
         ExecutionJob job = jobProvider.get(task.getJob().getId()); // refresh object from DB
@@ -1281,6 +1375,13 @@ public class Orchestrator extends Notifiable {
         return this.jobTaskSelector.chooseNext(job, task);
     }
 
+    /**
+     * Identifies and returns a list of originating data source execution tasks
+     * associated with the given execution task.
+     *
+     * @param current the current execution task whose originating tasks are to be found
+     * @return a list of data source execution tasks that originate from the given task
+     */
     private List<DataSourceExecutionTask> findOriginatingTasks(ExecutionTask current) {
         /*ExecutionGroup groupTask = current.getGroupTask();
         if (groupTask != null) {
@@ -1291,6 +1392,15 @@ public class Orchestrator extends Notifiable {
         return TaskUtilities.findDataSourceTasks(current.getJob());
     }
 
+    /**
+     * Resolves the target name for the given execution task using the provided overridden output parameter,
+     * applying naming rules derived from originating tasks.
+     *
+     * @param nextTask The execution task for which the target name is being resolved.
+     *                 This can potentially be a specific type of task such as a ConditionExecutionTask.
+     * @param overriddenOutParam The output parameter that overrides the default behavior for target name resolution.
+     *                           Contains the key-value pair to be used during resolution.
+     */
     private void resolveTargetName(ExecutionTask nextTask, Variable overriddenOutParam) {
         List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
         if (originatingTasks != null && !originatingTasks.isEmpty()) {
@@ -1341,6 +1451,15 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Resolves the value of a variable based on the context of the given execution task.
+     * If the variable contains expressions that need to be resolved, the method attempts
+     * to evaluate them using the output parameters of originating tasks and the defined
+     * naming rules. If resolution fails, the task status is updated to indicate failure.
+     *
+     * @param nextTask the execution task for which the variable resolution is being performed
+     * @param variable the variable whose value is to be resolved
+     */
     private void resolveVariable(ExecutionTask nextTask, Variable variable) {
         final String value = variable.getValue();
         if (value != null && value.contains("${")) {
@@ -1388,6 +1507,15 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Persists the output products generated by the given execution task. This method fetches the
+     * associated workflow node descriptor, determines the appropriate component provider based on
+     * the node type, and processes the output products accordingly. It also manages metadata for
+     * the generated products and applies handlers for managing output data.
+     *
+     * @param task the execution task containing output parameter values to be persisted
+     *             along with details such as workflow node ID and associated job user ID.
+     */
     private void persistOutputProducts(ExecutionTask task) {
         try {
             if (ExecutionConfiguration.developmentModeEnabled()) {
@@ -1419,6 +1547,15 @@ public class Orchestrator extends Notifiable {
 
     }
 
+    /**
+     * Creates a list of EOProduct instances based on the provided parameters and metadata.
+     *
+     * @param component the TaoComponent used to retrieve target descriptors
+     * @param outParam the variable that holds the key and associated value for product creation
+     * @param userId the identifier of the user for whom the products are created
+     * @param withMetadata a boolean indicating whether to include metadata in the created products
+     * @return a list of EOProduct objects based on the provided input parameters
+     */
     private List<EOProduct> createProducts(TaoComponent component, Variable outParam, String userId, boolean withMetadata) {
         List<EOProduct> products = new ArrayList<>();
         List<TargetDescriptor> targets = component.getTargets();
@@ -1441,6 +1578,22 @@ public class Orchestrator extends Notifiable {
         return products;
     }
 
+    /**
+     * Creates a product based on the provided target descriptor, output value, user ID,
+     * and metadata inclusion configuration. This method processes file paths,
+     * optionally inspects metadata, and generates the product with specified visibility and acquisition date.
+     *
+     * @param descriptor The descriptor of the target, containing information about the data format
+     *                   and other properties required to create the product.
+     * @param outValue The path to the output file or resource used for creating the product.
+     *                 The path is resolved and validated during execution.
+     * @param userId The identifier of the user requesting the product creation.
+     *               This is added as a reference in the generated product.
+     * @param withMetadata A flag indicating whether metadata should be inspected and
+     *                     included in the creation of the product.
+     * @return The created {@code EOProduct}, or {@code null} if the product could not
+     *         be created or an error occurred.
+     */
     private EOProduct createProduct(TargetDescriptor descriptor, String outValue, String userId, boolean withMetadata) {
         EOProduct product = null;
         try {
@@ -1523,18 +1676,52 @@ public class Orchestrator extends Notifiable {
         return UserQuotaManager.getInstance().checkUserProcessingQuota(user);
     }
 
+    /**
+     * Attempts to create an execution job based on the provided user details, session context,
+     * and execution request. The job creation process may consider workflow optimization settings.
+     *
+     * @param user the identifier for the user initiating the job creation
+     * @param context the session context containing necessary session-related details
+     * @param request the execution request providing details for job creation
+     * @return the created ExecutionJob instance, or null if the job creation fails
+     */
     private ExecutionJob tryCreateJob(String user, SessionContext context, ExecutionRequest request) {
         return createJob(context, request, ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
     }
-    
+
+    /**
+     * Attempts to create a WPS (Web Processing Service) job using the provided parameters.
+     *
+     * @param user the identifier of the user requesting the WPS job creation
+     * @param wpsId the ID of the WPS process to be executed
+     * @param inputs a map containing the inputs for the WPS process, where each key represents an input name,
+     *               and the value is another map of input properties and their corresponding values
+     * @return an {@code ExecutionJob} representing the created WPS job
+     */
     private ExecutionJob tryCreateWPSJob(String user, String wpsId, Map<String, Map<String, String>> inputs) {
         return createWPSJob(wpsId, inputs);
     }
 
+    /**
+     * Attempts to create a WMS job using the specified user, WMS ID, and input parameters.
+     *
+     * @param user The user initiating the creation of the WMS job.
+     * @param wmsId The unique identifier of the WMS job to be created.
+     * @param inputs A map of input parameters required for the WMS job creation.
+     * @return An instance of ExecutionJob if the WMS job was successfully created.
+     */
     private ExecutionJob tryCreateWMSJob(String user, String wmsId, Map<String, String> inputs) {
         return createWMSJob(wmsId, inputs);
     }
 
+    /**
+     * Translates the output path from a worker execution environment to the master path.
+     * This method ensures that the output path is properly mapped to the master's
+     * workspace and handles specific data formats accordingly.
+     *
+     * @param task the processing execution task that contains the output path and related metadata
+     * @return the translated output path relative to the master environment, or null if the path could not be determined
+     */
     private String translateOutputToMasterPath(ProcessingExecutionTask task) {
         String path = task.getInstanceTargetOutput();
         final String masterRoot = SystemVariable.ROOT.value().replace("\\", "/");
@@ -1569,6 +1756,16 @@ public class Orchestrator extends Notifiable {
         return outPath;
     }
 
+    /**
+     * Attempts to remove a temporary workflow associated with the provided execution job.
+     * If the workflow is temporary and all associated jobs have a final status
+     * (FAILED, DONE, or CANCELLED), it updates the tasks and jobs to reference the original
+     * workflow and deletes the temporary workflow. This operation is synchronized to ensure
+     * thread safety.
+     *
+     * @param job the execution job associated with the temporary workflow to be evaluated
+     *            and potentially removed
+     */
     private void tryRemoveTemporaryWorkflow(ExecutionJob job) {
         final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
         if (workflow != null && workflow.isTemporary()) {
@@ -1605,55 +1802,24 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    /*private void tryRestoreSymlinks(ExecutionJob job) {
-        if (job.getWorkflowId() != null) {
-            final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
-            if (workflow != null) {
-                final List<WorkflowNodeDescriptor> firstLevel = WorkflowUtilities.findFirstLevel(workflow.getOrderedNodes());
-                final List<DataSourceComponent> components = new ArrayList<>();
-                for (WorkflowNodeDescriptor node : firstLevel) {
-                    final TaoComponent c = TaskUtilities.getComponentFor(node);
-                    if (c instanceof DataSourceComponent) {
-                        components.add((DataSourceComponent) c);
-                    }
-                }
-                for (DataSourceComponent component : components) {
-                    synchronized (lock) {
-                        final SourceDescriptor srcDescriptor = component.getSources().stream()
-                                                                        .filter(t -> t.getName().equals(DataSourceComponent.QUERY_PARAMETER))
-                                                                        .findFirst().get();
-                        final TargetDescriptor trgDescriptor = component.getTargets().stream()
-                                                                        .filter(t -> t.getName().equals(DataSourceComponent.RESULTS_PARAMETER))
-                                                                        .findFirst().get();
-                        final String initialList = srcDescriptor.getDataDescriptor().getLocation();
-                        final String modifiedList = trgDescriptor.getDataDescriptor().getLocation();
-                        if (!StringUtilities.isNullOrEmpty(modifiedList)) {
-                            final String[] initial = initialList.split(",");
-                            final String[] modified = modifiedList.split(",");
-                            if (initial.length == modified.length) {
-                                for (int i = 0; i < initial.length; i++) {
-                                    if (!initial[i].equals(modified[i])) {
-                                        try {
-                                            FileUtilities.replaceWithLink(FileUtilities.toPath(initial[i]),
-                                                                          FileUtilities.toPath(modified[i]));
-                                            logger.finest("Restored symlink " + initial[i]);
-                                        } catch (IOException e) {
-                                            ExceptionUtils.getStackTrace(logger, e);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }*/
-
+    /**
+     * Adds a JobCompletedListener to the list of listeners that will be notified
+     * when a job is completed.
+     *
+     * @param listener the JobCompletedListener to be added
+     */
     public void addJobListener(JobCompletedListener listener) {
         this.jobListeners.add(listener);
     }
 
+    /**
+     * Notifies all registered job listeners about the completion of the given job.
+     * Each listener's onCompleted method is invoked. If an exception occurs
+     * during the notification of a listener, it is logged but does not stop the
+     * notification of other listeners.
+     *
+     * @param job the completed execution job to notify listeners about
+     */
     private void notifyJobListeners(ExecutionJob job) {
         this.jobListeners.forEach(l -> {
             try {
@@ -1738,6 +1904,11 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Represents a specialized session context that encapsulates the details of an impersonating user
+     * for message-specific operations. This class extends the functionality of {@link SessionContext}
+     * by associating the session context with an impersonated principal.
+     */
     private class MessageContext extends SessionContext {
         private final Principal impersonatingUser;
 
@@ -1779,6 +1950,26 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * This class represents a worker thread that continuously processes messages from a queue.
+     * It extends the {@link Thread} class and overrides the {@code run} method to implement
+     * the logic for dequeuing messages from the {@code messageQueue} and submitting them to
+     * the {@code messageWorker} for further processing.
+     *
+     * The {@code run} method operates in an infinite loop where it:
+     * - Retrieves entries consisting of a {@link Message} and {@link SessionContext} from the queue.
+     * - Logs the dequeued message.
+     * - Submits the message and its associated context to the {@link Orchestrator}'s message worker pool for processing.
+     *
+     * If the thread is interrupted while waiting to retrieve a message from the queue, the exception
+     * is caught, and the error is logged.
+     *
+     * This implementation assumes that the queue is thread-safe and handles the communication between
+     * producers and this worker thread.
+     *
+     * Note: The worker thread is designed to run indefinitely and should only be terminated by
+     * externally interrupting the thread if necessary.
+     */
     private class OrchestratorWorker extends Thread {
         @Override
         public void run() {
@@ -1795,6 +1986,17 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * A listener class that processes the completion of execution jobs and performs necessary actions.
+     *
+     * The {@code JobListener} class provides the implementation of the {@link JobCompletedListener}
+     * interface, enabling handling of job completion events. On completion of an execution job, the class
+     * performs actions such as notifying the user, restoring task links, managing job queues, removing
+     * transient nodes, and cleaning up volatile components.
+     *
+     * This class interacts with various components, including job queues, configuration settings, topology
+     * management, and messaging services, to execute required post-completion logic.
+     */
     private class JobListener implements JobCompletedListener {
         private final Orchestrator instance;
 

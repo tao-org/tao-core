@@ -19,8 +19,22 @@ package ro.cs.tao.orchestration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * A provider of an {@link ExecutorService} delegate that allows creating
+ * instances of ExecutorService with a specified number of threads.
+ *
+ * This interface provides a default implementation for creating a fixed-size
+ * thread pool using the {@link Executors#newFixedThreadPool} method.
+ */
 public interface ExecutorServiceDelegateProvider {
 
+    /**
+     * Creates an {@link ExecutorService} with a fixed number of threads.
+     * The created {@link ExecutorService} uses a thread pool of the specified size.
+     *
+     * @param threads the number of threads in the fixed thread pool
+     * @return an {@link ExecutorService} instance with a fixed thread pool
+     */
     default ExecutorService createExecutor(int threads) {
         return Executors.newFixedThreadPool(threads);
     }
