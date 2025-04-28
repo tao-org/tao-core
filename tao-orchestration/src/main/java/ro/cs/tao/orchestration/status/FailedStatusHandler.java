@@ -13,6 +13,16 @@ import ro.cs.tao.workflow.enums.TransitionBehavior;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Handles tasks in a "FAILED" execution status and ensures other dependent or
+ * associated tasks are properly managed (e.g., stopping tasks, updating statuses).
+ * This class specifically targets scenarios where a failure in one task
+ * necessitates consistent handling of its job and associated tasks.
+ *
+ * Extends from {@link TaskStatusHandler} to implement the process for handling
+ * failed tasks, ensuring that dependent tasks are stopped and their states are
+ * aligned with the failure.
+ */
 public class FailedStatusHandler extends TaskStatusHandler {
     protected FailedStatusHandler(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
         super(jobProvider, taskProvider);
