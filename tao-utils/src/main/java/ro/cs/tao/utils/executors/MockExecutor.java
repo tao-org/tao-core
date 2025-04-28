@@ -2,6 +2,12 @@ package ro.cs.tao.utils.executors;
 
 import java.util.List;
 
+/**
+ * The MockExecutor class is a mock implementation of the Executor class.
+ * It is designed to simulate the behavior of executing commands without
+ * performing any real action. This mock implementation is useful for testing
+ * purposes or cases where actual execution is not required.
+ */
 public class MockExecutor extends Executor<Object> {
 
     MockExecutor(String host, List<String> args, boolean asSU) {

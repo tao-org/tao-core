@@ -51,6 +51,16 @@ public class Zipper {
         decompressZip(source, target, false);
     }
 
+    /**
+     * Compresses the contents of a folder into a zip archive.
+     *
+     * @param sourceFolder   The path of the folder to compress.
+     * @param archiveName    The name of the resulting zip archive (without extension).
+     * @param deleteFolder   If true, deletes the original folder after compression.
+     * @param listener       An optional {@link ProgressListener} to receive progress updates
+     *                       and status of the compression process.
+     * @throws IOException   If an I/O error occurs during compression.
+     */
     public static void compress(Path sourceFolder, String archiveName, boolean deleteFolder, ProgressListener listener) throws IOException {
         Path zipFile = sourceFolder.getParent().resolve(archiveName + ".zip");
         Files.deleteIfExists(zipFile);
@@ -105,6 +115,17 @@ public class Zipper {
         }
     }
 
+    /**
+     * Decompresses a ZIP file into a specified target directory. Optionally deletes
+     * the ZIP file after decompression.
+     *
+     * @param source               The path to the ZIP file to decompress. Must not be null and should end with ".zip".
+     * @param target               The path to the target directory where the decompressed files will be extracted.
+     * @param deleteAfterDecompress If true, deletes the source ZIP file after successful decompression.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a ZIP file.
+     * @throws IOException If an I/O error occurs during the decompression process.
+     */
     public static Path decompressZip(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
@@ -142,6 +163,16 @@ public class Zipper {
         return target;
     }
 
+    /**
+     * Decompresses a specified ZIP file into a target directory and reports progress using an optional listener.
+     *
+     * @param source   The path to the ZIP file to decompress. Must not be null and should end with ".zip".
+     * @param target   The path to the target directory where the decompressed files will be extracted.
+     * @param listener An optional {@link ProgressListener} for receiving progress updates during the decompression process.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a ZIP file.
+     * @throws IOException If an I/O error occurs during the decompression process.
+     */
     public static Path decompressZip(Path source, Path target, ProgressListener listener) throws IOException {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
@@ -190,6 +221,19 @@ public class Zipper {
         return target;
     }
 
+    /**
+     * Decompresses a ZIP file into a specified target directory using a multi-threaded approach.
+     * Optionally creates a folder named after the ZIP file at the target location and
+     * deletes the source ZIP file after successful decompression.
+     *
+     * @param source               The path to the ZIP file to decompress. Must not be null and should end with ".zip".
+     * @param target               The path to the target directory where the decompressed files will be extracted.
+     * @param createFolderFromName If true, creates a folder named after the ZIP file at the target location
+     *                             and extracts the files into it. If false, extracts files directly into the target directory.
+     * @param deleteAfterDecompress If true, deletes the source ZIP file after successful decompression.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a ZIP file.
+     */
     public static Path decompressZipMT(Path source, Path target, boolean createFolderFromName, boolean deleteAfterDecompress) {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
@@ -241,6 +285,19 @@ public class Zipper {
         return target;
     }
 
+    /**
+     * Decompresses a tar.gz (or tar) file into a specified target directory. Optionally deletes
+     * the source file after successful decompression.
+     *
+     * @param source               The path to the tar.gz (or tar) file to decompress. Must not be null and should end with ".tar.gz".
+     *                             If the source is not valid, the method returns null.
+     * @param target               The path to the target directory where the decompressed files will be extracted.
+     *                             The directory is created if it does not already exist.
+     * @param deleteAfterDecompress If true, deletes the source file after successful decompression.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a tar.gz file.
+     * @throws IOException If an I/O error occurs during the decompression process.
+     */
     public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
         if (source == null || !source.toString().endsWith(".tar.gz")) {
             return null;
