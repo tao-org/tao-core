@@ -38,6 +38,11 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * A concrete implementation of the {@link DownloadStrategy} for downloading
+ * and handling archive files such as `.zip` or `.tar.gz`. This strategy provides
+ * functionality to download, decompress, and manage archive products.
+ */
 public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
     protected static final long DOWNLOAD_TIMEOUT = 30000; // 30s
     protected Timer timeoutTimer;

@@ -7,6 +7,10 @@ import ro.cs.tao.persistence.EntityProvider;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A provider interface for managing and querying {@link DataSourceComponent} entities. This interface
+ * extends {@link EntityProvider} to provide additional methods specific to handling data source components.
+ */
 public interface DataSourceComponentProvider extends EntityProvider<DataSourceComponent, String> {
 
     List<DataSourceComponent> list(int pageNumber, int pageSize, Sort sort);
