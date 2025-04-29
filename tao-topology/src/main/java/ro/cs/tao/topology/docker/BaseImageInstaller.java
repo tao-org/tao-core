@@ -151,6 +151,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         final String dockerHubName = additionalProperties.getProperty("docker.hub.name");
                         if (!StringUtilities.isNullOrEmpty(dockerHubName)) {
                             container = DockerManager.pullImage(dockerHubName);
+                            if (container != null) {
+                                container.setName(getContainerName());
+                            }
+                            DockerManager.pushImageToRegistry(container);
                         }
                     } else {
                         dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");

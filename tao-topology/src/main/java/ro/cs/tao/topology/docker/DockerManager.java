@@ -151,6 +151,16 @@ public class DockerManager {
     }
 
     /**
+     * Pushes the specified container image to the Docker registry.
+     *
+     * @param image the container image that needs to be pushed to the registry
+     * @return the identifier of the pushed image, or null if the operation fails
+     */
+    public static String pushImageToRegistry(Container image) {
+        return instance.pushToRegistry(image);
+    }
+
+    /**
      * Runs a Docker container as a daemon using the specified image, name, port mapping, user, and additional arguments.
      * This method delegates to an internal implementation to execute the command and manage the container lifecycle.
      *
@@ -569,60 +579,76 @@ public class DockerManager {
         waitFor(executor, 20, TimeUnit.MINUTES);
         if ((retCode = executor.getReturnCode()) == 0) {
             Container image = getDockerImage(correctedName);
-            containerId = image.getId();
-            String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
-            // do not execute docker tag is no docker registry is configured
-            if (localRegistry == null || localRegistry.length() == 0) {
-                Messaging.send(principal, Topic.INFORMATION.value(), this,
-                        String.format("Docker image '%s' successfully registered", correctedName));
-                return containerId;
-            }
-            String tag = localRegistry + "/" + correctedName;
-            commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, containerId, tag);
-            job = new ExecutionUnit(ExecutorType.PROCESS,
-                                    masterNode.getId(),
-                                    masterNode.getUserName(),
-                                    masterNode.getUserPass(),
-                                    commands, false, SSHMode.EXEC);
-            accumulator.reset();
-            executor = Executor.execute(accumulator, job);
-            logger.fine("Executing " + String.join(" ", commands));
-            waitFor(executor, 30, TimeUnit.SECONDS);
-            if ((retCode = executor.getReturnCode()) == 0) {
-                if (!SystemUtils.IS_OS_WINDOWS) {
-                    commands = ProcessHelper.tokenizeCommands(dockerPushCmdTemplate, tag);
-                    job = new ExecutionUnit(ExecutorType.PROCESS,
-                                            masterNode.getId(),
-                                            masterNode.getUserName(),
-                                            masterNode.getUserPass(),
-                                            commands, false, SSHMode.EXEC);
-                    accumulator.reset();
-                    executor = Executor.execute(accumulator, job);
-                    logger.fine("Executing " + String.join(" ", commands));
-                    waitFor(executor, 10, TimeUnit.MINUTES);
-                    if ((retCode = executor.getReturnCode()) == 0) {
-                        Messaging.send(principal, Topic.INFORMATION.value(), this,
-                                       String.format("Docker image '%s' successfully registered", correctedName));
-                        return containerId;
-                    } else {
-                        logger.severe("Command output: " + accumulator.getOutput());
-                    }
-                } else {
-                    Messaging.send(principal, Topic.INFORMATION.value(), this,
-                                   String.format("Docker image '%s' successfully registered", correctedName));
-                    return containerId;
-                }
-            } else {
-                logger.severe(String.format("Execution failed with code %s. Command output: %s",
-                                            executor.getReturnCode(),
-                                            accumulator.getOutput()));
-            }
+            return pushToRegistry(image);
         }
         String message = String.format("Registration for image '%s' failed with code %s. Details: '%s'",
                                        correctedName, retCode, accumulator.getOutput());
         logger.severe(message);
         Messaging.send(principal, Topic.ERROR.value(), this, message);
         return containerId;
+    }
+
+    private String pushToRegistry(Container image) {
+        if (image == null) {
+            throw new IllegalArgumentException("[image] must not be null]");
+        }
+        String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
+        Principal principal = SessionStore.currentContext() != null ?
+                              SessionStore.currentContext().getPrincipal() : SystemPrincipal.instance();
+        String name = image.getName();
+        // do not execute docker tag is no docker registry is configured
+        if (localRegistry == null || localRegistry.length() == 0) {
+            Messaging.send(principal, Topic.INFORMATION.value(), this,
+                           String.format("Docker image '%s' successfully registered", name));
+            return image.getId();
+        }
+        String tag = localRegistry + "/" + name;
+        List<String> commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, image.getId(), tag);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.reset();
+        Executor executor = Executor.execute(accumulator, job);
+        logger.fine("Executing " + String.join(" ", commands));
+        int retCode;
+        waitFor(executor, 30, TimeUnit.SECONDS);
+        if ((retCode = executor.getReturnCode()) == 0) {
+            if (!SystemUtils.IS_OS_WINDOWS) {
+                commands = ProcessHelper.tokenizeCommands(dockerPushCmdTemplate, tag);
+                job = new ExecutionUnit(ExecutorType.PROCESS,
+                                        masterNode.getId(),
+                                        masterNode.getUserName(),
+                                        masterNode.getUserPass(),
+                                        commands, false, SSHMode.EXEC);
+                accumulator.reset();
+                executor = Executor.execute(accumulator, job);
+                logger.fine("Executing " + String.join(" ", commands));
+                waitFor(executor, 10, TimeUnit.MINUTES);
+                if ((retCode = executor.getReturnCode()) == 0) {
+                    Messaging.send(principal, Topic.INFORMATION.value(), this,
+                                   String.format("Docker image '%s' successfully registered", name));
+                    return image.getId();
+                } else {
+                    logger.severe("Command output: " + accumulator.getOutput());
+                }
+            } else {
+                Messaging.send(principal, Topic.INFORMATION.value(), this,
+                               String.format("Docker image '%s' successfully registered", name));
+                return image.getId();
+            }
+        } else {
+            logger.severe(String.format("Execution failed with code %s. Command output: %s",
+                                        executor.getReturnCode(),
+                                        accumulator.getOutput()));
+        }
+        String message = String.format("Registration for image '%s' failed with code %s. Details: '%s'",
+                                       name, retCode, accumulator.getOutput());
+        logger.severe(message);
+        Messaging.send(principal, Topic.ERROR.value(), this, message);
+        return null;
     }
 
     /**
