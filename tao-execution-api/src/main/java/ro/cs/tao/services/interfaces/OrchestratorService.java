@@ -74,6 +74,8 @@ public interface OrchestratorService extends TAOService {
      */
     //ExecutionJob createJobExternal(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
     ExecutionJob scriptJob(ExecutionRequest request) throws ExecutionException;
+
+    ExecutionJob executeSimpipe(ExecutionRequest request) throws ExecutionException;
     /**
      * Stops the execution of the given job.
      *
