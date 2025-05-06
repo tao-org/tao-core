@@ -8,6 +8,12 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.logging.Logger;
 
+/**
+ * DefaultRuntimeInspector provides a default implementation of the NodeRuntimeInspector
+ * interface. It allows for inspecting and retrieving node runtime information such as CPU
+ * usage, memory, and disk utilization, and dynamically initializes platform-specific
+ * inspectors (e.g., Windows or Linux).
+ */
 public class DefaultRuntimeInspector implements NodeRuntimeInspector {
     String node;
     String user;
@@ -33,7 +39,7 @@ public class DefaultRuntimeInspector implements NodeRuntimeInspector {
         this.password = password;
         this.authenticationType = authType;
         String localhost = InetAddress.getLocalHost().getHostName();
-        if (localhost.equals(host)) {
+        if (localhost.equals(host) || host.toLowerCase().startsWith(localhost.toLowerCase())) {
             this.inspector = SystemUtils.IS_OS_WINDOWS
                    ? new WindowsRuntimeInspector(host, authType, user, password, false)
                    : new LinuxRuntimeInspector(host, authType, user, password, false);

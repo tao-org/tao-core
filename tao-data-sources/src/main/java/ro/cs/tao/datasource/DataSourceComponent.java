@@ -582,6 +582,19 @@ public class DataSourceComponent extends TaoComponent {
                 logger.warning(String.format("Fetching product '%s' ignored: %s",
                                              product.getName(), e.getMessage()));
                 errorMessage = e.getMessage();
+            } catch (QueryException e) {
+                if (e.shouldRetry()) {
+                    // sessions limit reached, wait 15 minutes and retry
+                    logger.warning(e.getMessage());
+                    idx--;
+                    try {
+                        Thread.sleep(15 * 60 * 1000);
+                    } catch (java.lang.InterruptedException ex) {
+                    }
+                    errorMessage = null;
+                } else {
+                    throw e;
+                }
             } catch (Exception e) {
                 errorMessage = e.getMessage();
                 // maybe the token has just expired, retry one more time

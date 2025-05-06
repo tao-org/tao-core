@@ -10,6 +10,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+/**
+ * A download strategy implementation that doesn't handle downloading files.
+ * Instead, it relies on pre-existing files already stored in a local archive.
+ *
+ * This class provides methods to fetch and verify the existence of EOProduct files
+ * within the local archive. It raises exceptions when files are missing or
+ * unsupported features are accessed, such as metadata URLs.
+ *
+ * Constructor and methods include the following functionalities:
+ * - Fetching the product path from the local archive.
+ * - Checking if a product exists in the provided location.
+ * - Throwing exceptions when unsupported operations, like metadata handling, are invoked.
+ */
 public class NoDownloadStrategy extends DownloadStrategy {
 
     public NoDownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {

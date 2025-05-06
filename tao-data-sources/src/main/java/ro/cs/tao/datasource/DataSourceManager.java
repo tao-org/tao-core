@@ -87,6 +87,13 @@ public class DataSourceManager {
         });
     }
 
+    /**
+     * Registers a data source and associates its supported sensors and parameters with the manager.
+     * If a data source with the same ID is already registered, it is unregistered first.
+     * The data source is then added to the list of additional data sources if it is not already present in the registry.
+     *
+     * @param ds The data source to be registered. It contains the ID, supported sensors, and associated parameters.
+     */
     public void registerDataSource(DataSource<?, ?> ds) {
         unregisterDataSource(ds.getId());
         final String[] sensors = ds.getSupportedSensors();
@@ -106,11 +113,29 @@ public class DataSourceManager {
         }
     }
 
+    /**
+     * Unregisters a data source from the manager by its name.
+     * This will remove the data source from both the registered sources and
+     * the additional data sources list if present.
+     *
+     * @param dsName The name of the data source to be unregistered.
+     */
     public void unregisterDataSource(String dsName) {
         this.registeredSources.entrySet().removeIf(entry -> entry.getKey().getValue().equals(dsName));
         this.additionalDatasources.remove(dsName);
     }
 
+    /**
+     * Sets the filtered parameters for the data sources managed by the system.
+     * The filtered parameters define a mapping between data sources, their associated sensors,
+     * and the parameters to be filtered for each sensor.
+     *
+     * @param filter A mapping of data source entries to their corresponding filtered parameter structures.
+     *               The key is a Map.Entry where the entry's key represents the sensor and its value represents the data source name.
+     *               The value is a nested map where:
+     *               - The first key represents parameters associated with the sensor.
+     *               - The innermost map defines the mapping for parameter values.
+     */
     public void setFilteredParameters(Map<Map.Entry<String, String>, Map<String, Map<String, String>>> filter) {
         // Map<Datasource, Map<Sensor, Map<Parameter, Map<ValueSetEntry, ValueSetFriendlyValue>>>>
         this.filteredParameters = new HashMap<>();

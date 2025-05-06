@@ -22,6 +22,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents an endpoint for OpenSearch functionality, encapsulating information
+ * such as the type of the endpoint, its scope, URL, and associated parameters.
+ */
 public class OpenSearchEndpoint {
     private String type;
     private String scope;

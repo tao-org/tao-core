@@ -8,16 +8,30 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ConditionExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.execution.util.TaskUtilities;
 
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+/**
+ * The {@code ConditionExecutor} class is a specific implementation of {@code Executor}
+ * for handling condition-based execution tasks. It processes tasks of type
+ * {@code ConditionExecutionTask}, validates their configuration, and manages their
+ * execution lifecycle, including start, stop, and error handling.
+ */
 public class ConditionExecutor extends Executor<ConditionExecutionTask> {
 
     private static ExecutionTaskProvider taskProvider;
 
+    /**
+     * Sets the task provider for the {@code ConditionExecutor}.
+     *
+     * @param taskProvider the {@link ExecutionTaskProvider} to be set as the task provider
+     */
     public static void setTaskProvider(ExecutionTaskProvider taskProvider) {
         ConditionExecutor.taskProvider = taskProvider;
     }
@@ -42,12 +56,15 @@ public class ConditionExecutor extends Executor<ConditionExecutionTask> {
             task.setStartTime(LocalDateTime.now());
             task.setExecutionStatus(ExecutionStatus.RUNNING);
             taskProvider.update(task);
+            final Set<String> conditions = task.getComponent().getParameterDescriptors().stream().map(d -> d.getName()).collect(Collectors.toSet());
+            int expectedSize = conditions.size() + 1;
             final List<Variable> inputParameterValues = task.getInputParameterValues();
-            if (inputParameterValues.isEmpty() || inputParameterValues.size() != 1) {
-                throw new ExecutionException("Invalid cardinality (must be 1)");
+            if (inputParameterValues.isEmpty() || inputParameterValues.size() != expectedSize) {
+                throw new ExecutionException(String.format("Invalid cardinality (must be %d)", expectedSize));
             }
-            final Variable input = inputParameterValues.get(0);
+            final Variable input = inputParameterValues.stream().filter(p -> !conditions.contains(p.getKey())).findFirst().orElseThrow();
             task.setOutputParameterValue(task.buildExecutionCommand(), input.getValue());
+            TaskUtilities.removeUnmatchedConditionBranches(task);
             markTaskFinished(task, ExecutionStatus.DONE);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());

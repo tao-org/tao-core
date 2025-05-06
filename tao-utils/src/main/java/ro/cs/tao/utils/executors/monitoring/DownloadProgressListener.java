@@ -1,11 +1,26 @@
 package ro.cs.tao.utils.executors.monitoring;
 
+/**
+ * An interface that provides methods for tracking download progress and reporting updates
+ * including progress percentage, transfer speeds, and remaining items.
+ */
 public interface DownloadProgressListener extends ProgressListener {
 
+    /**
+     * Sets the length of the download being monitored.
+     * The length typically represents the total size of the content.
+     *
+     * @param value The length to be set, expressed as a long value.
+     */
     default void setLength(long value) {
 
     }
 
+    /**
+     * Retrieves the length of the download being monitored.
+     *
+     * @return the total length of the download as a long value, typically representing the size in bytes.
+     */
     default long getLength() { return 0; }
 
     /**

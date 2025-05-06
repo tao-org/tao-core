@@ -19,6 +19,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Builder class for constructing a WorkflowDescriptor object. This class provides a fluent API to
+ * define properties of a workflow, add workflow nodes, and establish connections between nodes.
+ */
 public class WorkflowBuilder {
 
     private WorkflowDescriptor workflow;

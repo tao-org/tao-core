@@ -16,7 +16,16 @@
 package ro.cs.tao.utils.executors;
 
 /**
- * @author Cosmin Cara
+ * A concrete implementation of the {@link OutputConsumer} interface,
+ * designed for consuming and processing debug output messages.
+ *
+ * This class provides a mechanism to handle debug-oriented log messages
+ * in a way that adheres to the contract defined by the {@code OutputConsumer} interface.
+ * It is typically used in environments where debugging information
+ * needs to be collected, processed, or displayed.
+ *
+ * The behavior of the class can be customized to suit specific debugging
+ * and logging requirements.
  */
 public class DebugOutputConsumer implements OutputConsumer {
 }

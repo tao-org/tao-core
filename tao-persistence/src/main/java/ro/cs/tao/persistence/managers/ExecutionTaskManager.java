@@ -281,6 +281,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
+    public List<ExecutionTask> getChildrenTasks(long taskId) {
+        return repository.getChildrenTasks(taskId);
+    }
+
+    @Override
     public int getCPUsForUser(String userId) {
         return repository.getCPUsForUser(userId);
     }    
@@ -330,7 +335,8 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             }
 
             if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask) {
+                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask
+                    || task instanceof ConditionExecutionTask) {
 
                 // set the task parent job
                 task.setJob(job);
