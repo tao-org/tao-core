@@ -10,6 +10,18 @@ import ro.cs.tao.component.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The WPSExecutionTask class represents a specialized execution task designed to interact
+ * with WPS (Web Processing Service) components. It extends the generic ExecutionTask class,
+ * providing additional logic for handling input and output parameters specific to WPS-based configurations.
+ *
+ * This class is responsible for setting parameter values, validating their existence
+ * within the associated component, and ensuring proper cardinality of input parameters.
+ * It also manages the creation and population of input and output parameter values.
+ *
+ * The buildExecutionCommand method is intended to produce an execution command for the
+ * task, though it is currently a placeholder and requires further implementation.
+ */
 public class WPSExecutionTask extends ExecutionTask {
 
     private WPSComponent component;

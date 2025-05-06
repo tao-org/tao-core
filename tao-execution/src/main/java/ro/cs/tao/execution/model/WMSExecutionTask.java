@@ -16,6 +16,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a task for the execution of a Web Map Service (WMS) request. This class defines
+ * methods to configure input and output parameters, build execution commands,
+ * and output paths for the associated WMS component.
+ */
 public class WMSExecutionTask extends ExecutionTask {
 
     private WMSComponent component;

@@ -16,6 +16,13 @@
 package ro.cs.tao.execution.model;
 
 /**
+ * Interface for listening to changes in the status of an execution task.
+ *
+ * Implementers of this interface can define custom logic to handle changes
+ * in the state of {@code ExecutionTask} instances. The {@code statusChanged}
+ * method provides a default implementation that can be overridden to process
+ * the status updates.
+ *
  * @author Cosmin Cara
  */
 public interface StatusChangeListener {

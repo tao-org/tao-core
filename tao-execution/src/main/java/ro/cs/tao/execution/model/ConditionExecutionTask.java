@@ -1,6 +1,7 @@
 package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.ConditionComponent;
+import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.eodata.naming.NamingRule;
@@ -35,8 +36,9 @@ public class ConditionExecutionTask extends ExecutionTask {
     @Override
     public void setInputParameterValue(String parameterName, String value) {
         final boolean descriptorExists =
-                        this.component.getSources().stream().anyMatch(s -> s.getName().equals(parameterName)) ||
-                        this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName));
+                    this.component.getParameterDescriptors().stream().anyMatch(d -> d.getName().equals(parameterName)) ||
+                    this.component.getSources().stream().anyMatch(s -> s.getName().equals(parameterName)) ||
+                    this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName));
         if (!descriptorExists) {
             throw new ValidationException(String.format("The input [%s] does not exists in the component '%s'",
                                                         parameterName, component.getLabel()));
@@ -44,7 +46,30 @@ public class ConditionExecutionTask extends ExecutionTask {
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
         }
-        this.inputParameterValues.add(new Variable(parameterName, value));
+        Variable variable = this.inputParameterValues.stream()
+                .filter(v -> v.getKey().equals(parameterName))
+                .findFirst()
+                .orElse(null);
+        SourceDescriptor sourceDescriptor = this.component.getSources().stream()
+                .filter(s -> s.getName().equals(parameterName))
+                .findFirst()
+                .orElse(null);
+        final int cardinality = sourceDescriptor != null ? sourceDescriptor.getCardinality() : 1;
+        if (variable != null) {
+            if (cardinality == 1) {
+                variable.setValue(value);
+            } else {
+                variable.setValue(value != null ? appendValueToList(variable.getValue(), value) : value);
+            }
+        } else {
+            Variable var;
+            if (cardinality == 1) {
+                var = new Variable(parameterName, value);
+            } else {
+                var = new Variable(parameterName, value != null ? appendValueToList(null, value) : value);
+            }
+            this.inputParameterValues.add(var);
+        }
     }
 
     @Override
@@ -56,6 +81,12 @@ public class ConditionExecutionTask extends ExecutionTask {
         }
         if (this.outputParameterValues == null) {
             this.outputParameterValues = new ArrayList<>();
+        }
+        for (int i = 0; i < this.outputParameterValues.size(); i++) {
+            if (this.outputParameterValues.get(i).getKey().equals(parameterName)) {
+                this.outputParameterValues.set(i, new Variable(parameterName, value));
+                return;
+            }
         }
         this.outputParameterValues.add(new Variable(parameterName, value));
     }

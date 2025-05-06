@@ -141,13 +141,14 @@ VALUES ('k8s-master', '', '', 'k8s', 'K8s Node', 'k8s');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUES
-(1, 'Sentinel2', 'S2MSI1C,S2MSI2A,L1C,L2A' , '(S2[A-B])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
-(2, 'Sentinel1', 'GRD,SLC', '(S1[A-B])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
+(1, 'Sentinel2', 'S2MSI1C,S2MSI2A,L1C,L2A' , '(S2[A-D])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
+(2, 'Sentinel1', 'GRD,SLC', '(S1[A-D])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
 (3, 'Landsat8', 'L1T,L1GT,L1TP,L2SP', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming'),
 (4, 'GeoTIFF', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.(tif|TIF|tiff|TIFF+)', 'Generic GeoTIFF product'),
 (5, 'Generic', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.([A-Za-z.]+)', 'Generic product'),
 (6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming'),
-(7, 'Enmap', 'ENMAP', '(ENMAP01)-____(L[1-2][A-C])-DT(\d{9,10})_(\d{8})T(\d{6})Z_(\d{3})_V(\d{6})_(\d{8}T\d{6})Z', 'ENMAP product naming');
+(7, 'Enmap', 'ENMAP', '(ENMAP01)-____(L[1-2][A-C])-DT(\d{9,10})_(\d{8})T(\d{6})Z_(\d{3})_V(\d{6})_(\d{8}T\d{6})Z', 'ENMAP product naming'),
+(8, 'Sentinel3', 'OL_1_EFR___,OL_1_ERR___,OL_2_LFR___,OL_2_LRR___,OL_2_WFR___,OL_2_WRR___,SL_1_RBT___,SL_2_AOD___,SL_2_FRP___,SL_2_LST___,SL_2_WST___,SR_1_SRA___,SR_1_SRA_A_,SR_1_SRA_BS,SR_2_LAN___,SR_2_LAN_HY,SR_2_LAN_LI,SR_2_LAN_SI,SR_2_WAT___,SY_2_AOD___,SY_2_SYN___,SY_2_V10___,SY_2_VG1___,SY_2_VGP___','(S3[A-D])_(OL|SR|SL|ST|SY|DO|MW|GN|AX)_([012_])_(EFR\w{3}|CR0\w{3}|CR1\w{3}|ERR\w{3}|RAC\w{3}|SPC\w{3}|INS\w{3}|WFR\w{3}|WRR\w{3}|LFR\w{3}|LRR\w{3}|ATP\w{3}|AER\w{3}|LAP\w{3}|LVI\w{3}|SLT\w{3}|RBT\w{3}|WCT\w{3}|WST\w{3}|LST\w{3}|MISR__|SYN\w{3}|VGP\w{3}|VG1\w{3}|V10\w{3}|LAN\w{3}|WAT\w{3}|SRA\w{3}|CAL\w{3}|FRP\w{3})_(\d{8}T\d{6})_(\d{8}T\d{6})_(\d{8}T\d{6})_(((\d{4})_(\d{3})_(\d{3})_(\d{4}|____))|(\w{17}))_(\w{3})_([DFOR])_(NR|ST|NT)_(\d{3})(?:.SEN3)?','Sentinel3 product naming');
 
 INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
 (1, 'MISSION', 1, 'Mission identifier'),
@@ -224,6 +225,21 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (7, 'TILE', 6, 'Tile identifier'),
 (7, 'VERSION', 7, 'Product version'),
 (7, 'PDATE', 8, 'Processing date');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(8, 'MISSION', 1, 'Mission identifier'),
+(8, 'DATASOURCE', 2, 'Data source / consumer'),
+(8, 'LEVEL', 3, 'Processing level'),
+(8, 'DATATYPE', 4, 'Data type identifier'),
+(8, 'DATESTART', 5, 'Data start time'),
+(8, 'DATESTOP', 6, 'Data stop time'),
+(8, 'PDATE', 7, 'Processing date'),
+(8, 'STIME', 8, 'Sensing time duration'),
+(8, 'SCYCLE', 9, 'Cycle number at the start sensing time'),
+(8, 'ORBIT', 10, 'Relative orbit'),
+(8, 'FRAME', 11, 'Frame start time'),
+(8, 'TILEID', 12, 'Tile identifier'),
+(8, 'CENTRE', 13, 'Product generating centre');
 
 -- Repository types
 INSERT INTO workspace.repository_type (id, name, params) VALUES

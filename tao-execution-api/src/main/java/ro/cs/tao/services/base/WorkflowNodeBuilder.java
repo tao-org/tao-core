@@ -6,6 +6,12 @@ import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.time.LocalDateTime;
 
+/**
+ * Provides a fluent builder to define and configure a WorkflowNodeDescriptor instance.
+ * This builder allows setting various properties of the workflow node, including
+ * name, component details, configuration parameters, connections, and behavior.
+ * The resulting WorkflowNodeDescriptor can be used to define nodes in a workflow.
+ */
 class WorkflowNodeBuilder {
 
     private final WorkflowBuilder parentBuilder;

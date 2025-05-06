@@ -43,6 +43,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The WorkflowBuilderBase class is an abstract base class that provides common functionalities
+ * for building workflows, such as creating workflow descriptors, adding nodes, groups, and links.
+ * It integrates with various services to assist in workflow persistence and component management.
+ * Subclasses are expected to implement specific logic for adding nodes to a workflow.
+ *
+ * This class utilizes predefined services for tasks such as persistence management,
+ * component management, and workflow operations.
+ * It provides default implementations for creating or retrieving data source components
+ * and workflow descriptors, as well as adding workflow nodes, utility nodes, group nodes, and links.
+ */
 public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     protected static final PersistenceManager persistenceManager;
     protected static final ComponentService componentService;

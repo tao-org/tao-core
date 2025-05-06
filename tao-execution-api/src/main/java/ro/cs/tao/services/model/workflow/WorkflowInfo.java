@@ -23,6 +23,11 @@ import ro.cs.tao.workflow.enums.Status;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Represents information about a workflow within the system, encapsulating its metadata and properties.
+ * This class provides a simplified view of a workflow, enabling interaction and transformation
+ * between different representations of workflow data (e.g., between the domain and storage layers).
+ */
 public class WorkflowInfo {
 
     protected Long id;

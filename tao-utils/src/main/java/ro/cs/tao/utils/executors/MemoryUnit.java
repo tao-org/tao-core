@@ -16,7 +16,9 @@
 package ro.cs.tao.utils.executors;
 
 /**
- * @author Cosmin Cara
+ * An enumeration representing memory units, ranging from bytes to terabytes.
+ * Each constant in this enumeration is associated with a unique identifier (id)
+ * and a specific numeric value representing the size of the memory unit in bytes.
  */
 public enum MemoryUnit {
     BYTE(1, 1),

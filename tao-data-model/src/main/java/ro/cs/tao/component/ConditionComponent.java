@@ -256,7 +256,7 @@ public class ConditionComponent extends TaoComponent {
     }
 
     public String processTemplate(List<NamingRule> rules, List<Variable> values) throws ParseException {
-        final String transformedTemplate;
+        String transformedTemplate;
         if (!rules.isEmpty() && rules.size() == 1 && values != null && !values.isEmpty()) {
             NameExpressionParser parser = new NameExpressionParser(rules.get(0));
             String parsedTemplate = parser.resolve(getTemplateContents(),
@@ -267,8 +267,12 @@ public class ConditionComponent extends TaoComponent {
                 Logger.getLogger(ProcessingComponent.class.getName())
                       .warning(String.format("Component %s produced an empty invocation template", this.id));
             } else {
-                final TargetDescriptor targetDescriptor = this.targets.stream().filter(t -> ("$" + t.getName()).equals(transformedTemplate)).findFirst().get();
-                targetDescriptor.setDataDescriptor(this.sources.get(0).getDataDescriptor());
+                transformedTemplate = transformedTemplate.replace("\n", "").replace("$", "");
+                for (TargetDescriptor targetDescriptor : this.targets) {
+                    if (targetDescriptor.getName().equals(transformedTemplate)) {
+                        targetDescriptor.setDataDescriptor(this.sources.get(0).getDataDescriptor());
+                    }
+                }
             }
         } else {
             transformedTemplate = null;

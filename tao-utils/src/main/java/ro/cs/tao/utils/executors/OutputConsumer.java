@@ -16,6 +16,10 @@
 package ro.cs.tao.utils.executors;
 
 /**
+ * Interface defining a contract for consuming output messages.
+ * Classes implementing this interface should provide specific logic
+ * for processing or storing messages passed to the {@code consume} method.
+ *
  * @author Cosmin Cara
  */
 public interface OutputConsumer {
