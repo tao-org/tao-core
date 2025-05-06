@@ -605,7 +605,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected NodeDescription createNodeIfMatchingFlavor(List<Map.Entry<String, NodeRuntime>> userNodes, String userId, int cpus, long memory) throws Exception {
         List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
         NodeFlavor matchingFlavor = nodeFlavors.stream()
-                                               .filter(f -> f.getCpu() >= cpus && f.getMemory() >= 1.5 * memory)
+                                               .filter(f -> f.getCpu() >= cpus && (f.getMemory() * f.getMemoryUnit().value() / MemoryUnit.MB.value()) >= (1.5 * memory))
                                                .min(Comparator.comparingInt(NodeFlavor::getCpu))
                                                .orElse(null);
         if (matchingFlavor != null) {
