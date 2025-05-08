@@ -148,7 +148,7 @@ INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUE
 (5, 'Generic', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.([A-Za-z.]+)', 'Generic product'),
 (6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming'),
 (7, 'Enmap', 'ENMAP', '(ENMAP01)-____(L[1-2][A-C])-DT(\d{9,10})_(\d{8})T(\d{6})Z_(\d{3})_V(\d{6})_(\d{8}T\d{6})Z', 'ENMAP product naming'),
-(8, 'Sentinel3', 'OL_1_EFR___,OL_1_ERR___,OL_2_LFR___,OL_2_LRR___,OL_2_WFR___,OL_2_WRR___,SL_1_RBT___,SL_2_AOD___,SL_2_FRP___,SL_2_LST___,SL_2_WST___,SR_1_SRA___,SR_1_SRA_A_,SR_1_SRA_BS,SR_2_LAN___,SR_2_LAN_HY,SR_2_LAN_LI,SR_2_LAN_SI,SR_2_WAT___,SY_2_AOD___,SY_2_SYN___,SY_2_V10___,SY_2_VG1___,SY_2_VGP___','(S3[A-D])_(OL|SR|SL|ST|SY|DO|MW|GN|AX)_([012_])_(EFR\w{3}|CR0\w{3}|CR1\w{3}|ERR\w{3}|RAC\w{3}|SPC\w{3}|INS\w{3}|WFR\w{3}|WRR\w{3}|LFR\w{3}|LRR\w{3}|ATP\w{3}|AER\w{3}|LAP\w{3}|LVI\w{3}|SLT\w{3}|RBT\w{3}|WCT\w{3}|WST\w{3}|LST\w{3}|MISR__|SYN\w{3}|VGP\w{3}|VG1\w{3}|V10\w{3}|LAN\w{3}|WAT\w{3}|SRA\w{3}|CAL\w{3}|FRP\w{3})_(\d{8}T\d{6})_(\d{8}T\d{6})_(\d{8}T\d{6})_(((\d{4})_(\d{3})_(\d{3})_(\d{4}|____))|(\w{17}))_(\w{3})_([DFOR])_(NR|ST|NT)_(\d{3})(?:.SEN3)?','Sentinel3 product naming');
+(8, 'Sentinel3', 'OL_1_EFR___,OL_1_ERR___,OL_2_LFR___,OL_2_LRR___,OL_2_WFR___,OL_2_WRR___,SL_1_RBT___,SL_2_AOD___,SL_2_FRP___,SL_2_LST___,SL_2_WST___,SR_1_SRA___,SR_1_SRA_A_,SR_1_SRA_BS,SR_2_LAN___,SR_2_LAN_HY,SR_2_LAN_LI,SR_2_LAN_SI,SR_2_WAT___,SY_2_AOD___,SY_2_SYN___,SY_2_V10___,SY_2_VG1___,SY_2_VGP___','(S3[A-D])_(OL|SR|SL|ST|SY|DO|MW|GN|AX)_([012_])_(EFR\w{3}|CR0\w{3}|CR1\w{3}|ERR\w{3}|RAC\w{3}|SPC\w{3}|INS\w{3}|WFR\w{3}|WRR\w{3}|LFR\w{3}|LRR\w{3}|ATP\w{3}|AER\w{3}|LAP\w{3}|LVI\w{3}|SLT\w{3}|RBT\w{3}|WCT\w{3}|WST\w{3}|LST\w{3}|MISR__|SYN\w{3}|VGP\w{3}|VG1\w{3}|V10\w{3}|LAN\w{3}|WAT\w{3}|SRA\w{3}|CAL\w{3}|FRP\w{3})_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{8}T\d{6})_(((\d{4})_(\d{3})_(\d{3})_(\d{4}|____))|(\w{17}))_(\w{3})_([DFOR])_(NR|ST|NT)_(\d{3})(?:.SEN3)?','Sentinel3 product naming');
 
 INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
 (1, 'MISSION', 1, 'Mission identifier'),
@@ -231,15 +231,17 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (8, 'DATASOURCE', 2, 'Data source / consumer'),
 (8, 'LEVEL', 3, 'Processing level'),
 (8, 'DATATYPE', 4, 'Data type identifier'),
-(8, 'DATESTART', 5, 'Data start time'),
-(8, 'DATESTOP', 6, 'Data stop time'),
-(8, 'PDATE', 7, 'Processing date'),
-(8, 'STIME', 8, 'Sensing time duration'),
-(8, 'SCYCLE', 9, 'Cycle number at the start sensing time'),
-(8, 'ORBIT', 10, 'Relative orbit'),
-(8, 'FRAME', 11, 'Frame start time'),
-(8, 'TILEID', 12, 'Tile identifier'),
-(8, 'CENTRE', 13, 'Product generating centre');
+(8, 'DATESTART', 5, 'Data start date'),
+(8, 'TIMESTART', 6, 'Data start time'),
+(8, 'DATESTOP', 7, 'Data stop date'),
+(8, 'TIMESTOP', 8, 'Data stop time'),
+(8, 'PDATE', 9, 'Processing date'),
+(8, 'STIME', 10, 'Sensing time duration'),
+(8, 'SCYCLE', 11, 'Cycle number at the start sensing time'),
+(8, 'ORBIT', 12, 'Relative orbit'),
+(8, 'FRAME', 13, 'Frame start time'),
+(8, 'TILEID', 14, 'Tile identifier'),
+(8, 'CENTRE', 15, 'Product generating centre');
 
 -- Repository types
 INSERT INTO workspace.repository_type (id, name, params) VALUES
