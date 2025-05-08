@@ -9,6 +9,8 @@ import ro.cs.tao.execution.model.ConditionExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
+import ro.cs.tao.messaging.Messaging;
+import ro.cs.tao.messaging.Topic;
 
 import java.net.InetAddress;
 import java.time.LocalDateTime;
@@ -64,7 +66,9 @@ public class ConditionExecutor extends Executor<ConditionExecutionTask> {
             }
             final Variable input = inputParameterValues.stream().filter(p -> !conditions.contains(p.getKey())).findFirst().orElseThrow();
             task.setOutputParameterValue(task.buildExecutionCommand(), input.getValue());
-            TaskUtilities.removeUnmatchedConditionBranches(task);
+            final List<String> removedTasks = TaskUtilities.removeUnmatchedConditionBranches(task);
+            Messaging.send(task.getJob().getUserId(), Topic.INFORMATION.value(), String.format("Tasks %s were discarded",
+                                                                                               String.join(", ", removedTasks)));
             markTaskFinished(task, ExecutionStatus.DONE);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());

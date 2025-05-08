@@ -549,13 +549,14 @@ public class TaskUtilities {
      * @param task  The task to be removed
      * @throws PersistenceException
      */
-    public static void removeTask(ExecutionTask task) throws PersistenceException {
+    public static String removeTask(ExecutionTask task) throws PersistenceException {
         final ExecutionJob job = task.getJob();
         final Long id = task.getId();
         job.getTaskDependencies().remove(id.toString());
         job.getTasks().removeIf(t -> t.getId().equals(id));
         jobProvider.update(job);
         taskProvider.delete(id);
+        return getWorkflowNode(task).getName();
     }
 
     /**
@@ -564,16 +565,17 @@ public class TaskUtilities {
      * @param task  The task whose children are to be removed.
      * @throws PersistenceException
      */
-    public static void removeChildrenTasks(ExecutionJob job, ExecutionTask task) throws PersistenceException {
+    public static List<String> removeChildrenTasks(ExecutionJob job, ExecutionTask task) throws PersistenceException {
         final Map<String, List<String>> dependencies = job.getTaskDependencies();
         List<ExecutionTask> children = taskProvider.getChildrenTasks(task.getId());
-        boolean isDirty = false;
+        final List<String> result = new ArrayList<>();
         while (children != null && !children.isEmpty()) {
             for (ExecutionTask child : children) {
-                removeTask(child);
                 children = taskProvider.getChildrenTasks(child.getId());
+                result.add(removeTask(child));
             }
         }
+        return result;
     }
 
     /**
@@ -582,7 +584,7 @@ public class TaskUtilities {
      * @param task  The task whose unmatched branches are to be removed.
      * @throws PersistenceException
      */
-    public static void removeUnmatchedConditionBranches(ConditionExecutionTask task) throws PersistenceException {
+    public static List<String> removeUnmatchedConditionBranches(ConditionExecutionTask task) throws PersistenceException {
         final List<ExecutionTask> children = taskProvider.getChildrenTasks(task.getId());
         final List<Variable> outputParameterValues = task.getOutputParameterValues();
         final Set<String> names = outputParameterValues.stream()
@@ -599,10 +601,12 @@ public class TaskUtilities {
                 iterator.remove();
             }
         }
+        final List<String> result = new ArrayList<>();
         for (ExecutionTask child : children) {
-            removeChildrenTasks(task.getJob(), child);
-            removeTask(child);
+            result.addAll(removeChildrenTasks(task.getJob(), child));
+            result.add(removeTask(child));
         }
+        return result;
     }
 
     /**
