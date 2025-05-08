@@ -10,6 +10,7 @@ import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.component.template.engine.JavascriptTemplateEngine;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.template.engine.VelocityTemplateEngine;
 import ro.cs.tao.datasource.param.JavaType;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 public class ConditionComponent extends TaoComponent {
     public static final String ONE_CONDITION_COMPONENT_ID = "one-condition-component";
     public static final String TWO_CONDITIONS_COMPONENT_ID = "two-conditions-component";
+    private static final Logger logger = Logger.getLogger(ConditionComponent.class.getName());
     private ComponentCategory category;
     private Template template;
     private TemplateType templateType;
@@ -255,12 +257,39 @@ public class ConditionComponent extends TaoComponent {
         this.template.associateWith(getTemplateEngine());
     }
 
+    /**
+     * Processes a template using the given naming rules and variable values.
+     *
+     * The method applies transformations to a template based on the provided naming rules and substitutions
+     * derived from the variable values. Conditions within the template are resolved using a parser and evaluated
+     * using a JavaScript engine, with the final output potentially transformed further for specific targets.
+     *
+     * @param rules a list of {@code NamingRule} objects that define patterns or rules for naming tokens in the template
+     * @param values a list of {@code Variable} objects representing key-value pairs used to substitute placeholders
+     *               and resolve conditions within the template
+     * @return the processed template as a {@code String}, or {@code null} if transformation cannot be applied
+     * @throws ParseException if an error occurs during the parsing of condition expressions within the template
+     */
     public String processTemplate(List<NamingRule> rules, List<Variable> values) throws ParseException {
         String transformedTemplate;
         if (!rules.isEmpty() && rules.size() == 1 && values != null && !values.isEmpty()) {
             NameExpressionParser parser = new NameExpressionParser(rules.get(0));
-            String parsedTemplate = parser.resolve(getTemplateContents(),
-                                                   new String[] { this.sources.get(0).getDataDescriptor().getLocation() });
+            Variable input = values.stream().filter(v -> v.getKey().equals(this.sources.get(0).getName())).findFirst().orElseThrow();
+            List<Variable> conditions = values.stream().filter(v -> v.getKey().startsWith("condition")).collect(Collectors.toList());
+            String templateContents = getTemplateContents();
+            // Velocity doesn't evaluate expressions, it considers them as objects.
+            // We need to use an actual evaluator, like the Javascript one.
+            final JavascriptTemplateEngine engine = new JavascriptTemplateEngine();
+            for (Variable condition : conditions) {
+                String value = parser.resolve(condition.getValue(), null);
+                String evalValue = String.valueOf(engine.evaluate(value));
+                templateContents = templateContents.replace("$" + condition.getKey(), evalValue);
+                logger.fine(String.format("Condition %s for input %s resolved to %s",
+                                          condition.getKey(),
+                                          input.getValue(),
+                                          evalValue));
+            }
+            this.template.setContents(templateContents, false);
             transformedTemplate = templateEngine.transform(this.template,
                                                            values.stream().collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
             if (transformedTemplate == null || "null".equals(transformedTemplate)) {

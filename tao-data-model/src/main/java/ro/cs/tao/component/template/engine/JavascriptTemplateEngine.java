@@ -71,4 +71,13 @@ public class JavascriptTemplateEngine extends TemplateEngine {
         }
         return result;
     }
+
+    @Override
+    public Object evaluate(String expression) throws TemplateException {
+        try {
+            return scriptEngine.eval(expression);
+        } catch (ScriptException e) {
+            throw new TemplateException(e);
+        }
+    }
 }
