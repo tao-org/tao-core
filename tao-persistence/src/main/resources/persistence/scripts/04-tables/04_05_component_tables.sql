@@ -277,7 +277,7 @@ DROP TABLE IF EXISTS component.component_dry_run_metrics CASCADE;
 CREATE TABLE component.component_dry_run_metrics
 (
 	id integer,
-	processing_component_id varchar(512) NOT NULL,
+	processing_component_id varchar(512) UNIQUE,
 	cpu_usage text NULL,
 	memory_usage text NULL,
     duration int NOT NULL
