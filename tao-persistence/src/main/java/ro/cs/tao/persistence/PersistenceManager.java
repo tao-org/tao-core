@@ -155,6 +155,9 @@ public class PersistenceManager {
     @Autowired
     private ConditionComponentManager conditionComponentManager;
 
+    @Autowired
+    private DryRunMetricsManager dryRunMetricsManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -242,4 +245,6 @@ public class PersistenceManager {
     public ExternalResourceSubscriptionManager externalResourceSubscription() { return externalResourceSubscriptionManager; }
 
     public ConditionComponentManager conditionComponents() { return conditionComponentManager; }
+
+    public DryRunMetricsManager dryRunMetrics() { return dryRunMetricsManager; }
 }

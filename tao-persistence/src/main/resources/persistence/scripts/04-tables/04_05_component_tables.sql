@@ -271,6 +271,25 @@ ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT PK_processin
 ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT FK_processing_parameter_expansion_parameter
 	FOREIGN KEY (id) REFERENCES component.processing_parameter (id) ON DELETE CASCADE ON UPDATE No Action;
 
+------------------------------------------------------------------------------
+-- table: condition_component
+DROP TABLE IF EXISTS component.component_dry_run_metrics CASCADE;
+CREATE TABLE component.component_dry_run_metrics
+(
+	id integer,
+	processing_component_id varchar(512) NOT NULL,
+	cpu_usage text NULL,
+	memory_usage text NULL,
+    duration int NOT NULL
+);
+ALTER TABLE component.component_dry_run_metrics ADD CONSTRAINT PK_dry_run_metrics
+	PRIMARY KEY (id);
+ALTER TABLE component.component_dry_run_metrics ADD CONSTRAINT FK_component_dry_run_metrics_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES component.processing_component (id) ON DELETE CASCADE ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS component.component_dry_run_metrics_id_seq CASCADE;
+CREATE SEQUENCE component.component_dry_run_metrics_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.component_dry_run_metrics ALTER COLUMN id SET DEFAULT nextval('component.component_dry_run_metrics_id_seq');
+ALTER SEQUENCE component.component_dry_run_metrics_id_seq OWNED BY component.component_dry_run_metrics.id;
 -------------------------------------------------------------------------------
 -- table: component.condition
 DROP TABLE IF EXISTS component.condition CASCADE;
