@@ -12,6 +12,7 @@ import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -340,5 +341,44 @@ public class WorkflowUtilities {
             } while (nodeNames.contains(newName));
             nodeDescriptor.setName(newName);
         }
+    }
+
+    public static int getNodeLevel(WorkflowNodeDescriptor node) {
+        int level = 1;
+        final List<WorkflowNodeDescriptor> allNodes = node.getWorkflow().getOrderedNodes();
+        if (node.getIncomingLinks() != null && !node.getIncomingLinks().isEmpty()) {
+            for (ComponentLink link : node.getIncomingLinks()) {
+                WorkflowNodeDescriptor parent = allNodes.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().get();
+                level = Math.max(level, getNodeLevel(parent, allNodes));
+            }
+        }
+        if (node.getLevel() != level) {
+            node.setLevel(level);
+            try {
+                persistenceManager.workflowNodes().update(node);
+            } catch (PersistenceException e) {
+                Logger.getLogger(WorkflowUtilities.class.getName()).severe(e.getMessage());
+            }
+        }
+        return level;
+    }
+
+    public static int getNodeLevel(WorkflowNodeDescriptor node, List<WorkflowNodeDescriptor> allNodes) {
+        int level = 1;
+        if (node.getIncomingLinks() != null && !node.getIncomingLinks().isEmpty()) {
+            for (ComponentLink link : node.getIncomingLinks()) {
+                WorkflowNodeDescriptor parent = allNodes.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().get();
+                level = Math.max(level, getNodeLevel(parent, allNodes));
+            }
+        }
+        if (node.getLevel() != level) {
+            node.setLevel(level);
+            try {
+                persistenceManager.workflowNodes().update(node);
+            } catch (PersistenceException e) {
+                Logger.getLogger(WorkflowUtilities.class.getName()).severe(e.getMessage());
+            }
+        }
+        return level;
     }
 }

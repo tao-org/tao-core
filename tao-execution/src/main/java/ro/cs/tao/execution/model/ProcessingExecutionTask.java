@@ -19,6 +19,7 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.component.converters.ConverterFactory;
 import ro.cs.tao.component.converters.ParameterConverter;
 import ro.cs.tao.component.enums.ParameterType;
+import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
@@ -248,7 +249,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
                     strValue.charAt(0) != '\'' &&  strValue.charAt(0) != '\"') {
             // Parameter values containing spaces will break the command line invocation, hence
             // the value needs to be enclosed in quotes
-            value = "'" + strValue + "'";
+            // Except for the case of an aggregate component, for which we need the unquoted value
+            if (this.component.getComponentType() != ProcessingComponentType.AGGREGATE) {
+                value = "'" + strValue + "'";
+            }
         }
         return value;
     }

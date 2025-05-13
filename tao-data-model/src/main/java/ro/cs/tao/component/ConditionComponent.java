@@ -47,6 +47,9 @@ public class ConditionComponent extends TaoComponent {
     private boolean active;
     private String owner;
 
+    /**
+     * Creates a condition component with one condition (if - else)
+     */
     public static ConditionComponent oneConditionComponent() {
         final ConditionComponent component = new ConditionComponent();
         component.setId(ONE_CONDITION_COMPONENT_ID);
@@ -74,10 +77,14 @@ public class ConditionComponent extends TaoComponent {
         component.setAuthors("CS GROUP");
         component.setCopyright("(C)2025");
         component.setVersion("1.0");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setVisibility(ProcessingComponentVisibility.SYSTEM);
         return component;
     }
 
+    /**
+     * Creates a condition component with two conditions (if - else if - else)
+     */
     public static ConditionComponent twoConditionsComponent() {
         final ConditionComponent component = new ConditionComponent();
         component.setId(TWO_CONDITIONS_COMPONENT_ID);
@@ -113,6 +120,7 @@ public class ConditionComponent extends TaoComponent {
         component.setVersion("1.0");
         component.setAuthors("CS GROUP");
         component.setCopyright("(C)2025");
+        component.setNodeAffinity(NodeAffinity.Any);
         component.setVisibility(ProcessingComponentVisibility.SYSTEM);
         return component;
     }
