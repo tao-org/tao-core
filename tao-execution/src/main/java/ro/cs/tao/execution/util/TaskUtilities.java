@@ -555,7 +555,11 @@ public class TaskUtilities {
         job.getTaskDependencies().remove(id.toString());
         job.getTasks().removeIf(t -> t.getId().equals(id));
         jobProvider.update(job);
-        taskProvider.delete(id);
+        try {
+            taskProvider.delete(id);
+        } catch (PersistenceException e) {
+            logger.severe(e.getMessage());
+        }
         return getWorkflowNode(task).getName();
     }
 

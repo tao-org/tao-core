@@ -367,7 +367,7 @@ public class Orchestrator extends Notifiable {
      */
     public ExecutionJob createJob(SessionContext context, ExecutionRequest request, boolean optimize)  throws ExecutionException {
         try {
-            final WorkflowDescriptor descriptor = workflowProvider.get(request.getWorkflowId());
+            final WorkflowDescriptor descriptor = workflowProvider.loadWorkflowDescriptor(request.getWorkflowId());
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", request.getWorkflowId()));
             }
@@ -382,8 +382,8 @@ public class Orchestrator extends Notifiable {
                 optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor, request.getParameters());
                 if (optimized == null) {
                     optimized = descriptor;
-                    optimized.setActive(descriptor.isActive());
                 }
+                optimized.setActive(descriptor.isActive());
             }
             final Environment env = request.getEnvironment() != null
                                     ? Environment.valueOf(request.getEnvironment())
