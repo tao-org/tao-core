@@ -2,17 +2,24 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.topology.NodeFlavor;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Class containing the dry run metrics of a processing component. Currently being provided by SIM-PIPE
+ *
+ * @author Stefan Efrem-Hagiu
+ */
+@XmlRootElement(name = "dryRunMetrics")
 public class DryRunMetrics extends LongIdentifiable {
 
-    private String componentName;
     private List<String> cpuUsageMetrics;
     private List<String> memoryUsageMetrics;
     private int duration;
     private NodeFlavor executionNodeFlavor;
+    private ProcessingComponent component;
 
     public DryRunMetrics() {
 
@@ -20,6 +27,14 @@ public class DryRunMetrics extends LongIdentifiable {
 
     public List<String> getCpuUsageMetrics() {
         return cpuUsageMetrics;
+    }
+
+    public void setCpuUsageMetrics(List<String> cpuUsageMetrics) {
+        this.cpuUsageMetrics = cpuUsageMetrics;
+    }
+
+    public void setMemoryUsageMetrics(List<String> memoryUsageMetrics) {
+        this.memoryUsageMetrics = memoryUsageMetrics;
     }
 
     public void addCpuUsageMetric(String cpuUsageMetric) {
@@ -48,12 +63,12 @@ public class DryRunMetrics extends LongIdentifiable {
         this.duration = duration;
     }
 
-    public String getComponentName() {
-        return componentName;
+    public ProcessingComponent getComponent() {
+        return component;
     }
 
-    public void setComponentName(String componentName) {
-        this.componentName = componentName;
+    public void setComponent(ProcessingComponent component) {
+        this.component = component;
     }
 
     public NodeFlavor getExecutionNodeFlavor() {
@@ -66,25 +81,24 @@ public class DryRunMetrics extends LongIdentifiable {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof DryRunMetrics that)) return false;
         if (!super.equals(o)) return false;
-        DryRunMetrics that = (DryRunMetrics) o;
-        return Objects.equals(componentName, that.componentName);
+        return getDuration() == that.getDuration() && Objects.equals(getComponent(), that.getComponent());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), componentName);
+        return Objects.hash(super.hashCode(), getDuration(), getComponent());
     }
 
     @Override
     public String toString() {
         return "DryRunMetrics{" +
-                "componentName='" + componentName + '\'' +
-                ", cpuUsageMetrics=" + cpuUsageMetrics +
+                "cpuUsageMetrics=" + cpuUsageMetrics +
                 ", memoryUsageMetrics=" + memoryUsageMetrics +
                 ", duration=" + duration +
                 ", executionNodeFlavor=" + executionNodeFlavor +
+                ", component=" + component +
                 '}';
     }
 }
