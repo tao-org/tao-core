@@ -16,6 +16,7 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.component.DryRunMetrics;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
@@ -75,7 +76,31 @@ public interface OrchestratorService extends TAOService {
     //ExecutionJob createJobExternal(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
     ExecutionJob scriptJob(ExecutionRequest request) throws ExecutionException;
 
+
+    /**
+     * Creates an ARGO Script job for a workflow definition. After the creation of the ARGO Workflow it executes a dry
+     * run on the SIM-PIPE app and persists the Dry Run Metrics retrieved.
+     *
+     * @param request       The execution request, containing:
+     *  - The workflow identifier
+     *  - A friendly name for this execution
+     *  - Argo format in which the Workflow will be exported
+     *  - The overridden parameter values for components
+     *
+     * @throws ExecutionException   In case anything goes wrong with executing the Job or the Dry Run
+     * @throws PersistenceException   In case anything goes wrong with persisting the Dry Run Metrics
+     */
     ExecutionJob executeSimpipe(ExecutionRequest request) throws ExecutionException, PersistenceException;
+
+    /**
+     * Creates an ARGO Script job for a workflow definition. After the creation of the ARGO Workflow it executes a dry
+     * run on the SIM-PIPE app and persists the Dry Run Metrics retrieved.
+     *
+     * @param componentIds  The list of Ids of the processing components for whom the Dry Run Metrics will be retrieved
+     *
+     */
+    List<DryRunMetrics> getDryRunMetricsForComponentIds(List<String> componentIds);
+
     /**
      * Stops the execution of the given job.
      *
