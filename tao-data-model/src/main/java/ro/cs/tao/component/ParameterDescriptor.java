@@ -193,6 +193,8 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public String typeFriendlyName() { return type != null ? type.friendlyName() : null; }
 
+    public String dataTypeFriendlyName() { return dataType != null ? dataType.friendlyName() : null; }
+
     public Validator getValidator() { return customValidator; }
 
     public void setValidator(Validator customValidator) { this.customValidator = customValidator; }
