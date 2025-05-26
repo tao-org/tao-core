@@ -27,6 +27,7 @@ import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
 import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 import ro.cs.tao.utils.StringUtilities;
@@ -41,6 +42,9 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
 
     @Autowired
     private ParameterExpansionRuleRepository expansionRuleRepository;
+
+    @Autowired
+    private ParameterDescriptorRepository parameterDescriptorRepository;
 
     @Override
     public ProcessingComponent get(String id, String containerId) {
@@ -111,8 +115,10 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
                     d.setExpansionRule(null);
                 }
             });
+            for(ParameterDescriptor descriptor : descriptors){
+                parameterDescriptorRepository.save(descriptor);
+            }
         }
-        //super.save(entity);
         if (!checkEntity(entity, false)) {
             throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
                                                          entity.getClass().getSimpleName()));
@@ -149,6 +155,12 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             throw new PersistenceException(String.format("Invalid parameters provided for updating entity of type %s!",
                                                          entity.getClass().getSimpleName()));
         }
+        final Optional<ProcessingComponent> existing = repository.findById(entity.getId());
+        if (existing.isEmpty()) {
+            throw new PersistenceException(String.format("There is no entity with the given identifier %s",
+                    entity.getId()));
+        }
+        ProcessingComponent entityExisting = existing.get();
         Set<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
         Map<ParameterDescriptor, ParameterExpansionRule> map = new HashMap<>();
         if (descriptors != null) {
