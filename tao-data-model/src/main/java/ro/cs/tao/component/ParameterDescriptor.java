@@ -29,7 +29,10 @@ import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Complete descriptor of a component parameter.
@@ -272,11 +275,6 @@ public class ParameterDescriptor extends StringIdentifiable {
         if (!super.equals(o)) return false;
         ParameterDescriptor that = (ParameterDescriptor) o;
         return name.equals(that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), name);
     }
 
     public JavaType javaType() { return this.dataType; }
