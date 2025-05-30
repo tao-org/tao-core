@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-public abstract class TaoLoginModule implements LoginModule {
+public abstract class TaoLoginModule<T extends TokenProvider> implements LoginModule {
     protected static UserProvider userProvider;
     protected UserPrincipal userPrincipal;
     protected Subject subject;
@@ -36,6 +36,7 @@ public abstract class TaoLoginModule implements LoginModule {
     protected String id;
     protected final Logger logger;
     protected final AuthenticationMode configuredAuthMode;
+    protected T tokenProvider;
 
     public static void setUserProvider(UserProvider provider) { userProvider = provider; }
 
@@ -137,7 +138,9 @@ public abstract class TaoLoginModule implements LoginModule {
 
     @Override
     public boolean logout() throws LoginException {
-        subject.getPrincipals().remove(userPrincipal);
+        if (subject != null && subject.getPrincipals() != null && userPrincipal != null) {
+            subject.getPrincipals().remove(userPrincipal);
+        }
         succeeded = false;
         succeeded = commitSucceeded;
         username = null;
@@ -167,6 +170,10 @@ public abstract class TaoLoginModule implements LoginModule {
             logout();
         }
         return true;
+    }
+
+    public Token refresh(String refreshToken) {
+        return this.tokenProvider.newToken(refreshToken);
     }
 
     protected abstract AuthenticationMode intendedFor();
