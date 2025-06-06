@@ -1,5 +1,8 @@
 package ro.cs.tao.eodata.naming;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a resolver capable of resolving and transforming string expressions containing tokens.
  * A token is typically a placeholder or a reference embedded within a string that requires substitution,
@@ -38,4 +41,8 @@ public interface TokenResolver {
      */
     String resolve(final String expression);
 
+    /**
+     * Retunrs a list of function descriptors that are supported by this resolver, if any.
+     */
+    default List<ResolverFunction> definedFunctions() { return new ArrayList<>(); }
 }
