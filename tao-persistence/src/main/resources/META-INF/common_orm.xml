@@ -1562,6 +1562,9 @@
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
+            <basic name="sessionId">
+                <column name="session_id" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
             <basic name="event">
                 <column name="event" nullable="true" column-definition="character varying NOT NULL"/>
             </basic>
