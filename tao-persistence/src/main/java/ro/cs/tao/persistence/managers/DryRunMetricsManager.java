@@ -23,6 +23,11 @@ public class DryRunMetricsManager extends EntityManager<DryRunMetrics, Long, Dry
     }
 
     @Override
+    public DryRunMetrics getByComponentId(String componentId) {
+        return repository.getByComponentId(componentId);
+    }
+
+    @Override
     public DryRunMetrics save(DryRunMetrics entity) throws PersistenceException {
         if (!checkEntity(entity, false)) {
             throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
