@@ -11,6 +11,9 @@ import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 /**
+ * Utility class for running parallel iterations over a range of integers or collections.
+ * It provides static methods for parallel loops with customizable levels of parallelism.
+ *
  * @author Cosmin Cara
  */
 public class Parallel {
@@ -27,6 +30,10 @@ public class Parallel {
         void run(T i, Signal cancelSignal);
     }
 
+    /**
+     * A utility class used to manage and control the execution of a collection of tasks represented as {@link Future} objects.
+     * This class provides functionality to signal cancellation of all tasks that are not yet completed.
+     */
     public static class Signal {
         private final List<Future<?>> tasks;
 
@@ -168,10 +175,29 @@ public class Parallel {
         }
     }
 
+    /**
+     * Executes a parallel for-loop from the specified start index to the specified stop index.
+     *
+     * @param start The start index of the loop (inclusive).
+     * @param stop The stop index of the loop (exclusive).
+     * @param code The loop code to execute, which accepts the current index and a signal for cancellation handling.
+     */
     public static void For(int start, int stop, final Cancellable<Integer> code) {
         For(null, start, stop, PARALLELISM, code);
     }
 
+    /**
+     * Executes a parallel for-loop across a range of integers, with specified settings
+     * including loop naming and degree of parallelism. This method provides support for
+     * cancellation mechanisms via a {@link Signal} object.
+     *
+     * @param name        The name of the loop, useful for identification in thread pool configurations.
+     * @param start       The start index of the loop (inclusive).
+     * @param stop        The end index of the loop (exclusive).
+     * @param parallelism The degree of parallelism defining how many threads can run concurrently.
+     * @param code        The loop code to execute, which accepts the current index and a signal for
+     *                    cancellation handling.
+     */
     public static void For(String name, int start, int stop, int parallelism, final Cancellable<Integer> code) {
         final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("pfc" + (name == null ? "" : "-" + name), Math.max(PARALLELISM, parallelism));
         try {

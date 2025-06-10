@@ -16,10 +16,21 @@
 
 package ro.cs.tao.utils.executors;
 
+/**
+ * The OutputAccumulator class is an implementation of the OutputConsumer interface
+ * that accumulates output messages into an internal buffer. It provides functionality
+ * to configure whether to preserve line delimiters while storing the messages.
+ */
 public class OutputAccumulator implements OutputConsumer {
     private boolean delimitLines;
     private final StringBuilder buffer = new StringBuilder();
 
+    /**
+     * Configures whether to preserve line separators in the accumulated output.
+     * When enabled, line delimiters are retained while storing messages in the buffer.
+     *
+     * @param delimitLines if true, line delimiters will be preserved; otherwise, they will be excluded
+     */
     public void preserveLineSeparator(boolean delimitLines) {
         this.delimitLines = delimitLines;
     }
@@ -33,11 +44,23 @@ public class OutputAccumulator implements OutputConsumer {
             }
         }
     }
+
+    /**
+     * Retrieves the accumulated output stored in the internal buffer as a single string.
+     * This method ensures thread-safe access to the buffer's content.
+     *
+     * @return the current content of the internal buffer as a string
+     */
     public String getOutput() {
         synchronized (buffer) {
             return this.buffer.toString();
         }
     }
+
+    /**
+     * Resets the internal buffer by clearing all accumulated content.
+     * This method ensures thread-safe modification of the buffer.
+     */
     public void reset() {
         synchronized (buffer) {
             this.buffer.setLength(0);

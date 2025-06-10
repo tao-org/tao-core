@@ -2,9 +2,9 @@ package ro.cs.tao.optimization;
 
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.RuntimeOptimizer;
+import ro.cs.tao.utils.Tuple;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * An OptimizationNode is used for simulating a WorkflowNodeDescriptor, but with dependencies in both ways.
@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class OptimizationNode {
     private List<OptimizationNode> successors   = new ArrayList<>();
-    private List<OptimizationNode> predecessors = new ArrayList<>();
+    private Map<Tuple<String, String>, OptimizationNode> predecessors = new LinkedHashMap<>();
     private List<Long> nodeIds = new ArrayList<>();
     private NodesDefinition defined;
     private int level = -1;
@@ -35,12 +35,25 @@ public class OptimizationNode {
         this.successors = successors;
     }
 
-    public List<OptimizationNode> getPredecessors() {
+    public Map<Tuple<String, String>, OptimizationNode> getPredecessors() {
         return predecessors;
     }
 
-    public void setPredecessors(List<OptimizationNode> predecessors) {
-        this.predecessors = predecessors;
+    public void setPredecessors(Map<Tuple<String, String>, OptimizationNode> predecessors) {
+        if (this.predecessors != null) {
+            if (this.predecessors.size() != predecessors.size()) {
+                throw new IllegalArgumentException("Should have the same number of predecessors");
+            }
+            final Map<Tuple<String, String>, OptimizationNode> newMap = new LinkedHashMap<>();
+            final Iterator<Map.Entry<Tuple<String, String>, OptimizationNode>> thisIterator = this.predecessors.entrySet().iterator();
+            final Iterator<Map.Entry<Tuple<String, String>, OptimizationNode>> thatIterator = predecessors.entrySet().iterator();
+            while (thisIterator.hasNext() && thatIterator.hasNext()) {
+                newMap.put(thisIterator.next().getKey(), thatIterator.next().getValue());
+            }
+            this.predecessors = newMap;
+        } else {
+            this.predecessors = predecessors;
+        }
     }
 
     public Long getFirstNodeId() {
@@ -59,8 +72,8 @@ public class OptimizationNode {
         successors.add(n);
     }
 
-    public void addParent(OptimizationNode n) {
-        predecessors.add(n);
+    public void addParent(String parentPort, String nodePort, OptimizationNode n) {
+        predecessors.put(new Tuple<>(parentPort, nodePort), n);
     }
 
     public boolean isCompatibleWith(OptimizationNode node) {
@@ -105,10 +118,10 @@ public class OptimizationNode {
         // if level is not defined
         if (level == -1) {
             if (predecessors.isEmpty()) {
-                level = 0;
+                level = 1;
 
             } else {
-                predecessors.forEach((n) -> level = Integer.max(level, n.getLevel()));
+                predecessors.values().forEach((n) -> level = Integer.max(level, n.getLevel()));
                 level++;
 
             }

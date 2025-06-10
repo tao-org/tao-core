@@ -6,6 +6,11 @@ import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 import java.security.Principal;
 import java.util.Map;
 
+/**
+ * A specialized progress notifier that tracks and reports the progress of download activities.
+ * This class implements the {@link DownloadProgressListener} interface and extends the
+ * {@link ProgressNotifier} base class, allowing it to handle download-specific progress updates.
+ */
 public class DownloadProgressNotifier extends ProgressNotifier implements DownloadProgressListener {
     private long total;
 

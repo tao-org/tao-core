@@ -16,6 +16,12 @@
 package ro.cs.tao.utils.executors;
 
 /**
+ * Represents the execution mode for a system or process.
+ *
+ * This enumeration defines two execution modes:
+ * - {@link #SUPERUSER}: Represents a mode where elevated privileges are granted.
+ * - {@link #USER}: Represents a mode with standard user privileges.
+ *
  * @author Cosmin Cara
  */
 public enum ExecutionMode {

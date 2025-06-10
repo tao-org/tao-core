@@ -37,8 +37,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.FileSystem;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
@@ -573,6 +573,9 @@ public class FileUtilities {
     public static void replaceWithLink(Path path, Path linkTarget) throws IOException {
         if (!Files.exists(path)) {
             throw new NoSuchFileException(path.toString());
+        }
+        if (Files.isSymbolicLink(path)) {
+            return;
         }
         if (!Files.exists(linkTarget)) {
             throw new NoSuchFileException(linkTarget.toString());

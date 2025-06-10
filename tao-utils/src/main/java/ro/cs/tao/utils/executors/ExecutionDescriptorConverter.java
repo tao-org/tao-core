@@ -11,6 +11,12 @@ import ro.cs.tao.utils.ExecutionUnitFormat;
  */
 public interface ExecutionDescriptorConverter {
 
+    /**
+     * Determines whether this converter is intended for the specified execution unit format.
+     *
+     * @param unitFormat The format of the execution unit to be checked.
+     * @return true if this converter supports the specified format; false otherwise.
+     */
     boolean isIntendedFor(ExecutionUnitFormat unitFormat);
 
 }

@@ -12,6 +12,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * The WindowsRuntimeInspector class provides methods to collect runtime information
+ * about a Windows operating system node. It gathers details such as CPU usage,
+ * memory, and disk statistics by interacting with the Windows Management Instrumentation
+ * Command-line (WMIC). This class implements the NodeRuntimeInspector interface.
+ *
+ * The collected information includes system metrics such as:
+ * - CPU usage percentage
+ * - Total and available memory in MB
+ * - Total and used disk space in GB
+ *
+ * Additionally, this class can execute commands remotely or locally depending on the
+ * specified configuration.
+ */
 class WindowsRuntimeInspector implements NodeRuntimeInspector {
 
     final String node;

@@ -4,6 +4,14 @@ import ro.cs.tao.component.LongIdentifiable;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents the usage of a resource associated with a specific task and user.
+ * This class tracks relevant information such as the user ID, host details,
+ * resource flavor, and the start and end timestamps for resource usage.
+ *
+ * Extends:
+ * - LongIdentifiable: To uniquely identify the resource usage by an ID of type long.
+ */
 public class ResourceUsage extends LongIdentifiable {
     private long taskId;
     private String userId;

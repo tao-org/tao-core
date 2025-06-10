@@ -82,6 +82,12 @@ public class ConditionExecutionTask extends ExecutionTask {
         if (this.outputParameterValues == null) {
             this.outputParameterValues = new ArrayList<>();
         }
+        for (int i = 0; i < this.outputParameterValues.size(); i++) {
+            if (this.outputParameterValues.get(i).getKey().equals(parameterName)) {
+                this.outputParameterValues.set(i, new Variable(parameterName, value));
+                return;
+            }
+        }
         this.outputParameterValues.add(new Variable(parameterName, value));
     }
 

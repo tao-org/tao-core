@@ -45,6 +45,11 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
             "WHERE c.id = :taskId ORDER BY p.id", nativeQuery = true)
     List<Long> findParentTaskIds(@Param("taskId") long taskId);
 
+    @Query(value = "SELECT p.* FROM execution.task p JOIN workflow.component_link l ON l.target_graph_node_id = p.graph_node_id " +
+            "JOIN execution.task c ON c.graph_node_id = l.source_graph_node_id AND c.job_id = p.job_id " +
+            "WHERE c.id = :taskId ORDER BY p.id", nativeQuery = true)
+    List<ExecutionTask> getChildrenTasks(@Param("taskId") long taskId);
+
     @Query(value = "SELECT * from execution.task where execution_status_id = 2", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getRunningTasks();

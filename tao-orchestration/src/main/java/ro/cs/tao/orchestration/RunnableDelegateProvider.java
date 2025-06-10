@@ -16,6 +16,10 @@
 
 package ro.cs.tao.orchestration;
 
+/**
+ * An interface that provides a mechanism to wrap a {@link Runnable} instance with additional functionality.
+ * This can be used to delegate or modify the execution context of the provided {@link Runnable}.
+ */
 public interface RunnableDelegateProvider {
     default Runnable wrap(Runnable runnable) {
         return runnable;

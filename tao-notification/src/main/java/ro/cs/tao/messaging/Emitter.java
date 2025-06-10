@@ -31,7 +31,7 @@ public interface Emitter {
      * @param message   The message
      */
     default void send(Topic topic, Message message) {
-        if (message.getUserId() != null) {
+        if (message.getUserId() == null) {
             throw new RuntimeException("No userId set");
         }
         message.setTopic(topic.value());

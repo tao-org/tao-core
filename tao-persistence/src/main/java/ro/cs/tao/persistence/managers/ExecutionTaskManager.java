@@ -142,7 +142,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
-                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE n.\"name\" END ELSE d.Label END \"componentName\", " +
+                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN CASE WHEN c.id IS NULL THEN 'group' ELSE 'condition' END ELSE n.\"name\" END ELSE d.Label END \"componentName\", " +
                                                  "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
                                                  "CASE WHEN ct.average_duration_seconds IS NULL OR ct.average_duration_seconds = 0 THEN -1 ELSE " +
                                                  "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, t.execution_log, " +
@@ -152,6 +152,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                                                  "LEFT OUTER JOIN workflow.graph w ON w.id = j.workflow_id " +
                                                  "LEFT OUTER JOIN workflow.graph_node n ON n.id = t.graph_node_id " +
                                                  "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
+                                                 "LEFT OUTER JOIN component.condition_component c ON c.id = t.component_id " +
                                                  "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
                                                  "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
                                                  "WHERE job_id = ? " +
@@ -278,6 +279,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public List<Long> getParentIds(long taskId) {
         return repository.findParentTaskIds(taskId);
+    }
+
+    @Override
+    public List<ExecutionTask> getChildrenTasks(long taskId) {
+        return repository.getChildrenTasks(taskId);
     }
 
     @Override

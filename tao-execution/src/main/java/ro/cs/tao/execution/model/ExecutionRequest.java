@@ -3,6 +3,12 @@ package ro.cs.tao.execution.model;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a request to execute a specific workflow with configurable parameters
+ * and inputs. This class contains details about the workflow execution, including
+ * its ID, name, label, job type, environment, and additional input and parameter
+ * configurations.
+ */
 public class ExecutionRequest {
     private long workflowId;
     private String name;

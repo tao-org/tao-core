@@ -16,6 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+/**
+ * A class that listens for and manages process activity events, such as disk I/O activities,
+ * and logs the data if a log file is provided. This class implements the {@code ProcessActivityListener}
+ * interface to handle disk activity records generated for monitored processes.
+ */
 public class ActivityListener implements ProcessActivityListener {
     private final Logger logger = Logger.getLogger(ActivityListener.class.getName());
     private int sampleInterval;
@@ -27,8 +32,22 @@ public class ActivityListener implements ProcessActivityListener {
         this.sampleInterval = 10000;
     }
 
+    /**
+     * Sets the sampling interval for monitoring activities.
+     *
+     * @param sampleInterval the sampling interval in milliseconds at which activity monitoring is performed
+     */
     public void setSampleInterval(int sampleInterval) { this.sampleInterval = sampleInterval; }
 
+    /**
+     * Configures the log file where disk activity will be recorded. If the specified file does not exist,
+     * it will be created, and necessary parent directories will also be generated as needed.
+     * The log file will record disk read and write activities in a tabular format.
+     * If the log file is successfully set, a confirmation will be logged.
+     * Otherwise, a warning indicating failure to record disk activity will be issued.
+     *
+     * @param file the {@code Path} to the disk activity log file
+     */
     public void setLogFile(Path file) {
         if (file != null) {
             if (!Files.exists(file)) {
@@ -70,6 +89,13 @@ public class ActivityListener implements ProcessActivityListener {
         }
     }
 
+    /**
+     * Attaches a process to the activity listener, allowing the monitoring of disk activity
+     * for the specified process. If the process is not already being monitored, a new
+     * {@code ProcessActivityMonitor} is created and registered with this listener.
+     *
+     * @param process the {@code Process} instance to be monitored
+     */
     public void attachTo(Process process) {
         if (!this.monitorMap.containsKey(process)) {
             ProcessActivityMonitor monitor = ProcessActivityMonitor.createMonitor(process, this.sampleInterval);
@@ -78,6 +104,13 @@ public class ActivityListener implements ProcessActivityListener {
         }
     }
 
+    /**
+     * Detaches a process from the activity listener, stopping the monitoring of disk activity
+     * for the specified process. This will remove the associated process from the internal
+     * monitoring map if it is currently being monitored.
+     *
+     * @param process the {@code Process} instance to be detached
+     */
     public void detachFrom(Process process) {
         this.monitorMap.remove(process);
     }

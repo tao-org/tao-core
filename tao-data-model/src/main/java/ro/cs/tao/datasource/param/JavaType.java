@@ -36,7 +36,8 @@ public enum JavaType implements TaoEnum<Class<?>> {
     BOOLEAN_ARRAY(boolean[].class, "bool[]", "\"urn:ogc:def:string", Boolean::parseBoolean),
     POLYGON(Polygon2D.class, "polygon", "urn:ogc:def:anyURI", Polygon2D::fromWKT),
     PATH(Path.class, "path", "urn:ogc:def:string", Path::of),
-    PATH_ARRAY(Path[].class, "path[]", "urn:ogc:def:stringList", Path::of);
+    PATH_ARRAY(Path[].class, "path[]", "urn:ogc:def:stringList", Path::of),
+    WKT(WKT.class, "wkt", "urn:ogc:def:string", WKT::new);
 
     private final Class<?> clazz;
     private final String description;

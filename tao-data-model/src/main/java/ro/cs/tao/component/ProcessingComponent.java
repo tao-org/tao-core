@@ -45,6 +45,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -74,6 +76,7 @@ public class ProcessingComponent extends TaoComponent {
     private boolean isTransient;
     private Boolean outputManaged;
 
+    private static final String paramRegex = "([\\$\\-]%s[ ]?\\b)|([\\$\\-]%s[ ]?\\b)";
 
     public ProcessingComponent() {
         super();
@@ -637,14 +640,28 @@ public class ProcessingComponent extends TaoComponent {
                 default:
                     final String[] lines = templateContents.split("\n");
                     final StringBuilder builder = new StringBuilder();
+                    final Pattern pattern = Pattern.compile(String.format(paramRegex, descriptor.getName(), descriptor.getLabel()));
                     for (String line : lines) {
-                        if (!line.contains(paramLabel) && !line.contains(descriptor.getLabel())) {
+                        Matcher matcher = pattern.matcher(line) ;
+                        if (!matcher.matches()) {
                             builder.append(line).append("\n");
                         } else {
                             if (StringUtilities.count("$", line) > 1) {
                                 builder.append(line.replace(paramLabel, descriptor.getDefaultValue())).append("\n");
                             }
+                            // in a Velocity template there can be several params & values on the same line, therefore remove only the matching text
+                            line = line.replace(line.substring(matcher.regionStart(),matcher.regionEnd()), "");
+                            if (!StringUtilities.isNullOrEmpty(line)) {
+                                builder.append(line).append("\n");
+                            }
                         }
+                        /*if (!line.contains(paramLabel) && !line.contains(descriptor.getLabel()) && !line.contains(descriptor.getName())) {
+                            builder.append(line).append("\n");
+                        } else {
+                            if (StringUtilities.count("$", line) > 1) {
+                                builder.append(line.replace(paramLabel, descriptor.getDefaultValue())).append("\n");
+                            }
+                        }*/
                     }
                     this.template.setContents(builder.toString(), false);
                     break;

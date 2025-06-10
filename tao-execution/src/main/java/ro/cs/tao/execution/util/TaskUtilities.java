@@ -71,6 +71,7 @@ public class TaskUtilities {
     private static final ProcessingComponentProvider processingComponentProvider;
     private static final DataSourceComponentProvider dataSourceComponentProvider;
     private static final GroupComponentProvider groupComponentProvider;
+    private static final ConditionComponentProvider conditionComponentProvider;
     /*private static final ExecutionJobProvider jobProvider;*/
     private static final ExecutionTaskProvider taskProvider;
     private static final ExecutionJobProvider jobProvider;
@@ -95,6 +96,7 @@ public class TaskUtilities {
         processingComponentProvider = context.getService(ProcessingComponentProvider.class);
         dataSourceComponentProvider = context.getService(DataSourceComponentProvider.class);
         groupComponentProvider = context.getService(GroupComponentProvider.class);
+        conditionComponentProvider = context.getService(ConditionComponentProvider.class);
         containerProvider = context.getService(ContainerProvider.class);
         repositoryProvider = context.getService(RepositoryProvider.class);
         symLinks = Collections.synchronizedMap(new HashMap<>());
@@ -164,6 +166,9 @@ public class TaskUtilities {
                     break;
                 case GROUP:
                     component = groupComponentProvider.get(node.getComponentId());
+                    break;
+                case CONDITION:
+                    component = conditionComponentProvider.get(node.getComponentId());
                     break;
             }
         }
@@ -455,6 +460,8 @@ public class TaskUtilities {
             component = ((WPSExecutionTask) task).getComponent().getId();
         } else if (task instanceof WMSExecutionTask) {
             component = ((WMSExecutionTask) task).getComponent().getId();
+        } else if (task instanceof ConditionExecutionTask) {
+            component = ((ConditionExecutionTask) task).getComponent().getId();
         } else {
             component = "unknown component";
         }
@@ -529,20 +536,111 @@ public class TaskUtilities {
         return tasks.stream().map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
     }
 
+    /**
+     * Returns a task by a given output path.
+     * @param outputPath    The output path of the task.
+     */
     public static ExecutionTask findTaskByOutput(String outputPath) {
         return taskProvider.getTaskByOutput(outputPath);
     }
 
+    /**
+     * Deletes a task from its job and from database.
+     * @param task  The task to be removed
+     * @throws PersistenceException
+     */
+    public static String removeTask(ExecutionTask task) throws PersistenceException {
+        final ExecutionJob job = task.getJob();
+        final Long id = task.getId();
+        job.getTaskDependencies().remove(id.toString());
+        job.getTasks().removeIf(t -> t.getId().equals(id));
+        jobProvider.update(job);
+        try {
+            taskProvider.delete(id);
+        } catch (PersistenceException e) {
+            logger.severe(e.getMessage());
+        }
+        return getWorkflowNode(task).getName();
+    }
+
+    /**
+     * Removes all the children tasks of the given task.
+     * @param job   The job of the task.
+     * @param task  The task whose children are to be removed.
+     * @throws PersistenceException
+     */
+    public static List<String> removeChildrenTasks(ExecutionJob job, ExecutionTask task) throws PersistenceException {
+        final Map<String, List<String>> dependencies = job.getTaskDependencies();
+        List<ExecutionTask> children = taskProvider.getChildrenTasks(task.getId());
+        final List<String> result = new ArrayList<>();
+        while (children != null && !children.isEmpty()) {
+            for (ExecutionTask child : children) {
+                children = taskProvider.getChildrenTasks(child.getId());
+                result.add(removeTask(child));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Removes all the unmatched condition branches of the given task
+     * (the parent job should continue only on the matched branch).
+     * @param task  The task whose unmatched branches are to be removed.
+     * @throws PersistenceException
+     */
+    public static List<String> removeUnmatchedConditionBranches(ConditionExecutionTask task) throws PersistenceException {
+        final List<ExecutionTask> children = taskProvider.getChildrenTasks(task.getId());
+        final List<Variable> outputParameterValues = task.getOutputParameterValues();
+        final Set<String> names = outputParameterValues.stream()
+                                                       .filter(v -> v.getValue() == null).map(Variable::getKey)
+                                                       .collect(Collectors.toSet());
+        final List<TargetDescriptor> descriptors = task.getComponent().getTargets().stream()
+                                                       .filter(t -> names.contains(t.getName()))
+                                                       .collect(Collectors.toList());
+        final Iterator<ExecutionTask> iterator = children.iterator();
+        while (iterator.hasNext()) {
+            ExecutionTask child = iterator.next();
+            final WorkflowNodeDescriptor node = getWorkflowNode(child);
+            if (node.getIncomingLinks().stream().noneMatch(l -> names.contains(l.getInput().getName()))) {
+                iterator.remove();
+            }
+        }
+        final List<String> result = new ArrayList<>();
+        for (ExecutionTask child : children) {
+            result.addAll(removeChildrenTasks(task.getJob(), child));
+            result.add(removeTask(child));
+        }
+        return result;
+    }
+
+    /**
+     * Returns the local repository of the user executing the task.
+     * @param task  The execution task.
+     */
     public static String getUserWorkspace(ExecutionTask task) {
         return repositoryProvider.getUserSystemRepositories(task.getJob().getUserId()).stream()
                                  .filter(r -> r.getType() == RepositoryType.LOCAL)
                                  .findFirst().get().root();
     }
 
+    /**
+     * Adds a symbolic link replacement to the collection of replacements associated with a job.
+     * This allows for tracking of symbolic links and their resolved paths during job execution.
+     *
+     * @param jobId        The unique identifier of the job.
+     * @param link         The symbolic link to be replaced.
+     * @param resolvedLink The resolved path of the symbolic link.
+     */
     public static void addLinkReplacement(long jobId, Path link, String resolvedLink) {
         symLinks.computeIfAbsent(jobId, j -> new ArrayList<>()).add(new Tuple<>(link.toString(), resolvedLink));
     }
 
+    /**
+     * Restores all the symbolic links that were replaced during job execution.
+     *
+     * @param jobId The unique identifier of the job.
+     * @return The number of links restored.
+     */
     public static int restoreLinks(long jobId) {
         final List<Tuple<String, String>> list = symLinks.get(jobId);
         int counter = 0;

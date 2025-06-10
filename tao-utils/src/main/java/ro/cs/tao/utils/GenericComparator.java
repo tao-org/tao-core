@@ -23,6 +23,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A generic comparator for comparing objects or fields within objects based on specified criteria.
+ * This class allows for multi-field comparisons where the order of comparison and sort direction
+ * are configurable through the constructor.
+ */
 public class GenericComparator implements Comparator<Object>  {
 
     private final Class objectClass;

@@ -18,6 +18,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * The ScriptJobFactory is responsible for creating and configuring instances
+ * of script-based execution tasks within a workflow. This class extends the
+ * DefaultJobFactory and overrides the method for task creation specifically
+ * for processing components that involve scripts.
+ */
 public class ScriptJobFactory extends DefaultJobFactory {
 
     @Override
