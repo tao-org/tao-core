@@ -17,6 +17,7 @@ package ro.cs.tao.persistence.config;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
+import org.h2gis.functions.factory.H2GISFunctions;
 import org.hibernate.annotations.TypeDef;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.springframework.context.ApplicationListener;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.env.Environment;
+import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.orm.jpa.JpaDialect;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -126,6 +128,11 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 
     private static final String PROPERTY_NAME_SPRING_JPA_HIBERNATE_LOB_CREATION = "spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation";
 
+    private static final String PROPERTY_SPRING_H2_CONSOLE_PATH = "spring.h2.console.path";
+    private static final String PROPERTY_SPRING_H2_CONSOLE = "spring.h2.console.enabled";
+    private static final String PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW = "spring.h2.console.settings.web-allow-others";
+
+
     /**
      * Constant for the hibernate format sql flag property name (within
      * .properties file)
@@ -190,11 +197,16 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 
             dataSource.setDriverClass(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_DRIVER));
 
+//            dataSource.getDriverClass()
+
             // DB URL + user name + pass from tao.properties
             dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_URL));
-
             dataSource.setUser(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_USERNAME));
             dataSource.setPassword(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_PASSWORD));
+
+            //pt PersistenceManager
+            dataSource.setJdbcUrl("jdbc:h2:./../db/taodata;;MODE=PostgreSQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE;NON_KEYWORDS=USER,VALUE,values,key,IN;IFEXISTS=TRUE");
+            dataSource.setUser("tao");dataSource.setPassword("tao");
 
             dataSource.setInitialPoolSize(Integer
               .parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_INITIALPOOLSIZE)));
@@ -213,9 +225,10 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
             if ((connection = dataSource.getConnection()) == null) {
                 logger.log(Level.SEVERE, "Database connection cannot be established!");
             } else {
+                H2GISFunctions.load(connection);
                 String[] jdbcUrlTokens = dataSource.getJdbcUrl().split(":");
-                logger.fine(String.format("Using %s as database driver to connect to '%s:%s'",
-                                          dataSource.getDriverClass(), jdbcUrlTokens[2], jdbcUrlTokens[3]));
+                logger.fine(String.format("Using %s as database driver to connect to '%s'",
+                                          dataSource.getDriverClass(), jdbcUrlTokens[2]));
                 connection.close();
             }
         } catch (SQLException | IllegalStateException | PropertyVetoException e) {
@@ -243,7 +256,6 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
         transactionManager.setJpaDialect(jpaDialect);
         return transactionManager;
     }
-
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
 
@@ -255,7 +267,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
         entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         //entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
         entityManagerFactoryBean.setPersistenceUnitName("tao");
-        entityManagerFactoryBean.setMappingResources("META-INF/common_orm.xml", "META-INF/eo_orm.xml");
+        entityManagerFactoryBean.setMappingResources("META-INF/common_orm_h2.xml", "META-INF/eo_orm_h2.xml");
 
         final Properties jpaProperties = new Properties();
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_DIALECT,
@@ -278,6 +290,12 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_CONNECTION_RELEASE_MODE));
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_TRANSACTION_AUTO_CLOSE_SESSION,
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_TRANSACTION_AUTO_CLOSE_SESSION));
+        jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE,
+                environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE));
+        jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_PATH,
+                environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_PATH));
+        jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW,
+                environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW));
         jpaProperties.put("hibernate.enable_lazy_load_no_trans",
           environment.getRequiredProperty("hibernate.enable_lazy_load_no_trans"));
         entityManagerFactoryBean.setJpaProperties(jpaProperties);

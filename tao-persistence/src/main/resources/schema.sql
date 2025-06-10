@@ -1,0 +1,2424 @@
+--schemas
+-------------------------------------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS usr;
+CREATE SCHEMA IF NOT EXISTS common;
+CREATE SCHEMA IF NOT EXISTS topology;
+CREATE SCHEMA IF NOT EXISTS component;
+CREATE SCHEMA IF NOT EXISTS product;
+CREATE SCHEMA IF NOT EXISTS workflow;
+CREATE SCHEMA IF NOT EXISTS execution;
+CREATE SCHEMA IF NOT EXISTS scheduling;
+CREATE SCHEMA IF NOT EXISTS workspace;
+CREATE SCHEMA IF NOT EXISTS config;
+CREATE SCHEMA IF NOT EXISTS subscription;
+
+
+--DB USER
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- table: usr.group
+DROP TABLE IF EXISTS usr.grp CASCADE;
+CREATE TABLE usr.grp
+(
+	id integer PRIMARY KEY NOT NULL,
+	name varchar(50) NOT NULL,
+	input_quota int NOT NULL DEFAULT -1,
+	processing_quota int NOT NULL DEFAULT -1,
+	cpu_quota int NOT NULL DEFAULT 2,
+	memory_quota int NOT NULL DEFAULT 8192
+);
+DROP SEQUENCE IF EXISTS usr.group_id_seq;
+CREATE SEQUENCE usr.group_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE usr.grp ALTER COLUMN id SET DEFAULT nextval('usr.group_id_seq');
+--ALTER SEQUENCE usr.group_id_seq OWNED BY usr.grp.id;
+-------------------------------------------------------------------------------
+-- table: usr.user_status
+DROP TABLE IF EXISTS usr.user_status CASCADE;
+CREATE TABLE usr.user_status
+(
+	id integer PRIMARY KEY NOT NULL,
+	status varchar(250) NOT NULL
+);
+DROP SEQUENCE IF EXISTS usr.user_status_id_seq;
+CREATE SEQUENCE usr.user_status_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE usr.user_status ALTER COLUMN id SET DEFAULT nextval('usr.user_status_id_seq');
+--ALTER SEQUENCE usr.user_status_id_seq OWNED BY usr.user_status.id;
+
+-------------------------------------------------------------------------------
+-- table: usr.user_type
+DROP TABLE IF EXISTS usr.user_type CASCADE;
+CREATE TABLE usr.user_type
+(
+	id integer PRIMARY KEY  NOT NULL,
+	type varchar(250) NOT NULL
+);
+
+-------------------------------------------------------------------------------
+-- table: usr.user
+DROP TABLE IF EXISTS usr."user" CASCADE;
+CREATE TABLE IF NOT EXISTS usr."user"
+(
+	id varchar(50) NOT NULL DEFAULT RANDOM_UUID(),
+	username varchar(50) NOT NULL,
+	-- password nullable for external users
+	password text NULL,
+	email varchar(100) NOT NULL,
+	alternative_email varchar(100) NULL,
+	last_name varchar(50) NOT NULL,
+	first_name varchar(50) NOT NULL,
+	phone varchar(50) NULL,
+	last_login_date timestamp NULL,
+	input_quota int NOT NULL,
+	actual_input_quota int NOT NULL,
+	processing_quota int NOT NULL,
+    actual_processing_quota int NOT NULL,
+    cpu_quota int NOT NULL DEFAULT 2,
+    memory_quota int NOT NULL DEFAULT 8192,
+	organization varchar(255) NOT NULL,
+	status_id integer NOT NULL,
+	-- external boolean NULL DEFAULT false,
+	user_type_id integer NOT NULL,
+	password_reset_key varchar(255) NULL,
+	created timestamp NULL DEFAULT now(),
+	expiration_date timestamp NULL,
+	modified timestamp NULL
+);
+ALTER TABLE usr."user" ADD CONSTRAINT PK_user PRIMARY KEY (id);
+ALTER TABLE usr."user" ADD CONSTRAINT FK_user_status
+	FOREIGN KEY (status_id) REFERENCES usr.user_status (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE usr."user" ADD CONSTRAINT FK_user_type
+        	FOREIGN KEY (user_type_id) REFERENCES usr.user_type (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: usr.user_group
+DROP TABLE IF EXISTS usr.user_group CASCADE;
+CREATE TABLE usr.user_group
+(
+	user_id varchar NOT NULL,
+	group_id integer NOT NULL
+);
+ALTER TABLE usr.user_group ADD CONSTRAINT FK_user_group_user
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE usr.user_group ADD CONSTRAINT FK_user_group_group
+	FOREIGN KEY (group_id) REFERENCES usr.grp (id) ON DELETE No Action ON UPDATE No Action;
+-------------------------------------------------------------------------------
+-- table: usr.user_prefs
+DROP TABLE IF EXISTS usr.user_prefs CASCADE;
+CREATE TABLE usr.user_prefs
+(
+	user_id varchar NOT NULL,
+	pref_key varchar(50) NOT NULL,
+	pref_value varchar(250) NOT NULL
+);
+ALTER TABLE usr.user_prefs ADD CONSTRAINT PK_user_prefs PRIMARY KEY (user_id, pref_key);
+ALTER TABLE usr.user_prefs ADD CONSTRAINT FK_user_prefs_user
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+
+--TOPOLOGY TABLES
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- topology.memory_unit
+DROP TABLE IF EXISTS topology.memory_unit CASCADE;
+CREATE TABLE topology.memory_unit
+(
+	id smallint NOT NULL,
+	short_description varchar(3) NOT NULL
+);
+
+ALTER TABLE topology.memory_unit ADD CONSTRAINT PK_memory_unit PRIMARY KEY (id);
+-------------------------------------------------------------------------------
+-- topology.node_flavor
+DROP TABLE IF EXISTS topology.node_flavor CASCADE;
+CREATE TABLE topology.node_flavor
+(
+	id varchar(250) NOT NULL,
+	cpu integer NOT NULL,
+	memory integer NOT NULL,
+	disk integer NOT NULL,
+	swap integer NOT NULL,
+	rxtx real NOT NULL,
+	unit_id smallint NOT NULL
+);
+ALTER TABLE topology.node_flavor ADD CONSTRAINT PK_node_flavor PRIMARY KEY (id);
+ALTER TABLE topology.node_flavor ADD CONSTRAINT FK_node_flavor_memory_unit
+    FOREIGN KEY (unit_id) REFERENCES topology.memory_unit (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: topology.execution_node
+DROP TABLE IF EXISTS topology.node CASCADE;
+CREATE TABLE topology.node
+(
+	id varchar(250) NOT NULL,
+	username varchar(50) NOT NULL,
+	password text NOT NULL,
+	flavor_id varchar(250) NOT NULL,
+	description text NULL,
+	ssh_key text NULL,
+	used_CPU integer NULL,
+	used_RAM integer NULL,
+	used_HDD integer NULL,
+	tags text NULL,
+	role varchar(6) NULL DEFAULT 'worker',
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL DEFAULT now(),
+    volatile boolean NULL DEFAULT false,
+	active boolean NULL DEFAULT true,
+	owner_id varchar(50),
+	app_id varchar(50),
+	server_id varchar(50)
+);
+ALTER TABLE topology.node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
+ALTER TABLE topology.node ADD CONSTRAINT FK_execution_node_flavor
+    FOREIGN KEY (flavor_id) REFERENCES topology.node_flavor (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- topology.service_status
+DROP TABLE IF EXISTS topology.service_status CASCADE;
+CREATE TABLE topology.service_status
+(
+	id integer NOT NULL,
+	status varchar(50) NOT NULL
+);
+ALTER TABLE topology.service_status ADD CONSTRAINT PK_service_status PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS topology.service_status_id_seq;
+CREATE SEQUENCE topology.service_status_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE topology.service_status ALTER COLUMN id SET DEFAULT nextval('topology.service_status_id_seq');
+--ALTER SEQUENCE topology.service_status_id_seq OWNED BY topology.service_status.id;
+-------------------------------------------------------------------------------
+-- table: topology.service
+DROP TABLE IF EXISTS topology.service CASCADE;
+CREATE TABLE topology.service
+(
+    id integer NOT NULL,
+	name varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NULL
+);
+ALTER TABLE topology.service ADD CONSTRAINT PK_service PRIMARY KEY (id);
+ALTER TABLE topology.service ADD CONSTRAINT K_service UNIQUE (name, version);
+DROP SEQUENCE IF EXISTS topology.service_id_seq;
+CREATE SEQUENCE topology.service_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE topology.service ALTER COLUMN id SET DEFAULT nextval('topology.service_id_seq');
+--ALTER SEQUENCE topology.service_id_seq OWNED BY topology.service.id;
+-------------------------------------------------------------------------------
+-- table: topology.execution_node_service
+DROP TABLE IF EXISTS topology.node_service CASCADE;
+CREATE TABLE topology.node_service
+(
+	host_name varchar(250) NOT NULL,
+	service_id integer NOT NULL,
+	service_status_id integer NOT NULL
+);
+ALTER TABLE topology.node_service ADD CONSTRAINT PK_execution_node_service PRIMARY KEY (host_name, service_id);
+ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_execution_node
+	FOREIGN KEY (host_name) REFERENCES topology.node (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_service
+    FOREIGN KEY (service_id) REFERENCES topology.service (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_service_status
+	FOREIGN KEY (service_status_id) REFERENCES topology.service_status (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: topology.volatile_instance
+DROP TABLE IF EXISTS topology.volatile_instance CASCADE;
+CREATE TABLE topology.volatile_instance
+(
+    id bigint NOT NULL,
+    node_id character varying NOT NULL,
+    user_id character varying NOT NULL,
+    flavor_id character varying NOT NULL,
+    created timestamp without time zone NOT NULL,
+    destroyed timestamp without time zone,
+    average_cpu_load real,
+    average_memory real
+);
+ALTER TABLE topology.volatile_instance ADD CONSTRAINT PK_volatile_instance PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS topology.volatile_instance_id_seq;
+CREATE SEQUENCE topology.volatile_instance_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE topology.volatile_instance ALTER COLUMN id SET DEFAULT nextval('topology.volatile_instance_id_seq');
+
+
+
+
+
+
+--TABLE COMMON-TABLES
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- table: tag_type
+DROP TABLE IF EXISTS common.tag_type CASCADE;
+CREATE TABLE common.tag_type
+(
+	id integer NOT NULL,
+	description varchar(20) NOT NULL
+);
+ALTER TABLE common.tag_type ADD CONSTRAINT PK_tag_type
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: tag
+DROP TABLE IF EXISTS common.tag CASCADE;
+CREATE TABLE common.tag
+(
+	id bigserial NOT NULL,
+	tag_type_id integer NOT NULL,
+	tag varchar(1024) NOT NULL --posgresql text initial
+);
+ALTER TABLE common.tag ADD CONSTRAINT PK_tag
+	PRIMARY KEY (id);
+ALTER TABLE common.tag ADD CONSTRAINT FK_tag_tag_type
+	FOREIGN KEY (tag_type_id) REFERENCES common.tag_type (id) ON DELETE No Action ON UPDATE No Action;
+
+DROP SEQUENCE IF EXISTS common.tag_id_seq;
+CREATE SEQUENCE common.tag_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE common.tag ALTER COLUMN id SET DEFAULT nextval('common.tag_id_seq');
+--ALTER SEQUENCE common.tag_id_seq OWNED BY common.tag.id;
+
+-------------------------------------------------------------------------------
+-- table: common.notification
+DROP TABLE IF EXISTS common.notification CASCADE;
+CREATE TABLE common.notification
+(
+    id bigserial NOT NULL,
+    timestamp bigint NOT NULL,
+    topic character varying NOT NULL,
+	user_id character varying NOT NULL,
+	read boolean NULL,
+	data character varying NOT NULL,
+	discriminator integer NOT NULL
+);
+ALTER TABLE common.notification ADD CONSTRAINT PK_notification PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS common.notification_id_seq;
+CREATE SEQUENCE common.notification_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE common.notification ALTER COLUMN id SET DEFAULT nextval('common.notification_id_seq');
+--ALTER SEQUENCE common.notification_id_seq OWNED BY common.notification.id;
+--CREATE INDEX IX_notification ON common.notification
+--    USING btree (topic COLLATE pg_catalog."default", user_id COLLATE pg_catalog."default");
+
+-------------------------------------------------------------------------------
+-- table: workflow_graph_visibility
+DROP TABLE IF EXISTS common.visibility CASCADE;
+CREATE TABLE common.visibility
+(
+	id integer NOT NULL,
+	visibility varchar(250) NOT NULL
+);
+ALTER TABLE common.visibility ADD CONSTRAINT PK_visibility PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS common.visibility_id_seq;
+CREATE SEQUENCE common.visibility_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE common.visibility ALTER COLUMN id SET DEFAULT nextval('common.visibility_id_seq');
+--ALTER SEQUENCE common.visibility_id_seq OWNED BY common.visibility.id;
+
+-------------------------------------------------------------------------------
+-- table: audit
+DROP TABLE IF EXISTS common.audit CASCADE;
+CREATE TABLE common.audit
+(
+    id bigserial NOT NULL,
+    "timestamp" timestamp without time zone NOT NULL,
+    user_id character varying NOT NULL,
+    session_id character varying NOT NULL,
+    event character varying NOT NULL
+);
+ALTER TABLE common.audit ADD CONSTRAINT PK_audit PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS common.audit_id_seq;
+CREATE SEQUENCE common.audit_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE common.audit ALTER COLUMN id SET DEFAULT nextval('common.audit_id_seq');
+--ALTER SEQUENCE common.audit_id_seq OWNED BY common.audit.id;
+--CREATE INDEX IX_audit ON common.audit
+--    USING btree (user_id COLLATE pg_catalog."default", timestamp);
+--
+--DB PRODUCT-TABLES
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- table: product.data_format
+DROP TABLE IF EXISTS product.data_format CASCADE;
+CREATE TABLE product.data_format
+(
+	id integer NOT NULL,
+	type varchar(50) NOT NULL
+);
+ALTER TABLE product.data_format ADD CONSTRAINT PK_data_format
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.data_format_id_seq;
+CREATE SEQUENCE product.data_format_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.data_format ALTER COLUMN id SET DEFAULT nextval('product.data_format_id_seq');
+--ALTER SEQUENCE product.data_format_id_seq OWNED BY product.data_format.id;
+
+-------------------------------------------------------------------------------
+-- table: product.pixel_type
+DROP TABLE IF EXISTS product.pixel_type CASCADE;
+CREATE TABLE product.pixel_type
+(
+	id integer NOT NULL,
+	type varchar(50) NOT NULL
+);
+ALTER TABLE product.pixel_type ADD CONSTRAINT PK_pixel_type
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.pixel_type_id_seq;
+CREATE SEQUENCE product.pixel_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.pixel_type ALTER COLUMN id SET DEFAULT nextval('product.pixel_type_id_seq');
+--ALTER SEQUENCE product.pixel_type_id_seq OWNED BY product.pixel_type.id;
+
+-------------------------------------------------------------------------------
+-- table: product.sensor_type
+DROP TABLE IF EXISTS product.sensor_type CASCADE;
+CREATE TABLE product.sensor_type
+(
+	id integer NOT NULL,
+	type varchar(50) NOT NULL
+);
+ALTER TABLE product.sensor_type ADD CONSTRAINT PK_sensor_type
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.sensor_type_id_seq;
+CREATE SEQUENCE product.sensor_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.sensor_type ALTER COLUMN id SET DEFAULT nextval('product.sensor_type_id_seq');
+--ALTER SEQUENCE product.sensor_type_id_seq OWNED BY product.sensor_type.id;
+
+-------------------------------------------------------------------------------
+-- table: product.orbit_direction
+DROP TABLE IF EXISTS product.orbit_direction CASCADE;
+CREATE TABLE product.orbit_direction
+(
+	id integer NOT NULL,
+	direction varchar(50) NOT NULL
+);
+ALTER TABLE product.orbit_direction ADD CONSTRAINT PK_orbit_direction
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.orbit_direction_id_seq;
+CREATE SEQUENCE product.orbit_direction_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.orbit_direction ALTER COLUMN id SET DEFAULT nextval('product.orbit_direction_id_seq');
+--ALTER SEQUENCE product.orbit_direction_id_seq OWNED BY product.orbit_direction.id;
+
+-------------------------------------------------------------------------------
+-- table: product.polarisation_mode
+DROP TABLE IF EXISTS product.polarisation_mode CASCADE;
+CREATE TABLE product.polarisation_mode
+(
+	id integer NOT NULL,
+	mode varchar(50) NOT NULL
+);
+ALTER TABLE product.polarisation_mode ADD CONSTRAINT PK_polarisation_mode
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.polarisation_mode_id_seq;
+CREATE SEQUENCE product.polarisation_mode_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.polarisation_mode ALTER COLUMN id SET DEFAULT nextval('product.polarisation_mode_id_seq');
+--ALTER SEQUENCE product.polarisation_mode_id_seq OWNED BY product.polarisation_mode.id;
+
+-------------------------------------------------------------------------------
+-- table: product.polarisation_channel
+DROP TABLE IF EXISTS product.polarisation_channel CASCADE;
+CREATE TABLE product.polarisation_channel
+(
+	id integer NOT NULL,
+	channel varchar(50) NOT NULL
+);
+ALTER TABLE product.polarisation_channel ADD CONSTRAINT PK_polarisation_channel
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.polarisation_channel_id_seq;
+CREATE SEQUENCE product.polarisation_channel_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.polarisation_channel ALTER COLUMN id SET DEFAULT nextval('product.polarisation_channel_id_seq');
+--ALTER SEQUENCE product.polarisation_channel_id_seq OWNED BY product.polarisation_channel.id;
+
+-------------------------------------------------------------------------------
+-- table: product.product_status
+DROP TABLE IF EXISTS product.product_status CASCADE;
+CREATE TABLE product.product_status
+(
+	id integer NOT NULL,
+	status varchar(50) NOT NULL
+);
+ALTER TABLE product.product_status ADD CONSTRAINT PK_product_status
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.product_status_id_seq;
+CREATE SEQUENCE product.product_status_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.product_status ALTER COLUMN id SET DEFAULT nextval('product.product_status_id_seq');
+--ALTER SEQUENCE product.product_status_id_seq OWNED BY product.product_status.id;
+
+-------------------------------------------------------------------------------
+-- table: product.download_queue
+DROP TABLE IF EXISTS product.download_queue CASCADE;
+CREATE TABLE product.download_queue
+(
+	id varchar(50) NOT NULL,
+	data_source varchar(255) NOT NULL,
+	products clob NOT NULL,
+	destination varchar(512) NOT NULL,
+	local_root varchar(512),
+	tiles clob,
+	properties clob
+);
+ALTER TABLE product.download_queue ADD CONSTRAINT PK_download_queue
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: product.raster_data_product
+DROP TABLE IF EXISTS product.raster_data_product CASCADE;
+CREATE TABLE product.raster_data_product
+(
+	id character varying(1000) NOT NULL,
+	name varchar(250) NOT NULL,
+	type_id integer NOT NULL,
+	geometry GEOMETRY(POLYGON) NOT NULL,
+	coordinate_reference_system text NULL,
+	location varchar NOT NULL,
+	entry_point varchar NULL,
+	sensor_type_id integer NOT NULL,
+	acquisition_date timestamp NULL,
+	pixel_type_id integer NOT NULL,
+	product_type varchar(512) NOT NULL,
+	width integer NOT NULL,
+	height integer NOT NULL,
+	approximate_size bigint NOT NULL,
+	-- username varchar NULL,
+	visibility_id integer NULL DEFAULT 2,
+	status_id integer NULL,
+	created timestamp NULL DEFAULT now(),
+	modified timestamp NULL
+);
+ALTER TABLE product.raster_data_product ADD CONSTRAINT PK_raster_data_product
+	PRIMARY KEY (id);
+ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_data_format
+	FOREIGN KEY (type_id) REFERENCES product.data_format (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_sensor_type
+	FOREIGN KEY (sensor_type_id) REFERENCES product.sensor_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_pixel_type
+	FOREIGN KEY (pixel_type_id) REFERENCES product.pixel_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_visibility
+	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_product_status
+   	FOREIGN KEY (status_id) REFERENCES product.product_status (id) ON DELETE No Action ON UPDATE No Action;
+
+-- table: product.raster_data_product_refs
+DROP TABLE IF EXISTS product.raster_data_product_refs CASCADE;
+CREATE TABLE product.raster_data_product_refs
+(
+	product_id character varying(1000) NOT NULL,
+	refs character varying NOT NULL
+);
+ALTER TABLE product.raster_data_product_refs ADD CONSTRAINT PK_raster_data_product_refs
+	PRIMARY KEY (product_id, refs);
+ALTER TABLE product.raster_data_product_refs ADD CONSTRAINT FK_raster_data_product_refs_product
+	FOREIGN KEY (product_id) REFERENCES product.raster_data_product (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: product.vector_data_product
+DROP TABLE IF EXISTS product.vector_data_product CASCADE;
+CREATE TABLE product.vector_data_product
+(
+	id character varying(1000) NOT NULL,
+	name varchar(250) NOT NULL,
+	type_id integer NOT NULL,
+	geometry GEOMETRY(POLYGON) NOT NULL,
+	coordinate_reference_system text NULL,
+	location varchar NOT NULL,
+	entry_point varchar NULL,
+	--username varchar NULL,
+	visibility_id integer NULL DEFAULT 2,
+	status_id integer NULL,
+	created timestamp NULL DEFAULT now(),
+	modified timestamp NULL
+);
+ALTER TABLE product.vector_data_product ADD CONSTRAINT PK_vector_data_product
+	PRIMARY KEY (id);
+ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_format
+	FOREIGN KEY (type_id) REFERENCES product.data_format (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_visibility
+	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_product_status
+	FOREIGN KEY (status_id) REFERENCES product.product_status (id) ON DELETE No Action ON UPDATE No Action;
+
+-- table: product.vector_data_product_refs
+DROP TABLE IF EXISTS product.vector_data_product_refs CASCADE;
+CREATE TABLE product.vector_data_product_refs
+(
+	product_id character varying(1000) NOT NULL,
+	refs character varying(100) NOT NULL
+);
+ALTER TABLE product.vector_data_product_refs ADD CONSTRAINT PK_vector_data_product_refs
+	PRIMARY KEY (product_id, refs);
+ALTER TABLE product.vector_data_product_refs ADD CONSTRAINT FK_vector_data_product_refs_product
+	FOREIGN KEY (product_id) REFERENCES product.vector_data_product (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: product.auxiliary_data
+DROP TABLE IF EXISTS product.auxiliary_data CASCADE;
+CREATE TABLE product.auxiliary_data
+(
+    id character varying(1000) NOT NULL,
+	location character varying NOT NULL,
+	description character varying NULL,
+	user_id character varying NOT NULL,
+	visibility_id integer NULL DEFAULT 2,
+	created timestamp NULL DEFAULT now(),
+	modified timestamp NULL
+);
+ALTER TABLE product.auxiliary_data ADD CONSTRAINT PK_auxiliary_data
+	PRIMARY KEY (id);
+ALTER TABLE product.auxiliary_data ADD CONSTRAINT FK_auxiliary_data_visibility
+	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: product.data_product_attributes
+DROP TABLE IF EXISTS product.data_product_attributes CASCADE;
+CREATE TABLE product.data_product_attributes
+(
+	data_product_id varchar(1000) NOT NULL,
+	name varchar(1000) NOT NULL,
+	"value" text NOT NULL
+);
+ALTER TABLE product.data_product_attributes ADD CONSTRAINT PK_data_product_attributes
+	PRIMARY KEY (data_product_id, name);
+
+-------------------------------------------------------------------------------
+-- table: product.data_type
+DROP TABLE IF EXISTS product.data_type CASCADE;
+CREATE TABLE product.data_type
+(
+	id integer NOT NULL,
+	type varchar(50) NOT NULL
+);
+ALTER TABLE product.data_type ADD CONSTRAINT PK_data_type
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.data_type_id_seq;
+CREATE SEQUENCE product.data_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.data_type ALTER COLUMN id SET DEFAULT nextval('product.data_type_id_seq');
+--ALTER SEQUENCE product.data_type_id_seq OWNED BY product.data_type.id;
+
+-------------------------------------------------------------------------------
+-- table: product.naming_rule
+DROP TABLE IF EXISTS product.naming_rule CASCADE;
+CREATE TABLE product.naming_rule
+(
+    id integer NOT NULL,
+    sensor varchar(50) NOT NULL,
+    regex varchar(512) NOT NULL,
+    description varchar(100) NOT NULL,
+    synonyms varchar
+);
+ALTER TABLE product.naming_rule ADD CONSTRAINT PK_naming_rule
+    PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.naming_rule_id_seq;
+CREATE SEQUENCE product.naming_rule_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.naming_rule ALTER COLUMN id SET DEFAULT nextval('product.naming_rule_id_seq');
+--ALTER SEQUENCE product.naming_rule_id_seq OWNED BY product.naming_rule.id;
+
+-------------------------------------------------------------------------------
+-- table: product.naming_rule_token
+DROP TABLE IF EXISTS product.naming_rule_token CASCADE;
+CREATE TABLE product.naming_rule_token
+(
+    naming_rule_id integer NOT NULL,
+    token_name varchar(20) NOT NULL,
+    matching_group_number integer NOT NULL,
+    description varchar(100) NOT NULL
+);
+ALTER TABLE product.naming_rule_token ADD CONSTRAINT PK_naming_rule_token
+    PRIMARY KEY (naming_rule_id, token_name);
+ALTER TABLE product.naming_rule_token ADD CONSTRAINT FK_naming_rule_token_naming_rule
+	FOREIGN KEY (naming_rule_id) REFERENCES product.naming_rule (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: product.data_sources_index
+DROP TABLE IF EXISTS product.data_sources_index CASCADE;
+CREATE TABLE product.data_sources_index
+(
+	id integer NOT NULL,
+    data_source_name varchar(50) NOT NULL,
+    sensor_name varchar(50) NOT NULL,
+    from_year integer NOT NULL,
+   	to_year integer NULL,
+   	last_run timestamp NULL,
+   	params clob NULL
+);
+ALTER TABLE product.data_sources_index ADD CONSTRAINT PK_query
+	PRIMARY KEY (data_source_name,sensor_name);
+DROP SEQUENCE IF EXISTS product.data_sources_index_id_seq;
+CREATE SEQUENCE product.data_sources_index_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.data_sources_index ALTER COLUMN id SET DEFAULT nextval('product.data_sources_index_id_seq');
+--ALTER SEQUENCE product.data_sources_index_id_seq OWNED BY product.data_sources_index.id;
+-------------------------------------------------------------------------------
+-- table: product.data_sources_index_props
+DROP TABLE IF EXISTS product.data_sources_index_props CASCADE;
+CREATE TABLE product.data_sources_index_props
+(
+    data_source_id integer NOT NULL,
+    footprint  geometry(Geometry) NULL,
+    acquisition_date timestamp NULL
+);
+
+--ALTER TABLE IF EXISTS product.data_sources_index_props
+--    OWNER to tao;
+ALTER TABLE IF EXISTS product.data_sources_index_props ADD CONSTRAINT info UNIQUE (data_source_id, footprint, acquisition_date);
+-------------------------------------------------------------------------------
+---- Index: ix_data_source_geom
+--DROP INDEX IF EXISTS public.ix_data_sources_geom;
+--CREATE INDEX IF NOT EXISTS ix_data_sources_geom
+--    ON product.data_sources_index_props USING gist (footprint)
+--TABLESPACE pg_default;
+
+
+
+--DB COMPONENT-TABLES
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- table: component_category
+DROP TABLE IF EXISTS component.component_category CASCADE;
+CREATE TABLE component.component_category
+(
+	id integer NOT NULL,
+	category varchar(250) NOT NULL
+);
+ALTER TABLE component.component_category ADD CONSTRAINT PK_component_category
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS component.component_category_id_seq;
+CREATE SEQUENCE component.component_category_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.component_category ALTER COLUMN id SET DEFAULT nextval('component.component_category_id_seq');
+--ALTER SEQUENCE component.component_category_id_seq OWNED BY component.component_category.id;
+
+-------------------------------------------------------------------------------
+-- table: parameter_type
+DROP TABLE IF EXISTS component.parameter_type CASCADE;
+CREATE TABLE component.parameter_type
+(
+	id integer NOT NULL,
+	type varchar(250) NOT NULL
+);
+ALTER TABLE component.parameter_type ADD CONSTRAINT PK_parameter_type
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS component.parameter_type_id_seq;
+CREATE SEQUENCE component.parameter_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.parameter_type ALTER COLUMN id SET DEFAULT nextval('component.parameter_type_id_seq');
+--ALTER SEQUENCE component.parameter_type_id_seq OWNED BY component.parameter_type.id;
+
+-------------------------------------------------------------------------------
+-- table: component_visibility
+DROP TABLE IF EXISTS component.component_visibility CASCADE;
+CREATE TABLE component.component_visibility
+(
+	id integer NOT NULL,
+	visibility varchar(50) NOT NULL
+);
+ALTER TABLE component.component_visibility ADD CONSTRAINT PK_component_visibility
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS component.component_visibility_id_seq;
+CREATE SEQUENCE component.component_visibility_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.component_visibility ALTER COLUMN id SET DEFAULT nextval('component.component_visibility_id_seq');
+--ALTER SEQUENCE component.component_visibility_id_seq OWNED BY component.component_visibility.id;
+-------------------------------------------------------------------------------
+-- table: processing_component_type
+DROP TABLE IF EXISTS component.processing_component_type CASCADE;
+CREATE TABLE component.processing_component_type
+(
+	id integer NOT NULL,
+	type varchar(50) NOT NULL
+);
+ALTER TABLE component.processing_component_type ADD CONSTRAINT PK_processing_component_type
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: template_type
+DROP TABLE IF EXISTS component.template_type CASCADE;
+CREATE TABLE component.template_type
+(
+	id integer NOT NULL,
+	type varchar(250) NOT NULL
+);
+ALTER TABLE component.template_type ADD CONSTRAINT PK_template_type
+	PRIMARY KEY (id);
+
+----- table: component.template_type --------------------------------------------------------------------
+DROP SEQUENCE IF EXISTS component.template_type_id_seq;
+CREATE SEQUENCE component.template_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.template_type ALTER COLUMN id SET DEFAULT nextval('component.template_type_id_seq');
+--ALTER SEQUENCE component.template_type_id_seq OWNED BY component.template_type.id;
+
+-------------------------------------------------------------------------------
+-- table: component.fetch_mode
+DROP TABLE IF EXISTS component.fetch_mode CASCADE;
+CREATE TABLE component.fetch_mode
+(
+	id integer NOT NULL,
+	fetch_mode varchar(50) NOT NULL
+);
+ALTER TABLE component.fetch_mode ADD CONSTRAINT PK_fetch_mode
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS component.fetch_mode_id_seq;
+CREATE SEQUENCE component.fetch_mode_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.fetch_mode ALTER COLUMN id SET DEFAULT nextval('component.fetch_mode_id_seq');
+--ALTER SEQUENCE component.fetch_mode_id_seq OWNED BY component.fetch_mode.id;
+
+-------------------------------------------------------------------------------
+-- table: component.container_type
+DROP TABLE IF EXISTS component.container_type CASCADE;
+CREATE TABLE component.container_type
+(
+	id integer NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE component.container_type ADD CONSTRAINT PK_container_type
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS component.container_type_id_seq;
+CREATE SEQUENCE component.container_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.container_type ALTER COLUMN id SET DEFAULT nextval('component.container_type_id_seq');
+--ALTER SEQUENCE component.container_type_id_seq OWNED BY component.container_type.id;
+
+-------------------------------------------------------------------------------
+-- table: component.container_visibility
+DROP TABLE IF EXISTS component.container_visibility CASCADE;
+CREATE TABLE component.container_visibility
+(
+	id integer NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE component.container_visibility ADD CONSTRAINT PK_container_visibility
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: container
+DROP TABLE IF EXISTS component.container CASCADE;
+CREATE TABLE component.container
+(
+	id varchar(1024) NOT NULL,
+	name varchar(1024) NOT NULL,
+	description varchar(1024) NOT NULL,
+	type_id int NULL DEFAULT 1,
+	visibility_id int NULL DEFAULT 1,
+	tag varchar(1024) NOT NULL,
+	application_path varchar(1024) NULL,
+	logo_image varchar NULL,
+	common_parameters varchar(128) NULL,
+	format_name_parameter varchar(20) NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+    owner_id varchar NULL
+);
+ALTER TABLE component.container ADD CONSTRAINT PK_container
+	PRIMARY KEY (id);
+ALTER TABLE component.container ADD CONSTRAINT FK_container_container_type
+	FOREIGN KEY (type_id) REFERENCES component.container_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.container ADD CONSTRAINT FK_container_container_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.container_visibility (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: container_applications
+DROP TABLE IF EXISTS component.container_applications CASCADE;
+CREATE TABLE component.container_applications
+(
+	container_id varchar(1024) NOT NULL,
+	name varchar(1024) NOT NULL,
+	path varchar(1024) NULL,
+	parallel_flag varchar(50) NULL,
+	memory integer NULL
+);
+ALTER TABLE component.container_applications ADD CONSTRAINT PK_container_applications
+	PRIMARY KEY (container_id, name);
+ALTER TABLE component.container_applications ADD CONSTRAINT FK_container_applications_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: container_formats
+DROP TABLE IF EXISTS component.container_formats CASCADE;
+CREATE TABLE component.container_formats
+(
+	container_id varchar(1024) NOT NULL,
+	format varchar(30) NOT NULL
+);
+ALTER TABLE component.container_formats ADD CONSTRAINT PK_container_formats
+	PRIMARY KEY (container_id, format);
+ALTER TABLE component.container_formats ADD CONSTRAINT FK_container_formats_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- Table: component.container_instance
+DROP TABLE IF EXISTS component.container_instance CASCADE;
+CREATE TABLE IF NOT EXISTS component.container_instance
+(
+    id varchar(1024) NOT NULL,
+    container_id varchar(1024) NOT NULL,
+    name varchar(50),
+    host_port integer,
+    user_id character varying(50) NOT NULL
+);
+ALTER TABLE component.container_instance ADD CONSTRAINT PK_container_instance
+    PRIMARY KEY (id);
+ALTER TABLE component.container_instance ADD CONSTRAINT FK_container_instance_container
+    FOREIGN KEY (container_id) REFERENCES component.container (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE component.container_instance ADD CONSTRAINT FK_container_instance_user
+    FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-------------------------------------------------------------------------------
+
+-- table: component.data_source_component
+DROP TABLE IF EXISTS component.data_source_component CASCADE;
+CREATE TABLE component.data_source_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+    sensor_name varchar(1024) NOT NULL,
+	data_source_name  varchar(512) NOT NULL,
+	fetch_mode_id integer NOT NULL,
+	max_retries integer NULL DEFAULT 3,
+	is_system boolean NOT NULL DEFAULT false,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+    volatile boolean NULL DEFAULT false
+);
+
+ALTER TABLE component.data_source_component ADD CONSTRAINT PK_data_source_component
+	PRIMARY KEY (id);
+ALTER TABLE component.data_source_component ADD CONSTRAINT FK_data_source_component_fetch_mode
+	FOREIGN KEY (fetch_mode_id) REFERENCES component.fetch_mode (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.source_descriptor
+DROP TABLE IF EXISTS component.source_descriptor CASCADE;
+CREATE TABLE component.source_descriptor
+(
+    id varchar(512) NOT NULL DEFAULT RANDOM_UUID(),
+	parent_id varchar(512) NOT NULL,
+	name varchar(512) NOT NULL,
+	cardinality integer NOT NULL,
+	constraints text NULL,
+	data_format_id integer NOT NULL,
+	format_name varchar(30),
+    geometry GEOMETRY(POLYGON) NULL,
+    coordinate_reference_system text NULL,
+    sensor_type_id integer NULL,
+    dimension clob NULL,
+    location varchar NULL,
+    ref_source_descriptor_id varchar NULL
+);
+
+ALTER TABLE component.source_descriptor ADD CONSTRAINT PK_source_descriptor PRIMARY KEY (id);
+ALTER TABLE component.source_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
+	FOREIGN KEY (data_format_id) REFERENCES product.data_format (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.source_descriptor ADD CONSTRAINT FK_data_descriptor_sensor_type
+	FOREIGN KEY (sensor_type_id) REFERENCES product.sensor_type (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.target_descriptor
+DROP TABLE IF EXISTS component.target_descriptor CASCADE;
+CREATE TABLE component.target_descriptor
+(
+    id varchar(512) NOT NULL DEFAULT RANDOM_UUID(),
+    parent_id varchar(512) NOT NULL,
+    name varchar(512) NOT NULL,
+    cardinality integer NOT NULL,
+	constraints text NULL,
+	data_format_id integer NOT NULL,
+	format_name varchar(30) NULL,
+    geometry GEOMETRY(POLYGON) NULL,
+    coordinate_reference_system text NULL,
+    sensor_type_id integer NULL,
+    dimension clob NULL,
+    location varchar NULL,
+    ref_target_descriptor_id varchar NULL
+);
+ALTER TABLE component.target_descriptor ADD CONSTRAINT PK_target_descriptor PRIMARY KEY (id);
+ALTER TABLE component.target_descriptor ADD CONSTRAINT FK_data_descriptor_data_format_target
+	FOREIGN KEY (data_format_id) REFERENCES product.data_format (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.target_descriptor ADD CONSTRAINT FK_data_descriptor_sensor_type_target
+	FOREIGN KEY (sensor_type_id) REFERENCES product.sensor_type (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: processing_component
+DROP TABLE IF EXISTS component.processing_component CASCADE;
+CREATE TABLE component.processing_component
+(
+	id varchar(512) NOT NULL,
+	label varchar NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+    container_id varchar(1024) NULL,
+    category_id int NULL DEFAULT 5,
+	main_tool_file_location varchar(512) NOT NULL,
+	working_directory varchar(512) NULL,
+	template_type_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	visibility_id integer NOT NULL,
+	multi_thread boolean NULL DEFAULT false,
+	parallelism integer NULL DEFAULT 1,
+	template_contents text NULL,
+	component_type_id integer NULL DEFAULT 1,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+	active boolean NULL DEFAULT true,
+	transient boolean NULL DEFAULT false,
+	output_managed boolean NULL DEFAULT true
+);
+
+ALTER TABLE component.processing_component ADD CONSTRAINT PK_processing_component
+	PRIMARY KEY (id);
+ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_template_type
+	FOREIGN KEY (template_type_id) REFERENCES component.template_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_user
+	FOREIGN KEY (owner_user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_processing_component_type
+	FOREIGN KEY (component_type_id) REFERENCES component.processing_component_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_component_category
+	FOREIGN KEY (category_id) REFERENCES component.component_category (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS component.processing_component_id_seq;
+CREATE SEQUENCE component.processing_component_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.processing_component ALTER COLUMN id SET DEFAULT nextval('component.processing_component_id_seq');
+--ALTER SEQUENCE component.processing_component_id_seq OWNED BY component.processing_component.id;
+-------------------------------------------------------------------------------
+-- table: processing_parameter
+DROP TABLE IF EXISTS component.processing_parameter CASCADE;
+CREATE TABLE component.processing_parameter
+(
+	id varchar(512) NOT NULL,
+	name varchar(512) NOT NULL,
+    type_id integer NOT NULL,
+    label varchar(512) NOT NULL,
+    data_type varchar(512) NOT NULL,
+    default_value text NULL,
+    description text NULL,
+    unit varchar(250) NULL,
+    format varchar(250) NULL,
+    value_set text NULL,
+    not_null boolean NULL,
+    -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
+    discriminator integer NOT NULL
+);
+ALTER TABLE component.processing_parameter ADD CONSTRAINT PK_processing_parameter
+	PRIMARY KEY (id);
+ALTER TABLE component.processing_parameter ADD CONSTRAINT FK_processing_parameter_parameter_type
+	FOREIGN KEY (type_id) REFERENCES component.parameter_type (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: processing_parameter_expansion
+DROP TABLE IF EXISTS component.processing_parameter_expansion CASCADE;
+CREATE TABLE component.processing_parameter_expansion
+(
+	id varchar(512) NOT NULL,
+	join_values boolean NOT NULL DEFAULT true,
+    separator char(1) NOT NULL DEFAULT ' '
+);
+ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT PK_processing_parameter_expansion
+	PRIMARY KEY (id);
+ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT FK_processing_parameter_expansion_parameter
+	FOREIGN KEY (id) REFERENCES component.processing_parameter (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.condition
+DROP TABLE IF EXISTS component.condition CASCADE;
+CREATE TABLE component.condition
+(
+    id integer NOT NULL,
+    description varchar(250)
+);
+ALTER TABLE component.condition ADD CONSTRAINT PK_condition
+    PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: processing_parameter_dependencies
+DROP TABLE IF EXISTS component.processing_parameter_dependencies CASCADE;
+CREATE TABLE component.processing_parameter_dependencies
+(
+    parameter_id varchar(512) NOT NULL,
+    dependant_parameter_id varchar(512) NOT NULL,
+    dependency_condition_id integer NOT NULL,
+    dependant_parameter_value varchar(250) NULL,
+    dependency_type_id integer NOT NULL,
+    allowed_values character varying
+);
+ALTER TABLE component.processing_parameter_dependencies ADD CONSTRAINT PK_processing_parameter_dependencies
+    PRIMARY KEY (parameter_id, dependant_parameter_id);
+ALTER TABLE component.processing_parameter_dependencies ADD CONSTRAINT FK_processing_parameter_dependencies_processing_parameter_1
+    FOREIGN KEY (parameter_id) REFERENCES component.processing_parameter (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.processing_parameter_dependencies ADD CONSTRAINT FK_processing_parameter_dependencies_processing_parameter_2
+    FOREIGN KEY (dependant_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.processing_parameter_dependencies ADD CONSTRAINT FK_processing_parameter_dependencies_condition
+    FOREIGN KEY (dependency_condition_id) REFERENCES component.condition (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component_parameters
+DROP TABLE IF EXISTS component.component_parameters CASCADE;
+CREATE TABLE component.component_parameters
+(
+	processing_component_id varchar(512) NOT NULL,
+	processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.component_parameters ADD CONSTRAINT PK_component_parameters
+	PRIMARY KEY (processing_component_id, processing_parameter_id);
+ALTER TABLE component.component_parameters ADD CONSTRAINT FK_component_parameters_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES component.processing_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.component_parameters ADD CONSTRAINT FK_component_parameters_processing_parameter
+	FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: template_parameter_parameters
+DROP TABLE IF EXISTS component.template_parameter_parameters CASCADE;
+CREATE TABLE component.template_parameter_parameters
+(
+    template_parameter_id varchar(512) NOT NULL,
+	regular_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.template_parameter_parameters ADD CONSTRAINT PK_template_parameter_parameters
+	PRIMARY KEY (template_parameter_id, regular_parameter_id);
+ALTER TABLE component.template_parameter_parameters ADD CONSTRAINT FK_template_parameter_parameters_processing_parameter_01
+	FOREIGN KEY (template_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.template_parameter_parameters ADD CONSTRAINT FK_template_parameter_parameters_processing_parameter_02
+	FOREIGN KEY (regular_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component_parameter_values_set
+DROP TABLE IF EXISTS component.component_parameter_values_set CASCADE;
+CREATE TABLE component.component_parameter_values_set
+(
+	parameter_id varchar(512) NOT NULL,
+	processing_component_id varchar(512) NOT NULL,
+	parameter_value varchar(250) NOT NULL
+);
+ALTER TABLE component.component_parameter_values_set ADD CONSTRAINT PK_component_parameter_values_set
+	PRIMARY KEY (parameter_id, processing_component_id, parameter_value);
+ALTER TABLE component.component_parameter_values_set ADD CONSTRAINT FK_component_parameter_values_set_processing_parameter
+	FOREIGN KEY (parameter_id) REFERENCES component.processing_parameter (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.component_parameter_values_set ADD CONSTRAINT FK_component_parameter_values_set_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES component.processing_component (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component_variables
+DROP TABLE IF EXISTS component.component_variables CASCADE;
+CREATE TABLE component.component_variables
+(
+	processing_component_id varchar(512) NOT NULL,
+	"key" varchar(512) NOT NULL,
+	"value" varchar(512) NOT NULL
+);
+ALTER TABLE component.component_variables ADD CONSTRAINT PK_component_variables
+	PRIMARY KEY (processing_component_id, "key");
+ALTER TABLE component.component_variables ADD CONSTRAINT FK_component_variables_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES component.processing_component (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: group_component
+DROP TABLE IF EXISTS component.group_component CASCADE;
+CREATE TABLE component.group_component
+(
+	id varchar(512) NOT NULL,
+	label varchar NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+	owner_user_id varchar NULL,
+	visibility_id integer NOT NULL,
+	parallelism integer NULL DEFAULT 1,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+	active boolean NULL DEFAULT true
+);
+ALTER TABLE component.group_component ADD CONSTRAINT PK_group_component
+	PRIMARY KEY (id);
+ALTER TABLE component.group_component ADD CONSTRAINT FK_group_component_user
+	FOREIGN KEY (owner_user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.group_component ADD CONSTRAINT FK_group_component_component_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.processing_component_sources
+DROP TABLE IF EXISTS component.processing_component_sources CASCADE;
+CREATE TABLE component.processing_component_sources
+(
+	processing_component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.processing_component_sources ADD CONSTRAINT PK_processing_component_sources
+	PRIMARY KEY (processing_component_id, source_descriptor_id);
+ALTER TABLE component.processing_component_sources ADD CONSTRAINT FK_processing_component_sources_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES component.processing_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.processing_component_sources ADD CONSTRAINT FK_processing_component_sources_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.processing_component_targets
+DROP TABLE IF EXISTS component.processing_component_targets CASCADE;
+CREATE TABLE component.processing_component_targets
+(
+	processing_component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.processing_component_targets ADD CONSTRAINT PK_processing_component_targets
+	PRIMARY KEY (processing_component_id, target_descriptor_id);
+ALTER TABLE component.processing_component_targets ADD CONSTRAINT FK_processing_component_targets_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES component.processing_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.processing_component_targets ADD CONSTRAINT FK_processing_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.group_component_sources
+DROP TABLE IF EXISTS component.group_component_sources CASCADE;
+CREATE TABLE component.group_component_sources
+(
+	group_component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.group_component_sources ADD CONSTRAINT PK_group_component_sources
+	PRIMARY KEY (group_component_id, source_descriptor_id);
+ALTER TABLE component.group_component_sources ADD CONSTRAINT FK_group_component_sources_group_component
+	FOREIGN KEY (group_component_id) REFERENCES component.group_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.group_component_sources ADD CONSTRAINT FK_group_component_sources_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.group_component_targets
+DROP TABLE IF EXISTS component.group_component_targets CASCADE;
+CREATE TABLE component.group_component_targets
+(
+	group_component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.group_component_targets ADD CONSTRAINT PK_group_component_targets
+	PRIMARY KEY (group_component_id, target_descriptor_id);
+ALTER TABLE component.group_component_targets ADD CONSTRAINT FK_group_component_targets_group_component
+	FOREIGN KEY (group_component_id) REFERENCES component.group_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.group_component_targets ADD CONSTRAINT FK_group_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component
+DROP TABLE IF EXISTS component.data_source_component CASCADE;
+CREATE TABLE component.data_source_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+    sensor_name varchar(1024) NOT NULL,
+	data_source_name  varchar(512) NOT NULL,
+	fetch_mode_id integer NOT NULL,
+	max_retries integer NULL DEFAULT 3,
+	is_system boolean NOT NULL DEFAULT false,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+    volatile boolean NULL DEFAULT false
+);
+ALTER TABLE component.data_source_component ADD CONSTRAINT PK_data_source_component
+	PRIMARY KEY (id);
+ALTER TABLE component.data_source_component ADD CONSTRAINT FK_data_source_component_fetch_mode
+	FOREIGN KEY (fetch_mode_id) REFERENCES component.fetch_mode (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_sources
+DROP TABLE IF EXISTS component.data_source_component_sources CASCADE;
+CREATE TABLE component.data_source_component_sources
+(
+	data_source_component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.data_source_component_sources ADD CONSTRAINT PK_data_source_component_sources
+	PRIMARY KEY (data_source_component_id, source_descriptor_id);
+ALTER TABLE component.data_source_component_sources ADD CONSTRAINT FK_data_source_component_sources_data_source_component
+	FOREIGN KEY (data_source_component_id) REFERENCES component.data_source_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.data_source_component_sources ADD CONSTRAINT FK_data_source_component_sources_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_targets
+DROP TABLE IF EXISTS component.data_source_component_targets CASCADE;
+CREATE TABLE component.data_source_component_targets
+(
+	data_source_component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.data_source_component_targets ADD CONSTRAINT PK_data_source_component_targets
+	PRIMARY KEY (data_source_component_id, target_descriptor_id);
+ALTER TABLE component.data_source_component_targets ADD CONSTRAINT FK_data_source_component_targets_data_source_component
+	FOREIGN KEY (data_source_component_id) REFERENCES component.data_source_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.data_source_component_targets ADD CONSTRAINT FK_data_source_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_group
+DROP TABLE IF EXISTS component.data_source_component_group CASCADE;
+CREATE TABLE component.data_source_component_group
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+	tags text NULL,
+	user_id text NOT NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL DEFAULT now()
+);
+ALTER TABLE component.data_source_component_group ADD CONSTRAINT PK_data_source_component_group
+	PRIMARY KEY (id);
+ALTER TABLE component.data_source_component_group ADD CONSTRAINT FK_data_source_component_group_user
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_group_sources
+DROP TABLE IF EXISTS component.data_source_component_group_sources CASCADE;
+CREATE TABLE component.data_source_component_group_sources
+(
+	data_source_component_group_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.data_source_component_group_sources ADD CONSTRAINT PK_data_source_component_group_sources
+	PRIMARY KEY (data_source_component_group_id, source_descriptor_id);
+ALTER TABLE component.data_source_component_group_sources ADD CONSTRAINT FK_data_source_component_group_sources_1
+	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.data_source_component_group_sources ADD CONSTRAINT FK_data_source_component_group_sources_2
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_group_targets
+DROP TABLE IF EXISTS component.data_source_component_group_targets CASCADE;
+CREATE TABLE component.data_source_component_group_targets
+(
+	data_source_component_group_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.data_source_component_group_targets ADD CONSTRAINT PK_data_source_component_group_targets
+	PRIMARY KEY (data_source_component_group_id, target_descriptor_id);
+ALTER TABLE component.data_source_component_group_targets ADD CONSTRAINT FK_data_source_component_group_targets_1
+	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.data_source_component_group_targets ADD CONSTRAINT FK_data_source_component_group_targets_2
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_group_components
+DROP TABLE IF EXISTS component.data_source_component_group_components CASCADE;
+CREATE TABLE component.data_source_component_group_components
+(
+	data_source_component_group_id varchar(512) NOT NULL,
+	data_source_component_id varchar(512) NOT NULL
+);
+ALTER TABLE component.data_source_component_group_components ADD CONSTRAINT PK_data_source_component_group_components
+	PRIMARY KEY (data_source_component_group_id, data_source_component_id);
+ALTER TABLE component.data_source_component_group_components ADD CONSTRAINT FK_data_source_component_group_components_1
+	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.data_source_component_group_components ADD CONSTRAINT FK_data_source_component_group_components_2
+	FOREIGN KEY (data_source_component_id) REFERENCES component.data_source_component (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_group_queries
+DROP TABLE IF EXISTS component.data_source_component_group_queries CASCADE;
+CREATE TABLE component.data_source_component_group_queries
+(
+	data_source_component_group_id varchar(512) NOT NULL,
+	query_id bigint NOT NULL
+);
+ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT PK_data_source_component_group_queries
+	PRIMARY KEY (data_source_component_group_id, query_id);
+ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_1
+	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-- table: component.data_source_configuration
+DROP TABLE IF EXISTS component.data_source_configuration CASCADE;
+CREATE TABLE component.data_source_configuration
+(
+	id varchar(512) NOT NULL,
+	fetch_mode smallint NOT NULL,
+	local_repository_root varchar(255),
+	parameters clob
+);
+ALTER TABLE component.data_source_configuration ADD CONSTRAINT PK_data_source_configuration
+	PRIMARY KEY (id);
+ALTER TABLE component.data_source_configuration ADD CONSTRAINT FK_data_source_configuration_data_source_component
+    FOREIGN KEY (id) REFERENCES component.data_source_component (id) ON DELETE CASCADE ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: component.wps_authentication
+DROP TABLE IF EXISTS component.wps_authentication CASCADE;
+CREATE TABLE component.wps_authentication
+(
+	id varchar(1024) NOT NULL,
+	auth_type varchar(20) NOT NULL,
+    username varchar(50),
+	password text,
+	login_url varchar(1024),
+	header_name varchar(50)
+);
+ALTER TABLE component.wps_authentication ADD CONSTRAINT PK_wps_authentication
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: component.wps_component
+DROP TABLE IF EXISTS component.wps_component CASCADE;
+CREATE TABLE component.wps_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text,
+	authors varchar(1024),
+	copyright text,
+	node_affinity varchar(250) NULL,
+    remote_address varchar(1024) NOT NULL,
+	capability  varchar(512) NOT NULL,
+	visibility_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	container_id varchar(1024) NOT NULL,
+	parameters clob NULL,
+    active boolean NULL DEFAULT true,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL
+);
+ALTER TABLE component.wps_component ADD CONSTRAINT PK_wps_component
+	PRIMARY KEY (id);
+ALTER TABLE component.wps_component ADD CONSTRAINT FK_wps_component_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wps_component_sources
+DROP TABLE IF EXISTS component.wps_component_sources CASCADE;
+CREATE TABLE component.wps_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wps_component_sources ADD CONSTRAINT PK_wps_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_sources_wps_component
+	FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wps_component_targets
+DROP TABLE IF EXISTS component.wps_component_targets CASCADE;
+CREATE TABLE component.wps_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wps_component_targets ADD CONSTRAINT PK_wps_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_wps_component
+	FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: wps_component_parameters
+DROP TABLE IF EXISTS component.wps_component_parameters CASCADE;
+CREATE TABLE component.wps_component_parameters
+(
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wps_component_parameters ADD CONSTRAINT PK_wps_component_parameters
+    PRIMARY KEY (component_id, processing_parameter_id);
+ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_component
+    FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_parameter
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component
+DROP TABLE IF EXISTS component.wms_component CASCADE;
+CREATE TABLE component.wms_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text,
+	authors varchar(1024),
+	copyright text,
+	node_affinity varchar(250) NULL,
+    remote_address varchar(1024) NOT NULL,
+	capability  varchar(512) NOT NULL,
+	visibility_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	container_id varchar(1024) NOT NULL,
+	parameters clob NULL,
+    active boolean NULL DEFAULT true,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL
+);
+ALTER TABLE component.wms_component ADD CONSTRAINT PK_wms_component
+	PRIMARY KEY (id);
+ALTER TABLE component.wms_component ADD CONSTRAINT FK_wms_component_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component_sources
+DROP TABLE IF EXISTS component.wms_component_sources CASCADE;
+CREATE TABLE component.wms_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT PK_wms_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_sources_wms_component
+	FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component_targets
+DROP TABLE IF EXISTS component.wms_component_targets CASCADE;
+CREATE TABLE component.wms_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT PK_wms_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targets_wms_component
+	FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: wms_component_parameters
+DROP TABLE IF EXISTS component.wms_component_parameters CASCADE;
+CREATE TABLE component.wms_component_parameters
+(
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT PK_wms_component_parameters
+    PRIMARY KEY (component_id, processing_parameter_id);
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_component
+    FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_parameter
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: condition_component
+DROP TABLE IF EXISTS component.condition_component CASCADE;
+CREATE TABLE component.condition_component
+(
+	id varchar(512) NOT NULL,
+	label varchar NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+    category_id int NULL DEFAULT 6,
+	template_type_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	visibility_id integer NOT NULL,
+	template_contents text NULL,
+	node_affinity varchar(250) NULL,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+	active boolean NULL DEFAULT true
+);
+ALTER TABLE component.condition_component ADD CONSTRAINT PK_condition_component
+	PRIMARY KEY (id);
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_template_type
+	FOREIGN KEY (template_type_id) REFERENCES component.template_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_user
+	FOREIGN KEY (owner_user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_component_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component ADD CONSTRAINT FK_condition_component_component_category
+	FOREIGN KEY (category_id) REFERENCES component.component_category (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS component.condition_component_id_seq;
+CREATE SEQUENCE component.condition_component_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.condition_component ALTER COLUMN id SET DEFAULT nextval('component.condition_component_id_seq');
+--ALTER SEQUENCE component.condition_component_id_seq OWNED BY component.condition_component.id;
+
+-------------------------------------------------------------------------------
+-- table: component.condition_component_sources
+DROP TABLE IF EXISTS component.condition_component_sources CASCADE;
+CREATE TABLE component.condition_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.condition_component_sources ADD CONSTRAINT PK_condition_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.condition_component_sources ADD CONSTRAINT FK_condition_component_sources_condition_component
+	FOREIGN KEY (component_id) REFERENCES component.condition_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.condition_component_sources ADD CONSTRAINT FK_condition_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.condition_component_targets
+DROP TABLE IF EXISTS component.condition_component_targets CASCADE;
+CREATE TABLE component.condition_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.condition_component_targets ADD CONSTRAINT PK_condition_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.condition_component_targets ADD CONSTRAINT FK_condition_component_targets_condition_component
+	FOREIGN KEY (component_id) REFERENCES component.condition_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.condition_component_targets ADD CONSTRAINT FK_condition_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: condition_component_parameters
+DROP TABLE IF EXISTS component.condition_component_parameters CASCADE;
+CREATE TABLE component.condition_component_parameters
+(
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.condition_component_parameters ADD CONSTRAINT PK_condition_component_parameters
+    PRIMARY KEY (component_id, processing_parameter_id);
+ALTER TABLE component.condition_component_parameters ADD CONSTRAINT FK_condition_component_parameters_processing_component
+    FOREIGN KEY (component_id) REFERENCES component.condition_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.condition_component_parameters ADD CONSTRAINT FK_condition_component_parameters_processing_parameter
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+
+--DB WORKFLOW
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- table: workflow_graph_status
+DROP TABLE IF EXISTS workflow.status CASCADE;
+CREATE TABLE workflow.status
+(
+	id integer NOT NULL,
+	description varchar(250) NOT NULL
+);
+ALTER TABLE workflow.status ADD CONSTRAINT PK_workflow_graph_status PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS workflow.graph_status_id_seq;
+CREATE SEQUENCE workflow.graph_status_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE workflow.status ALTER COLUMN id SET DEFAULT nextval('workflow.graph_status_id_seq');
+--ALTER SEQUENCE workflow.graph_status_id_seq OWNED BY workflow.status.id;
+
+-------------------------------------------------------------------------------
+-- table: workflow.node_behavior
+DROP TABLE IF EXISTS workflow.node_behavior CASCADE;
+CREATE TABLE workflow.node_behavior
+(
+	id smallint NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE workflow.node_behavior ADD CONSTRAINT PK_node_behavior PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: workflow.component_type
+-- component_type
+DROP TABLE IF EXISTS workflow.component_type CASCADE;
+CREATE TABLE workflow.component_type
+(
+	id smallint NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE workflow.component_type ADD CONSTRAINT PK_component_type PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: workflow_graph
+DROP TABLE IF EXISTS workflow.graph CASCADE;
+CREATE TABLE workflow.graph
+(
+	id bigint NOT NULL,
+	name varchar(250) NOT NULL,
+	description varchar,
+	created timestamp NULL DEFAULT now(),
+	user_id varchar(50) NOT NULL,
+	definition_path varchar(512) NULL,
+	status_id integer NOT NULL,
+	visibility_id integer NOT NULL,
+	xCoord real NULL,
+    yCoord real NULL,
+    zoom real NULL,
+	custom_values clob NULL,
+	tags text NULL,
+	created_from_graph_id bigint,
+	active boolean NULL DEFAULT true,
+	temporary boolean NULL DEFAULT false
+);
+ALTER TABLE workflow.graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
+ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_status
+	FOREIGN KEY (status_id) REFERENCES workflow.status (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_visibility
+	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_user
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS workflow.workflow_graph_id_seq;
+CREATE SEQUENCE workflow.workflow_graph_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE workflow.graph ALTER COLUMN id SET DEFAULT nextval('workflow.workflow_graph_id_seq');
+--ALTER SEQUENCE workflow.workflow_graph_id_seq OWNED BY workflow.graph.id;
+
+-------------------------------------------------------------------------------
+-- table: graph_node
+DROP TABLE IF EXISTS workflow.graph_node CASCADE;
+CREATE TABLE workflow.graph_node
+(
+	id bigint NOT NULL,
+	name varchar(250) NULL,
+	description varchar,
+	created timestamp NULL DEFAULT now(),
+	workflow_id bigint NOT NULL,
+	node_level integer NOT NULL,
+	component_id varchar(512) NOT NULL,
+    component_type_id smallint NOT NULL,
+	xCoord real NULL,
+	yCoord real NULL,
+	behavior_id smallint NULL DEFAULT 1,
+	preserve_output boolean NULL DEFAULT true,
+	custom_values clob NULL,
+	additional_info clob NULL,
+	created_from_node_id bigint,
+    -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
+    discriminator integer NOT NULL
+);
+ALTER TABLE workflow.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
+ALTER TABLE workflow.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
+	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE workflow.graph_node ADD CONSTRAINT FK_graph_node_component_type
+	FOREIGN KEY (component_type_id) REFERENCES workflow.component_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE workflow.graph_node ADD CONSTRAINT FK_graph_node_node_behavior
+	FOREIGN KEY (behavior_id) REFERENCES workflow.node_behavior (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS workflow.graph_node_id_seq;
+CREATE SEQUENCE workflow.graph_node_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE workflow.graph_node ALTER COLUMN id SET DEFAULT nextval('workflow.graph_node_id_seq');
+--ALTER SEQUENCE workflow.graph_node_id_seq OWNED BY workflow.graph_node.id;
+
+-------------------------------------------------------------------------------
+-- table: graph_node_group_nodes
+DROP TABLE IF EXISTS workflow.graph_node_group_nodes CASCADE;
+CREATE TABLE workflow.graph_node_group_nodes
+(
+    graph_node_group_id bigint NOT NULL,
+	graph_node_id bigint NOT NULL
+);
+ALTER TABLE workflow.graph_node_group_nodes ADD CONSTRAINT PK_graph_node_group_nodes
+	PRIMARY KEY (graph_node_group_id, graph_node_id);
+ALTER TABLE workflow.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_01
+	FOREIGN KEY (graph_node_group_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE workflow.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_02
+	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: workflow.component_link
+DROP TABLE IF EXISTS workflow.component_link CASCADE;
+CREATE TABLE workflow.component_link
+(
+    target_graph_node_id bigint NOT NULL,
+    source_descriptor_id varchar(512) NOT NULL,
+    source_graph_node_id bigint NOT NULL,
+    target_descriptor_id varchar(512) NOT NULL,
+    aggregator varchar(512) NULL
+);
+ALTER TABLE workflow.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (source_graph_node_id, target_graph_node_id, source_descriptor_id, target_descriptor_id);
+ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_graph_node_1
+	FOREIGN KEY (source_graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_graph_node_2
+	FOREIGN KEY (target_graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: query
+DROP TABLE IF EXISTS workflow.query CASCADE;
+CREATE TABLE workflow.query
+(
+    id bigserial NOT NULL,
+    label text,
+	user_id varchar(50) NOT NULL,
+	siteid varchar,
+	graph_node_id bigint,
+	component_id varchar(512),
+	sensor_name varchar(512) NOT NULL,
+	data_source varchar(512) NOT NULL,
+	username varchar NULL,
+	password varchar NULL,
+	secret varchar,
+	page_size integer NULL,
+	page_number integer NULL,
+	_limit integer NULL,  -- reserved word
+	coverage real NULL,
+	"values" clob NULL,    -- reserved word
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL
+);
+ALTER TABLE workflow.query ADD CONSTRAINT PK_query
+	PRIMARY KEY (id);
+ALTER TABLE workflow.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source);
+ALTER TABLE workflow.query ADD CONSTRAINT U_query_label UNIQUE(label, user_id);
+ALTER TABLE workflow.query ADD CONSTRAINT FK_query_user
+	FOREIGN KEY (user_id) REFERENCES usr."user"(id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE workflow.query ADD CONSTRAINT FK_query_graph_node
+	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node(id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE workflow.query ADD CONSTRAINT FK_query_data_source_component
+    FOREIGN KEY (component_id) REFERENCES component.data_source_component (id) ON DELETE CASCADE ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS workflow.query_id_seq;
+CREATE SEQUENCE workflow.query_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE workflow.query ALTER COLUMN id SET DEFAULT nextval('workflow.query_id_seq');
+--ALTER SEQUENCE workflow.query_id_seq OWNED BY workflow.query.id;
+
+-------------------------------------------------------------------------------
+-- table: workflow.query_parameter
+DROP TABLE IF EXISTS workflow.query_parameter CASCADE;
+CREATE TABLE workflow.query_parameter
+(
+	id integer NOT NULL,
+	data_type_id integer NOT NULL,
+	name varchar(250) NOT NULL
+);
+ALTER TABLE workflow.query_parameter ADD CONSTRAINT PK_query_parameter
+	PRIMARY KEY (id);
+ALTER TABLE workflow.query_parameter ADD CONSTRAINT FK_query_parameter_data_type
+	FOREIGN KEY (data_type_id) REFERENCES product.data_type (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS workflow.query_parameter_id_seq;
+CREATE SEQUENCE workflow.query_parameter_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE workflow.query_parameter ALTER COLUMN id SET DEFAULT nextval('workflow.query_parameter_id_seq');
+--ALTER SEQUENCE workflow.query_parameter_id_seq OWNED BY workflow.query_parameter.id;
+ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_2
+	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: graph_image
+DROP TABLE IF EXISTS workflow.graph_image CASCADE;
+CREATE TABLE workflow.graph_image
+(
+	workflow_id bigint NOT NULL,
+	image varchar NOT NULL
+);
+ALTER TABLE workflow.graph_image ADD CONSTRAINT PK_graph_image PRIMARY KEY (workflow_id);
+ALTER TABLE workflow.graph_image ADD CONSTRAINT FK_graph_image_workflow_graph
+    FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE CASCADE ON UPDATE No Action;
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+--DB Execution
+-------------------------------------------------------------------------------
+-- table: execution.execution_status
+DROP TABLE IF EXISTS execution.status CASCADE;
+CREATE TABLE execution.status
+(
+	id integer NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE execution.status ADD CONSTRAINT PK_execution_status PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS execution.execution_status_id_seq;
+CREATE SEQUENCE execution.execution_status_id_seq	INCREMENT BY 1 MINVALUE 0 NO MAXVALUE START WITH 0 NO CYCLE;
+ALTER TABLE execution.status ALTER COLUMN id SET DEFAULT nextval('execution.execution_status_id_seq');
+--ALTER SEQUENCE execution.execution_status_id_seq OWNED BY execution.status.id;
+
+-------------------------------------------------------------------------------
+-- table: job
+DROP TABLE IF EXISTS execution.job CASCADE;
+CREATE TABLE execution.job
+(
+	id bigint NOT NULL,
+	name text NOT NULL,
+	job_type smallint NOT NULL DEFAULT 0,
+	env smallint DEFAULT 0,
+	app_id varchar(50),
+	start_time timestamp without time zone NULL,
+	end_time timestamp without time zone NULL,
+	workflow_id bigint,
+	user_id varchar(50) NOT NULL,
+	output_path varchar(512),
+	query_id bigint NULL,
+	execution_status_id integer NOT NULL,
+	is_external boolean NULL DEFAULT false,
+	callback clob NULL,
+	task_dependencies clob NULL,
+	batch_id varchar(50)
+);
+ALTER TABLE execution.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
+ALTER TABLE execution.job ADD CONSTRAINT FK_job_workflow
+	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE execution.job ADD CONSTRAINT FK_job_user
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE execution.job ADD CONSTRAINT FK_job_query
+	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE execution.job ADD CONSTRAINT FK_job_execution_status
+	FOREIGN KEY (execution_status_id) REFERENCES execution.status (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS execution.job_id_seq;
+CREATE SEQUENCE execution.job_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE execution.job ALTER COLUMN id SET DEFAULT nextval('execution.job_id_seq');
+--ALTER SEQUENCE execution.job_id_seq OWNED BY execution.job.id;
+
+-------------------------------------------------------------------------------
+-- table: execution.task
+DROP TABLE IF EXISTS execution.task CASCADE;
+CREATE TABLE execution.task
+(
+	id bigint NOT NULL,
+	-- FK to either execution.processing_component, either execution.data_source_component,
+	-- Also nullable, because execution group doesn't have a component
+	component_id varchar(512) NULL,
+	resource_id varchar(512) NULL,
+	graph_node_id bigint,
+	start_time timestamp without time zone NULL,
+	end_time timestamp without time zone NULL,
+	last_updated timestamp without time zone NULL,
+	internal_state varchar(512) NULL,
+	-- for some tasks the parent is the task group, not the job, therefore job_id nullable
+	job_id bigint NULL,
+	task_group_id bigint NULL,
+	execution_node_host_name varchar(250) NULL,
+	command varchar NULL,
+	execution_status_id integer NOT NULL,
+	execution_level integer NOT NULL,
+	execution_log varchar NULL,
+	instance_id integer NOT NULL,
+	used_CPU integer NULL,
+    used_RAM integer NULL,
+    used_HDD integer NULL,
+    temp_target text NULL,
+    actual_target text NULL,
+    cardinality integer NULL DEFAULT(1),
+    -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
+    discriminator integer NOT NULL
+);
+ALTER TABLE execution.task ADD CONSTRAINT PK_task PRIMARY KEY (id);
+-- This prevents deleting a node if previously executed
+--ALTER TABLE execution.task ADD CONSTRAINT FK_task_graph_node
+--	FOREIGN KEY (graph_node_id) REFERENCES execution.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE execution.task ADD CONSTRAINT FK_task_job
+	FOREIGN KEY (job_id) REFERENCES execution.job (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE execution.task ADD CONSTRAINT FK_task_group
+	FOREIGN KEY (task_group_id) REFERENCES execution.task (id) ON DELETE CASCADE ON UPDATE No Action;
+--ALTER TABLE execution.task ADD CONSTRAINT FK_task_execution_node
+--	FOREIGN KEY (execution_node_host_name) REFERENCES topology.node (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE execution.task ADD CONSTRAINT FK_task_execution_status
+	FOREIGN KEY (execution_status_id) REFERENCES execution.status (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS execution.task_id_seq;
+CREATE SEQUENCE execution.task_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE execution.task ALTER COLUMN id SET DEFAULT nextval('execution.task_id_seq');
+--ALTER SEQUENCE execution.task_id_seq OWNED BY execution.task.id;
+
+-------------------------------------------------------------------------------
+-- table: execution.execution_group_tasks
+DROP TABLE IF EXISTS execution.task_group CASCADE;
+CREATE TABLE execution.task_group
+(
+    group_id bigint NOT NULL,
+	task_id bigint NOT NULL
+);
+ALTER TABLE execution.task_group ADD CONSTRAINT PK_execution_group_tasks
+	PRIMARY KEY (group_id, task_id);
+ALTER TABLE execution.task_group ADD CONSTRAINT FK_execution_group_tasks_execution_group
+	FOREIGN KEY (group_id) REFERENCES execution.task (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE execution.task_group ADD CONSTRAINT FK_execution_group_tasks_execution_task
+	FOREIGN KEY (task_id) REFERENCES execution.task (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: execution.task_inputs
+DROP TABLE IF EXISTS execution.task_input CASCADE;
+CREATE TABLE execution.task_input
+(
+	task_id bigint NOT NULL,
+	"key" varchar(512) NOT NULL,
+	"value" varchar NULL
+);
+ALTER TABLE execution.task_input ADD CONSTRAINT PK_task_inputs PRIMARY KEY (task_id, "key");
+ALTER TABLE execution.task_input ADD CONSTRAINT FK_task_inputs_task
+	FOREIGN KEY (task_id) REFERENCES execution.task (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: execution.task_output
+DROP TABLE IF EXISTS execution.task_output CASCADE;
+CREATE TABLE execution.task_output
+(
+	task_id bigint NOT NULL,
+	"key" varchar(512) NOT NULL,
+    "value" varchar NULL
+);
+ALTER TABLE execution.task_output ADD CONSTRAINT PK_task_output PRIMARY KEY (task_id, "key");
+ALTER TABLE execution.task_output ADD CONSTRAINT FK_task_output_task
+	FOREIGN KEY (task_id) REFERENCES execution.task (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: execution.user_data_query
+DROP TABLE IF EXISTS execution.user_data_query CASCADE;
+CREATE TABLE execution.user_data_query
+(
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+	query_id integer NOT NULL
+);
+ALTER TABLE execution.user_data_query ADD CONSTRAINT PK_user_data_query
+	PRIMARY KEY (job_id, query_id);
+ALTER TABLE execution.user_data_query ADD CONSTRAINT FK_user_data_query_query
+	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE execution.user_data_query ADD CONSTRAINT FK_user_data_query_job
+	FOREIGN KEY (job_id) REFERENCES execution.job (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: execution.user_data_source_connection
+DROP TABLE IF EXISTS execution.user_data_source_connection CASCADE;
+CREATE TABLE execution.user_data_source_connection
+(
+    id bigserial NOT NULL,
+	user_id varchar(50) NOT NULL,
+    data_source_id varchar(512) NOT NULL,
+	username varchar(50) NULL,
+	password text NULL,
+	tfa_secret text NULL,
+	params varchar(512) NULL,
+	created timestamp NULL DEFAULT now(),
+	modified timestamp NULL
+);
+ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT PK_user_data_source_connection
+	PRIMARY KEY (id);
+ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT U_user_data_source_connection UNIQUE (user_id, data_source_id);
+ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_user
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+DROP SEQUENCE IF EXISTS execution.user_data_source_connection_id_seq;
+CREATE SEQUENCE execution.user_data_source_connection_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE execution.user_data_source_connection ALTER COLUMN id SET DEFAULT nextval('execution.user_data_source_connection_id_seq');
+--ALTER SEQUENCE execution.user_data_source_connection_id_seq OWNED BY execution.user_data_source_connection.id;
+
+-- Table: execution.component_time
+DROP TABLE IF EXISTS execution.component_time CASCADE;
+CREATE TABLE execution.component_time
+(
+    component_id varchar(512) NOT NULL,
+    average_duration_seconds integer NOT NULL,
+    CONSTRAINT component_time_pkey PRIMARY KEY (component_id),
+    CONSTRAINT fk_component_time_processing_component FOREIGN KEY (component_id)
+        REFERENCES component.processing_component (id)
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+--CREATE INDEX IF NOT EXISTS fki_fk_component_time_processing_component
+--    ON execution.component_time USING btree
+--    (component_id COLLATE pg_catalog."default" ASC NULLS LAST);
+
+-- Table: execution.resource_usage
+DROP TABLE IF EXISTS execution.resource_usage CASCADE;
+CREATE TABLE IF NOT EXISTS execution.resource_usage
+(
+    id bigint NOT NULL,
+    user_id character varying NOT NULL,
+    task_id bigint NOT NULL,
+    host_name character varying NOT NULL,
+    flavor character varying,
+    start_time timestamp without time zone,
+    end_time timestamp without time zone,
+    CONSTRAINT resource_usage_pkey PRIMARY KEY (id)
+);
+DROP SEQUENCE IF EXISTS execution.resource_usage_id_seq;
+CREATE SEQUENCE IF NOT EXISTS execution.resource_usage_id_seq INCREMENT BY 1 START WITH 1 MINVALUE 1 NO MAXVALUE;
+ALTER TABLE execution.resource_usage ALTER COLUMN id SET DEFAULT nextval('execution.resource_usage_id_seq');
+--ALTER SEQUENCE execution.resource_usage_id_seq OWNED BY execution.resource_usage.id;
+
+-- Table: execution.resource_usage_report
+DROP TABLE IF EXISTS execution.resource_usage_report CASCADE;
+CREATE TABLE IF NOT EXISTS execution.resource_usage_report
+(
+    id bigint NOT NULL,
+    user_id character varying NOT NULL,
+    last_report_time timestamp without time zone,
+    CONSTRAINT resource_usage_report_pkey PRIMARY KEY (id)
+);
+DROP SEQUENCE IF EXISTS execution.resource_usage_report_id_seq;
+CREATE SEQUENCE IF NOT EXISTS execution.resource_usage_report_id_seq INCREMENT BY 1 START WITH 1 MINVALUE 1 NO MAXVALUE;
+ALTER TABLE execution.resource_usage_report ALTER COLUMN id SET DEFAULT nextval('execution.resource_usage_report_id_seq');
+--ALTER SEQUENCE execution.resource_usage_report_id_seq OWNED BY execution.resource_usage_report.id;
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS scheduling.qrtz_JOB_DETAILS CASCADE;
+CREATE TABLE scheduling.qrtz_JOB_DETAILS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    JOB_NAME  VARCHAR(200) NOT NULL,
+    JOB_GROUP VARCHAR(200) NOT NULL,
+    DESCRIPTION VARCHAR(250) NULL,
+    JOB_CLASS_NAME   VARCHAR(250) NOT NULL,
+    IS_DURABLE BOOL NOT NULL,
+    IS_NONCONCURRENT BOOL NOT NULL,
+    IS_UPDATE_DATA BOOL NOT NULL,
+    REQUESTS_RECOVERY BOOL NOT NULL,
+    JOB_DATA BYTEA NULL,
+    PRIMARY KEY (SCHED_NAME,JOB_NAME,JOB_GROUP)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_TRIGGERS CASCADE;
+CREATE TABLE scheduling.qrtz_TRIGGERS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    JOB_NAME  VARCHAR(200) NOT NULL,
+    JOB_GROUP VARCHAR(200) NOT NULL,
+    DESCRIPTION VARCHAR(250) NULL,
+    NEXT_FIRE_TIME BIGINT NULL,
+    PREV_FIRE_TIME BIGINT NULL,
+    PRIORITY INTEGER NULL,
+    TRIGGER_STATE VARCHAR(16) NOT NULL,
+    TRIGGER_TYPE VARCHAR(8) NOT NULL,
+    START_TIME BIGINT NOT NULL,
+    END_TIME BIGINT NULL,
+    CALENDAR_NAME VARCHAR(200) NULL,
+    MISFIRE_INSTR SMALLINT NULL,
+    JOB_DATA BYTEA NULL,
+    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (SCHED_NAME,JOB_NAME,JOB_GROUP)
+	REFERENCES scheduling.qrtz_JOB_DETAILS(SCHED_NAME,JOB_NAME,JOB_GROUP)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_SIMPLE_TRIGGERS CASCADE;
+CREATE TABLE scheduling.qrtz_SIMPLE_TRIGGERS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    REPEAT_COUNT BIGINT NOT NULL,
+    REPEAT_INTERVAL BIGINT NOT NULL,
+    TIMES_TRIGGERED BIGINT NOT NULL,
+    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+	REFERENCES scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_CRON_TRIGGERS CASCADE;
+CREATE TABLE scheduling.qrtz_CRON_TRIGGERS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    CRON_EXPRESSION VARCHAR(120) NOT NULL,
+    TIME_ZONE_ID VARCHAR(80),
+    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+	REFERENCES scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_SIMPROP_TRIGGERS CASCADE;
+CREATE TABLE scheduling.qrtz_SIMPROP_TRIGGERS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    STR_PROP_1 VARCHAR(512) NULL,
+    STR_PROP_2 VARCHAR(512) NULL,
+    STR_PROP_3 VARCHAR(512) NULL,
+    INT_PROP_1 INT NULL,
+    INT_PROP_2 INT NULL,
+    LONG_PROP_1 BIGINT NULL,
+    LONG_PROP_2 BIGINT NULL,
+    DEC_PROP_1 NUMERIC(13,4) NULL,
+    DEC_PROP_2 NUMERIC(13,4) NULL,
+    BOOL_PROP_1 BOOL NULL,
+    BOOL_PROP_2 BOOL NULL,
+    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+    REFERENCES scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_BLOB_TRIGGERS CASCADE;
+CREATE TABLE scheduling.qrtz_BLOB_TRIGGERS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    BLOB_DATA BYTEA NULL,
+    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+    REFERENCES scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_CALENDARS CASCADE;
+CREATE TABLE scheduling.qrtz_CALENDARS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    CALENDAR_NAME  VARCHAR(200) NOT NULL,
+    CALENDAR BYTEA NOT NULL,
+    PRIMARY KEY (SCHED_NAME,CALENDAR_NAME)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_PAUSED_TRIGGER_GRPS CASCADE;
+CREATE TABLE scheduling.qrtz_PAUSED_TRIGGER_GRPS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    TRIGGER_GROUP  VARCHAR(200) NOT NULL,
+    PRIMARY KEY (SCHED_NAME,TRIGGER_GROUP)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_FIRED_TRIGGERS CASCADE;
+CREATE TABLE scheduling.qrtz_FIRED_TRIGGERS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    ENTRY_ID VARCHAR(95) NOT NULL,
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    INSTANCE_NAME VARCHAR(200) NOT NULL,
+    FIRED_TIME BIGINT NOT NULL,
+    SCHED_TIME BIGINT NOT NULL,
+    PRIORITY INTEGER NOT NULL,
+    STATE VARCHAR(16) NOT NULL,
+    JOB_NAME VARCHAR(200) NULL,
+    JOB_GROUP VARCHAR(200) NULL,
+    IS_NONCONCURRENT BOOL NULL,
+    REQUESTS_RECOVERY BOOL NULL,
+    PRIMARY KEY (SCHED_NAME,ENTRY_ID)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_SCHEDULER_STATE CASCADE;
+CREATE TABLE scheduling.qrtz_SCHEDULER_STATE
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    INSTANCE_NAME VARCHAR(200) NOT NULL,
+    LAST_CHECKIN_TIME BIGINT NOT NULL,
+    CHECKIN_INTERVAL BIGINT NOT NULL,
+    PRIMARY KEY (SCHED_NAME,INSTANCE_NAME)
+);
+
+DROP TABLE IF EXISTS scheduling.qrtz_LOCKS CASCADE;
+CREATE TABLE scheduling.qrtz_LOCKS
+(
+    SCHED_NAME VARCHAR(120) NOT NULL,
+    LOCK_NAME  VARCHAR(40) NOT NULL,
+    PRIMARY KEY (SCHED_NAME,LOCK_NAME)
+);
+
+CREATE INDEX idx_qrtz_j_req_recovery on scheduling.qrtz_JOB_DETAILS(SCHED_NAME,REQUESTS_RECOVERY);
+CREATE INDEX idx_qrtz_j_grp on scheduling.qrtz_JOB_DETAILS(SCHED_NAME,JOB_GROUP);
+
+CREATE INDEX idx_qrtz_t_j on scheduling.qrtz_TRIGGERS(SCHED_NAME,JOB_NAME,JOB_GROUP);
+CREATE INDEX idx_qrtz_t_jg on scheduling.qrtz_TRIGGERS(SCHED_NAME,JOB_GROUP);
+CREATE INDEX idx_qrtz_t_c on scheduling.qrtz_TRIGGERS(SCHED_NAME,CALENDAR_NAME);
+CREATE INDEX idx_qrtz_t_g on scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_GROUP);
+CREATE INDEX idx_qrtz_t_state on scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_STATE);
+CREATE INDEX idx_qrtz_t_n_state on scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP,TRIGGER_STATE);
+CREATE INDEX idx_qrtz_t_n_g_state on scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_GROUP,TRIGGER_STATE);
+CREATE INDEX idx_qrtz_t_next_fire_time on scheduling.qrtz_TRIGGERS(SCHED_NAME,NEXT_FIRE_TIME);
+CREATE INDEX idx_qrtz_t_nft_st on scheduling.qrtz_TRIGGERS(SCHED_NAME,TRIGGER_STATE,NEXT_FIRE_TIME);
+CREATE INDEX idx_qrtz_t_nft_misfire on scheduling.qrtz_TRIGGERS(SCHED_NAME,MISFIRE_INSTR,NEXT_FIRE_TIME);
+CREATE INDEX idx_qrtz_t_nft_st_misfire on scheduling.qrtz_TRIGGERS(SCHED_NAME,MISFIRE_INSTR,NEXT_FIRE_TIME,TRIGGER_STATE);
+CREATE INDEX idx_qrtz_t_nft_st_misfire_grp on scheduling.qrtz_TRIGGERS(SCHED_NAME,MISFIRE_INSTR,NEXT_FIRE_TIME,TRIGGER_GROUP,TRIGGER_STATE);
+
+CREATE INDEX idx_qrtz_ft_trig_inst_name on scheduling.qrtz_FIRED_TRIGGERS(SCHED_NAME,INSTANCE_NAME);
+CREATE INDEX idx_qrtz_ft_inst_job_req_rcvry on scheduling.qrtz_FIRED_TRIGGERS(SCHED_NAME,INSTANCE_NAME,REQUESTS_RECOVERY);
+CREATE INDEX idx_qrtz_ft_j_g on scheduling.qrtz_FIRED_TRIGGERS(SCHED_NAME,JOB_NAME,JOB_GROUP);
+CREATE INDEX idx_qrtz_ft_jg on scheduling.qrtz_FIRED_TRIGGERS(SCHED_NAME,JOB_GROUP);
+CREATE INDEX idx_qrtz_ft_t_g on scheduling.qrtz_FIRED_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP);
+CREATE INDEX idx_qrtz_ft_tg on scheduling.qrtz_FIRED_TRIGGERS(SCHED_NAME,TRIGGER_GROUP);
+
+--DB Workspace
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- table: workspace.repository_type
+DROP TABLE IF EXISTS workspace.repository_type CASCADE;
+CREATE TABLE workspace.repository_type
+(
+    id integer NOT NULL,
+	name varchar(250) NOT NULL,
+	params clob NULL
+);
+ALTER TABLE workspace.repository_type ADD CONSTRAINT PK_repository_type PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: workspace.repository
+DROP TABLE IF EXISTS workspace.repository CASCADE;
+CREATE TABLE workspace.repository
+(
+    id varchar(40) NOT NULL DEFAULT RANDOM_UUID(),
+	name varchar(250) NOT NULL,
+	description text NOT NULL,
+	url_prefix varchar(20) NOT NULL,
+	repository_type_id int NOT NULL,
+	user_id varchar(50),
+	read_only boolean NOT NULL,
+	system boolean DEFAULT false,
+	is_editable boolean NOT NULL,
+	params clob NULL,
+	display_order smallint,
+	persistent_storage boolean DEFAULT false,
+	created timestamp DEFAULT now()
+);
+ALTER TABLE workspace.repository ADD CONSTRAINT PK_repository PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS workspace.repository_id_seq;
+ALTER TABLE workspace.repository ADD CONSTRAINT FK_workspace_repository_type
+    FOREIGN KEY (repository_type_id) REFERENCES workspace.repository_type (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: workspace.site
+DROP TABLE IF EXISTS workspace.site CASCADE;
+CREATE TABLE workspace.site
+(
+    id varchar(40) NOT NULL DEFAULT RANDOM_UUID(),
+	name varchar(250) NOT NULL,
+	description text NOT NULL,
+	footprint GEOMETRY(POLYGON) NOT NULL,
+	start_date timestamp NOT NULL,
+	end_date timestamp NOT NULL,
+	user_id varchar(50)
+);
+ALTER TABLE workspace.site ADD CONSTRAINT PK_site PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS workspace.site_id_seq;
+
+-------------------------------------------------------------------------------
+-- table: workspace.repository_template
+DROP TABLE IF EXISTS workspace.repository_template CASCADE;
+CREATE TABLE IF NOT EXISTS workspace.repository_template
+(
+    id character varying(40) NOT NULL DEFAULT RANDOM_UUID(),
+    name character varying(250)  NOT NULL,
+    description text NOT NULL,
+    url_prefix character varying(20) NOT NULL,
+    repository_type_id integer NOT NULL,
+    params clob,
+    created timestamp without time zone DEFAULT now(),
+    CONSTRAINT pk_repository_template PRIMARY KEY (id),
+    CONSTRAINT fk_repository_template_repository_type FOREIGN KEY (repository_type_id)
+        REFERENCES workspace.repository_type (id)
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+);
+--GRANT ALL ON TABLE workspace.repository_template TO postgres;
+--GRANT ALL ON TABLE workspace.repository_template TO tao;
+
+--DB CONFIG
+-------------------------------------------------------------------------------
+-- table: config.category
+DROP TABLE IF EXISTS config.category CASCADE;
+CREATE TABLE IF NOT EXISTS config.category
+(
+    id smallint NOT NULL,
+    name varchar NOT NULL,
+    display_order integer NOT NULL
+);
+ALTER TABLE config.category ADD CONSTRAINT PK_config_category PRIMARY KEY (id);
+
+---------------------------------------------------------------------------------
+-- table: config.config
+DROP TABLE IF EXISTS config.config CASCADE;
+CREATE TABLE IF NOT EXISTS config.config
+(
+    id varchar(512) NOT NULL,
+    "value" varchar,
+    friendly_name varchar NOT NULL,
+    type varchar(10) NOT NULL,
+    category_id smallint NOT NULL,
+    label varchar,
+    "values" clob,
+    last_updated timestamp NOT NULL
+);
+
+ALTER TABLE config.config ADD CONSTRAINT PK_config PRIMARY KEY (id);
+ALTER TABLE config.config ADD CONSTRAINT FK_config_category
+    FOREIGN KEY (category_id) REFERENCES config.category (id) ON DELETE No Action ON UPDATE No Action;
+
+-- DB SUBSCRIPTION
+-------------------------------------------------------------------------------
+-- table: subscription.workflow
+DROP TABLE IF EXISTS subscription.workflow CASCADE;
+CREATE TABLE IF NOT EXISTS subscription.workflow
+(
+    id bigint NOT NULL,
+    user_id varchar NOT NULL,
+    workflow_id bigint NOT NULL,
+    created timestamp without time zone NULL DEFAULT now()
+);
+ALTER TABLE subscription.workflow ADD CONSTRAINT PK_subscription_workflow PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS subscription.workflow_id_seq;
+CREATE SEQUENCE subscription.workflow_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE subscription.workflow ALTER COLUMN id SET DEFAULT nextval('subscription.workflow_id_seq');
+--ALTER SEQUENCE subscription.workflow_id_seq OWNED BY subscription.workflow.id;
+
+-------------------------------------------------------------------------------
+-- table: subscription.dataset
+DROP TABLE IF EXISTS subscription.dataset CASCADE;
+CREATE TABLE IF NOT EXISTS subscription.dataset
+(
+    id bigint NOT NULL,
+    user_id varchar NOT NULL,
+    repository_id varchar NOT NULL,
+    name varchar NOT NULL,
+    data_root_path varchar NOT NULL,
+    checksum varchar,
+    subscribers_count integer DEFAULT 0,
+    created timestamp without time zone NULL DEFAULT now()
+);
+ALTER TABLE subscription.dataset ADD CONSTRAINT PK_subscription_dataset PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS subscription.dataset_id_seq;
+CREATE SEQUENCE subscription.dataset_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE subscription.dataset ALTER COLUMN id SET DEFAULT nextval('subscription.dataset_id_seq');
+--ALTER SEQUENCE subscription.dataset_id_seq OWNED BY subscription.dataset.id;
+
+-------------------------------------------------------------------------------
+-- table: subscription.subscription_type
+DROP TABLE IF EXISTS subscription.subscription_type CASCADE;
+CREATE TABLE IF NOT EXISTS subscription.subscription_type
+(
+    id smallint NOT NULL,
+    name varchar NOT NULL
+);
+ALTER TABLE subscription.subscription_type ADD CONSTRAINT PK_subscription_type PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: subscription.resource_subscription
+DROP TABLE IF EXISTS subscription.resource_subscription CASCADE;
+CREATE TABLE IF NOT EXISTS subscription.resource_subscription
+(
+    id bigint NOT NULL,
+    user_id varchar NOT NULL,
+    type_id smallint NOT NULL,
+    --flavor_id varchar NOT NULL,
+    --flavor_quantity smallint NOT NULL,
+    --flavor_hdd_quantity_GB smallint,
+    --flavor_ssd_quantity_GB smallint,
+    flavors clob, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
+    object_storage_GB smallint,
+    paid boolean NULL DEFAULT false,
+    created timestamp without time zone NULL DEFAULT now(),
+    ended timestamp without time zone NULL
+);
+ALTER TABLE subscription.resource_subscription ADD CONSTRAINT PK_resource_subscription PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS subscription.resource_subscription_id_seq;
+CREATE SEQUENCE subscription.resource_subscription_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE subscription.resource_subscription ALTER COLUMN id SET DEFAULT nextval('subscription.resource_subscription_id_seq');
+--ALTER SEQUENCE subscription.resource_subscription_id_seq OWNED BY subscription.resource_subscription.id;
+ALTER TABLE subscription.resource_subscription ADD CONSTRAINT FK_resource_subscription_type
+    FOREIGN KEY (type_id) REFERENCES subscription.subscription_type (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: subscription.external_resource_subscription
+DROP TABLE IF EXISTS subscription.external_resource_subscription CASCADE;
+CREATE TABLE IF NOT EXISTS subscription.external_resource_subscription
+(
+    id bigint NOT NULL,
+    name varchar NOT NULL,
+    flavors clob, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
+    object_storage_GB smallint,
+    UNIQUE(name)
+);
+ALTER TABLE subscription.external_resource_subscription ADD CONSTRAINT PK_external_resource_subscription PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS subscription.external_resource_subscription_id_seq;
+CREATE SEQUENCE subscription.external_resource_subscription_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE subscription.external_resource_subscription ALTER COLUMN id SET DEFAULT nextval('subscription.external_resource_subscription_id_seq');
+--ALTER SEQUENCE subscription.external_resource_subscription_id_seq OWNED BY subscription.external_resource_subscription.id;
+
+-- table: subscription.external_subscription_users
+DROP TABLE IF EXISTS subscription.external_subscription_users CASCADE;
+CREATE TABLE IF NOT EXISTS subscription.external_subscription_users
+(
+    subscription_id bigint NOT NULL,
+    user_id varchar NOT NULL
+);
+ALTER TABLE subscription.external_subscription_users ADD CONSTRAINT PK_external_subscription_users PRIMARY KEY (subscription_id, user_id);
+ALTER TABLE subscription.external_subscription_users ADD CONSTRAINT FK_external_subscription_users_subscription
+    FOREIGN KEY (subscription_id) REFERENCES subscription.external_resource_subscription (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE subscription.external_subscription_users ADD CONSTRAINT FK_external_subscription_users_user
+    FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------

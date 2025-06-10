@@ -170,8 +170,8 @@ function Get-Script-Folder {
 
 $postgresqlPort = 5432
 
-$DEFAULT_POSTGRESQL_PATH="C:\Program Files\PostgreSQL\9.5"
-$DEFAULT_POSTGRESQL_BIN_PATH="C:\Program Files\PostgreSQL\9.5\bin"
+$DEFAULT_POSTGRESQL_PATH="C:\Program Files\PostgreSQL\15"
+$DEFAULT_POSTGRESQL_BIN_PATH="C:\Program Files\PostgreSQL\15\bin"
 
 Update-Environment
 
