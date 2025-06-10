@@ -4,6 +4,7 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.execution.Optimizers;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.utils.WorkflowUtilities;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
@@ -36,7 +37,8 @@ public class WorkflowOptimizer {
         Map<Long, OptimizationNode> references = new HashMap<>();
 
         /* define an optimization node for every workflow node */
-        for (WorkflowNodeDescriptor wNode : workflow.getNodes()) {
+        final List<WorkflowNodeDescriptor> orderedNodes = workflow.getOrderedNodes();
+        for (WorkflowNodeDescriptor wNode : orderedNodes) {
 
             /* create optimization node with the component from this node */
             OptimizationNode node = new OptimizationNode(wNode.getId(), defined);
@@ -77,7 +79,7 @@ public class WorkflowOptimizer {
         }
 
         /* set dependencies (u -> v) */
-        for (WorkflowNodeDescriptor wNode : workflow.getNodes()) {
+        for (WorkflowNodeDescriptor wNode : orderedNodes) {
             Long vId = wNode.getId();
             OptimizationNode v = references.get(vId);
 
@@ -95,7 +97,9 @@ public class WorkflowOptimizer {
 
                     /* add link between optimization nodes both ways */
                     u.addChild(v);
-                    v.addParent(u);
+                    v.addParent(link.getInput().getName(),
+                                link.getOutput().getName(),
+                                u);
                 }
             }
         }
@@ -172,25 +176,25 @@ public class WorkflowOptimizer {
 
             /* add links based on graph */
             for (Map.Entry<OptimizationNode, WorkflowNodeDescriptor> e : translation.entrySet()) {
-                List<OptimizationNode> parents = e.getKey().getPredecessors();
+                Map<Tuple<String, String>, OptimizationNode> parents = e.getKey().getPredecessors();
                 WorkflowNodeDescriptor child = e.getValue();
 
-                for (OptimizationNode node : parents) {
-                    WorkflowNodeDescriptor parent = translation.get(node);
-
-                    builder.addLink(parent, child);
+                for (Map.Entry<Tuple<String, String>, OptimizationNode> entry : parents.entrySet()) {
+                    WorkflowNodeDescriptor parent = translation.get(entry.getValue());
+                    final Tuple<String, String> ports = entry.getKey();
+                    builder.addLink(parent, ports.getKeyOne(), child, ports.getKeyTwo());
                 }
             }
 
             return builder.updateWorkflowDescriptor(workflow);
 
         } catch (AggregationException e1) {
-            logger.finer("Aggregation exception: " + e1.getMessage());
+            logger.warning("Aggregation exception: " + e1.getMessage());
             builder.cleanCache();
             return null;
 
         } catch (PersistenceException e2) {
-            logger.finer("Persistence exception: " + e2.getMessage());
+            logger.warning("Persistence exception: " + e2.getMessage());
             builder.cleanCache();
             return null;
 

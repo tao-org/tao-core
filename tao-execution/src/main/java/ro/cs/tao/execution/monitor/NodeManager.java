@@ -136,10 +136,24 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return runtimeInfo;
     }
 
+    /**
+     * Sets the application identifier.
+     *
+     * @param id The unique identifier for the application
+     */
     public void setApplicationId(String id) {
         this.appId = id;
     }
 
+    /**
+     * Retrieves the default node information. If the default node information
+     * is not already set, it initializes the details using the configuration provider.
+     * The information includes node name prefix, description, user, password, and
+     * SSH key used for secure access.
+     *
+     * @return the {@link DefaultNodeInfo} object containing the default configuration
+     *         details for a node.
+     */
     public DefaultNodeInfo getDefaultNodeInfo() {
         if (defaultNodeInfo == null) {
             final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
@@ -168,6 +182,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return defaultNodeInfo;
     }
 
+    /**
+     * Sets the default node information to be used for initializing and managing nodes.
+     *
+     */
     public void setDefaultNodeInfo(DefaultNodeInfo defaultNodeInfo) {
         this.defaultNodeInfo = defaultNodeInfo;
     }
@@ -185,8 +203,20 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      */
     public void setTaskProvider(ExecutionTaskProvider taskProvider) { this.taskProvider = taskProvider; }
 
+    /**
+     * Sets the resource subscription provider, which is responsible for managing resource subscriptions
+     * and providing related information, such as active and ended subscriptions for a user.
+     *
+     * @param provider The resource subscription provider to be used
+     */
     public void setResourceSubscriptionProvider(ResourceSubscriptionProvider provider) { this.resourceSubscriptionProvider = provider; }
 
+    /**
+     * Sets the flavor provider, which is responsible for supplying specific node flavor configurations.
+     * The flavor provider determines the characteristics of nodes such as CPU and memory.
+     *
+     * @param provider The NodeFlavorProvider instance to be used for managing node flavors
+     */
     public void setFlavorProvider(NodeFlavorProvider provider) { this.flavorProvider = provider; }
 
     /**
@@ -203,6 +233,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      */
     public void setNodeLimit(int nodeLimit) { this.nodeLimit = nodeLimit; }
 
+    /**
+     * Determines whether the creation of new nodes is allowed based on the current node limit.
+     *
+     * @return true if the node limit is greater than or equal to 0, indicating that new nodes can be created; false otherwise
+     */
     public boolean canCreateNewNodes() { return this.nodeLimit >= 0; }
 
     /**
@@ -421,6 +456,20 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return nodeData;
     }
 
+    /**
+     * Creates a new worker node allocated to a specific user. The method ensures the user is within
+     * their permissible node limit and provisions a node if the requirements are met.
+     *
+     * @param userId The unique identifier of the user requesting the creation of a worker node.
+     *               This is used to validate user-specific limits and associate the node accordingly.
+     *
+     * @return The {@link NodeDescription} object representing the newly created worker node.
+     *         Returns null if the user exceeds their node allocation limit, shared nodes are used,
+     *         or the necessary configuration is unavailable.
+     *
+     * @throws TopologyException If the node creation fails due to errors during the provisioning
+     *                           process or other internal issues.
+     */
     public NodeDescription createWorkerNode(String userId) throws TopologyException {
         if (TopologyManager.getInstance().isExternalProviderAvailable()) {
             final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
@@ -462,6 +511,19 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return null;
     }
 
+    /**
+     * Generates a new node description object for a user based on the provided parameters.
+     * This method creates a unique node identifier and sets various properties required
+     * for initializing and managing the node.
+     *
+     * @param existingUserNodesCount The current number of nodes already allocated to the user.
+     *                               Used to generate a unique identifier for the new node.
+     * @param userId The unique identifier of the user for whom the node is being created.
+     * @param matchingFlavor The specific flavor (configuration) of the node to be assigned.
+     *                       It defines the characteristics of the node such as CPU and memory.
+     * @return A {@link NodeDescription} object that represents the newly created
+     *         node, containing updated attributes like ID, flavor, owner, and credentials.
+     */
     public NodeDescription getNewNodeDescription(int existingUserNodesCount, String userId, NodeFlavor matchingFlavor) {
         final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
         NodeDescription node = new NodeDescription();
@@ -479,6 +541,13 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return node;
     }
 
+    /**
+     * Retrieves the description and resource details of a specific node identified by its name.
+     *
+     * @param nodeName the name of the node to be retrieved
+     * @return a {@link NodeData} object containing the node description, CPU, and memory details;
+     *         or null if the node with the given name does not exist in the topology
+     */
     public NodeData getNode(String nodeName) {
         NodeRuntime nodeRuntime = this.nodes.get(nodeName);
         if (nodeRuntime == null) {
@@ -498,6 +567,13 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return (nodeRuntime == null) ? null : nodeRuntime.getRuntimeInfo();
     }
 
+    /**
+     * Retrieves a snapshot of the runtime information for all registered nodes in the system.
+     * This method iterates over the current nodes and collects their associated runtime information.
+     *
+     * @return a map where the keys are node identifiers (as {@link String}) and the values are the corresponding
+     *         {@link RuntimeInfo} objects representing the runtime state of each node.
+     */
     public Map<String, RuntimeInfo> getNodesSnapshot() {
         Map<String, RuntimeInfo> runtimeInfoMap = new HashMap<>(this.nodes.size());
         for (Map.Entry<String, NodeRuntime> entry : this.nodes.entrySet()) {
@@ -506,6 +582,18 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return runtimeInfoMap;
     }
 
+    /**
+     * Initializes and adds the initial set of active nodes to the node management system.
+     * This method processes the list of existing nodes, verifies their active status,
+     * and excludes nodes with a role equal to NodeRole.K8S. If the node is active and
+     * valid, it is added along with its runtime information. Additionally, volatile
+     * nodes are tracked by updating their entry in the nodeUpdates map with the
+     * current timestamp.
+     *
+     * This method is primarily responsible for setting up the active node state
+     * during system initialization. It ensures that only active, non-K8S nodes
+     * are considered and dynamically updates the system for volatile nodes.
+     */
     protected final void addInitialActiveNodes() {
         List<NodeDescription> nodes = listNodes();
         for (NodeDescription node : nodes) {
@@ -518,12 +606,32 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
+    /**
+     * Retrieves a filtered list of active nodes excluding those with the K8S role.
+     * The nodes are sourced from the node provider, and only those marked as active
+     * and not associated with the K8S role are included in the resulting list.
+     *
+     * @return a list of NodeDescription objects that are active and do not have the K8S role
+     * @throws TopologyException if an error occurs during the node retrieval process
+     */
     protected List<NodeDescription> listNodes() throws TopologyException {
         return this.nodeProvider.listNodes().stream().filter(n -> Boolean.TRUE.equals(n.getActive()) &&
                                                                   NodeRole.K8S != n.getRole())
                                 .collect(Collectors.toList());
     }
 
+    /**
+     * Finds or creates a suitable subscription node candidate based on the provided requirements of CPU and memory,
+     * using the subscription's available flavors and the system's current state of nodes.
+     * Attempts to reuse an existing node with less than 20% CPU load if available,
+     * or provisions a new node if necessary.
+     *
+     * @param subscription The resource subscription containing the user's details and available flavors.
+     * @param cpus The number of CPUs required for the node.
+     * @param memory The amount of memory required for the node in bytes.
+     * @return A {@code NodeData} object representing the selected or newly created node with allocated CPU and memory,
+     *         or {@code null} if no suitable node can be allocated or created.
+     */
     protected NodeData getSubscriptionNodeCandidate(ResourceSubscription subscription, int cpus, long memory) {
         NodeDescription node = null;
         // First select the suitable flavors
@@ -602,10 +710,24 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                : null;
     }
 
+    /**
+     * Creates a new node based on the provided user requirements if a matching flavor is available.
+     * Checks the available node flavors to find one that meets or exceeds the specified CPU and memory
+     * requirements, and selects one with the minimum CPU that satisfies the criteria. If a match is
+     * found, the method creates a new node.
+     *
+     * @param userNodes a list of user nodes mapped to their respective runtime information
+     * @param userId the unique identifier of the user requesting the node
+     * @param cpus the minimum number of CPUs required for the node
+     * @param memory the minimum amount of memory (in bytes) required for the node
+     * @return a {@code NodeDescription} instance representing the created node if a matching flavor
+     *         is found, or {@code null} if no matching flavor is available
+     * @throws Exception if an error occurs while fetching flavors or creating the node
+     */
     protected NodeDescription createNodeIfMatchingFlavor(List<Map.Entry<String, NodeRuntime>> userNodes, String userId, int cpus, long memory) throws Exception {
         List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
         NodeFlavor matchingFlavor = nodeFlavors.stream()
-                                               .filter(f -> f.getCpu() >= cpus && f.getMemory() >= 1.5 * memory)
+                                               .filter(f -> f.getCpu() >= cpus && (f.getMemory() * f.getMemoryUnit().value() / MemoryUnit.MB.value()) >= (1.5 * memory))
                                                .min(Comparator.comparingInt(NodeFlavor::getCpu))
                                                .orElse(null);
         if (matchingFlavor != null) {
@@ -614,6 +736,18 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return null;
     }
 
+    /**
+     * Creates and provisions a new node based on the given parameters. The method initializes a
+     * new node, sends a message regarding its provisioning, and waits for the node to be added
+     * to the topology. If the node creation fails, an exception is thrown.
+     *
+     * @param userId The unique identifier of the user requesting the node creation.
+     * @param flavor The node flavor specifying the configuration or type of the node.
+     * @param userInstances The number of user instances associated with the node.
+     * @param isVolatile A flag indicating whether the node is volatile (temporary) or not.
+     * @return The description of the created node.
+     * @throws Exception If node creation fails or times out.
+     */
     protected NodeDescription createNode(String userId, NodeFlavor flavor, int userInstances, boolean isVolatile) throws Exception {
         NodeDescription node = getNewNodeDescription(userInstances, userId, flavor);
         node.setVolatile(isVolatile);
@@ -647,6 +781,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
+    /**
+     * Removes a node from the collection of nodes and corresponding updates.
+     *
+     * @*/
     protected final void removeNode(String host) {
         synchronized (this.nodes) {
             this.nodes.remove(host);
@@ -654,11 +792,28 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
+    /**
+     * Uninstalls the specified node from the system by removing its associated data
+     * and updating the topology.
+     *
+     * @param node the NodeDescription object representing the node to uninstall
+     */
     protected void uninstallNode(NodeDescription node) {
         removeNode(node.getId());
         TopologyManager.getInstance().removeNode(node.getId());
     }
 
+    /**
+     * Reads and retrieves runtime information of a specified node.
+     * The method determines the authentication type based on the presence of an SSH key
+     * and uses this information, along with other node attributes, to fetch runtime details.
+     * For Linux nodes, the method adjusts the CPU usage percentage as it is reported
+     * as the sum of all core loads which may exceed 100%.
+     *
+     * @param node the node description containing details such as ID, role, authentication, and credentials
+     * @return the runtime information of the specified node
+     * @throws Exception if an error occurs during the process of fetching runtime information
+     */
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
         AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
         final NodeRuntimeInspector inspector = RuntimeInspectorFactory.getInstance()
@@ -675,6 +830,13 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return info;
     }
 
+    /**
+     * Schedules a periodic inspection task with the specified delay and interval.
+     * Cancels any existing inspection timer before scheduling a new one.
+     *
+     * @param delay    the delay in milliseconds before the task is executed
+     * @param interval the interval in milliseconds between subsequent task executions
+     */
     protected void scheduleInspection(long delay, long interval) {
         if (this.nodeInspectTimer != null) {
             this.nodeInspectTimer.cancel();
@@ -683,6 +845,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         this.nodeInspectTimer.scheduleAtFixedRate(this.nodeInspectTask, delay, interval);
     }
 
+    /**
+     * Schedules a periodic refresh task with the specified delay and interval. If a timer
+     * is already running, it will be canceled before scheduling a new one.
+     *
+     * @param delay    the delay in milliseconds before the first execution of the task.
+     *                 If the delay is less than or equal to 0, the interval will be used as the delay.
+     * @param interval the interval in milliseconds between successive executions of the task
+     */
     protected void scheduleRefresh(long delay, long interval) {
         if (this.nodeRefreshTimer != null) {
             this.nodeRefreshTimer.cancel();
@@ -691,6 +861,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         this.nodeRefreshTimer.scheduleAtFixedRate(this.nodeRefreshTask, delay > 0 ? delay : interval, interval);
     }
 
+    /**
+     * Computes the load of the given node based on its CPU utilization and available memory.
+     *
+     * @param node the node description containing details such as flavor and identification
+     * @param actualCPU the actual CPU usage of the node
+     * @param availableMemory the available memory of the node in bytes
+     * @return a double value representing the computed load of the node
+     */
     private double computeLoad(NodeDescription node, double actualCPU, long availableMemory) {
         double result = 0.0d;
         try {
@@ -725,6 +903,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return ConfigurationManager.getInstance().getBooleanValue(USE_MASTER_FOR_EXECUTION_KEY);
     }
 
+    /**
+     * Represents the runtime information of a node in a network or system.
+     * This class tracks the node's description, runtime information, the last
+     * update time, and the number of failed attempts for specific operations.
+     */
     public static class NodeRuntime {
         private RuntimeInfo runtimeInfo;
         private NodeDescription node;
@@ -770,6 +953,20 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
+    /**
+     * The NodeInspectTask class is a scheduled task that performs periodic inspection and management
+     * of node runtime information. This task interacts with a collection of nodes, performs operations
+     * such as runtime information updates, failure management, and communication with other system components.
+     *
+     * The class extends {@link TimerTask} and overrides the {@code run()} method to define its specific
+     * execution behavior when the task is triggered.
+     *
+     * Features:
+     * - Periodically inspects the runtime state of nodes in the system.
+     * - Handles retries for failed node updates and deactivates a node after a threshold of failures.
+     * - Updates the runtime information for active nodes and propagates this information using messaging systems.
+     * - Ensures synchronization and thread safety when accessing or modifying shared node data.
+     */
     protected class NodeInspectTask extends TimerTask {
 
         private final boolean shouldRetry;
@@ -844,6 +1041,23 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
+    /**
+     * A task that refreshes the state of nodes in the system. This class extends {@code TimerTask}
+     * and is responsible for periodically updating the nodes managed by the application.
+     * The task performs operations such as adding new nodes, updating existing nodes,
+     * and removing inactive or volatile nodes based on specific conditions.
+     *
+     * The refresh process:
+     * - Retrieves the list of active nodes from the {@code NodeProvider}.
+     * - Updates or adds nodes to the internal collection.
+     * - Removes nodes that are no longer present or inactive based on the latest data.
+     * - Handles the lifecycle of volatile nodes as per the configuration settings.
+     *
+     * Various operations are synchronized on the internal node collection to ensure thread safety,
+     * particularly when modifying the list of nodes.
+     *
+     * Any errors occurring during the refresh process are logged appropriately.
+     */
     protected class NodeRefreshTask extends TimerTask {
 
         private NodeRefreshTask() {

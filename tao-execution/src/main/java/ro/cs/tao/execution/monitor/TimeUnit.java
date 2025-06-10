@@ -18,6 +18,10 @@ package ro.cs.tao.execution.monitor;
 import java.util.Arrays;
 
 /**
+ * An enumeration representing units of time and their respective values in milliseconds.
+ * This enumeration provides constants for various time units (MILLISECONDS, SECONDS, MINUTES)
+ * and supports conversion or representation of these units.
+ *
  * @author Cosmin Cara
  */
 public enum TimeUnit {

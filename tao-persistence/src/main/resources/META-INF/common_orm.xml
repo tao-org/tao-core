@@ -377,9 +377,9 @@
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="component.processing_component"/>
 
-        <entity-listeners>
+        <!--<entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.ProcessingComponentListener"/>
-        </entity-listeners>
+        </entity-listeners>-->
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
@@ -449,6 +449,33 @@
             <transient name="template" />
             <transient name="templateEngine" />
             <transient name="expandedFileLocation" />
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.component.DryRunMetrics" access="PROPERTY">
+        <table name="component.component_dry_run_metrics"/>
+
+        <attributes>
+            <basic name="duration">
+                <column name="duration" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="cpuUsageMetrics">
+                <column name="cpu_usage" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
+            </basic>
+            <basic name="memoryUsageMetrics">
+                <column name="memory_usage" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
+            </basic>
+            <one-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
+                <join-column name="processing_component_id" referenced-column-name="id" />
+                <cascade>
+                    <cascade-refresh/>
+                </cascade>
+            </one-to-one>
+
+            <transient name="executionNodeFlavor" />
+
         </attributes>
     </entity>
 
@@ -1534,6 +1561,9 @@
             </basic>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="sessionId">
+                <column name="session_id" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
             <basic name="event">
                 <column name="event" nullable="true" column-definition="character varying NOT NULL"/>

@@ -12,6 +12,28 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.logging.Logger;
 
+/**
+ * The DefaultProductPathBuilder class provides the capability to construct the paths for EO products
+ * based on configuration and product metadata. It supports deriving paths using acquisition or
+ * processing dates and a customizable local path format.
+ *
+ * This implementation uses a specified repository path as the root directory and incorporates
+ * optional suffixes, product formats, and properties to resolve the final product path.
+ *
+ * The main method, getProductPath, retrieves the product path based on either acquisition or,
+ * optionally, processing dates. Additionally, this class provides helper methods for product
+ * name generation and date-based folder path transformation.
+ *
+ * This class is intended to provide extensibility for specific EO product path-building
+ * implementations through subclassing.
+ *
+ * Constructor Overview:
+ * - DefaultProductPathBuilder(Path repositoryPath, String localPathFormat, Properties properties):
+ *   Initializes path builder with the mandatory repository path, local path format, and
+ *   properties.
+ * - DefaultProductPathBuilder(Path repositoryPath, String localPathFormat, Properties properties,
+ *   boolean testOnly): Provides an option to operate in testing mode.
+ */
 public class DefaultProductPathBuilder implements ProductPathBuilder {
     protected String localPathFormat;
     protected final Path repositoryPath;

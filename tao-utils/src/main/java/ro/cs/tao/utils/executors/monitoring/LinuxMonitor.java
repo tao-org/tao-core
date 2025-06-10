@@ -12,6 +12,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * A concrete implementation of the {@link ProcessActivityMonitor} for monitoring
+ * disk activity of a process running on a Linux operating system.
+ *
+ * This class uses the `pidstat` utility to collect disk read and write statistics
+ * for a specific process. The collected data includes the amount of data read
+ * and written by the process, measured in kilobytes per second.
+ *
+ * The class periodically executes the `pidstat` command with the specified process ID
+ * and parses its output to produce disk activity records. These records consist of
+ * the timestamp, the number of bytes read, and the number of bytes written.
+ */
 class LinuxMonitor extends ProcessActivityMonitor {
 
     LinuxMonitor(Process process, long sampleInterval) {

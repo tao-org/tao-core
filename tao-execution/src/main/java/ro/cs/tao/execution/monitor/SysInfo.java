@@ -16,6 +16,13 @@
 
 package ro.cs.tao.execution.monitor;
 
+/**
+ * A class representing system information, including resource metrics such as the number
+ * of logical processors, memory statistics, and disk usage metrics.
+ *
+ * This class provides getter and setter methods to access and modify the system's
+ * hardware and resource attributes.
+ */
 public class SysInfo {
     private int logicalProcessors;
     private long availableMemory;

@@ -86,10 +86,25 @@ public class StringUtilities {
         return value.length() < length ? String.format("%-" + length + "s", value).replace(" ", padValue) : value;
     }
 
+    /**
+     * Converts the first character of the given string to uppercase and the rest to lowercase.
+     * If the string is empty, it will return an empty string. This method assumes the input is not null.
+     *
+     * @param value the input string to be converted
+     * @return the processed string with the first character in uppercase and the rest in lowercase
+     */
     public static String toFirstCaps(String value) {
         return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
     }
 
+    /**
+     * Converts an array of bytes to its corresponding hexadecimal string representation.
+     * Each byte is converted to a two-character hexadecimal value.
+     *
+     * @param bytes The byte array to be converted. If null or empty, the method will return null.
+     * @return A string containing the hexadecimal representation of the byte array,
+     *         or null if the input byte array is null or empty.
+     */
     public static String byteArrayToHexString(byte[] bytes) {
         if (bytes == null || bytes.length == 0) {
             return null;
@@ -101,6 +116,16 @@ public class StringUtilities {
         return builder.toString();
     }
 
+    /**
+     * Converts a hexadecimal string into its corresponding byte array representation.
+     * The input string is processed two characters at a time, each representing
+     * a hexadecimal value, and converted into a byte.
+     * If the input string has an odd number of characters, it will be padded with a leading zero.
+     *
+     * @param s The hexadecimal string to be converted. It must consist of valid hexadecimal digits (0-9, A-F, a-f).
+     * @return A byte array corresponding to the hexadecimal representation in the input string.
+     *         Returns an empty byte array if the input string is empty or null.
+     */
     public static byte[] hexStringToByteArray(String s) {
         String toConvert = s;
         int len = s.length();
@@ -114,10 +139,26 @@ public class StringUtilities {
         return data;
     }
 
+    /**
+     * Determines if the provided string is a valid GUID (Globally Unique Identifier).
+     * A GUID is a 128-bit value typically represented as a string in the standard format.
+     *
+     * @param s the string to be checked for GUID format; it must not be null.
+     * @return true if the string matches the GUID format, false otherwise.
+     */
     public static boolean isGUID(String s) {
         return guidPattern.matcher(s).matches();
     }
 
+    /**
+     * Counts the number of occurrences of a given substring within a larger string.
+     * The method performs a case-sensitive search.
+     * If either the substring or the larger string is null or empty, the method returns 0.
+     *
+     * @param substring the substring to look for; cannot be null or empty
+     * @param inString the string in which the search is performed; cannot be null or empty
+     * @return the number of occurrences of the substring within the larger string
+     */
     public static int count(String substring, String inString) {
         if (isNullOrEmpty(substring) || isNullOrEmpty(inString)) {
             return 0;
