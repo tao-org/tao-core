@@ -52,7 +52,7 @@ public class WorkflowDescriptor
     private boolean temporary;
     private List<String> tags;
 
-    @XmlElement(name = "userName")
+    @XmlElement(name = "userId")
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
