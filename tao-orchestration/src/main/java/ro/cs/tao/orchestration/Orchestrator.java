@@ -385,11 +385,15 @@ public class Orchestrator extends Notifiable {
                 }
                 optimized.setActive(descriptor.isActive());
             }
-            final Environment env = request.getEnvironment() != null
-                                    ? Environment.valueOf(request.getEnvironment())
-                                    : Environment.valueOf(ConfigurationManager.getInstance()
-                                                                              .getValue("execution.environment",
-                                                                                        Environment.DEFAULT.friendlyName()));
+            final Environment env;
+            if (request.getEnvironment() == null) {
+                env = EnumUtils.getEnumConstantByString(Environment.class,
+                                                        ConfigurationManager.getInstance()
+                                                                            .getValue("execution.environment",
+                                                                                      Environment.DEFAULT.friendlyName()));
+            } else {
+                env = EnumUtils.getEnumConstantByString(Environment.class, request.getEnvironment());
+            }
             return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized,
                                              request.getParameters(), 
                                              request.getJobType() == null ? JobType.EXECUTION : JobType.valueOf(request.getJobType()),
