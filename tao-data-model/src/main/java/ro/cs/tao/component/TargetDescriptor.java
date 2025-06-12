@@ -22,7 +22,6 @@ import ro.cs.tao.component.enums.ParameterType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -52,7 +51,6 @@ public class TargetDescriptor extends StringIdentifiable {
     /**
      * Returns the component that owns this instance
      */
-    @XmlTransient
     public String getParentId() { return parentId; }
     /**
      * Sets the component that owns this instance
