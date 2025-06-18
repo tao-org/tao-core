@@ -24,6 +24,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * Abstract class representing runtime information of a system.
+ * Provides methods to retrieve details about system resources such as
+ * CPU usage, memory, and disk usage.
+ */
 public abstract class RuntimeInfo {
 
     final String host;
@@ -40,6 +45,20 @@ public abstract class RuntimeInfo {
         this.isRemote = remote;
     }
 
+    /**
+     * Creates an instance of {@code RuntimeInfo} tailored to the specified host and operating system.
+     * Depending on whether the hostname matches the local host or not, and the detected operating system,
+     * the method returns a specific implementation of {@code RuntimeInfo}.
+     *
+     * @param hostName the name of the host where the inspector will be created. If it matches the local
+     *                 host, the implementation created is specific to the current operating system.
+     * @param authenticationType the authentication mechanism to use, e.g., password-based or certificate-based.
+     * @param user the username to authenticate with.
+     * @param password the password to authenticate with.
+     * @return a {@code RuntimeInfo} instance, which can either be for Windows or Linux, and either local or remote.
+     * @throws Exception if an error occurs during the creation of the inspector, including network issues or
+     *                   incorrect configurations.
+     */
     public static RuntimeInfo createInspector(String hostName, AuthenticationType authenticationType,
                                               String user, String password) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
@@ -52,12 +71,69 @@ public abstract class RuntimeInfo {
         }
     }
 
+    /**
+     * Retrieves the current processor usage in percentage.
+     * The method is abstract and the actual implementation may vary,
+     * depending on whether the processor usage is being measured on a
+     * local or remote machine and the operating system.
+     *
+     * @return the current processor usage as a percentage value, typically
+     *         in the range of 0.0 to 100.0, where 0.0 indicates no CPU usage
+     *         and 100.0 indicates full CPU usage.
+     */
     public abstract double getProcessorUsage();
+
+    /**
+     * Retrieves the total memory available on the system in megabytes.
+     * This method is abstract, and its implementation may vary depending
+     * on the platform and whether the information is being collected
+     * from a local or remote machine.
+     *
+     * @return the total memory in megabytes, representing the full amount
+     *         of physical memory installed in the system.
+     */
     public abstract long getTotalMemoryMB();
+
+    /**
+     * Retrieves the available memory in the system in megabytes.
+     * The method is abstract, and the implementation may vary depending
+     * on whether the information is being gathered from a local or remote
+     * system and on the type of operating system.
+     *
+     * @return the amount of available memory in megabytes, representing
+     *         the memory currently unallocated and available for use.
+     */
     public abstract long getAvailableMemoryMB();
+
+    /**
+     * Retrieves the total disk space available on the system in gigabytes.
+     * This method is abstract, and its implementation may vary depending on
+     * whether the information is being gathered from a local or remote system
+     * and the type of operating system.
+     *
+     * @return the total disk space in gigabytes, representing the full capacity
+     *         of the storage available on the system.
+     */
     public abstract long getTotalDiskGB();
+
+    /**
+     * Retrieves the used disk space on the system in gigabytes.
+     * This method is abstract, and its implementation may vary depending
+     * on whether the information is being gathered from a local or remote
+     * machine and the type of operating system.
+     *
+     * @return the used disk space in gigabytes, representing the amount of
+     *         storage currently occupied on the system.
+     */
     public abstract long getUsedDiskGB();
 
+    /**
+     * The Windows class extends the RuntimeInfo class and provides implementations
+     * of methods to retrieve resource usage details in a Windows operating system.
+     * It utilizes the Windows Management Instrumentation Command-line (WMIC) tool
+     * to fetch system metrics such as CPU usage, memory utilization, and disk
+     * information, executing these commands on the host machine.
+     */
     private static class Windows extends RuntimeInfo {
 
         Windows(String host, AuthenticationType authenticationType, String user, String password,boolean remote) {
@@ -196,6 +272,15 @@ public abstract class RuntimeInfo {
         }
     }
 
+    /**
+     * The Linux class extends the RuntimeInfo class and provides specific methods
+     * to retrieve system resource information for a Linux host.
+     * It supports both local and remote execution depending on the specified configuration.
+     *
+     * This class uses system commands to fetch various details such as processor usage,
+     * total memory, available memory, total disk space, and used disk space.
+     * Authentication for remote execution is handled through password or certificate-based authentication.
+     */
     private static class Linux extends RuntimeInfo {
 
         Linux(String host, AuthenticationType authenticationType, String user, String password, boolean remote) {

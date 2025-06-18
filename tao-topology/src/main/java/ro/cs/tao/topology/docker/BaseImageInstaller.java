@@ -253,6 +253,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
      */
     protected ProcessingComponent[] readComponentDescriptors(String fileName) throws IOException {
         ProcessingComponent[] components;
+        if(fileName == null || fileName.isEmpty()) {
+            logger.info("No resource file found containing component descriptors in JSON format");
+            return new ProcessingComponent[]{};
+        }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
             final String str = reader.lines().collect(Collectors.joining(""));
             final ObjectMapper mapper = new ObjectMapper();
