@@ -65,6 +65,14 @@ public class NetUtils {
         httpClients = new AutoEvictableCache<>(compositeKey -> WrappedCloseableHttpClient.create(), 3600);
     }
 
+    /**
+     * Generates a basic authentication token encoded in Base64 format using the provided username and password.
+     * The returned token can be used for HTTP Basic Authentication.
+     *
+     * @param username the username to be included in the token; must not be null or empty
+     * @param password the password to be included in the token; must not be null or empty
+     * @return the Base64 encoded authentication token, or null if either the username or password is null or empty
+     */
     public static String getAuthToken(final String username, final String password) {
         String authToken = null;
         if(isNotEmpty(username) && isNotEmpty(password)){
@@ -73,6 +81,17 @@ public class NetUtils {
         return authToken;
     }
 
+    /**
+     * Configures an HTTP proxy for network connections by specifying the type, host,
+     * port, username, and password. Supports authentication and applies the settings
+     * for both Java's networking API and Apache HTTP client.
+     *
+     * @param type the type of the proxy, e.g., "HTTP" or "SOCKS"; must not be null or empty
+     * @param host the hostname or IP address of the proxy server; must not be null or empty
+     * @param port the port number on which the proxy server is listening
+     * @param user the username for proxy authentication; can be null if no authentication is required
+     * @param pwd the password for proxy authentication; can be null if no authentication is required
+     */
     public static void setProxy(String type, final String host, final int port, final String user, final String pwd) {
         if (type != null && host != null && !type.isEmpty() && !host.isEmpty()) {
             Proxy.Type proxyType = Enum.valueOf(Proxy.Type.class, type.toUpperCase());
@@ -91,10 +110,25 @@ public class NetUtils {
         }
     }
 
+    /**
+     * Sets a new timeout value for network operations.
+     *
+     * @param newTimeout the new timeout value in milliseconds; must be a non-negative integer
+     */
     public static void setTimeout(int newTimeout) {
         timeout = newTimeout;
     }
 
+    /**
+     * Checks the availability of a given URL by sending an HTTP GET request using the provided
+     * user credentials. The method determines the availability based on whether the HTTP response
+     * code is 200 (OK) or 400 (Bad Request).
+     *
+     * @param url the URL to verify; must not be null or empty
+     * @param user the username to authenticate the request; must not be null or empty
+     * @param password the password to authenticate the request; must not be null or empty
+     * @return true if the URL is accessible and returns a response code of 200 or 400; false otherwise
+     */
     public static boolean isAvailable(String url, String user, String password) {
         boolean status;
         try {
@@ -111,6 +145,16 @@ public class NetUtils {
         return status;
     }
 
+    /**
+     * Configures the application to trust all SSL certificates, including self-signed certificates.
+     * This is achieved by disabling SSL validation checks for certificates and hostname verification.
+     *
+     * Note: This method bypasses standard SSL security checks, creating potential security risks.
+     * It should only be used in controlled environments where such risks are acceptable, such as during development
+     * or testing. Avoid using this method in production environments.
+     *
+     * In case of a failure, an error message is logged using the standard Java logging framework.
+     */
     public static void allowSelfSignedCertificates() {
         try {
             /*
@@ -150,22 +194,67 @@ public class NetUtils {
         }
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using a GET request.
+     *
+     * @param url the URL to connect to; must not be null or empty
+     * @return an {@link HttpURLConnection} object corresponding to the open connection
+     */
     public static HttpURLConnection openConnection(String url) {
         return openConnection(url, (String) null);
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using the GET method and an authentication token.
+     *
+     * @param url the URL to connect to; must not be null or empty
+     * @param authToken the authentication token to include in the request; must not be null or empty
+     * @return an {@link HttpURLConnection} object corresponding to the open connection
+     */
     public static HttpURLConnection openConnection(String url, String authToken) {
         return openConnection(HttpMethod.GET, url, authToken, null);
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using the GET method and the provided authentication header.
+     *
+     * @param url the URL to connect to; must not be null or empty
+     * @param authToken the authentication header to include in the request; can be null if no authentication is needed
+     * @return an {@link HttpURLConnection} object corresponding to the open connection, or null if the connection could not be opened
+     */
     public static HttpURLConnection openConnection(String url, Header authToken) {
         return openURLConnection(HttpMethod.GET, url, authToken, null);
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using the provided HTTP method, authentication token,
+     * and additional request properties. The method leverages the internal utility to establish
+     * the connection with the specified configuration.
+     *
+     * @param method the HTTP method to use for the connection (e.g., GET, POST); must not be null
+     * @param url the URL to connect to; must not be null or empty
+     * @param authToken the authentication token to include in the request; can be null if no authentication is needed
+     * @param requestProperties a list of additional request properties to set on the connection;
+     *                           can be null or empty if no extra properties are needed
+     * @return an {@link HttpURLConnection} object representing the open connection; can return null if the
+     *         connection could not be established
+     */
     public static HttpURLConnection openConnection(HttpMethod method, String url, String authToken, List<NameValuePair> requestProperties) {
         return openURLConnection(method, url, new BasicHeader("Authorization", authToken), requestProperties);
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using the specified HTTP method, authentication header,
+     * and additional request properties. Configures the connection to use a proxy if one is set.
+     *
+     * @param method the HTTP method to use for the connection (e.g., GET, POST); must not be null
+     * @param url the URL to connect to; must not be null or empty
+     * @param authHeader the authentication header to include in the request; can be null if no authentication is required
+     * @param requestProperties a list of additional request properties to set on the connection;
+     *                          can be null or empty if no extra properties are needed
+     * @return an {@link HttpURLConnection} object representing the open connection; can return null if the connection
+     *         could not be established
+     */
     public static HttpURLConnection openURLConnection(HttpMethod method, String url, Header authHeader, List<NameValuePair> requestProperties) {
         HttpURLConnection connection = null;
         try {
@@ -208,10 +297,31 @@ public class NetUtils {
         return connection;
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using the provided HTTP method
+     * and credentials. This method allows for establishing a connection with
+     * authentication enabled.
+     *
+     * @param method the HTTP method to use (e.g., GET, POST); must not be null
+     * @param url the URL to connect to; must not be null or empty
+     * @param credentials the credentials to authenticate the request; must not be null
+     * @return a {@link ro.cs.tao.utils.CloseableHttpResponse} object representing the HTTP response
+     * @throws IOException if an I/O error occurs while opening the connection
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) throws IOException {
         return openConnection(method, url, credentials, (List<NameValuePair>) null);
     }
 
+    /**
+     * Opens a connection to the given URL using the specified HTTP method, credentials, and optional JSON payload.
+     *
+     * @param method      the HTTP method to be used for the request (e.g., GET, POST)
+     * @param url         the URL to which the connection will be made
+     * @param credentials the credentials to authenticate the request
+     * @param json        the optional JSON payload for POST requests, can be null
+     * @return a {@link ro.cs.tao.utils.CloseableHttpResponse} object encapsulating the HTTP response
+     * @throws IOException if an I/O error occurs while attempting to create or execute the connection
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, String json) throws IOException {
         CloseableHttpResponse response;
         try {
@@ -250,6 +360,17 @@ public class NetUtils {
         }
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using the specified HTTP method, headers, and payload.
+     *
+     * @param method the HTTP method to be used for the connection (e.g., GET, POST).
+     * @param url the target URL to which the connection is made.
+     * @param header the name of the header to be added to the HTTP request (e.g., Authorization).
+     * @param authToken the value of the authorization token to be included in the header.
+     * @param json the JSON payload to be sent with the request (applicable for POST method only, can be null).
+     * @return a CloseableHttpResponse object encapsulating the HTTP response.
+     * @throws IOException if an I/O error occurs during the connection process.
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, String header, String authToken, String json) throws IOException {
         CloseableHttpResponse response;
         try {
@@ -291,6 +412,16 @@ public class NetUtils {
         }
     }
 
+    /**
+     * Opens an HTTP connection to the specified URL using the given HTTP method, headers, and parameters.
+     *
+     * @param method the HTTP method to use for the connection, e.g., GET or POST
+     * @param url the URL to connect to
+     * @param header the request header to include in the connection
+     * @param parameters the request parameters to include in the connection, applicable for POST requests
+     * @return a {@code ro.cs.tao.utils.CloseableHttpResponse} object representing the HTTP response
+     * @throws IOException if an I/O error occurs during the connection process
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Header header, List<NameValuePair> parameters) throws IOException {
         CloseableHttpResponse response;
         try {
@@ -329,14 +460,47 @@ public class NetUtils {
         }
     }
 
+    /**
+     * Opens an HTTP connection using the specified method, URL, headers, and parameters.
+     *
+     * @param method     the HTTP method to be used for the connection (e.g., GET, POST).
+     * @param url        the URL to connect to.
+     * @param headers    a list of headers to include in the request.
+     * @param parameters a list of parameters to include in the request.
+     * @return a CloseableHttpResponse object representing the response from the server.
+     * @throws IOException if an I/O error occurs during the connection.
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters) throws IOException {
         return openConnection(method, url, headers, parameters, timeout);
     }
 
+    /**
+     * Opens an HTTP connection with the specified parameters and returns the response.
+     *
+     * @param method the HTTP method to be used (e.g., GET, POST)
+     * @param url the URL to which the connection will be made
+     * @param headers a list of headers to include in the request
+     * @param parameters a list of parameters to include in the request
+     * @param timeoutMillis the timeout value in milliseconds for the connection
+     * @return the HTTP response received from making the connection
+     * @throws IOException if an input or output error occurs during the connection
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         return openConnection(method, url, null, headers, parameters, timeoutMillis);
     }
 
+    /**
+     * Opens an HTTP connection using the specified method, URL, credentials, headers, and parameters.
+     *
+     * @param method the HttpMethod to execute, such as GET or POST
+     * @param url the URL to connect to
+     * @param credentials the credentials for authentication, or null if no credentials are required
+     * @param headers a list of headers to include in the request, or null if no headers should be added
+     * @param parameters a list of NameValuePair objects representing the parameters for POST requests, or null if no parameters are required
+     * @param timeoutMillis the timeout value in milliseconds for the connection, request, and socket operations
+     * @return a CloseableHttpResponse containing the response from the server
+     * @throws IOException if an I/O error occurs during the connection or response handling
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials,List<Header> headers, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
@@ -384,10 +548,35 @@ public class NetUtils {
         }
     }
 
+    /**
+     * Opens an HTTP connection with the specified method, URL, credentials, and parameters.
+     *
+     * @param method       the HTTP method to be used (e.g., GET, POST).
+     * @param url          the target URL for the connection.
+     * @param credentials  the credentials to be used for authentication.
+     * @param parameters   the list of additional parameters to be included in the request.
+     * @return a CloseableHttpResponse object representing the response from the connection.
+     * @throws IOException if an I/O error occurs during the connection.
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
         return openConnection(method, url, credentials, parameters, timeout);
     }
 
+    /**
+     * Opens an HTTP connection to a specified URL using the provided method, credentials,
+     * parameters, and timeout settings. Configures the request and executes it, returning the
+     * HTTP response received from the server.
+     *
+     * @param method         the HTTP method to be used (e.g., GET, POST)
+     * @param url            the URL to which the connection should be made
+     * @param credentials    the credentials for authentication, if required
+     * @param parameters     the list of parameters to include in the request, applicable for
+     *                       certain HTTP methods like POST (can be null)
+     * @param timeoutMillis  the timeout in milliseconds for the connection, socket, and
+     *                       connection request
+     * @return a CloseableHttpResponse object containing the HTTP response
+     * @throws IOException   if an I/O error occurs during the connection or request execution
+     */
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
@@ -425,10 +614,27 @@ public class NetUtils {
         }
     }
 
+    /**
+     * Retrieves the response from the specified URL as a String.
+     *
+     * @param url the URL from which the response is to be fetched
+     * @return the response content as a String
+     * @throws IOException if an I/O error occurs during the request
+     */
     public static String getResponseAsString(String url) throws IOException {
         return getResponseAsString(url, null, null);
     }
 
+    /**
+     * Sends an HTTP GET request to the specified URL with the provided credentials
+     * and parameters, and returns the response content as a string.
+     *
+     * @param url the target URL to send the HTTP GET request
+     * @param credentials the credentials used for authentication
+     * @param parameters the list of name-value pairs to be included as request parameters
+     * @return the response content as a string, or null if the request fails or is unauthorized
+     * @throws IOException if an I/O error occurs while performing the request
+     */
     public static String getResponseAsString(String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
         String result = null;
         try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials, parameters)) {
@@ -447,14 +653,40 @@ public class NetUtils {
         return result;
     }
 
+    /**
+     * Sends an HTTP request to the specified URL with the given parameters and returns the response as a String.
+     *
+     * @param url the target URL to which the request will be sent
+     * @param parameters a list of name-value pairs to be included as parameters in the request
+     * @return the response from the server as a String
+     * @throws IOException if an I/O error occurs during the request or response handling
+     */
     public static String getResponseAsString(String url, List<NameValuePair> parameters) throws IOException {
         return getResponseAsString(url, null, parameters);
     }
 
+    /**
+     * Retrieves the response of an HTTP request to the specified URL as a stream.
+     *
+     * @param url the URL to send the HTTP request to
+     * @return a NetStreamResponse object containing the response as a stream
+     * @throws IOException if an I/O error occurs during the request
+     */
     public static NetStreamResponse getResponseAsStream(String url) throws IOException {
         return getResponseAsStream(url, null);
     }
 
+    /**
+     * Retrieves the response from the specified URL as a stream wrapped in a NetStreamResponse object.
+     * This method performs an HTTP GET request to the given URL using the provided credentials.
+     *
+     * @param url the URL to connect to and retrieve the response from
+     * @param credentials the credentials used for authenticating the connection
+     * @return a NetStreamResponse object containing the response stream, content type, file name,
+     *         and content length
+     * @throws IOException if an I/O error occurs while connecting or retrieving the response,
+     *                     or if the server returns an HTTP error code
+     */
     public static NetStreamResponse getResponseAsStream(String url, Credentials credentials) throws IOException {
         NetStreamResponse result;
         try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
@@ -487,10 +719,30 @@ public class NetUtils {
         return result;
     }
 
+    /**
+     * Retrieves a list of cookies for the specified URL using the provided credentials.
+     *
+     * @param url the URL for which cookies need to be retrieved
+     * @param credentials the credentials containing the username and password for authentication
+     * @return a list of cookies associated with the specified URL
+     * @throws IOException if an I/O error occurs while retrieving the cookies
+     */
     public static List<Cookie> getCookies(String url, Credentials credentials) throws IOException {
         return getCookies(url, credentials.getUserPrincipal().getName() + ":" + credentials.getPassword());
     }
 
+    /**
+     * Retrieves a list of cookies associated with a given URL and authentication token.
+     * If a corresponding HTTP client is found, it extracts cookies from the client's cookie store,
+     * filtering out cookies with null or empty values. If no HTTP client is available, an empty
+     * list of cookies is returned.
+     *
+     * @param url the URL for which cookies are to be retrieved
+     * @param authToken the authentication token used to identify the HTTP client
+     * @return a list of cookies associated with the given URL and authentication token;
+     *         returns an empty list if no HTTP client is found
+     * @throws IOException if there is a problem parsing the URL or retrieving cookies
+     */
     public static List<Cookie> getCookies(String url, String authToken) throws IOException {
         try {
             final URI uri = new URI(url);
