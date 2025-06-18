@@ -57,7 +57,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
             return result;
         });*/
         return jdbcTemplate.query(con -> con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
-                                                              "(extract(hours from (lo.timestamp-li.timestamp))*3600 + extract(mins from (lo.timestamp-li.timestamp))*60 + extract(seconds from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                              "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
                                                               "from common.audit li " +
                                                               "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
                                                               "where li.event = 'Login' and lo.event = 'Logout' order by li.user_id, login_on desc"), (rs, rowNum) -> {
@@ -94,7 +94,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
         });*/
         return jdbcTemplate.query(con -> {
                                       final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
-                                                                                               "(extract(hours from (lo.timestamp-li.timestamp))*3600 + extract(mins from (lo.timestamp-li.timestamp))*60 + extract(seconds from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
                                                                                                "from common.audit li " +
                                                                                                "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
                                                                                                "where li.event = 'Login' and lo.event = 'Logout' " +
@@ -140,7 +140,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                   });*/
         return jdbcTemplate.query(con -> {
                                       final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
-                                                                                               "(extract(hours from (lo.timestamp-li.timestamp))*3600 + extract(mins from (lo.timestamp-li.timestamp))*60 + extract(seconds from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
                                                                                                "from common.audit li " +
                                                                                                "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
                                                                                                "where li.event = 'Login' and lo.event = 'Logout' " +
@@ -185,7 +185,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
           });*/
         return jdbcTemplate.query(con -> {
                                       final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
-                                                                                               "(extract(hours from (lo.timestamp-li.timestamp))*3600 + extract(mins from (lo.timestamp-li.timestamp))*60 + extract(seconds from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
                                                                                                "from common.audit li " +
                                                                                                "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
                                                                                                "where li.event = 'Login' and lo.event = 'Logout' " +
@@ -227,7 +227,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
           });*/
         return jdbcTemplate.query(con -> {
                                       final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
-                                                                                               "(extract(hours from (lo.timestamp-li.timestamp))*3600 + extract(mins from (lo.timestamp-li.timestamp))*60 + extract(seconds from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
                                                                                                "from common.audit li " +
                                                                                                "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
                                                                                                "where li.event = 'Login' and lo.event = 'Logout' " +

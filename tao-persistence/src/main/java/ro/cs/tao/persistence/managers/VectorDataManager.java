@@ -4,10 +4,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.persistence.repository.VectorDataRepository;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +22,9 @@ public class VectorDataManager extends EntityManager<VectorData, String, VectorD
 
     @Override
     public List<VectorData> getByLocation(String... locations) {
+        if(locations.length == 0 ){
+            return new ArrayList<VectorData>();
+        }
         return repository.getProductsByLocation(new HashSet<>(Arrays.asList(locations)));
     }
 

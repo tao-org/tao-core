@@ -900,7 +900,7 @@ ALTER TABLE component.condition_component_targets ADD CONSTRAINT FK_condition_co
 	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
--- table: condition_component_parameters
+-- table: component.condition_component_parameters
 DROP TABLE IF EXISTS component.condition_component_parameters CASCADE;
 CREATE TABLE component.condition_component_parameters
 (
