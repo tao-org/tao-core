@@ -87,7 +87,6 @@ public class PersistenceManagerTest {
         logger.info("TC_01_check_DB_configuration");
         try
         {
-            setupDB_H2();
             assertNotNull(dbConfig.dataSource());
             assertNotNull(dbConfig.dataSource().getConnection());
             System.out.println("Connection established!");
@@ -2082,13 +2081,6 @@ public class PersistenceManagerTest {
     private static void setupDB() {
         final ConfigurationProvider provider = ConfigurationManager.getInstance();
         provider.setValue("spring.datasource.url", "jdbc:postgresql://localhost:5432/taodata?stringtype=unspecified");
-        provider.setValue("spring.datasource.username", "tao");
-        provider.setValue("spring.datasource.password", "tao");
-    }
-
-    private static void setupDB_H2() {
-        final ConfigurationProvider provider = ConfigurationManager.getInstance();
-        provider.setValue("spring.datasource.url", "jdbc:h2:./../db/taodata");
         provider.setValue("spring.datasource.username", "tao");
         provider.setValue("spring.datasource.password", "tao");
     }
