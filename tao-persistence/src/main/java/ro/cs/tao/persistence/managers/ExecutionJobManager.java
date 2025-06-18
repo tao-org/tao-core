@@ -69,7 +69,7 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
 //                                                 "WHERE e.workflow_id = ? ORDER BY t.job_id, t.end_time DESC");
                     con.prepareStatement("SELECT t.job_id, t.id, t.end_time," +
                                                         "REGEXP_REPLACE(actual_target, '.*/', '') AS filename, t.actual_target " +
-                                                        "FROM  EXECUTION.TASK t " +
+                                                        "FROM EXECUTION.TASK t " +
                                                         "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
                                                         "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
                                                         "WHERE e.workflow_id = ? ORDER BY t.job_id, t.end_time DESC");

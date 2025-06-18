@@ -133,7 +133,6 @@ INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx, unit_id) VA
 
 -- localhost execution node
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)
---('PCD3234', '', '', 'master', 'Master Node', 'master'); --HARDCODED MY PC
 VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
 
 -- Kubernetes execution node
@@ -232,15 +231,17 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (8, 'DATASOURCE', 2, 'Data source / consumer'),
 (8, 'LEVEL', 3, 'Processing level'),
 (8, 'DATATYPE', 4, 'Data type identifier'),
-(8, 'DATESTART', 5, 'Data start time'),
-(8, 'DATESTOP', 6, 'Data stop time'),
-(8, 'PDATE', 7, 'Processing date'),
-(8, 'STIME', 8, 'Sensing time duration'),
-(8, 'SCYCLE', 9, 'Cycle number at the start sensing time'),
-(8, 'ORBIT', 10, 'Relative orbit'),
-(8, 'FRAME', 11, 'Frame start time'),
-(8, 'TILEID', 12, 'Tile identifier'),
-(8, 'CENTRE', 13, 'Product generating centre');
+(8, 'DATESTART', 5, 'Data start date'),
+(8, 'TIMESTART', 6, 'Data start time'),
+(8, 'DATESTOP', 7, 'Data stop date'),
+(8, 'TIMESTOP', 8, 'Data stop time'),
+(8, 'PDATE', 9, 'Processing date'),
+(8, 'STIME', 10, 'Sensing time duration'),
+(8, 'SCYCLE', 11, 'Cycle number at the start sensing time'),
+(8, 'ORBIT', 12, 'Relative orbit'),
+(8, 'FRAME', 13, 'Frame start time'),
+(8, 'TILEID', 14, 'Tile identifier'),
+(8, 'CENTRE', 15, 'Product generating centre');
 
 -- Repository types
 INSERT INTO workspace.repository_type (id, name, params) VALUES
@@ -374,7 +375,3 @@ INSERT INTO config.config (category_id, id, "value", friendly_name, type, label,
 INSERT INTO subscription.subscription_type VALUES
 (1, 'Fixed resources'),
 (2, 'Pay per use');
-
-
-INSERT INTO workflow.graph(id, name, created, user_id, definition_path, status_id, visibility_id, xcoord, ycoord, zoom, custom_values, tags, active, created_from_graph_id, temporary, description)  VALUES
-(1, 'Sentinel-2 Water Indices', '2023-10-09 18:35:58.27169', (SELECT id FROM usr."user" WHERE username='admin'), null, 1, 2, 0, 0, 0, null, null, false, null, false, null);
