@@ -26,7 +26,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.env.Environment;
-import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.orm.jpa.JpaDialect;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -198,16 +197,10 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 
             dataSource.setDriverClass(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_DRIVER));
 
-//            dataSource.getDriverClass()
-
             // DB URL + user name + pass from tao.properties
             dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_URL));
             dataSource.setUser(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_USERNAME));
             dataSource.setPassword(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_PASSWORD));
-
-            //pt PersistenceManager
-            dataSource.setJdbcUrl("jdbc:h2:./../db/taodata;;MODE=PostgreSQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE;NON_KEYWORDS=USER,VALUE,values,key,IN;IFEXISTS=TRUE");
-            dataSource.setUser("tao");dataSource.setPassword("tao");
 
             dataSource.setInitialPoolSize(Integer
               .parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_INITIALPOOLSIZE)));
