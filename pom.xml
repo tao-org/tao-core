@@ -110,7 +110,7 @@
         <profile>
             <id>postgres</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
                 <build.profile.id>postgres</build.profile.id>
@@ -119,7 +119,7 @@
         <profile>
             <id>h2</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
                 <build.profile.id>h2</build.profile.id>

@@ -177,7 +177,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
     @Resource
     private Environment environment;
 
-    private String databaseProvider;
+    private String databaseProvider = "PostgreSQL";
     private final List<ComboPooledDataSource> createdBeans = new ArrayList<>();
 
     /**
@@ -264,13 +264,23 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
         entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         //entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
         entityManagerFactoryBean.setPersistenceUnitName("tao");
+
+        final Properties jpaProperties = new Properties();
+
         if(databaseProvider == "H2"){
             entityManagerFactoryBean.setMappingResources("META-INF/common_orm_h2.xml", "META-INF/eo_orm_h2.xml");
+
+            // for accessing H2's embedded GUI console at /h2-console
+            jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE,
+                    environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE));
+            jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_PATH,
+                    environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_PATH));
+            jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW,
+                    environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW));
         }else{
             entityManagerFactoryBean.setMappingResources("META-INF/common_orm.xml", "META-INF/eo_orm.xml");
         }
 
-        final Properties jpaProperties = new Properties();
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_DIALECT,
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_DIALECT));
         jpaProperties.put(PROPERTY_NAME_SPRING_JPA_HIBERNATE_DIALECT,
@@ -291,14 +301,6 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_CONNECTION_RELEASE_MODE));
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_TRANSACTION_AUTO_CLOSE_SESSION,
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_TRANSACTION_AUTO_CLOSE_SESSION));
-
-//       for accessing H2's embedded GUI console at /h2-console
-        jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE,
-                environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE));
-        jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_PATH,
-                environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_PATH));
-        jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW,
-                environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW));
 
         jpaProperties.put("hibernate.enable_lazy_load_no_trans",
           environment.getRequiredProperty("hibernate.enable_lazy_load_no_trans"));
