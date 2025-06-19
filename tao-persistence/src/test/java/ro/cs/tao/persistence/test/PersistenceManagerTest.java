@@ -41,7 +41,6 @@ import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.user.User;
-import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -110,7 +109,6 @@ public class PersistenceManagerTest {
             node.setUserName("Test1 user name");
             node.setUserPass("Test1 user pass");
             NodeFlavor flavor = new NodeFlavor("Test flavor", 2, 1024, 1000, 4, 1);
-            flavor.setMemoryUnit(MemoryUnit.KB);
             flavor = persistenceManager.nodeFlavors().save(flavor);
 
             assertNotNull(flavor);

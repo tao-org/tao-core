@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.persistence.repository.VectorDataRepository;
