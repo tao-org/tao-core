@@ -416,11 +416,11 @@ CREATE TABLE product.download_queue
 (
 	id varchar(50) NOT NULL,
 	data_source varchar(255) NOT NULL,
-	products clob NOT NULL,
+	products text NOT NULL,
 	destination varchar(512) NOT NULL,
 	local_root varchar(512),
-	tiles clob,
-	properties clob
+	tiles text,
+	properties text
 );
 ALTER TABLE product.download_queue ADD CONSTRAINT PK_download_queue
 	PRIMARY KEY (id);
@@ -602,7 +602,7 @@ CREATE TABLE product.data_sources_index
     from_year integer NOT NULL,
    	to_year integer NULL,
    	last_run timestamp NULL,
-   	params clob NULL
+   	params text NULL
 );
 ALTER TABLE product.data_sources_index ADD CONSTRAINT PK_query
 	PRIMARY KEY (data_source_name,sensor_name);
@@ -852,7 +852,7 @@ CREATE TABLE component.source_descriptor
     geometry GEOMETRY(POLYGON) NULL,
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,
-    dimension clob NULL,
+    dimension text NULL,
     location varchar NULL,
     ref_source_descriptor_id varchar NULL
 );
@@ -878,7 +878,7 @@ CREATE TABLE component.target_descriptor
     geometry GEOMETRY(POLYGON) NULL,
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,
-    dimension clob NULL,
+    dimension text NULL,
     location varchar NULL,
     ref_target_descriptor_id varchar NULL
 );
@@ -1290,7 +1290,7 @@ CREATE TABLE component.data_source_configuration
 	id varchar(512) NOT NULL,
 	fetch_mode smallint NOT NULL,
 	local_repository_root varchar(255),
-	parameters clob
+	parameters text
 );
 ALTER TABLE component.data_source_configuration ADD CONSTRAINT PK_data_source_configuration
 	PRIMARY KEY (id);
@@ -1329,7 +1329,7 @@ CREATE TABLE component.wps_component
 	visibility_id integer NOT NULL,
 	owner_user_id varchar NULL,
 	container_id varchar(1024) NOT NULL,
-	parameters clob NULL,
+	parameters text NULL,
     active boolean NULL DEFAULT true,
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
@@ -1402,7 +1402,7 @@ CREATE TABLE component.wms_component
 	visibility_id integer NOT NULL,
 	owner_user_id varchar NULL,
 	container_id varchar(1024) NOT NULL,
-	parameters clob NULL,
+	parameters text NULL,
     active boolean NULL DEFAULT true,
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
@@ -1590,7 +1590,7 @@ CREATE TABLE workflow.graph
 	xCoord real NULL,
     yCoord real NULL,
     zoom real NULL,
-	custom_values clob NULL,
+	custom_values text NULL,
 	tags text NULL,
 	created_from_graph_id bigint,
 	active boolean NULL DEFAULT true,
@@ -1624,8 +1624,8 @@ CREATE TABLE workflow.graph_node
 	yCoord real NULL,
 	behavior_id smallint NULL DEFAULT 1,
 	preserve_output boolean NULL DEFAULT true,
-	custom_values clob NULL,
-	additional_info clob NULL,
+	custom_values text NULL,
+	additional_info text NULL,
 	created_from_node_id bigint,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
@@ -1697,7 +1697,7 @@ CREATE TABLE workflow.query
 	page_number integer NULL,
 	_limit integer NULL,  -- reserved word
 	coverage real NULL,
-	"values" clob NULL,    -- reserved word
+	"values" text NULL,    -- reserved word
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
@@ -1779,8 +1779,8 @@ CREATE TABLE execution.job
 	query_id bigint NULL,
 	execution_status_id integer NOT NULL,
 	is_external boolean NULL DEFAULT false,
-	callback clob NULL,
-	task_dependencies clob NULL,
+	callback text NULL,
+	task_dependencies text NULL,
 	batch_id varchar(50)
 );
 ALTER TABLE execution.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
@@ -2185,7 +2185,7 @@ CREATE TABLE workspace.repository_type
 (
     id integer NOT NULL,
 	name varchar(250) NOT NULL,
-	params clob NULL
+	params text NULL
 );
 ALTER TABLE workspace.repository_type ADD CONSTRAINT PK_repository_type PRIMARY KEY (id);
 
@@ -2203,7 +2203,7 @@ CREATE TABLE workspace.repository
 	read_only boolean NOT NULL,
 	system boolean DEFAULT false,
 	is_editable boolean NOT NULL,
-	params clob NULL,
+	params text NULL,
 	display_order smallint,
 	persistent_storage boolean DEFAULT false,
 	created timestamp DEFAULT now()
@@ -2239,7 +2239,7 @@ CREATE TABLE IF NOT EXISTS workspace.repository_template
     description text NOT NULL,
     url_prefix character varying(20) NOT NULL,
     repository_type_id integer NOT NULL,
-    params clob,
+    params text,
     created timestamp without time zone DEFAULT now(),
     CONSTRAINT pk_repository_template PRIMARY KEY (id),
     CONSTRAINT fk_repository_template_repository_type FOREIGN KEY (repository_type_id)
@@ -2271,7 +2271,7 @@ CREATE TABLE IF NOT EXISTS config.config
     type varchar(10) NOT NULL,
     category_id smallint NOT NULL,
     label varchar,
-    "values" clob,
+    "values" text,
     last_updated timestamp NOT NULL
 );
 
@@ -2336,7 +2336,7 @@ CREATE TABLE IF NOT EXISTS subscription.resource_subscription
     --flavor_quantity smallint NOT NULL,
     --flavor_hdd_quantity_GB smallint,
     --flavor_ssd_quantity_GB smallint,
-    flavors clob, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
+    flavors text, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
     object_storage_GB smallint,
     paid boolean NULL DEFAULT false,
     created timestamp without time zone NULL DEFAULT now(),
@@ -2356,7 +2356,7 @@ CREATE TABLE IF NOT EXISTS subscription.external_resource_subscription
 (
     id bigint NOT NULL,
     name varchar NOT NULL,
-    flavors clob, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
+    flavors text, -- {"flavorId": {"quantity":number,"hddGB":number,"ssdGB":number}}
     object_storage_GB smallint,
     UNIQUE(name)
 );
