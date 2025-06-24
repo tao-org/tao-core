@@ -377,9 +377,9 @@
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="component.processing_component"/>
 
-        <!--<entity-listeners>
+        <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.ProcessingComponentListener"/>
-        </entity-listeners>-->
+        </entity-listeners>
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />

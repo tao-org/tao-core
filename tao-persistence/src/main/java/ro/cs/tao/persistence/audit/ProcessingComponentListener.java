@@ -17,7 +17,9 @@
 package ro.cs.tao.persistence.audit;
 
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.managers.SimpleCache;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import javax.persistence.PostPersist;
 import javax.persistence.PostRemove;
@@ -26,12 +28,14 @@ import javax.persistence.PostUpdate;
 public class ProcessingComponentListener {
 
     @PostPersist
+    public void onSave(ProcessingComponent component) {
+        updateCache(component);
+    }
+
     @PostUpdate
-    public void onChange(ProcessingComponent component) {
-        SimpleCache.Cache<String, ProcessingComponent> cache = SimpleCache.getCache(ProcessingComponent.class);
-        if (cache != null) {
-            cache.put(component.getId(), component);
-        }
+    public void onUpdate(ProcessingComponent component) {
+        updateCache(component);
+        SpringContextBridge.services().getService(ProcessingComponentProvider.class).updateModifiedDate(component.getId());
     }
 
     @PostRemove
@@ -39,6 +43,13 @@ public class ProcessingComponentListener {
         SimpleCache.Cache<String, ProcessingComponent> cache = SimpleCache.getCache(ProcessingComponent.class);
         if (cache != null) {
             cache.remove(component.getId());
+        }
+    }
+
+    private static void updateCache(ProcessingComponent component) {
+        SimpleCache.Cache<String, ProcessingComponent> cache = SimpleCache.getCache(ProcessingComponent.class);
+        if (cache != null) {
+            cache.put(component.getId(), component);
         }
     }
 }

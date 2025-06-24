@@ -19,6 +19,7 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import ro.cs.tao.persistence.repository.ServiceRepository;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.Crypto;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,6 +43,8 @@ import java.util.stream.Collectors;
 @Component("nodeManager")
 public class NodeDBManager extends EntityManager<NodeDescription, String, NodeRepository> implements NodeDBProvider {
 
+    @Autowired
+    private DataSource dataSource;
     /** CRUD Repository for ServiceDescription entities */
     @Autowired
     private ServiceRepository serviceRepository;
@@ -214,5 +218,17 @@ public class NodeDBManager extends EntityManager<NodeDescription, String, NodeRe
         }
 
         return result;
+    }
+
+    /**
+     * Method to be used instead of the trigger that updates the "modified" column value in "tao.execution_node" table when a node is updated
+     * @param nodeId - processing component ID
+     * @return the number of rows affected
+     */
+    @Override
+    public int updateModifiedDate(String nodeId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        String sql = "UPDATE topology.node SET modified = now() WHERE topology.node.id = ?";
+        return jdbcTemplate.update(sql, nodeId);
     }
 }

@@ -18,6 +18,7 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.ParameterDescriptor;
@@ -32,6 +33,7 @@ import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 import ro.cs.tao.utils.StringUtilities;
 
+import javax.sql.DataSource;
 import java.util.*;
 
 @Configuration
@@ -39,6 +41,9 @@ import java.util.*;
 @Component("processingComponentManager")
 public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository>
                                         implements ProcessingComponentProvider {
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private ParameterExpansionRuleRepository expansionRuleRepository;
@@ -194,6 +199,18 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
         return checkComponent(entity) && entity.getFileLocation() != null &&
                 entity.getTemplateType() != null && entity.getVisibility() != null &&
                 entity.getParameterDescriptors().stream().allMatch(this::checkParameterDescriptor);
+    }
+
+    /**
+     * Method to be used instead of the trigger that updates the "modified" column value in "tao.processing_component" table when a component is updated
+     * @param processingComponentId - processing component ID
+     * @return the number of rows affected
+     */
+    @Override
+    public int updateModifiedDate(String processingComponentId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        String sql = " UPDATE component.processing_component SET modified = now() WHERE component.processing_component.id = ?";
+        return jdbcTemplate.update(sql, processingComponentId);
     }
 
 }
