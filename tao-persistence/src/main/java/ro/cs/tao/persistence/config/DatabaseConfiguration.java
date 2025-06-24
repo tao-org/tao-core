@@ -225,7 +225,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
                 }
                 String[] jdbcUrlTokens = dataSource.getJdbcUrl().split(":");
                 logger.fine(String.format("Using %s as database driver to connect to '%s'",
-                                          dataSource.getDriverClass(), jdbcUrlTokens[2]));
+                                          dataSource.getDriverClass(), jdbcUrlTokens[jdbcUrlTokens.length - 1]));
                 connection.close();
             }
         } catch (SQLException | IllegalStateException | PropertyVetoException e) {
@@ -268,8 +268,6 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
         final Properties jpaProperties = new Properties();
 
         if(databaseProvider == "H2"){
-            entityManagerFactoryBean.setMappingResources("META-INF/common_orm_h2.xml", "META-INF/eo_orm_h2.xml");
-
             // for accessing H2's embedded GUI console at /h2-console
             jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE,
                     environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE));
@@ -277,9 +275,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
                     environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_PATH));
             jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW,
                     environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW));
-        }else{
-            entityManagerFactoryBean.setMappingResources("META-INF/common_orm.xml", "META-INF/eo_orm.xml");
         }
+        entityManagerFactoryBean.setMappingResources("META-INF/common_orm.xml", "META-INF/eo_orm.xml");
 
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_DIALECT,
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_DIALECT));
