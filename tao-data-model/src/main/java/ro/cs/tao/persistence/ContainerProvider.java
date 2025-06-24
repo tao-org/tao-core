@@ -17,4 +17,6 @@ public interface ContainerProvider extends EntityProvider<Container, String> {
     List<Container> listContainersVisibleToUser(String userId);
 
     List<Container> listUserContainers(String userId);
+
+    int cleanContainerReferences(String containerId);
 }

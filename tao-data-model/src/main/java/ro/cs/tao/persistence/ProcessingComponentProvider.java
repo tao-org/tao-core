@@ -19,4 +19,5 @@ public interface ProcessingComponentProvider extends EntityProvider<ProcessingCo
     boolean hasCopyComponent(String containerId);
     boolean hasMoveComponent(String containerId);
     boolean hasDeleteComponent(String containerId);
+    int updateModifiedDate(String processingComponentId);
 }

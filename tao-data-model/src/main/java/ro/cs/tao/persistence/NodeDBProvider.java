@@ -14,4 +14,5 @@ public interface NodeDBProvider extends EntityProvider<NodeDescription, String> 
     ServiceDescription getServiceDescription(String name, String version);
     ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException;
     int countUsableNodes(String userId);
+    int updateModifiedDate(String nodeId);
 }

@@ -16,7 +16,9 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.docker.Application;
@@ -26,12 +28,16 @@ import ro.cs.tao.docker.ContainerVisibility;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.repository.ContainerRepository;
 
+import javax.sql.DataSource;
 import java.util.List;
 
 @Configuration
 @EnableTransactionManagement
 @Component("containerManager")
 public class ContainerManager extends EntityManager<Container, String, ContainerRepository> implements ContainerProvider {
+
+    @Autowired
+    private DataSource dataSource;
 
     @Override
     public Container getByName(String name) {
@@ -80,4 +86,17 @@ public class ContainerManager extends EntityManager<Container, String, Container
     private boolean checkApplication(Application application) {
         return application != null && application.getName() != null && !application.getName().isEmpty();
     }
+
+    /**
+     * Method to be used instead of the trigger that updates the "container_id" column value to NULL in "tao.processing_component" table when a container is deleted
+     * @param containerId - container ID
+     * @return the number of rows affected
+     */
+    @Override
+    public int cleanContainerReferences(String containerId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        String sql = "UPDATE component.processing_component SET container_id = NULL WHERE component.processing_component.container_id = ?";
+        return jdbcTemplate.update(sql, containerId);
+    }
+
 }
