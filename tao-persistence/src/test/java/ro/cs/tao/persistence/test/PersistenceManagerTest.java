@@ -86,7 +86,6 @@ public class PersistenceManagerTest {
         logger.info("TC_01_check_DB_configuration");
         try
         {
-            setupDB();
             assertNotNull(dbConfig.dataSource());
             assertNotNull(dbConfig.dataSource().getConnection());
             System.out.println("Connection established!");
