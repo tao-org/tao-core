@@ -169,9 +169,11 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
                                 "Until registration completes, the corresponding components will not be available.", getContainerName()));
                         for (String resource : additionalResources()) {
-                            //Files.write(dockerfilePath.getParent().resolve(Paths.get(resource).getFileName()), readResource(resource));
-                            Files.write(dockerfilePath.getParent().resolve(Paths.get(resource)),
-                                        readResource(resource));
+                            if(resource.contains("/")){ // classpath resource paths must always use forward slashes (/)
+                                // Ensure the parent directories exist
+                                Files.createDirectories(dockerfilePath.getParent().resolve(Paths.get(resource).getParent()));
+                            }
+                            Files.write(dockerfilePath.getParent().resolve(Paths.get(resource)), readResource(resource));
                         }
                         DockerManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
                         this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));
@@ -313,7 +315,9 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
      * Reads the content of a resource file and returns it as a byte array.
      * If the specified resource cannot be found, this method returns null.
      *
-     * @param name the name or path of the resource file to be read
+     * @param name the name or path of the resource file to be read.
+     *             In case of a path, classpath resource paths must always use forward slashes (/),
+     *             not the system-specific file separator (which can be \ on Windows or / on Unix-like systems)
      * @return a byte array containing the content of the resource,
      *         or null if the resource could not be found
      * @throws IOException if an I/O error occurs while reading the resource
