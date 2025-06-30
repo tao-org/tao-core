@@ -2,7 +2,6 @@ package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,7 @@ import java.util.Set;
 @Repository
 @Qualifier(value = "processingComponentRepository")
 @Transactional
-public interface ProcessingComponentRepository extends PagingAndSortingRepository<ProcessingComponent, String> {
+public interface ProcessingComponentRepository extends AuditableEntityRepository<ProcessingComponent, String> {
 
     @Query(value = "SELECT * FROM component.processing_component WHERE owner_user_id = :userId AND component_type_id = :typeId",
             nativeQuery = true)
@@ -41,4 +40,5 @@ public interface ProcessingComponentRepository extends PagingAndSortingRepositor
 
     @Query(value = "SELECT * FROM component.processing_component WHERE label = :label AND container_id = :containerId", nativeQuery = true)
     ProcessingComponent getByLabelAndContainer(@Param("label") String label, @Param("containerId") String containerId);
+
 }

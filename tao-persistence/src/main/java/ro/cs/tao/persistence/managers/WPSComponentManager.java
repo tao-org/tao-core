@@ -32,6 +32,11 @@ public class WPSComponentManager extends TaoComponentManager<WPSComponent, WPSCo
     }
 
     @Override
+    public void updateModified(WPSComponent component) throws PersistenceException {
+        this.repository.updateModified(component, component.getId());
+    }
+
+    @Override
     protected boolean checkEntity(WPSComponent entity) {
         return checkComponent(entity);
     }
