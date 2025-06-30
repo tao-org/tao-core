@@ -48,6 +48,7 @@ public enum RepositoryType implements TaoEnum<Integer> {
             put("ftp.server", true);
             put("ftp.user", false);
             put("ftp.password", false);
+            put("ftp.bucket", false);
         }}, false, true),
     @XmlEnumValue("7")
     FTPS(7, "FTPS repository", "ftps", "ftps.server", "ftps.user", "ftps.password", "none",
@@ -55,6 +56,7 @@ public enum RepositoryType implements TaoEnum<Integer> {
             put("ftps.server", true);
             put("ftps.user", false);
             put("ftps.password", false);
+            put("ftps.bucket", false);
         }}, false, true);
     private final int value;
     private final String description;
