@@ -85,6 +85,11 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     }
 
     @Override
+    public void updateModified(ProcessingComponent component) throws PersistenceException {
+        this.repository.updateModified(component, component.getId());
+    }
+
+    @Override
     public boolean hasCopyComponent(String containerId) {
         return getByLabel("Copy", containerId) != null;
     }

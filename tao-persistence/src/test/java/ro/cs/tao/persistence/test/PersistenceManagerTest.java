@@ -52,8 +52,8 @@ import java.awt.*;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -1934,7 +1934,7 @@ public class PersistenceManagerTest {
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
         component.setNodeAffinity(NodeAffinity.Any);
         component.setCapabilityName("remote name");
-        component.setOwner("avl1");
+        component.setOwner("tao");
         Container container = persistenceManager.containers().get("container01");
         component.setService(container);
         component.setRemoteAddress("http://localhost/wps");
@@ -2021,7 +2021,7 @@ public class PersistenceManagerTest {
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
         component.setNodeAffinity(NodeAffinity.Any);
         component.setCapabilityName("remote name");
-        component.setOwner("avl1");
+        component.setOwner("tao");
         Container container = persistenceManager.containers().get("container01");
         component.setService(container);
         component.setRemoteAddress("http://localhost/wms");

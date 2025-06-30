@@ -2,7 +2,6 @@ package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -19,7 +18,7 @@ import java.util.Set;
 @Repository
 @Qualifier(value = "dataSourceComponentRepository")
 @Transactional
-public interface DataSourceComponentRepository extends PagingAndSortingRepository<DataSourceComponent, String> {
+public interface DataSourceComponentRepository extends AuditableEntityRepository<DataSourceComponent, String> {
 
     /**
      * Find DataSourceComponent entity by its label
@@ -57,4 +56,5 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
                    "JOIN workflow.query q ON q.component_id = dsc.id WHERE q.id = ?1 AND COALESCE(dsc.volatile, false) = false",
            nativeQuery = true)
     DataSourceComponent getQueryDataSourceComponent(long queryId);
+
 }

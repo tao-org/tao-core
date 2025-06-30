@@ -184,7 +184,7 @@
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="topology.node"/>
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.NodeDescriptionListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.NodeRoleConverter" attribute-name="role"/>
         <attributes>
@@ -381,7 +381,7 @@
         <table name="component.processing_component"/>
 
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.ProcessingComponentListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
         </entity-listeners>
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
@@ -650,6 +650,10 @@
     <entity class="ro.cs.tao.datasource.DataSourceComponent" access="PROPERTY">
         <table name="component.data_source_component"/>
 
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
+        </entity-listeners>
+
         <association-override name="sources">
             <join-table name="component.data_source_component_sources">
                 <join-column name="data_source_component_id" referenced-column-name="id"/>
@@ -695,6 +699,10 @@
 
     <entity class="ro.cs.tao.component.ConditionComponent" access="PROPERTY">
         <table name="component.condition_component"/>
+
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
+        </entity-listeners>
 
         <association-override name="sources">
             <join-table name="component.condition_component_sources">
@@ -752,7 +760,7 @@
     <entity class="ro.cs.tao.datasource.DataSourceCredentials" access="PROPERTY">
         <table name="execution.user_data_source_connection"/>
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.DataSourceCredentialsListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="params" />
         <attributes>
@@ -1272,7 +1280,7 @@
     <entity class="ro.cs.tao.datasource.beans.Query" access="PROPERTY">
         <table name="workflow.query"/>
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.QueryListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="values"/>
         <attributes>
@@ -1336,7 +1344,7 @@
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
         <table name="usr.user"/>
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.UserListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
         <convert converter="ro.cs.tao.persistence.convert.UserTypeConverter" attribute-name="userType" />

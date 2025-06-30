@@ -19,10 +19,15 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.utils.StringUtilities;
 
 public abstract class TaoComponentManager<T extends TaoComponent, R extends PagingAndSortingRepository<T, String>>
         extends EntityManager<T, String, R> {
+
+    public void updateModified(T component) throws PersistenceException {
+        // To be overwritten in the managers that should update the modified column
+    }
 
     @Override
     protected String identifier() { return "id"; }

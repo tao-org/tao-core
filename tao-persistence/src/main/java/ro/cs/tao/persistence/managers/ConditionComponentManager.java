@@ -35,6 +35,11 @@ public class ConditionComponentManager extends TaoComponentManager<ConditionComp
     }
 
     @Override
+    public void updateModified(ConditionComponent component) throws PersistenceException {
+        this.repository.updateModified(component, component.getId());
+    }
+
+    @Override
     protected boolean checkEntity(ConditionComponent entity) {
         return checkComponent(entity);
     }

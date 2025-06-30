@@ -159,6 +159,10 @@
     <entity class="ro.cs.tao.component.ogc.WPSComponent" access="PROPERTY">
         <table name="component.wps_component"/>
 
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
+        </entity-listeners>
+
         <association-override name="sources">
             <join-table name="component.wps_component_sources">
                 <join-column name="component_id" referenced-column-name="id"/>
@@ -202,6 +206,10 @@
 
     <entity class="ro.cs.tao.component.ogc.WMSComponent" access="PROPERTY">
         <table name="component.wms_component"/>
+
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
+        </entity-listeners>
 
         <association-override name="sources">
             <join-table name="component.wms_component_sources">
