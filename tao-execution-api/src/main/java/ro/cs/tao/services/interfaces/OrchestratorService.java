@@ -42,10 +42,11 @@ public interface OrchestratorService extends TAOService {
     Map<String, List<Parameter>> getWorkflowParameters(long workflowId) throws PersistenceException;
 
     /**
-     * Returns the outputs of the executions of a workflow.
+     * Returns the outputs of the executions of a workflow for a specific user.
      * @param workflowId    The workflow identifier
+     * @param userId        The user identifier
      */
-    List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId) throws PersistenceException;
+    List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId, String userId) throws PersistenceException;
     /**
      * Returns the output descriptors of the executions of a workflow.
      * @param workflowId    The workflow identifier
