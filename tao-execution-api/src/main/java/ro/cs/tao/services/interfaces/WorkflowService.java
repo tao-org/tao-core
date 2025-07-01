@@ -248,14 +248,15 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
                                            WorkflowDescriptor subWorkflow,
                                            boolean keepDataSources) throws PersistenceException;
     /**
-     * Retrieve the execution history of a workflow
-     * @param workflowId         The workflow identifier
+     * Retrieves the execution history of a workflow for a specific user
+     * @param workflowId        The workflow identifier
+     * @param userId            The user identifier
      * @return  The list of workflow executions
      * @throws PersistenceException
      */
-    List<ExecutionJobInfo> getWorkflowExecutions(long workflowId) throws PersistenceException;
+    List<ExecutionJobInfo> getWorkflowExecutions(long workflowId, String userId) throws PersistenceException;
     /**
-     * Retrieve workflow nodes execution details from a workflow execution
+     * Retrieves workflow nodes execution details from a workflow execution
      * @param executionJobId         The workflow execution identifier
      * @return The list of nodes executions within a workflow execution
      * @throws PersistenceException

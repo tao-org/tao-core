@@ -26,6 +26,8 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
 
     List<ExecutionJob> findByWorkflowId(long workflowId);
 
+    List<ExecutionJob> findByWorkflowIdAndUserId(long workflowId, String userId);
+
     /**
      * Returns all the entities having the given status
      * @param status    The status to lookup for
@@ -53,9 +55,9 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
     @Query(value = "SELECT CONCAT(CAST(t.job_id as text), '-', CAST(t.id as text)) FROM execution.task_output tk " +
             "JOIN execution.task t ON t.id = tk.task_id " +
             "JOIN execution.job e ON e.id = t.job_id " +
-            "WHERE e.workflow_id = :workflowId " +
+            "WHERE e.workflow_id = :workflowId AND e.user_id = :userId " +
             "ORDER BY t.job_id, t.id", nativeQuery = true)
-    List<String> getWorkflowJobsOutputs(@Param("workflowId") Long workflowId);
+    List<String> getWorkflowJobsOutputs(@Param("workflowId") Long workflowId, @Param("userId") String userId);
 
     @Query(value = "SELECT CONCAT(CAST(t.job_id as text), '-', CAST(t.id as text)) FROM execution.task_output tk " +
             "JOIN execution.task t ON t.id = tk.task_id " +

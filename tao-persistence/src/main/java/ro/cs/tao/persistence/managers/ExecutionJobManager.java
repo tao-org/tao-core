@@ -46,34 +46,34 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
     private DataSource dataSource;
 
     @Override
+    public List<ExecutionJob> listByWorkflow(long workflowId, String userId) {
+        return repository.findByWorkflowIdAndUserId(workflowId, userId);
+    }
+
+    @Override
     public List<ExecutionJob> listByWorkflow(long workflowId) {
         return repository.findByWorkflowId(workflowId);
     }
 
     @Override
-    public List<String> getWorkflowOutputKeys(long workflowId) {
-        return repository.getWorkflowJobsOutputs(workflowId);
+    public List<String> getWorkflowOutputKeys(long workflowId, String userId) {
+        return repository.getWorkflowJobsOutputs(workflowId, userId);
     }
 
     @Override
-    public List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId) {
+    public List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId, String userId) {
         //return repository.getWorkflowJobsOutputs(workflowId);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
-//                    con.prepareStatement("SELECT t.job_id, t.id, t.end_time, " +
-//                                                 "SUBSTRING(t.actual_target, LENGTH(t.actual_target) - POSITION('/' IN REVERSE(t.actual_target)) + 2, POSITION('/' IN REVERSE(t.actual_target))) AS file_name,\n" +
-//                                                 "t.actual_target FROM execution.task t " +
-//                                                 "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
-//                                                 "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
-//                                                 "WHERE e.workflow_id = ? ORDER BY t.job_id, t.end_time DESC");
                     con.prepareStatement("SELECT t.job_id, t.id, t.end_time," +
                                                         "REGEXP_REPLACE(actual_target, '.*/', '') AS filename, t.actual_target " +
                                                         "FROM EXECUTION.TASK t " +
                                                         "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
                                                         "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
-                                                        "WHERE e.workflow_id = ? ORDER BY t.job_id, t.end_time DESC");
+                                                        "WHERE e.workflow_id = ? AND e.user_id = ? ORDER BY t.job_id, t.end_time DESC");
             statement.setLong(1, workflowId);
+            statement.setString(2, userId);
             return statement;
         }, (rs, rowNum) -> {
             ExecutionTaskOutput result = new ExecutionTaskOutput();

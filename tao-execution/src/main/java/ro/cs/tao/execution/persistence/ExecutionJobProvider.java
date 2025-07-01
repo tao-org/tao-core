@@ -17,6 +17,15 @@ import java.util.Set;
 public interface ExecutionJobProvider extends EntityProvider<ExecutionJob, Long> {
 
     /**
+     * Retrieves the list of execution jobs associated with a given workflow for a specific user.
+     *
+     * @param workflowId the unique identifier of the workflow for which the execution jobs are to be retrieved
+     * @param userId    the user identifier
+     * @return a list of execution jobs associated with the specified workflow
+     */
+    List<ExecutionJob> listByWorkflow(long workflowId, String userId);
+
+    /**
      * Retrieves the list of execution jobs associated with a given workflow.
      *
      * @param workflowId the unique identifier of the workflow for which the execution jobs are to be retrieved
@@ -25,20 +34,22 @@ public interface ExecutionJobProvider extends EntityProvider<ExecutionJob, Long>
     List<ExecutionJob> listByWorkflow(long workflowId);
 
     /**
-     * Retrieves a list of output keys associated with the specified workflow.
+     * Retrieves a list of output keys associated with the specified workflow for a specific user.
      *
      * @param workflowId the unique identifier of the workflow whose output keys are to be retrieved
+     * @param userId    the user identifier
      * @return a list of strings representing the output keys for the specified workflow
      */
-    List<String> getWorkflowOutputKeys(long workflowId);
+    List<String> getWorkflowOutputKeys(long workflowId, String userId);
 
     /**
-     * Retrieves the list of workflow outputs associated with the specified workflow.
+     * Retrieves the list of workflow outputs associated with the specified workflow for a specific user.
      *
      * @param workflowId the unique identifier of the workflow whose outputs are to be retrieved
+     * @param userId    the user identifier
      * @return a list of {@code ExecutionTaskOutput} objects representing the outputs of the specified workflow
      */
-    List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId);
+    List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId, String userId);
 
     /**
      * Retrieves a list of output keys associated with the specified execution job.
