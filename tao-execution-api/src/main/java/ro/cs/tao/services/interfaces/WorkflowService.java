@@ -324,6 +324,14 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     void deleteWorkflowImage(long id);
 
     /**
+     * Permanently removes a workflow identified by the given unique ID from the system.
+     *
+     * @param id the unique identifier of the workflow to be removed
+     * @throws PersistenceException if an error occurs during the removal process
+     */
+    void removeWorkflow(long id) throws PersistenceException;
+
+    /**
      * Imports the definition of a workflow from the given input stream.
      * @param source    The input stream
      * @throws IOException
