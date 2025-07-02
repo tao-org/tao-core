@@ -21,10 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ParameterExpansionRule;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.SourceDescriptor;
+import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -138,6 +135,9 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             if (existing != null) {
                 throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
             }
+        }
+        if (entity.getNodeAffinity() == null) {
+            entity.setNodeAffinity(NodeAffinity.Any);
         }
         final List<SourceDescriptor> sources = entity.getSources();
         for (SourceDescriptor descriptor : sources) {
