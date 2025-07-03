@@ -568,6 +568,16 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     /**
+     * Returns the last available resource utilisation information for the given host.
+     *
+     * @param hostName  The node host name
+     */
+    public RuntimeInfoCluster getClusterSnapshot(String hostName) {
+        NodeRuntime nodeRuntime = this.nodes.get(hostName);
+        return (nodeRuntime == null) ? null : nodeRuntime.getRuntimeInfoCluster();
+    }
+
+    /**
      * Retrieves a snapshot of the runtime information for all registered nodes in the system.
      * This method iterates over the current nodes and collects their associated runtime information.
      *
@@ -831,6 +841,29 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     /**
+     * Reads and retrieves runtime information of a specified cluster node.
+     * The method determines the authentication type based on the presence of an SSH key
+     * and uses this information, along with other node attributes, to fetch runtime details.
+     *
+     *
+     * @param node the node description containing details such as ID, role, authentication, and credentials
+     * @return the runtime information of the specified cluster node, aggregated information and node detailed information
+     * @throws Exception if an error occurs during the process of fetching runtime information
+     */
+    protected RuntimeInfoCluster readNodeRuntimeInfoCluster(NodeDescription node) throws Exception {
+        AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
+        final NodeRuntimeInspector inspector = RuntimeInspectorFactory.getInstance()
+                .get(node.getId(),
+                        node.getRole(),
+                        type,
+                        node.getUserName(),
+                        type == AuthenticationType.PASSWORD ? node.getUserPass() : node.getSshKey());
+        final RuntimeInfoCluster infoCluster = inspector.getInfoCluster();
+
+        return infoCluster;
+    }
+
+    /**
      * Schedules a periodic inspection task with the specified delay and interval.
      * Cancels any existing inspection timer before scheduling a new one.
      *
@@ -910,6 +943,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      */
     public static class NodeRuntime {
         private RuntimeInfo runtimeInfo;
+        private RuntimeInfoCluster runtimeInfoCluster;
         private NodeDescription node;
         private long lastUpdatedTimeMilliseconds;
         private int failedAttempts;
@@ -917,6 +951,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         public NodeRuntime(NodeDescription node, RuntimeInfo runtimeInfo) {
             this.node = node;
             this.runtimeInfo = runtimeInfo;
+            this.runtimeInfoCluster = null;
             this.lastUpdatedTimeMilliseconds = 0L;
         }
 
@@ -934,6 +969,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
         public void setRuntimeInfo(RuntimeInfo runtimeInfo) {
             this.runtimeInfo = runtimeInfo;
+        }
+
+        public RuntimeInfoCluster getRuntimeInfoCluster() {
+            return runtimeInfoCluster;
+        }
+
+        public void setRuntimeInfoCluster(RuntimeInfoCluster runtimeInfoCluster) {
+            this.runtimeInfoCluster = runtimeInfoCluster;
         }
 
         public NodeDescription getNode() {
@@ -1007,8 +1050,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     nodes.remove(h);
                                 } else {
                                     RuntimeInfo runtimeInfo = null;
+                                    RuntimeInfoCluster runtimeInfoCluster = null;
                                     try {
                                         runtimeInfo = readNodeRuntimeInfo(nodeRuntime.getNode());
+                                        runtimeInfoCluster = readNodeRuntimeInfoCluster(nodeRuntime.getNode());
                                     } catch (Exception exception) {
                                         logger.severe(() -> String.format("Cannot read node information '%s': %s",
                                                                           h,
@@ -1020,6 +1065,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                         runtimeInfo = buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), flavor.getCpu());
                                     }
                                     nodeRuntime.setRuntimeInfo(runtimeInfo);
+                                    nodeRuntime.setRuntimeInfoCluster(runtimeInfoCluster);
                                     nodeRuntime.setLastUpdatedTimeMilliseconds(System.currentTimeMillis());
                                     Messaging.send(SystemPrincipal.instance(),
                                                    Topic.RESOURCES.getCategory(),
