@@ -101,4 +101,30 @@ public interface NodeRuntimeInspector {
      */
     RuntimeInfo getSnapshot() throws Exception;
 
+    /**
+     * Retrieves runtime information for the current node if it is a cluster, such as CPU usage,
+     * memory data, and disk space details.
+     *
+     * @return an instance of {@code RuntimeInfoCluster} containing details about
+     *         processor usage, memory metrics, disk usage, and a timestamp
+     *         representing when the information was gathered for each node and an aggregated information of all nodes
+     * @throws Exception if an error occurs while fetching runtime information
+     */
+    default RuntimeInfoCluster getInfoCluster() throws Exception {
+        return null;
+    }
+
+    /**
+     * Retrieves runtime information for the current node if it is a cluster, such as CPU usage,
+     * memory data, and disk space details.
+     *
+     * @return an instance of {@code RuntimeInfoCluster} containing details about
+     *         processor usage, memory metrics, disk usage, and a timestamp
+     *         representing when the information was gathered for each node and an aggregated information of all nodes
+     * @throws Exception if an error occurs while fetching runtime information
+     */
+    default RuntimeInfoCluster getSnapshotCluster() throws Exception {
+        return null;
+    }
+
 }

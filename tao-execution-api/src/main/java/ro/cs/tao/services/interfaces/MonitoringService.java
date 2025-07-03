@@ -16,6 +16,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.execution.monitor.RuntimeInfo;
+import ro.cs.tao.execution.monitor.RuntimeInfoCluster;
 
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,17 @@ public interface MonitoringService<T> extends TAOService {
      * @return a {@link RuntimeInfo} object containing the runtime details of the specified node
      */
     RuntimeInfo getNodeSnapshot(String hostName);
+
+    /**
+     * Retrieves the runtime snapshot of a cluster identified by the given hostname.
+     * The snapshot provides details about system resources such as CPU usage, memory usage,
+     * disk usage, and the timestamp when the data was captured for each node of the cluster and an aggregated
+     * snapshot of the cluster.
+     *
+     * @param hostName the hostname of the node for which the runtime snapshot is to be retrieved
+     * @return a {@link RuntimeInfoCluster} object containing the runtime details of the specified node
+     */
+    RuntimeInfoCluster getClusterSnapshot(String hostName);
 
     /**
      * Retrieves the live notifications for a given user. These notifications are dynamically
