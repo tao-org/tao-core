@@ -21,12 +21,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTaskOutput;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
+import ro.cs.tao.utils.executors.MemoryUnit;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -67,11 +69,15 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
                     con.prepareStatement("SELECT t.job_id, t.id, t.end_time," +
-                                                        "REGEXP_REPLACE(actual_target, '.*/', '') AS filename, t.actual_target " +
-                                                        "FROM EXECUTION.TASK t " +
-                                                        "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
-                                                        "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
-                                                        "WHERE e.workflow_id = ? AND e.user_id = ? ORDER BY t.job_id, t.end_time DESC");
+                                        "REGEXP_REPLACE(t.actual_target, '.*/', '') AS filename, t.actual_target, COALESCE(d.data_format_id, 7) as data_format_id," +
+                                         "CASE WHEN d.data_format_id = 1 THEN rdp.approximate_size ELSE -1 END AS \"size\" " +
+                                        "FROM execution.task t " +
+                                        "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
+                                        "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
+                                        "JOIN component.processing_component_targets ct ON ct.processing_component_id = t.component_id " +
+                                        "JOIN component.target_descriptor d ON d.id = ct.target_descriptor_id " +
+                                        "LEFT JOIN product.raster_data_product rdp ON rdp.entry_point = REGEXP_REPLACE(t.actual_target, '.*/', '') " +
+                                        "WHERE e.workflow_id = ? AND e.user_id = ? ORDER BY t.job_id, t.end_time DESC");
             statement.setLong(1, workflowId);
             statement.setString(2, userId);
             return statement;
@@ -85,6 +91,10 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
             }
             result.setName(rs.getString(4));
             result.setPath(rs.getString(5));
+            result.setFormat(EnumUtils.getEnumConstantByValue(DataFormat.class, rs.getInt(6));
+            final long value = rs.getLong(7);
+            result.setSize(value > 0 ? value / MemoryUnit.MB.value() : -1);
+            result.setUnit(value > 0 ? MemoryUnit.MB : null);
             return result;
         });
     }
