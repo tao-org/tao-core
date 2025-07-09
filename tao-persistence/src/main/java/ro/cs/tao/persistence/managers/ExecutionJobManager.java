@@ -70,7 +70,7 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
             PreparedStatement statement =
                     con.prepareStatement("SELECT t.job_id, t.id, t.end_time," +
                                         "REGEXP_REPLACE(t.actual_target, '.*/', '') AS filename, t.actual_target, COALESCE(d.data_format_id, 7) as data_format_id," +
-                                         "CASE WHEN d.data_format_id = 1 THEN rdp.approximate_size ELSE -1 END AS \"size\" " +
+                                        "CASE WHEN d.data_format_id = 1 THEN rdp.approximate_size ELSE -1 END AS \"size\" " +
                                         "FROM execution.task t " +
                                         "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
                                         "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
@@ -91,7 +91,7 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
             }
             result.setName(rs.getString(4));
             result.setPath(rs.getString(5));
-            result.setFormat(EnumUtils.getEnumConstantByValue(DataFormat.class, rs.getInt(6));
+            result.setFormat(EnumUtils.getEnumConstantByValue(DataFormat.class, rs.getInt(6)));
             final long value = rs.getLong(7);
             result.setSize(value > 0 ? value / MemoryUnit.MB.value() : -1);
             result.setUnit(value > 0 ? MemoryUnit.MB : null);
