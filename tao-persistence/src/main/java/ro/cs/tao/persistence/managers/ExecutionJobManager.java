@@ -22,6 +22,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.EnumUtils;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
@@ -29,7 +30,6 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTaskOutput;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
-import ro.cs.tao.utils.executors.MemoryUnit;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -67,6 +67,7 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
     public List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId, String userId) {
         //return repository.getWorkflowJobsOutputs(workflowId);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        final String ext = ConfigurationManager.getInstance().getValue("quicklook.extension", ".png");
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
                     con.prepareStatement("SELECT t.job_id, t.id, t.end_time," +
@@ -91,11 +92,12 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
                 result.setEndTime(timestamp.toLocalDateTime());
             }
             result.setName(rs.getString(4));
-            result.setPath(rs.getString(5));
+            String path = rs.getString(5);
+            result.setUrl(path);
+            result.setPreviewUrl(path + ext);
             result.setFormat(EnumUtils.getEnumConstantByValue(DataFormat.class, rs.getInt(6)));
             final long value = rs.getLong(7);
-            result.setSize(value > 0 ? value / MemoryUnit.MB.value() : -1);
-            result.setUnit(value > 0 ? MemoryUnit.MB : null);
+            result.setSize(value);
             return result;
         });
     }
