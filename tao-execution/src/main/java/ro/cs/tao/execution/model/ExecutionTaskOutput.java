@@ -1,7 +1,6 @@
 package ro.cs.tao.execution.model;
 
 import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.utils.executors.MemoryUnit;
 
 import java.time.LocalDateTime;
 
@@ -10,10 +9,11 @@ public class ExecutionTaskOutput {
     private long taskId;
     private LocalDateTime endTime;
     private String name;
-    private String path;
+    private String url;
+    private String previewUrl;
+    private String relativePath;
     private DataFormat format;
     private long size;
-    private MemoryUnit unit;
 
     public LocalDateTime getEndTime() {
         return endTime;
@@ -39,12 +39,28 @@ public class ExecutionTaskOutput {
         this.name = name;
     }
 
-    public String getPath() {
-        return path;
+    public String getUrl() {
+        return url;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getPreviewUrl() {
+        return previewUrl;
+    }
+
+    public void setPreviewUrl(String previewUrl) {
+        this.previewUrl = previewUrl;
+    }
+
+    public String getRelativePath() {
+        return relativePath;
+    }
+
+    public void setRelativePath(String relativePath) {
+        this.relativePath = relativePath;
     }
 
     public DataFormat getFormat() {
@@ -61,14 +77,6 @@ public class ExecutionTaskOutput {
 
     public void setSize(long size) {
         this.size = size;
-    }
-
-    public MemoryUnit getUnit() {
-        return unit;
-    }
-
-    public void setUnit(MemoryUnit unit) {
-        this.unit = unit;
     }
 
     public long getTaskId() {
