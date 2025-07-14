@@ -37,6 +37,7 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
+import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.quota.QuotaException;
@@ -620,7 +621,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             productProvider.save(product);
             // roll back the user's quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
-            logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
+            String message = String.format("Product %s not downloaded. Reason: %s", product.getName(), reason);
+            logger.warning(message);
+            Messaging.send(principal, DataSourceTopic.WARNING.getCategory(), message);
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         } catch (Exception e) {
