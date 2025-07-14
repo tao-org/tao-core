@@ -313,7 +313,20 @@ public class TaskUtilities {
         final WorkflowNodeDescriptor node = workflowNodeProvider.get(toTask.getWorkflowNodeId());
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null && !links.isEmpty()) {
-            for (ComponentLink link : links) {
+            // In some cases, inputs have to be in a specific order; if specified, the links should be sorted,
+            // otherwise the order doesn't matter
+            final List<ComponentLink> sortedLinks = new ArrayList<>(links);
+            sortedLinks.sort(new Comparator<ComponentLink>() {
+                @Override
+                public int compare(ComponentLink o1, ComponentLink o2) {
+                    Aggregator a1 = o1.getAggregator();
+                    Aggregator a2 = o2.getAggregator();
+                    return a1 != null && a2 != null
+                            ? Integer.compare(a1.getOrder(), a2.getOrder())
+                            : 0;
+                }
+            });
+            for (ComponentLink link : sortedLinks) {
                 final ExecutionTask parentTask = taskProvider.getByJobAndNode(toTask.getJob().getId(),
                                                                               link.getSourceNodeId(), toTask.getInstanceId());
                 final Variable out = parentTask.getOutputParameterValues()
