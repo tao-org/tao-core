@@ -21,6 +21,7 @@ import ro.cs.tao.component.converters.ParameterConverter;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.docker.ExecutionConfiguration;
@@ -338,13 +339,16 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                               this.getId(),
                                               this.internalState == null ? "" : this.internalState + "-",
                                               FileUtilities.getFilenameWithoutExtension(fileName));
-            /*outPath = new String[] {
-                    FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()).resolve(principalName).resolve(folderName), false),
-                    FileUtilities.asUnixPath(path.getParent().resolve(folderName), true)
-            };*/
+            final boolean useDistinctFolder = Boolean.parseBoolean(ConfigurationManager.getInstance()
+                                                                                       .getValue("execution.folder.task",
+                                                                                                 "true"));
             outPath = new String[] {
-                    FileUtilities.asUnixPath(jobPath.resolve(folderName), false),
-                    FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()).resolve(folderName), true)
+                    useDistinctFolder
+                            ? FileUtilities.asUnixPath(jobPath.resolve(folderName), false)
+                            : FileUtilities.asUnixPath(jobPath, false),
+                    useDistinctFolder
+                            ? FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()).resolve(folderName), true)
+                            : FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()), true)
             };
         }
         return outPath;
