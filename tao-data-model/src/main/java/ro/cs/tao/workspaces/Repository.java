@@ -10,6 +10,10 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
+/**
+ * Represents a repository that holds configuration and metadata for a workspace.
+ * A repository can have different types, parameters, and properties that define its behavior and structure.
+ */
 public class Repository extends StringIdentifiable {
     private String name;
     private String description;

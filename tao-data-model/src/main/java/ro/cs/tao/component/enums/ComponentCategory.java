@@ -24,6 +24,35 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents different categories of components for processing and classification purposes.
+ * Each category is associated with a unique integer value and a human-readable description.
+ *
+ * This enumeration includes the following component categories:
+ * - RASTER: Represents raster data processing components.
+ * - VECTOR: Represents vector data processing components.
+ * - OPTICAL: Represents optical data processing components.
+ * - RADAR: Represents radar data processing components.
+ * - MISC: Represents miscellaneous components.
+ * - CONDITION: Represents condition-related components.
+ *
+ * The enum provides methods to:
+ * - Retrieve the friendly name (human-readable description) of a component category.
+ * - Retrieve the integer value associated with a particular component category.
+ * - Determine compatibility between a source category and other categories via a compatibility map.
+ *
+ * Implements the {@link TaoEnum} interface which includes methods to get the friendly name
+ * and associated value of each enum constant.
+ *
+ * Compatibility Map:
+ * Each component category defines a set of other categories it is compatible with.
+ * This information is stored in a static compatibility map.
+ * The compatibility check can be performed using the {@code isCompatibleWith} method.
+ *
+ * Serialization/Deserialization:
+ * The enum values are annotated with {@code @XmlEnumValue} for serialization and deserialization
+ * to and from XML, using their respective integer values.
+ */
 @XmlEnum(Integer.class)
 public enum ComponentCategory implements TaoEnum<Integer> {
     @XmlEnumValue("1")
@@ -55,6 +84,15 @@ public enum ComponentCategory implements TaoEnum<Integer> {
     private final int value;
     private final String description;
 
+    /**
+     * Checks whether two {@link ComponentCategory} instances are compatible with each other.
+     * Compatibility is determined based on pre-defined mappings stored in the compatibility map.
+     *
+     * @param source the source {@link ComponentCategory} to be checked for compatibility
+     * @param other  the target {@link ComponentCategory} to check compatibility against
+     * @return {@code true} if the source component category is compatible with the target component category;
+     *         {@code false} otherwise
+     */
     public static boolean isCompatibleWith(ComponentCategory source, ComponentCategory other) {
         return compatibilityMap.get(source).contains(other);
     }

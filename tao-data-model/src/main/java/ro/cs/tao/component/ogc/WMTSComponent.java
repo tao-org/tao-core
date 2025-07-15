@@ -14,6 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Represents a WMTS (Web Map Tile Service) component, inheriting from the base class TaoComponent.
+ * This class is used to configure and manage a WMTS service, providing various properties and methods
+ * to control its behavior and metadata.
+ *
+ * Instances of this class include information about the remote service,
+ * configuration parameters, visibility settings, and ownership details.
+ */
 @XmlRootElement(name = "wmstComponent")
 public class WMTSComponent extends TaoComponent {
     private String remoteAddress;

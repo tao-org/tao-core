@@ -23,7 +23,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 
 /**
- * @author Cosmin Cara
+ * The DateAdapter class provides functionality to convert between String
+ * representations of dates and LocalDateTime objects for XML serialization
+ * and deserialization. It extends the XmlAdapter class to facilitate this
+ * conversion process.
+ *
+ * This class employs a specified date format to format and parse date strings
+ * in UTC timezone.
+ *
+ * @author  Cosmin Cara
  */
 public class DateAdapter extends XmlAdapter<String, LocalDateTime> {
     protected Logger logger = Logger.getLogger(getClass().getName());

@@ -3,6 +3,27 @@ package ro.cs.tao.eodata.naming;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a function that can be utilized during token resolution processes or parsed operations.
+ * This class encapsulates details about a function, including its name, return type, description,
+ * category, and the list of arguments it accepts.
+ *
+ * ResolverFunction serves as a descriptive model for functions that can be supported by
+ * {@code TokenResolver} implementations or other related components.
+ *
+ * Responsibilities:
+ * - Define metadata about a function, such as its name, return type, category, and description.
+ * - Maintain a list of arguments required by the function.
+ * - Provide mechanisms to add new arguments programmatically.
+ *
+ * Thread Safety:
+ * - This class is not inherently thread-safe. When accessing or modifying its state from multiple threads,
+ *   external synchronization is required.
+ *
+ * Examples of Use:
+ * - Extending the functionality of token resolvers by representing functions callable within expressions.
+ * - Defining a catalog of resolvable or executable functions in a given runtime or parser.
+ */
 public class ResolverFunction {
     private final String category;
     private final String name;

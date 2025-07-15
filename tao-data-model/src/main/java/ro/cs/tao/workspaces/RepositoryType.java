@@ -7,6 +7,24 @@ import javax.xml.bind.annotation.XmlEnumValue;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Represents various types of repositories supported in the application.
+ * Each repository type is defined with specific configurations, including
+ * parameter requirements, prefixes, along with a description of its purpose.
+ * The enum implements the {@link TaoEnum} interface to provide additional
+ * functionality such as returning a friendly name and its associated value.
+ *
+ * The repository types include options such as local file systems, AWS S3,
+ * OpenStack Swift, STAC, network shares, FTP, and FTPS.
+ *
+ * Characteristics of each RepositoryType:
+ * - An integer value representing its unique identifier.
+ * - A human-readable description for better identification.
+ * - A prefix used to classify the repository type.
+ * - Parameter key-value pairs needed to configure the repository.
+ * - Keys to represent user credentials or data access roots where applicable.
+ * - Support for determining singleton behavior and user visibility.
+ */
 @XmlEnum(Integer.class)
 public enum RepositoryType implements TaoEnum<Integer> {
     @XmlEnumValue("1")

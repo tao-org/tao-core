@@ -7,6 +7,14 @@ import ro.cs.tao.serialization.GeometryAdapter;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents a site with associated metadata and spatial footprint information.
+ * This class extends {@link StringIdentifiable}, thus inheriting the ability to
+ * have a unique string identifier.
+ *
+ * Fields include site name, description, user ID of the creator or owner, start and end dates
+ * of relevance, and a spatial footprint in the form of a geometric representation.
+ */
 public class Site extends StringIdentifiable {
     private String name;
     private String description;

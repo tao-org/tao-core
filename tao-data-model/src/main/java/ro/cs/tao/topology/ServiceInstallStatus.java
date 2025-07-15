@@ -16,6 +16,22 @@
 package ro.cs.tao.topology;
 
 /**
+ * Represents the installation status of a service, including its name,
+ * current status, and the reason for its state.
+ *
+ * This class is used to encapsulate information about whether a service
+ * is installed, uninstalled, or in another state, and provides methods
+ * for setting and retrieving its attributes.
+ *
+ * The following statuses are predefined:
+ * - NODE_ADDED: Indicates that the service "Node" has been installed.
+ * - NODE_REMOVED: Indicates that the service "Node" has been uninstalled.
+ *
+ * Attributes:
+ * - serviceName: The name of the service whose status is being tracked.
+ * - status: The current status of the service (e.g., INSTALLED, UNINSTALLED, NOT_FOUND).
+ * - reason: A description or message providing additional details about the service's status.
+ *
  * @author Cosmin Cara
  */
 public class ServiceInstallStatus {

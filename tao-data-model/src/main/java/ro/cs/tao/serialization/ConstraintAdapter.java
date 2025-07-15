@@ -21,7 +21,18 @@ import ro.cs.tao.component.constraints.IOConstraint;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * @author Cosmin Cara
+ * The ConstraintAdapter is a custom adapter designed to handle the conversion between the
+ * {@code IOConstraint} objects and their {@code String} representation in the context of
+ * XML marshaling and unmarshaling. It extends the {@code XmlAdapter} class to facilitate
+ * this transformation process.
+ *
+ * This class provides a bridge between the textual representation of constraints and their
+ * corresponding object instances. The {@code unmarshal} method is responsible for converting
+ * an {@code IOConstraint} instance into its string form, while the {@code marshal} method
+ * converts a {@code String} back into an {@code IOConstraint} instance using the
+ * {@code ConstraintFactory}.
+ *
+ * @author  Cosmin Cara
  */
 public class ConstraintAdapter extends XmlAdapter<IOConstraint, String> {
     @Override

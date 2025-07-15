@@ -5,6 +5,18 @@ import ro.cs.tao.TaoEnum;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
+/**
+ * Enum representing different types of container services.
+ *
+ * Each constant in this enumeration has an associated integer value and a description
+ * that represents the type of container. This is used to categorize container services
+ * in various applications.
+ *
+ * The enum implements the {@code TaoEnum<Integer>} interface which provides the ability
+ * to retrieve the friendly name and integer value of each enum constant.
+ *
+ * The enum is annotated with {@code @XmlEnum} to support XML serialization and deserialization.
+ */
 @XmlEnum(Integer.class)
 public enum ContainerType implements TaoEnum<Integer> {
     @XmlEnumValue("1")

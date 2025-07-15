@@ -21,6 +21,20 @@ import ro.cs.tao.TaoEnum;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
+/**
+ * Represents the various types of processing components that can be defined in the system.
+ * Each component type is associated with a unique integer value and a descriptive name.
+ *
+ * This enumeration implements the {@link TaoEnum} interface to provide additional properties such as a friendly name and a value.
+ * It is annotated with {@code @XmlEnum} to enable XML binding and serialization.
+ *
+ * Enum Constants:
+ * - EXECUTABLE: Represents an executable component, identified by the value 1.
+ * - SCRIPT: Represents a scripting component, identified by the value 2.
+ * - AGGREGATE: Represents an aggregate component, identified by value 3.
+ * - EXTERNAL: Represents an external component, identified by the value 4.
+ * - UTILITY: Represents a utility component, identified by the value 5.
+ */
 @XmlEnum(Integer.class)
 public enum ProcessingComponentType implements TaoEnum<Integer> {
     @XmlEnumValue("1")

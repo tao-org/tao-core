@@ -1,5 +1,11 @@
 package ro.cs.tao.subscription;
 
+/**
+ * Represents a subscription to a flavor resource configuration.
+ * This class holds details related to a specific flavor subscription
+ * such as the flavor identifier, the number of instances, and
+ * optional configurations for storage in HDD or SSD.
+ */
 public class FlavorSubscription {
     private String flavorId;
     private int quantity;

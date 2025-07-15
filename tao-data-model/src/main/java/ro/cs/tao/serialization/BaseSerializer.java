@@ -30,6 +30,14 @@ import ro.cs.tao.utils.Tuple;
 import java.util.*;
 
 /**
+ * Abstract base class for implementing custom serializers. The class provides
+ * core methods and functionality for serializing and deserializing objects of
+ * type {@code T} to and from a string-based format, such as JSON or XML.
+ * Subclasses must implement the {@link #createMapper()} method to provide
+ * an instance of {@link ObjectMapper} specialized for their specific format.
+ *
+ * @param <T> The type of the objects to be serialized and deserialized.
+ *
  * @author  Cosmin Cara
  */
 public abstract class BaseSerializer<T> implements Serializer<T, String> {

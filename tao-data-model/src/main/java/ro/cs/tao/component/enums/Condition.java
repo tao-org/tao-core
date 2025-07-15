@@ -5,6 +5,13 @@ import ro.cs.tao.TaoEnum;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
+/**
+ * Represents various conditions with associated values and descriptions that can be used in comparisons or filtering operations.
+ * Each condition has a unique integer value and a descriptive friendly name.
+ *
+ * This enumeration implements the {@link TaoEnum} interface to provide additional properties like a friendly name and value.
+ * It is annotated with {@code @XmlEnum} to facilitate XML binding and serialization.
+ */
 @XmlEnum(Integer.class)
 public enum Condition implements TaoEnum<Integer> {
     @XmlEnumValue("1")

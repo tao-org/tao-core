@@ -14,19 +14,44 @@ public class Aggregator {
     private String[] filter;
     private int order;
 
+    /**
+     * Retrieves the array of sorter names.
+     *
+     * @return an array of strings representing the sorter names
+     */
     public String[] getSorter() { return sorter; }
     public void setSorter(String[] sorter) { this.sorter = sorter; }
 
+    /**
+     * Retrieves the array of associator names.
+     *
+     * @return an array of strings representing the associator names
+     */
     public String[] getAssociator() { return associator; }
     public void setAssociator(String[] associator) { this.associator = associator; }
 
+    /**
+     * Retrieves the array of filter names.
+     *
+     * @return an array of strings representing the filter names
+     */
     public String[] getFilter() { return filter; }
     public void setFilter(String[] filter) { this.filter = filter; }
 
+    /**
+     * Retrieves the order value.
+     *
+     * @return an integer representing the order value
+     */
     public int getOrder() {
         return order;
     }
 
+    /**
+     * Sets the order value.
+     *
+     * @param order the integer value representing the order to be set
+     */
     public void setOrder(int order) {
         this.order = order;
     }

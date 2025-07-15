@@ -3,6 +3,16 @@ package ro.cs.tao.component;
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
+/**
+ * Class representing node affinity, which specifies constraints or preferences
+ * about the placement or execution of tasks or entities in relation to nodes.
+ * Node affinity can determine how tasks interact with the underlying system or infrastructure.
+ *
+ * This class provides predefined affinities, such as {@code Any} and {@code SameNode},
+ * and allows the creation of custom affinities.
+ *
+ * Instances of this class are immutable.
+ */
 public final class NodeAffinity {
     public static final NodeAffinity Any = new NodeAffinity("Any");
     public static final NodeAffinity SameNode = new NodeAffinity("Same");

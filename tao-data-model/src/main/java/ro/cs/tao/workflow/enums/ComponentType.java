@@ -21,6 +21,13 @@ import ro.cs.tao.TaoEnum;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
+/**
+ * Enumeration representing different types of components used in a workflow system.
+ * Each type is associated with an integer value and a descriptive text.
+ *
+ * This enumeration implements the {@code TaoEnum<Integer>} interface to provide
+ * additional properties and behaviors like obtaining a friendly name and its value.
+ */
 @XmlEnum(Integer.class)
 public enum ComponentType implements TaoEnum<Integer> {
     /**
