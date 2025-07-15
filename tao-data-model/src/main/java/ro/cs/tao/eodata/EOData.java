@@ -33,6 +33,28 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 /**
+ * The EOData class serves as an abstract representation of Earth Observation data and metadata.
+ * It provides a structure for spatial data, attributes, and related information, ensuring
+ * compatibility with serialization and identification functionalities.
+ *
+ * EOData is designed to support extensible models for Earth Observation data, allowing
+ * applications to manage, query, and process geospatial datasets efficiently.
+ *
+ * Main responsibilities of this class include:
+ * - Defining the spatial data (geometry) and its related attributes.
+ * - Managing Coordinate Reference Systems (CRS) and spatial representation.
+ * - Handling metadata and extended properties specific to various datasets.
+ * - Supporting data identification via unique string identifiers.
+ * - Enabling serialization for data persistence and retrieval.
+ *
+ * This class provides getter and setter methods for accessing and updating its state,
+ * along with utility methods for managing attributes and file references.
+ * Subclasses of EOData are expected to extend and specialize the behavior as needed.
+ *
+ * Inherits from:
+ * - StringIdentifiable: Provides unique string-based identification for objects.
+ * - Serializable: Ensures the object can be serialized for data storage or transfer.
+ *
  * @author Cosmin Cara
  */
 public abstract class EOData extends StringIdentifiable implements Serializable {

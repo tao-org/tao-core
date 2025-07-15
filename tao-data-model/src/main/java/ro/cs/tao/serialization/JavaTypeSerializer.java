@@ -7,6 +7,12 @@ import ro.cs.tao.datasource.param.JavaType;
 
 import java.io.IOException;
 
+/**
+ * Serializer for Java class types that extends {@link Number}.
+ * Converts the class type to a friendly name and writes it as a string in the JSON output.
+ *
+ * @author  Cosmin Cara
+ */
 public class JavaTypeSerializer extends JsonSerializer<Class<? extends Number>> {
 
     @Override

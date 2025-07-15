@@ -38,6 +38,11 @@ public abstract class TaoLoginModule<T extends TokenProvider> implements LoginMo
     protected final AuthenticationMode configuredAuthMode;
     protected T tokenProvider;
 
+    /**
+     * Sets the user provider to be used by the TaoLoginModule.
+     *
+     * @param provider the UserProvider instance that provides user data and services
+     */
     public static void setUserProvider(UserProvider provider) { userProvider = provider; }
 
     public TaoLoginModule() {

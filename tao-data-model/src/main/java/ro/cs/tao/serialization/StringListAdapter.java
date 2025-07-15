@@ -21,6 +21,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Adapter for converting between a list of strings and a single string
+ * representation. This adapter is useful for XML serialization and
+ * deserialization processes.
+ *
+ * The unmarshal method takes a list of strings and converts it into a single
+ * concatenated string. The resulting string is enclosed in square brackets
+ * and separates list elements with commas.
+ *
+ * The marshal method takes a single formatted string and converts it back
+ * into a list of strings. If the string is enclosed in square brackets
+ * and contains comma-separated values, those values are split into a list.
+ * Otherwise, the string is placed as a single element in the list.
+ *
+ * This class extends the javax.xml.bind.annotation.adapters.XmlAdapter, making
+ * it compatible with JAXB processing.
+ */
 public class StringListAdapter extends XmlAdapter<List<String>, String> {
     @Override
     public String unmarshal(List<String> v) {

@@ -1,5 +1,10 @@
 package ro.cs.tao.subscription;
 
+/**
+ * Represents an external flavor subscription with specific resource allocations.
+ * This class encapsulates information about a particular flavor,
+ * including its unique identifier and allocated resources such as CPU, RAM, and disk size.
+ */
 public class ExternalFlavorSubscription {
     private String flavorId;
     private Integer cpu;

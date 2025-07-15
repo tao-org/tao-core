@@ -6,6 +6,15 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Represents a subscription that manages the allocation and usage details
+ * of specific resources for a user. The subscription encompasses various
+ * attributes such as resource type, storage capacity, and specific flavor
+ * configurations.
+ *
+ * This class extends LongIdentifiable, utilizing a long-based unique identifier
+ * for each subscription instance.
+ */
 public class ResourceSubscription extends LongIdentifiable {
     private String userId;
     private SubscriptionType type;

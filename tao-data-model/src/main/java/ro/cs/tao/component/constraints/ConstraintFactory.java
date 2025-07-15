@@ -39,6 +39,14 @@ public final class ConstraintFactory {
         initAliases();
     }
 
+    /**
+     * Creates or retrieves an instance of an {@code IOConstraint} based on the specified name.
+     * If the constraint corresponding to the name is not already cached, it dynamically loads
+     * the class, instantiates it, and stores it in a cache for future use.
+     *
+     * @param name the name of the desired constraint. If an alias is defined for this name, the alias is utilized.
+     * @return an instance of the specified constraint if successfully created or retrieved; otherwise, {@code null} if an error occurs.
+     */
     public static IOConstraint create(String name) {
         String className = aliases.getOrDefault(name, name);
         try {
@@ -54,6 +62,16 @@ public final class ConstraintFactory {
         }
     }
 
+    /**
+     * Creates or retrieves an instance of an {@code IOConstraint} based on the specified name and value.
+     * If the constraint corresponding to the name is not already cached, it dynamically loads the class,
+     * instantiates it using the value, and stores it in a cache for future use.
+     *
+     * @param name the name of the desired constraint. If an alias is defined for this name, the alias is used.
+     * @param value the specific value to be associated with the constraint being created.
+     * @return an instance of the specified constraint if successfully created or retrieved;
+     *         otherwise, {@code null} if an error occurs during instantiation or retrieval.
+     */
     public static IOConstraint create(String name, String value) {
         String className = aliases.getOrDefault(name, name);
         try {
@@ -83,10 +101,23 @@ public final class ConstraintFactory {
         }
     }
 
+    /**
+     * Retrieves the list of all available constraint names.
+     * The returned constraints represent the keys in the internal alias mapping.
+     *
+     * @return a list of constraint names available for use. The returned list is a new instance and modifications
+     *         to it do not affect the internal state of the class.
+     */
     public static List<String> getAvailableConstraints() {
         return new ArrayList<>(aliases.keySet());
     }
 
+    /**
+     * Sets the naming rule provider used to determine naming rules for constraints.
+     *
+     * @param provider the {@code NamingRuleProvider} instance to be set. This provider
+     *                 is responsible for supplying naming rules and handling related operations.
+     */
     public static void setNamingRuleProvider(NamingRuleProvider provider) {
         namingRuleProvider = provider;
     }

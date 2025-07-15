@@ -21,6 +21,24 @@ import ro.cs.tao.component.StringIdentifiable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Represents a user entity in the system with various attributes and metadata
+ * for user management and authentication purposes. This class extends
+ * {@code StringIdentifiable}.
+ *
+ * This class is annotated with {@code @JsonIgnoreProperties} to ignore
+ * certain fields during JSON serialization and deserialization.
+ *
+ * Attributes of the user include:
+ * - Personal information such as username, first name, and last name.
+ * - Contact details like email, alternative email, and phone number.
+ * - System metadata such as last login date, organization, quotas, and status.
+ * - Security-related fields like password, password reset key, and user type.
+ * - Associated groups and user preferences.
+ *
+ * The {@code password}, {@code created}, and {@code modified} fields are marked
+ * to be ignored in JSON processing to ensure security and reduce redundancy.
+ */
 @JsonIgnoreProperties( { "password", "created", "modified" })
 public class User extends StringIdentifiable {
 

@@ -12,16 +12,42 @@ import java.time.LocalDateTime;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * A decorator for {@code InputStream} that provides progress monitoring capability by notifying a
+ * {@code ProgressListener} about the current progress of an ongoing stream operation.
+ * It is designed to track the number of bytes read and periodically invoke callbacks on the listener.
+ */
 public class ListenableInputStream extends InputStream {
     private final InputStream wrappedStream;
     private double total;
     private double lastValue;
     private Timer timer;
 
+    /**
+     * Constructs a new ListenableInputStream instance with the specified wrapped input stream
+     * and progress listener. This constructor initializes the input stream to monitor its
+     * progress during read operations.
+     *
+     * @param wrappedStream the InputStream to be wrapped and monitored. Must not be null.
+     * @param listener the ProgressListener instance to receive progress updates. Must not be null.
+     * @throws IllegalArgumentException if either wrappedStream or listener is null.
+     */
     public ListenableInputStream(InputStream wrappedStream, ProgressListener listener) {
         this(wrappedStream, 0, listener);
     }
 
+    /**
+     * Constructs a new ListenableInputStream instance with the specified wrapped input stream,
+     * content length, and progress listener. This constructor initializes the input stream
+     * to monitor its progress during read operations and reports progress periodically.
+     *
+     * @param wrappedStream the InputStream to be wrapped and monitored. Must not be null.
+     * @param contentLength the total length of the content to be read. If set to 0 or negative,
+     *                      the total length will be determined from the available bytes in the
+     *                      wrapped input stream, if possible.
+     * @param listener the ProgressListener instance to receive progress updates. Must not be null.
+     * @throws IllegalArgumentException if either wrappedStream or listener is null.
+     */
     public ListenableInputStream(InputStream wrappedStream, long contentLength, ProgressListener listener) {
         if (wrappedStream == null || listener == null) {
             throw new IllegalArgumentException("Null argument");

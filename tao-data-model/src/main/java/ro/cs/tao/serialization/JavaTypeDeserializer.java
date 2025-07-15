@@ -9,6 +9,16 @@ import ro.cs.tao.datasource.param.JavaType;
 
 import java.io.IOException;
 
+/**
+ * A custom deserializer for the {@code JavaType} enumeration, extending the standard
+ * deserialization functionality provided by {@code StdDeserializer}.
+ *
+ * This deserializer handles the conversion of JSON input into a {@code JavaType} instance,
+ * based on its textual representation. It attempts to match the input string value
+ * to an enumeration constant by either a friendly name or class representation.
+ * If the matching fails, it throws an {@code IOException}.
+ * @author  Cosmin Cara
+ */
 public class JavaTypeDeserializer extends StdDeserializer<JavaType> {
     public JavaTypeDeserializer() {
         super(JavaType.class);

@@ -6,6 +6,23 @@ import ro.cs.tao.utils.executors.MemoryUnit;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Represents the specifications of a node flavor, including its compute and memory characteristics.
+ * A flavor defines a set of hardware and resource configurations that can be applied to a node.
+ *
+ * This class extends {@code StringIdentifiable}, allowing each flavor to have a unique string identifier.
+ *
+ * Nodes with specific flavors are characterized by their CPU cores, memory size, disk size, swap size, and RX/TX factor.
+ * The memory unit for the resource can also be specified.
+ *
+ * The following properties are provided:
+ * - CPU: Number of virtual or physical CPU cores allocated to the flavor.
+ * - Memory: Memory in the specified unit allocated to the flavor.
+ * - Disk: Storage space allocated to the flavor (in GB).
+ * - Swap: Swap space allocated to the flavor (also in GB).
+ * - RX/TX Factor: Network bandwidth factor associated with the flavor.
+ * - Memory Unit: The unit used for expressing memory (e.g., Bytes, KB, MB, GB, TB).
+ */
 @XmlRootElement(name = "flavor")
 public class NodeFlavor extends StringIdentifiable {
     private int cpu;

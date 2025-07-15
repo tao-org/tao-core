@@ -5,6 +5,22 @@ import ro.cs.tao.utils.Tuple;
 
 import java.util.*;
 
+/**
+ * The PreviousProductAssociation class is a specific implementation of the Association class,
+ * designed to associate EOProduct objects based on their geographic footprint and acquisition dates.
+ * It produces pairs of EOProducts where the second product in the pair follows the first
+ * product chronologically and both products share the same geographic footprint.
+ *
+ * Key Behavior:
+ * - The associate method groups the input EOProduct list by their shared geometry (footprint).
+ * - Within each group of products with the same geometry, it sorts the products by acquisition date.
+ * - Creates pairs of products where the first product's acquisition date is earlier than
+ *   the second product's acquisition date.
+ *
+ * Description:
+ * - This association is described using the friendly name: "Pair by Same Footprint and Previous Date".
+ * - The description method returns a String array containing this name.
+ */
 public class PreviousProductAssociation extends Association<EOProduct> {
 
     public PreviousProductAssociation() {

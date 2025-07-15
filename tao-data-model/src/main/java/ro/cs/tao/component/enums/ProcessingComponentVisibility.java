@@ -21,7 +21,19 @@ import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
- * @author Oana H.
+ * Represents the visibility types for processing components within the TAO system.
+ * Each visibility type is associated with an integer value and a descriptive friendly name.
+ *
+ * This enumeration implements the {@link TaoEnum} interface to provide additional properties
+ * such as a user-friendly name and value. It is annotated with {@code @XmlEnum} to facilitate
+ * XML binding and serialization.
+ *
+ * Enumeration types:
+ *  - SYSTEM: Represents a TAO system built-in component.
+ *  - USER: Represents a user-defined component.
+ *  - CONTRIBUTOR: Represents a contributor-defined component.
+ *
+ *  @author Oana H.
  */
 @XmlEnum(Integer.class)
 public enum ProcessingComponentVisibility implements TaoEnum<Integer> {

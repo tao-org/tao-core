@@ -16,6 +16,10 @@
 
 package ro.cs.tao;
 
+/**
+ * Enumeration representing the direction of sorting.
+ * Used in conjunction with sorting mechanisms to specify ascending or descending order.
+ */
 public enum SortDirection {
     ASC,
     DESC
