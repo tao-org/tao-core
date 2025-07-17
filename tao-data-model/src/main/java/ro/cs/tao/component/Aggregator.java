@@ -12,7 +12,7 @@ public class Aggregator {
     private String[] sorter;
     private String[] associator;
     private String[] filter;
-    private int order;
+    private Integer order;
 
     /**
      * Retrieves the array of sorter names.
@@ -43,7 +43,7 @@ public class Aggregator {
      *
      * @return an integer representing the order value
      */
-    public int getOrder() {
+    public Integer getOrder() {
         return order;
     }
 
@@ -52,7 +52,7 @@ public class Aggregator {
      *
      * @param order the integer value representing the order to be set
      */
-    public void setOrder(int order) {
+    public void setOrder(Integer order) {
         this.order = order;
     }
 

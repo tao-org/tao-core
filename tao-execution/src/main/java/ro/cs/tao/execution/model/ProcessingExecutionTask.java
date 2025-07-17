@@ -71,6 +71,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
 
     @Override
     public void setInputParameterValue(String parameterName, String value) {
+        setInputParameterValue(parameterName, value, true);
+    }
+
+    @Override
+    public void setInputParameterValue(String parameterName, String value, boolean sortLexicographically) {
         final boolean descriptorExists =
                 this.component.getParameterDescriptors().stream().anyMatch(d -> d.getName().equals(parameterName)) ||
                 this.component.getSources().stream().anyMatch(s -> s.getName().equals(parameterName)) ||
@@ -81,7 +86,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (!descriptorExists) {
             if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterName)) {
                 throw new ValidationException(String.format("The parameter [%s] does not exists in the component '%s'",
-                        parameterName, component.getLabel()));
+                                                            parameterName, component.getLabel()));
             }
         }
         if (this.inputParameterValues == null) {
@@ -92,15 +97,15 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                      .findFirst()
                                                      .orElse(null);
         SourceDescriptor sourceDescriptor = this.component.getSources().stream()
-                                                                       .filter(s -> s.getName().equals(parameterName))
-                                                                       .findFirst()
-                                                                       .orElse(null);
+                                                          .filter(s -> s.getName().equals(parameterName))
+                                                          .findFirst()
+                                                          .orElse(null);
         final int cardinality = sourceDescriptor != null ? sourceDescriptor.getCardinality() : 1;
         if (variable != null) {
             if (cardinality == 1) {
                 variable.setValue(value);
             } else {
-                variable.setValue(value != null ? appendValueToList(variable.getValue(), value) : value);
+                variable.setValue(value != null ? appendValueToList(variable.getValue(), value, sortLexicographically) : value);
             }
         } else {
             Variable var;

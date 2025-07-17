@@ -54,6 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -312,6 +313,7 @@ public class TaskUtilities {
         }
         final WorkflowNodeDescriptor node = workflowNodeProvider.get(toTask.getWorkflowNodeId());
         final Set<ComponentLink> links = node.getIncomingLinks();
+        final AtomicBoolean hasOrder = new AtomicBoolean(false);
         if (links != null && !links.isEmpty()) {
             // In some cases, inputs have to be in a specific order; if specified, the links should be sorted,
             // otherwise the order doesn't matter
@@ -321,9 +323,8 @@ public class TaskUtilities {
                 public int compare(ComponentLink o1, ComponentLink o2) {
                     Aggregator a1 = o1.getAggregator();
                     Aggregator a2 = o2.getAggregator();
-                    return a1 != null && a2 != null
-                            ? Integer.compare(a1.getOrder(), a2.getOrder())
-                            : 0;
+                    hasOrder.set(a1 != null && a2 != null && a1.getOrder() != null && a2.getOrder() != null);
+                    return hasOrder.get() ? Integer.compare(a1.getOrder(), a2.getOrder()) : 0;
                 }
             });
             for (ComponentLink link : sortedLinks) {
@@ -338,7 +339,9 @@ public class TaskUtilities {
                     final Variable inputVar = toTask.getInputParameterValues().stream().filter(p -> p.getKey().equals(toSourceName)).findFirst().get();
                     final boolean isExternal = isExternal(parentTask);
                     if (!isExternal || inputVar.getValue() == null) {
-                        toTask.setInputParameterValue(toSourceName, relativizePathForExecution(outValue, toTask));
+                        toTask.setInputParameterValue(toSourceName,
+                                                      relativizePathForExecution(outValue, toTask),
+                                                      !hasOrder.get());
                         logger.finest(String.format("Transferred output [%s] of task %s to task %s",
                                                     toSourceName, parentTask.getId(), toTask.getId()));
                     } else {

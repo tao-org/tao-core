@@ -168,6 +168,9 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.inputParameterValues = inputParameterValues;
     }
     public abstract void setInputParameterValue(String parameterId, String value);
+    public void setInputParameterValue(String parameterId, String value, boolean sortLexicographically) {
+        setInputParameterValue(parameterId, value);
+    }
 
     public List<Variable> getOutputParameterValues() {
         return outputParameterValues;
@@ -272,6 +275,10 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
 
     protected String appendValueToList(String valuesAsString, String newValue) {
+        return appendValueToList(valuesAsString, newValue, true);
+    }
+
+    protected String appendValueToList(String valuesAsString, String newValue, boolean sortLexicographically) {
         List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
                 new ArrayList<>() :
                 getListParameterValues(valuesAsString);
@@ -279,19 +286,21 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         if (!values.contains(newValue) && newValue != null && !newValue.contains("[null]")) {
             values.add(newValue);
         }
-        values.sort(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                if (StringUtilities.isNullOrEmpty(o1) || StringUtilities.isNullOrEmpty(o2)) {
-                    return 0;
+        if (sortLexicographically) {
+            values.sort(new Comparator<String>() {
+                @Override
+                public int compare(String o1, String o2) {
+                    if (StringUtilities.isNullOrEmpty(o1) || StringUtilities.isNullOrEmpty(o2)) {
+                        return 0;
+                    }
+                    try {
+                        return Paths.get(o1).getFileName().compareTo(Paths.get(o2).getFileName());
+                    } catch (Exception e) {
+                        return o1.compareTo(o2);
+                    }
                 }
-                try {
-                    return Paths.get(o1).getFileName().compareTo(Paths.get(o2).getFileName());
-                } catch (Exception e) {
-                    return o1.compareTo(o2);
-                }
-            }
-        });
+            });
+        }
         return convertListToSingleValue(values);
     }
 }
