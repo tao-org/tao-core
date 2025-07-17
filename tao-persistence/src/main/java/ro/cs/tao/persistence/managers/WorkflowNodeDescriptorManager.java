@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
@@ -71,6 +72,11 @@ public class WorkflowNodeDescriptorManager extends EntityManager<WorkflowNodeDes
     @Override
     public void updatePosition(Long id, float[] coordinates) throws PersistenceException {
         this.repository.updatePosition(id, coordinates[0], coordinates[1]);
+    }
+
+    @Override
+    public ComponentLink getLink(long fromNodeId, String fromOutputId, long toNodeId, String toInputId) {
+        return this.repository.getLink(fromNodeId, fromOutputId, toNodeId, toInputId);
     }
 
     @Override

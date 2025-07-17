@@ -7,6 +7,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
@@ -42,4 +43,9 @@ public interface WorkflowNodeDescriptorRepository extends PagingAndSortingReposi
     @Query(value = "UPDATE workflow.graph_node SET xcoord = :x, ycoord = :y WHERE id = :id", nativeQuery = true)
     @Modifying
     void updatePosition(@Param("id") long id, @Param("x") float x, @Param("y") float y);
+
+    @Query(value = "SELECT * FROM workflow.component_link WHERE source_graph_node_id = :sourceNodeId AND target_descriptor_id = :targetDescriptorId " +
+                   "AND target_graph_node_id = :targetNodeId AND source_descriptor_id = :sourceDescriptorId", nativeQuery = true)
+    ComponentLink getLink(@Param("sourceNodeId") long sourceNodeId, @Param("targetDescriptorId") String targetDescriptorId,
+                          @Param("targetNodeId") long targetNodeId, @Param("sourceDescriptorId") String sourceDescriptorId);
 }

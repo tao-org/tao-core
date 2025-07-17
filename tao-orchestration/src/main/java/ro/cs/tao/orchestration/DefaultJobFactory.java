@@ -348,7 +348,16 @@ public class DefaultJobFactory {
         task.setComponent(component);
         // Placeholders for inputs of previous tasks
         if (incomingLinks != null) {
-            incomingLinks.forEach(link -> {
+            incomingLinks.stream().sorted(new Comparator<ComponentLink>() {
+                @Override
+                public int compare(ComponentLink o1, ComponentLink o2) {
+                    Aggregator a1 = o1.getAggregator();
+                    Aggregator a2 = o2.getAggregator();
+                    return a1 != null && a2 != null && a1.getOrder() != null && a2.getOrder() != null
+                            ? Integer.compare(a1.getOrder(), a2.getOrder())
+                            : 0;
+                }
+            }).forEach(link -> {
                 String name = link.getOutput().getName();
                 task.setInputParameterValue(name, null);
             });

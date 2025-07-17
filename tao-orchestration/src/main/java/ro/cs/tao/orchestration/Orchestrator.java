@@ -1535,12 +1535,13 @@ public class Orchestrator extends Notifiable {
                     component = processingComponentProvider.get(node.getComponentId());
                 }
                 List<EOProduct> products = new ArrayList<>();
-                final boolean createMetadata = !ConfigurationManager.getInstance().getBooleanValue("tao.remove.intermediate.files")
-                        || TaskUtilities.isTerminalTask(task);
+                boolean isTerminal = TaskUtilities.isTerminalTask(task);
                 for (Variable value : values) {
-                    products.addAll(createProducts(component, value, task.getJob().getUserId(), createMetadata));
+                    products.addAll(createProducts(component, value, task.getJob().getUserId(), isTerminal));
                 }
-                OutputDataHandlerManager.getInstance().applyHandlers(products, createMetadata);
+                if (isTerminal) {
+                    OutputDataHandlerManager.getInstance().applyHandlers(products, isTerminal);
+                }
             } else {
                 logger.warning(String.format("Workflow node %d for task %s has been deleted before the task persisted output",
                                              task.getWorkflowNodeId(), task.getId()));

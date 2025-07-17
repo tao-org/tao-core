@@ -1,5 +1,6 @@
 package ro.cs.tao.persistence;
 
+import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -56,5 +57,7 @@ public interface WorkflowNodeProvider extends EntityProvider<WorkflowNodeDescrip
      * @return the {@link WorkflowNodeDescriptor} representing the cloned node, or null if no cloned node is found
      */
     WorkflowNodeDescriptor findClonedNode(long workflowId, long originalNodeId);
+
+    ComponentLink getLink(long fromNodeId, String fromOutputId, long toNodeId, String toInputId);
 
 }
