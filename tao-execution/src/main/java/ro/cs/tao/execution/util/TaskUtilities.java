@@ -46,6 +46,7 @@ import ro.cs.tao.utils.executors.*;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
+import ro.cs.tao.workspaces.Repository;
 import ro.cs.tao.workspaces.RepositoryType;
 
 import java.io.IOException;
@@ -637,6 +638,16 @@ public class TaskUtilities {
         return repositoryProvider.getUserSystemRepositories(task.getJob().getUserId()).stream()
                                  .filter(r -> r.getType() == RepositoryType.LOCAL)
                                  .findFirst().get().root();
+    }
+
+    /**
+     * Returns the local repository of the user executing the job.
+     * @param job  The execution job.
+     */
+    public static Repository getUserLocalRepository(ExecutionJob job) {
+        return repositoryProvider.getUserSystemRepositories(job.getUserId()).stream()
+                                 .filter(r -> r.getType() == RepositoryType.LOCAL)
+                                 .findFirst().get();
     }
 
     /**
