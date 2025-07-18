@@ -28,6 +28,10 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
 
     List<ExecutionJob> findByWorkflowIdAndUserId(long workflowId, String userId);
 
+    @Query(value = "SELECT * FROM execution.job WHERE workflow_id = :workflowId AND user_id = :userId " +
+                   "AND execution_status_id NOT IN (2, 7) ORDER BY start_time DESC, end_time DESC", nativeQuery = true)
+    List<ExecutionJob> getNotRunningJobs(@Param("workflowId") long workflowId, @Param("userId") String userId);
+
     /**
      * Returns all the entities having the given status
      * @param status    The status to lookup for

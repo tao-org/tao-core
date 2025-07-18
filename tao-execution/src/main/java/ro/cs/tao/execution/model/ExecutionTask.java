@@ -274,10 +274,35 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         return values.get(index - 1);
     }
 
+    /**
+     * Appends a new value to a comma-separated list of values, optionally provided as a single string.
+     * If the new value is not already present in the list, it will be added.
+     * Optionally, the resulting list can be sorted lexicographically.
+     *
+     * @param valuesAsString the existing comma-separated list of values as a string,
+     *                       or null/empty if no values are present.
+     * @param newValue the new value to be added to the list.
+     * @return a string representing the updated list of values, including the new value
+     *         if it was added.
+     */
     protected String appendValueToList(String valuesAsString, String newValue) {
         return appendValueToList(valuesAsString, newValue, true);
     }
 
+    /**
+     * Appends a new value to a given comma-separated list of values, and optionally sorts the resulting list lexicographically.
+     * If the provided value already exists in the list or is invalid, it will not be appended.
+     * Null or invalid entries in the list are removed before processing.
+     *
+     * @param valuesAsString the existing comma-separated list of values as a string,
+     *                       or null/empty if no values are currently present.
+     * @param newValue the new value to be added to the list. It will not be added if it is null,
+     *                 contains "[null]" or already exists in the list.
+     * @param sortLexicographically a boolean flag indicating whether the resulting list should be sorted
+     *                              lexicographically by filename, or left in its original input order.
+     * @return a string representing the updated, comma-separated list of values after appending
+     *         the new value (if valid and added) and optionally sorting the list.
+     */
     protected String appendValueToList(String valuesAsString, String newValue, boolean sortLexicographically) {
         List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
                 new ArrayList<>() :
