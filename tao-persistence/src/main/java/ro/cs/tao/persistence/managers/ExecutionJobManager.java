@@ -50,7 +50,7 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
 
     @Override
     public List<ExecutionJob> listByWorkflow(long workflowId, String userId) {
-        return repository.findByWorkflowIdAndUserId(workflowId, userId);
+        return repository.getNotRunningJobs(workflowId, userId);
     }
 
     @Override
