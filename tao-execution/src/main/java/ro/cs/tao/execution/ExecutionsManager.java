@@ -134,9 +134,10 @@ public class ExecutionsManager {
         if (action != null) {
             try {
                 action.call();
-                postExecuteTaskActions.remove(task.getId());
             } catch (Throwable e) {
                 Logger.getLogger(ExecutionsManager.class.getName()).warning(e.getMessage());
+            } finally {
+                postExecuteTaskActions.remove(task.getId());
             }
         }
     }
@@ -164,10 +165,6 @@ public class ExecutionsManager {
                     .filter(x -> x.supports(((DataSourceExecutionTask) task).getComponent()))
                     .findFirst();
         }
-        if(optional.isPresent()) {
-            return optional.get();
-        } else {
-            throw new ExecutionException("The component does not have an associated executor!");
-        }
+        return optional.orElseThrow(() -> new ExecutionException("The component does not have an associated executor!"));
     }
 }
