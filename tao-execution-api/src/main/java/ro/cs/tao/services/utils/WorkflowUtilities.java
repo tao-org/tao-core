@@ -144,6 +144,14 @@ public class WorkflowUtilities {
         return component != null ? component.getSources().stream().filter(s -> s.getId().equals(id)).findFirst().orElse(null) : null;
     }
 
+    /**
+     * Identifies and returns the workflow node that owns the given source descriptor within a specified group.
+     *
+     * @param groupSource The source descriptor for which to find the owning workflow node.
+     * @param groupNode   The workflow node group descriptor containing the group of nodes to be inspected.
+     * @return The workflow node that owns the provided source descriptor, or null if no owner is found.
+     * @throws PersistenceException If an error occurs while accessing the persistence layer.
+     */
     public static WorkflowNodeDescriptor findGroupSourceOwner(SourceDescriptor groupSource, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
         WorkflowNodeDescriptor owner = null;
         final List<WorkflowNodeDescriptor> nodes = groupNode.getNodes();
@@ -159,6 +167,15 @@ public class WorkflowUtilities {
         return owner;
     }
 
+    /**
+     * Identifies and returns the workflow node that owns the specified target descriptor
+     * within a given workflow node group.
+     *
+     * @param groupTarget The target descriptor for which the owning workflow node is to be determined.
+     * @param groupNode   The workflow node group descriptor that contains the group of nodes to inspect.
+     * @return The workflow node that owns the provided target descriptor, or null if no owner is found.
+     * @throws PersistenceException If an error occurs while accessing the persistence layer.
+     */
     public static WorkflowNodeDescriptor findGroupTargetOwner(TargetDescriptor groupTarget, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
         WorkflowNodeDescriptor owner = null;
         final List<WorkflowNodeDescriptor> nodes = groupNode.getNodes();
@@ -174,6 +191,16 @@ public class WorkflowUtilities {
         return owner;
     }
 
+    /**
+     * Finds the ancestors of a given workflow node by identifying nodes that have incoming links
+     * directed towards the specified node.
+     *
+     * @param node the workflow node for which ancestors are to be found
+     *             (must not be null, and must belong to a valid workflow instance).
+     * @return a list of workflow node descriptors that represent the ancestors of the given node,
+     *         or null if the node is null, the workflow associated with the node is null,
+     *         the node has no incoming links, or no ancestors are found.
+     */
     public static List<WorkflowNodeDescriptor> findAncestors(WorkflowNodeDescriptor node) {
         if (node == null) {
             return null;
@@ -192,6 +219,16 @@ public class WorkflowUtilities {
         }
     }
 
+    /**
+     * Finds the descendants of a given workflow node by identifying nodes whose incoming links
+     * originate from the specified node.
+     *
+     * @param node the workflow node for which descendants are to be determined. The node
+     *             must not be null, and must belong to a valid workflow instance.
+     * @return a list of workflow node descriptors that represent the descendants of the
+     *         specified node. Returns null if the input node is null, if the workflow associated
+     *         with the node is null, or if no descendants are found.
+     */
     public static List<WorkflowNodeDescriptor> findDescendants(WorkflowNodeDescriptor node) {
         if (node == null) {
             return null;
@@ -206,6 +243,17 @@ public class WorkflowUtilities {
                     .collect(Collectors.toList());
     }
 
+    /**
+     * Finds the siblings of the given workflow node within the same workflow.
+     * A sibling is defined as a node that shares at least one parent node with the specified node,
+     * or, if the given node has no incoming links, any other node without incoming links.
+     *
+     * @param node the workflow node for which siblings are to be identified.
+     *             It must not be null and must belong to a valid workflow instance.
+     * @return a list of workflow node descriptors representing the siblings of the given node,
+     *         or null if the input node is null, the workflow associated with the node is null,
+     *         or no siblings are found.
+     */
     public static List<WorkflowNodeDescriptor> findSiblings(WorkflowNodeDescriptor node) {
         if (node == null) {
             return null;
@@ -235,6 +283,14 @@ public class WorkflowUtilities {
         return siblings;
     }
 
+    /**
+     * Deletes all nodes associated with the specified workflow, along with their incoming links,
+     * and then removes the workflow itself from persistence.
+     *
+     * @param workflowId The unique identifier of the workflow whose nodes are to be deleted.
+     * @throws PersistenceException If the workflow does not exist, or an error occurs during
+     *                              the deletion process in the persistence layer.
+     */
     public static void deleteWorkflowNodes(long workflowId) throws PersistenceException {
         WorkflowDescriptor workflow = persistenceManager.workflows().get(workflowId);
         if (workflow == null) {
@@ -256,16 +312,46 @@ public class WorkflowUtilities {
         persistenceManager.workflows().delete(workflowId);
     }
 
+    /**
+     * Retrieves the SourceDescriptor entity of a workflow node by its identifier.
+     *
+     * @param id   The unique identifier of the source descriptor to search for.
+     * @param node The workflow node within which to look for the source descriptor.
+     * @return The SourceDescriptor with the specified identifier if found,
+     *         or null if no such source descriptor exists.
+     * @throws PersistenceException If an error occurs while accessing the persistence layer.
+     */
     public static SourceDescriptor findSourceById(String id, WorkflowNodeDescriptor node) throws PersistenceException {
         TaoComponent component = findComponent(node);
         return component != null ? component.getSources().stream().filter(s -> s.getId().equals(id)).findFirst().orElse(null) : null;
     }
 
+    /**
+     * Retrieves the TargetDescriptor entity of a workflow node by its unique identifier.
+     *
+     * @param id   The unique identifier of the target descriptor to search for.
+     * @param node The workflow node within which to look for the target descriptor.
+     * @return The TargetDescriptor with the specified identifier if found,
+     *         or null if no such target descriptor exists.
+     * @throws PersistenceException If an error occurs while accessing the persistence layer.
+     */
     public static TargetDescriptor findTargetById(String id, WorkflowNodeDescriptor node) throws PersistenceException {
         TaoComponent component = findComponent(node);
         return component != null ? component.getTargets().stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null) : null;
     }
 
+    /**
+     * Finds and retrieves a {@code TaoComponent} based on the given {@code WorkflowNodeDescriptor}.
+     * The component is determined by the type and identifier specified in the {@code nodeDescriptor}.
+     *
+     * @param nodeDescriptor The descriptor of the workflow node whose corresponding component
+     *                       is to be retrieved. Must not be null. The descriptor contains both
+     *                       the type and ID of the desired component.
+     * @return The {@code TaoComponent} corresponding to the specified {@code WorkflowNodeDescriptor}.
+     *         Returns null if the passed {@code nodeDescriptor} is null.
+     * @throws PersistenceException If no component is found for the specified identifier
+     *                              or an error occurs in the persistence layer.
+     */
     public static TaoComponent findComponent(WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException{
         if (nodeDescriptor == null) {
             return null;
@@ -343,6 +429,15 @@ public class WorkflowUtilities {
         }
     }
 
+    /**
+     * Determines the hierarchical level of the specified workflow node within its associated workflow.
+     * The level is determined based on the node's incoming connections and its position in the workflow.
+     * If the node's level is recalculated to a higher value, the updated level is persisted.
+     *
+     * @param node the workflow node whose level is to be determined. The node must belong to a valid workflow instance
+     *             and contain all necessary incoming link data.
+     * @return the hierarchical level of the specified node within its workflow.
+     */
     public static int getNodeLevel(WorkflowNodeDescriptor node) {
         int level = 1;
         final List<WorkflowNodeDescriptor> allNodes = node.getWorkflow().getOrderedNodes();
@@ -363,6 +458,16 @@ public class WorkflowUtilities {
         return level;
     }
 
+    /**
+     * Determines the level of a given workflow node in the workflow hierarchy.
+     * The level is calculated based on the incoming links to the node,
+     * recursively considering the levels of parent nodes. Updates the level
+     * in the node if recalculated.
+     *
+     * @param node the workflow node whose level is to be determined
+     * @param allNodes the list of all workflow nodes available for the hierarchy
+     * @return the determined level of the specified node
+     */
     public static int getNodeLevel(WorkflowNodeDescriptor node, List<WorkflowNodeDescriptor> allNodes) {
         int level = 1;
         if (node.getIncomingLinks() != null && !node.getIncomingLinks().isEmpty()) {
