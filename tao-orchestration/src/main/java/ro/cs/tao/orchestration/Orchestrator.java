@@ -2065,6 +2065,13 @@ public class Orchestrator extends Notifiable {
                                        job.getExecutionStatus().friendlyName(),
                                        time != null ? time.getSeconds() : "<n/a>");
             if (ExecutionStatus.DONE.equals(job.getExecutionStatus())) {
+                JobType type = job.getJobType();
+                if (type != JobType.EXECUTION) {
+                    Path outPath = Paths.get(job.getJobOutputPath());
+                    outPath = outPath.resolve(outPath.getFileName().toString() + type.getOutputExtension());
+                    job.setJobOutputPath(outPath.toString());
+                    jobProvider.update(job);
+                }
                 logger.info(msg);
             } else {
                 logger.warning(msg);

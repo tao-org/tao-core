@@ -70,18 +70,32 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
         final String ext = ConfigurationManager.getInstance().getValue("quicklook.extension", ".png");
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
-                    con.prepareStatement("SELECT t.job_id, t.id, t.end_time," +
-                                        "REGEXP_REPLACE(t.actual_target, '.*/', '') AS filename, t.actual_target, COALESCE(d.data_format_id, 7) as data_format_id," +
-                                        "CASE WHEN d.data_format_id = 1 THEN rdp.approximate_size ELSE -1 END AS \"size\" " +
-                                        "FROM execution.task t " +
-                                        "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 " +
-                                        "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
-                                        "JOIN component.processing_component_targets ct ON ct.processing_component_id = t.component_id " +
-                                        "JOIN component.target_descriptor d ON d.id = ct.target_descriptor_id " +
-                                        "LEFT JOIN product.raster_data_product rdp ON rdp.entry_point = REGEXP_REPLACE(t.actual_target, '.*/', '') " +
-                                        "WHERE e.workflow_id = ? AND e.user_id = ? ORDER BY t.job_id, t.end_time DESC");
+                    con.prepareStatement("WITH executions as ( " +
+                                         "SELECT t.job_id, t.id, t.end_time, " +
+                                         "REGEXP_REPLACE(t.actual_target, '.*/', '') AS filename, t.actual_target, COALESCE(d.data_format_id, 7) as data_format_id, " +
+                                         "CASE WHEN d.data_format_id = 1 THEN rdp.approximate_size ELSE -1 END AS \"size\" " +
+                                         "FROM execution.task t " +
+                                         "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 AND e.job_type = 0 " +
+                                         "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
+                                         "JOIN component.processing_component_targets ct ON ct.processing_component_id = t.component_id " +
+                                         "JOIN component.target_descriptor d ON d.id = ct.target_descriptor_id " +
+                                         "LEFT JOIN product.raster_data_product rdp ON rdp.entry_point = REGEXP_REPLACE(t.actual_target, '.*/', '') " +
+                                         "WHERE e.workflow_id = ? AND e.user_id = ?), " +
+                                         "scripts as (" +
+                                         "SELECT e.id as job_id, (SELECT id FROM execution.task where job_id = e.id ORDER BY end_time LIMIT 1) as id, e.end_time, " +
+                                         "REGEXP_REPLACE(e.output_path, '.*/', '') AS filename, e.output_path as actual_target, 6 as data_format_id, -1 AS \"size\" " +
+                                         "FROM execution.job e " +
+                                         "WHERE e.execution_status_id = 4 AND e.job_type != 0 AND e.workflow_id = ? AND e.user_id = ?) " +
+                                         "SELECT job_id, id, end_time, filename, actual_target, data_format_id, \"size\" " +
+                                         "FROM executions " +
+                                         "UNION " +
+                                         "SELECT job_id, id, end_time, filename, actual_target, data_format_id, \"size\" " +
+                                         "FROM scripts " +
+                                         "ORDER BY job_id, end_time DESC");
             statement.setLong(1, workflowId);
             statement.setString(2, userId);
+            statement.setLong(3, workflowId);
+            statement.setString(4, userId);
             return statement;
         }, (rs, rowNum) -> {
             ExecutionTaskOutput result = new ExecutionTaskOutput();
