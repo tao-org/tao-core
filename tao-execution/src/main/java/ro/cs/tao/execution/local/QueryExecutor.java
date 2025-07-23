@@ -34,6 +34,7 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.JobType;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -327,7 +328,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     final StringBuilder builder = new StringBuilder();
                     final StringBuilder srcBuilder = new StringBuilder();
                     final List<String> errList = new ArrayList<>();
-                    final boolean shouldReplace = ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
+                    final boolean shouldReplace = job.getJobType() == JobType.EXECUTION
+                                                  && ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
                     final double total = list.length;
                     double counter = 0;
                     for (String item : list) {
