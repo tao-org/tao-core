@@ -380,7 +380,8 @@ public class DefaultJobFactory {
         final NodeAffinity nodeAffinity = affinityParam != null
                 ? NodeAffinity.of(affinityParam.getParameterValue())
                 : component.getNodeAffinity();
-        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
+        if (nodeAffinity != null
+                && !(NodeAffinity.Any.equals(nodeAffinity) || NodeAffinity.SameNode.equals(nodeAffinity))) {
             task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
         if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
