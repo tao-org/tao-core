@@ -220,15 +220,13 @@ public enum JavaType implements TaoEnum<Class<?>> {
     /**
      * Parses the provided string value into an object of the expected type using the configured converter.
      * If the value is null, the method returns null cast to the appropriate type.
-     * If the class type is an array, this method will throw an {@link IllegalArgumentException}.
      *
      * @param value The string value to be parsed. Can be null.
      * @return The parsed object of the expected type, or {@code null} if the input value is null.
-     * @throws IllegalArgumentException If the method is called on an array type.
      */
     public Object parse(String value) {
         if (this.clazz.isArray()) {
-            throw new IllegalArgumentException("Method should not be called on an array type");
+            return parseArray(value);
         }
         return value != null ? this.converter.apply(value) : this.clazz.cast(null);
     }
