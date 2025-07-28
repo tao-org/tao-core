@@ -111,7 +111,7 @@ public class DefaultJobFactory implements JobFactory {
                     .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
                     .map(n -> (WorkflowNodeGroupDescriptor) n)
                     .collect(Collectors.toSet());
-            final boolean preComputeOutputs = job.getJobType() != JobType.EXECUTION;
+            final boolean preComputeOutputs = job.getJobType() != JobType.EXECUTION || job.getEnvironment() == Environment.SCRIPT;
             for (WorkflowNodeDescriptor node : nodes) {
                 // A workflow contains also the nodes of a node group.
                 // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
