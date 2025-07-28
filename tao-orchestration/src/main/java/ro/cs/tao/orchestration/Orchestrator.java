@@ -345,14 +345,14 @@ public class Orchestrator extends Notifiable {
      * @throws ExecutionException In case anything goes wrong
      */
     public ExecutionJob createJob(SessionContext context, long workflowId, String description,
-                                  Map<String, Map<String, String>> inputs, JobType jobType)  throws ExecutionException {
+                                  Map<String, Map<String, String>> inputs, JobType jobType, Environment env)  throws ExecutionException {
         try {
             final WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
             final ExecutionJob job = new ScriptJobFactory().createJob(context, this.uuid, description, descriptor,
-                                                                      inputs, jobType, Environment.DEFAULT);
+                                                                      inputs, jobType, env);
             this.jobQueue.put(job);
             return job;
         } catch (PersistenceException e) {
