@@ -1,5 +1,6 @@
 package ro.cs.tao.persistence;
 
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
@@ -217,11 +218,48 @@ public interface UserProvider extends EntityProvider<User, String> {
      *         and each value is the name corresponding to that identifier.
      */
     Map<String, String> listNames();
-    // Processing quota in GB
-    default int defaultProcessingQuota() { return 50; }
-    // Memory quota in MB
-    default int defaultMemoryQuota() { return 16384; }
-    default int defaultCPUQuota() { return 4; }
+
+    /**
+     * Retrieves the default input quota for users from the configuration settings.
+     * The method fetches the value associated with the key "topology.default.user.block.storage"
+     * in the configuration. If no value is provided, it defaults to 10.
+     *
+     * @return the default input quota as an integer, representing storage size in gigabytes (GB)
+     */
+    default int defaultInputQuota() {
+        return Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.default.user.block.storage", "10"));
+    }
+
+    /**
+     * Retrieves the default processing quota for the user in terms of S3 storage.
+     * The value is fetched from the application's configuration settings, falling back to a default value if not specified.
+     *
+     * @return the default processing quota as an integer, representing storage size in gigabytes (GB)
+     */
+    default int defaultProcessingQuota() {
+        return Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.default.user.s3.storage", "50"));
+    }
+
+    /**
+     * Retrieves the default memory quota for a topology user from the configuration.
+     * If the configuration value is not found, it defaults to 16384.
+     *
+     * @return the default memory quota value as an integer
+     */
+    default int defaultMemoryQuota() {
+        return Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.default.user.memory", "16384"));
+    }
+
+    /**
+     * Retrieves the default CPU quota for a topology configuration.
+     * The value is fetched from a configuration property "topology.default.user.cpu"
+     * and defaults to "4" if the property is not set.
+     *
+     * @return the default CPU quota as an integer
+     */
+    default int defaultCPUQuota() {
+        return Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.default.user.cpu", "4"));
+    }
     /**
      * Creates workspaces for the specified user by applying the given function
      * to repositories.
