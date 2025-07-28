@@ -16,7 +16,8 @@ import ro.cs.tao.TaoEnum;
  */
 public enum Environment implements TaoEnum<Integer> {
     DEFAULT(1, "Default"),
-    KUBERNETES(2, "Kubernetes");
+    KUBERNETES(2, "Kubernetes"),
+    SCRIPT(3, "Script");
 
     private final int value;
     private final String description;

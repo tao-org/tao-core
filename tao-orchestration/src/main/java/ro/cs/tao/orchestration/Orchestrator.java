@@ -135,7 +135,7 @@ public class Orchestrator extends Notifiable {
     private final UserProvider userProvider;
     private TaskSelector<ExecutionGroup> groupTaskSelector;
     private TaskSelector<ExecutionJob> jobTaskSelector;
-    private DefaultJobFactory jobFactory;
+    private final Map<Environment, JobFactory> jobFactories;
     private Set<MetadataInspector> metadataServices;
     private final ExecutorService messageWorker = Executors.newFixedThreadPool(1);
     private final Set<Long> runningTasks;
@@ -165,6 +165,11 @@ public class Orchestrator extends Notifiable {
         this.jobQueueWorker.setOrchestrator(this);
         this.activeJobs = new AtomicInteger(0);
         this.jobListeners = new ArrayList<>();
+        this.jobFactories = new EnumMap<>(Environment.class) {{
+            put(Environment.DEFAULT, new DefaultJobFactory());
+            put(Environment.KUBERNETES, new DefaultJobFactory());
+            put(Environment.SCRIPT, new ScriptJobFactory());
+        }};
         addJobListener(new JobListener(this));
         try {
             final NodeDescription masterNode = bridgedServices.getService(NodeDBProvider.class).get(Inet4Address.getLocalHost().getHostName());
@@ -203,7 +208,6 @@ public class Orchestrator extends Notifiable {
         initializeJobSelector(workflowProvider, this.taskProvider::getByJobAndNode);
         initializeGroupSelector(workflowProvider, this.taskProvider::getByGroupAndNode);
         TaskStatusHandler.registerHandlers(jobProvider, taskProvider);
-        this.jobFactory = new DefaultJobFactory();
         this.metadataServices = ServiceRegistryManager.getInstance().getServiceRegistry(MetadataInspector.class).getServices();
         OrchestratorWorker monitor = new OrchestratorWorker();
         monitor.setName("orchestrator");
@@ -238,7 +242,7 @@ public class Orchestrator extends Notifiable {
             final long productSetTasks = dataTasks.stream().filter(dt -> dt.getComponent().getId().startsWith("product-set-")).count();
             if (productSetTasks > 0) {
             	// try to split the job
-            	jobs.addAll(jobFactory.splitJobBeforeExecution(job)); 
+            	jobs.addAll(getJobFactory(request.getEnvironment()).splitJobBeforeExecution(job));
             }
             
             // add jobs for processing
@@ -394,10 +398,12 @@ public class Orchestrator extends Notifiable {
             } else {
                 env = EnumUtils.getEnumConstantByString(Environment.class, request.getEnvironment());
             }
-            return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized,
-                                             request.getParameters(), 
-                                             request.getJobType() == null ? JobType.EXECUTION : JobType.valueOf(request.getJobType()),
-                                             env);
+            return getJobFactory(request.getEnvironment()).createJob(context, this.uuid, request.getName(),
+                                                                     optimized, request.getParameters(),
+                                                                     request.getJobType() == null
+                                                                             ? JobType.EXECUTION :
+                                                                             JobType.valueOf(request.getJobType()),
+                                                                     env);
         } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -420,7 +426,7 @@ public class Orchestrator extends Notifiable {
         		return null;
         	}
         	// split the job into sub-jobs
-        	final List<ExecutionJob> jobsList = this.jobFactory.splitJobBeforeExecution(mainJob);
+        	final List<ExecutionJob> jobsList = getJobFactory(request.getEnvironment()).splitJobBeforeExecution(mainJob);
 
         	if (jobsList == null) {
         		return null;
@@ -446,7 +452,7 @@ public class Orchestrator extends Notifiable {
      */
     public ExecutionJob createWPSJob(String wpsId, Map<String, Map<String, String>> inputs)  throws ExecutionException {
         try {
-            return this.jobFactory.createWPSJob(SessionStore.currentContext(), this.uuid, wpsId, inputs);
+            return getJobFactory(Environment.DEFAULT).createWPSJob(SessionStore.currentContext(), this.uuid, wpsId, inputs);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -462,7 +468,7 @@ public class Orchestrator extends Notifiable {
      */
     public ExecutionJob createWMSJob(String wmsId, Map<String, String> inputs)  throws ExecutionException {
         try {
-            return this.jobFactory.createWMSJob(SessionStore.currentContext(), this.uuid, wmsId, inputs);
+            return getJobFactory(Environment.DEFAULT).createWMSJob(SessionStore.currentContext(), this.uuid, wmsId, inputs);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -698,7 +704,8 @@ public class Orchestrator extends Notifiable {
         }
         final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, payload);
         final ExecutionTask task = taskProvider.get(Long.parseLong(taskId));
-        final String user = task.getJob().getUserId();
+        final ExecutionJob job = task.getJob();
+        final String user = job.getUserId();
         try {
             currentContext.setPrincipal(new UserPrincipal(user));
             task.setContext(currentContext);
@@ -776,7 +783,7 @@ public class Orchestrator extends Notifiable {
                         }
                         if (manyParents) {
                             if (TaskUtilities.haveParentsCompleted(nextTask)) {
-                                final List<String> parentIds = task.getJob().getTaskDependencies().get(String.valueOf(nextTask.getId()));
+                                final List<String> parentIds = job.getTaskDependencies().get(String.valueOf(nextTask.getId()));
                                 final List<ExecutionTask> parentTasks = parentIds.stream().map(i -> taskProvider.get(Long.parseLong(i))).collect(Collectors.toList());
                                 boolean allDS = true;
                                 int parentCardinality = 0;
@@ -789,10 +796,10 @@ public class Orchestrator extends Notifiable {
                                     // There are more than 1 parent data source tasks that returned a list of results,
                                     // we need to split the job and
                                     try {
-                                        List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
-                                        logger.fine(String.format("Job %s will fork additional %d jobs", task.getJob().getName(), jobs.size()));
-                                        for (ExecutionJob job : jobs) {
-                                            this.jobQueue.put(job);
+                                        List<ExecutionJob> jobs = getJobFactory(job.getEnvironment()).splitJob(job);
+                                        logger.fine(String.format("Job %s will fork additional %d jobs", job.getName(), jobs.size()));
+                                        for (ExecutionJob j : jobs) {
+                                            this.jobQueue.put(j);
                                         }
                                     } catch (Exception e) {
                                         logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
@@ -817,7 +824,7 @@ public class Orchestrator extends Notifiable {
 
                     }
                 } else {
-                    final ExecutionJob job = jobProvider.get(task.getJob().getId());
+                    //final ExecutionJob job = jobProvider.get(job.getId());
                     if (TaskUtilities.haveAllTasksCompleted(job)) {
                         //logger.fine(String.format("Job %s: no more child tasks to execute after the current task", job.getId()));
                         if (job.orderedTasks().stream()
@@ -848,7 +855,6 @@ public class Orchestrator extends Notifiable {
                     }
                 }
             } else {
-                final ExecutionJob job = task.getJob();
                 final ExecutionStatus jobStatus = job.getExecutionStatus();
                 if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
                     cancelJob(job);
@@ -872,7 +878,6 @@ public class Orchestrator extends Notifiable {
             }
         } catch (Throwable e) {
             logger.severe(String.format("Abnormal termination: %s", ExceptionUtils.getStackTrace(logger, e)));
-            ExecutionJob job = task.getJob();
             job.setExecutionStatus(ExecutionStatus.FAILED);
             try {
                 cancelJob(job);
@@ -1132,10 +1137,11 @@ public class Orchestrator extends Notifiable {
                     // Since the next component can handle only 1 input, we split the current job in as
                     // many jobs as the number of inputs. The current job remains the same, with only 1st input
                     try {
-                        final List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
-                        logger.fine(String.format("Job %s will fork additional %d jobs", task.getJob().getName(), jobs.size()));
-                        for (ExecutionJob job : jobs) {
-                            this.jobQueue.put(job);
+                        ExecutionJob job = task.getJob();
+                        final List<ExecutionJob> jobs = getJobFactory(job.getEnvironment()).splitJob(job);
+                        logger.fine(String.format("Job %s will fork additional %d jobs", job.getName(), jobs.size()));
+                        for (ExecutionJob j : jobs) {
+                            this.jobQueue.put(j);
                         }
                     } catch (Exception e) {
                         logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
@@ -1807,6 +1813,18 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    public JobFactory getJobFactory(String environment) {
+        final Environment env = EnumUtils.getEnumConstantByString(Environment.class, environment);
+        if (env == null) {
+            throw new RuntimeException("Invalid environment: " + environment);
+        }
+        return this.jobFactories.get(env);
+    }
+
+    private JobFactory getJobFactory(Environment environment) {
+        return this.jobFactories.get(environment);
+    }
+
     /**
      * Adds a JobCompletedListener to the list of listeners that will be notified
      * when a job is completed.
@@ -2044,7 +2062,7 @@ public class Orchestrator extends Notifiable {
             
             // remove any volatile compnents created for this job
             try {
-				jobFactory.removeVolatileComponents(job);
+				getJobFactory(job.getEnvironment()).removeVolatileComponents(job);
 			} catch (PersistenceException e) {
 				logger.severe(() -> String.format("Cannot remove volatile components. Reason: %s", e.getMessage()));
 			}

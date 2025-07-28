@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-public class DefaultJobFactory {
+public class DefaultJobFactory implements JobFactory {
 
     protected static final int DEFAULT_INSTANCE = 1;
     protected static final String invalidChars = "[\\~\\#\\%\\&\\*\\{\\}\\\\\\:\\<\\>\\?\\/\\+\\|, ]";
@@ -85,16 +85,7 @@ public class DefaultJobFactory {
         this.logger = Logger.getLogger(DefaultJobFactory.class.getName());
     }
 
-    /**
-     * Creates an execution job for the given workflow, with the given input parameter values
-     *
-     * @param context   The current user session context
-     * @param appId     The orchestrator identifier
-     * @param jobName   The name of the new job
-     * @param workflow  The workflow
-     * @param inputs    The (possibly overridden) input parameter values
-     * @param jobType   The output job format
-     */
+    @Override
     public ExecutionJob createJob(SessionContext context, String appId, String jobName, WorkflowDescriptor workflow,
                                   Map<String, Map<String, String>> inputs, JobType jobType, Environment environment)
             throws PersistenceException {
@@ -176,14 +167,7 @@ public class DefaultJobFactory {
         return job;
     }
 
-    /**
-     * Creates an execution job with a single task for a WPS remote service invocation, with the given input parameter values
-     *
-     * @param context   The invocation context
-     * @param appId     The identifier of the Orchestrator instance
-     * @param jobName   The name of the new job
-     * @param inputs    The (possibly overridden) input parameter values
-     */
+    @Override
     public ExecutionJob createWPSJob(SessionContext context, String appId, String jobName, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
         ExecutionJob job = new ExecutionJob();
@@ -209,14 +193,7 @@ public class DefaultJobFactory {
         return job;
     }
 
-    /**
-     * Creates an execution job with a single task for a WMS remote service invocation, with the given input parameter values
-     *
-     * @param context   The invocation context
-     * @param appId     The identifier of the Orchestrator instance
-     * @param jobName   The name of the new job
-     * @param inputs    The (possibly overridden) input parameter values
-     */
+    @Override
     public ExecutionJob createWMSJob(SessionContext context, String appId, String jobName, Map<String, String> inputs)
             throws PersistenceException {
         ExecutionJob job = new ExecutionJob();
@@ -690,13 +667,7 @@ public class DefaultJobFactory {
         return task;
     }
 
-    /**
-     * Creates a list of execution jobs from a job based on the list of values of the entry data source task.
-     * The first value is discarded, assuming it is taken by the original job.
-     *
-     * @param job       The job to be split
-     *
-     */
+    @Override
     public List<ExecutionJob> splitJob(ExecutionJob job) throws PersistenceException, CloneNotSupportedException {
         final List<ExecutionJob> jobs = new ArrayList<>();
         List<ExecutionTask> tasks = job.getTasks();
@@ -796,14 +767,7 @@ public class DefaultJobFactory {
         return jobs;
     }
 
-
-    /**
-     * Creates a list of execution jobs from a job based on the list of values of the entry data source task.
-     * The first value is discarded, assuming it is taken by the original job.
-     *
-     * @param job       The job to be split
-     *
-     */
+    @Override
     public List<ExecutionJob> splitJobBeforeExecution(ExecutionJob job) throws PersistenceException, CloneNotSupportedException {
         final List<ExecutionJob> jobs = new ArrayList<>();
         List<ExecutionTask> tasks = job.getTasks();
@@ -993,12 +957,7 @@ public class DefaultJobFactory {
         return jobs;
     }
 
-    /**
-     * Remove volatile components.
-     * 
-     * @param job the finished job
-     * @throws PersistenceException if the removal fails
-     */
+    @Override
     public void removeVolatileComponents(final ExecutionJob job) throws PersistenceException {
         for (final ExecutionTask task : job.getTasks()) {
         	if (task instanceof DataSourceExecutionTask) {
@@ -1017,6 +976,7 @@ public class DefaultJobFactory {
         }
     }
     
+    @Override
     public ExecutionJob cloneJob(ExecutionJob original, int cloneNumber, int total) throws CloneNotSupportedException, PersistenceException {
         return TransactionalMethod.withExceptionType(PersistenceException.class).execute(() -> {
             ExecutionJob clone = new ExecutionJob();
@@ -1052,6 +1012,7 @@ public class DefaultJobFactory {
         });
     }
 
+    @Override
     public ExecutionTask cloneTask(ExecutionJob clonedJob, ExecutionTask original) throws CloneNotSupportedException, PersistenceException {
         ExecutionTask clone = null;
         WorkflowNodeDescriptor node = workflowNodeProvider.get(original.getWorkflowNodeId());
