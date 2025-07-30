@@ -605,7 +605,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             NodeDescription node;
             final int cpu;
             final long mem;
-            if(job.getEnvironment() == Environment.DEFAULT) {
+            if(job.getEnvironment() == Environment.DEFAULT || job.getEnvironment() == Environment.SIMPIPE) {
                 NodeData nodeData;
                 final Integer parallelism = component.getParallelism();
                 final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
