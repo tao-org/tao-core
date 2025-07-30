@@ -19,6 +19,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.JobCompletedListener;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceException;
@@ -229,4 +230,21 @@ public interface OrchestratorService extends TAOService {
      * @throws ExecutionException If an error occurs during the invocation of the WMS operation.
      */
     long invokeWMS(String identifier, Map<String, String> inputs) throws ExecutionException;
+
+    /**
+     * Registers a listener to be notified when a job is completed. The listener will receive
+     * callbacks when relevant job completion events occur. This method ensures the provided
+     * listener is added to the list of notification recipients for job completion events.
+     *
+     * @param listener The JobCompletedListener instance to register for job completion notifications.
+     */
+    void registerListener(JobCompletedListener listener);
+
+    /**
+     * Unregisters a previously registered listener so that it no longer receives notifications
+     * about job completion events.
+     *
+     * @param listener The JobCompletedListener instance to unregister from job completion notifications.
+     */
+    void unregisterListener(JobCompletedListener listener);
 }
