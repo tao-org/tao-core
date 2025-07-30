@@ -15,9 +15,12 @@
  */
 package ro.cs.tao.services.bridge.spring;
 
+import java.util.Map;
+
 /**
  * Created by cosmin on 9/13/2017.
  */
 public interface SpringContextBridgedServices {
+    <T> Map<String, T> getBeansOfTypes(Class<T> clazz);
     <T> T getService(Class<T> clazz);
 }
