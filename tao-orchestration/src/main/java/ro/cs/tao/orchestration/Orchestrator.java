@@ -1832,7 +1832,18 @@ public class Orchestrator extends Notifiable {
      * @param listener the JobCompletedListener to be added
      */
     public void addJobListener(JobCompletedListener listener) {
-        this.jobListeners.add(listener);
+        if (!this.jobListeners.contains(listener)) {
+            this.jobListeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes a job listener from the list of listeners.
+     *
+     * @param listener the listener to be removed from the list of job listeners
+     */
+    public void removeJobListener(JobCompletedListener listener) {
+        this.jobListeners.remove(listener);
     }
 
     /**
