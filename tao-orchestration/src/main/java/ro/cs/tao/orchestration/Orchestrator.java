@@ -168,7 +168,7 @@ public class Orchestrator extends Notifiable {
         this.jobFactories = new EnumMap<>(Environment.class) {{
             put(Environment.DEFAULT, new DefaultJobFactory());
             put(Environment.KUBERNETES, new DefaultJobFactory());
-            put(Environment.SCRIPT, new ScriptJobFactory());
+            put(Environment.SIMPIPE, new ScriptJobFactory());
         }};
         addJobListener(new JobListener(this));
         try {
