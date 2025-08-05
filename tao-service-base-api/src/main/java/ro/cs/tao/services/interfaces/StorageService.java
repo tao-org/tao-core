@@ -22,6 +22,7 @@ import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.model.FileObject;
 import ro.cs.tao.services.model.ItemAction;
 import ro.cs.tao.utils.Crypto;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
 
@@ -161,6 +162,48 @@ public interface StorageService<T, U> extends TAOService {
      * @throws IOException if the content cannot be retrieved
      */
     List<FileObject> listTree(String fromPath) throws IOException;
+
+    /**
+     * Retrieves a list of file objects based on the selected path, starting at the storage root.
+     * If the selected path is empty or null, an empty list will be returned.
+     * If the root path is selected, it retrieves the root folder and its children.
+     * Otherwise, it navigates the storage tree, marking the relevant nodes as selected
+     * and returns the sub-tree starting at the specified path.
+     *
+     * @param selectedPath The path to navigate within the storage for retrieving files.
+     *                     This path must be relative to the root of the storage.
+     * @return A list of {@code FileObject} representing the file structure for the given selection path.
+     *         If the specified path is invalid or empty, the list will be empty.
+     * @throws IOException If any errors occur while retrieving the file structure.
+     */
+    default List<FileObject> getForSelection(String selectedPath) throws IOException {
+        if (StringUtilities.isNullOrEmpty(selectedPath)) {
+            return List.of();
+        }
+        if (selectedPath.equals("/")) {
+            return listFiles("/", null, null, 1);
+        } else {
+            String[] tokens = (selectedPath.startsWith("/") ? selectedPath.substring(1) : selectedPath).split("/");
+            final List<FileObject> result = new ArrayList<>();
+            result.addAll(listFiles("/", null, null, 1));
+            FileObject parent = result.stream().filter(f -> f.getRelativePath().equals(tokens[0])).findFirst().get();
+            parent.setSelected(true);
+            final StringBuilder path = new StringBuilder();
+            path.append(tokens[0]);
+            for (int i = 1; i < tokens.length; i++) {
+                List<FileObject> children = listFiles(parent.getRelativePath(), null, null, 1);
+                if (i < tokens.length - 1) {
+                    children.removeIf(f -> !f.isFolder());
+                }
+                parent.setChildren(children);
+                path.append("/").append(tokens[i]);
+                parent.setSelected(children.isEmpty());
+                parent = children.stream().filter(f -> f.getRelativePath().equals(path.toString())).findFirst().get();
+                parent.setSelected(true);
+            }
+            return result;
+        }
+    }
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
