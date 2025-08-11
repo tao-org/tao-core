@@ -30,7 +30,9 @@ public enum ContainerType implements TaoEnum<Integer> {
     @XmlEnumValue("5")
     WMS(5, "Web Map Service"),
     @XmlEnumValue("6")
-    WMTS(6, "Web Map Tile Service");
+    WMTS(6, "Web Map Tile Service"),
+    @XmlEnumValue("7")
+    OGC_PROCESS(7, "OGC Process Service");
 
     private final int value;
     private final String description;

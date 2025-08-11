@@ -55,8 +55,15 @@ public enum ComponentType implements TaoEnum<Integer> {
      */
     @XmlEnumValue("5")
     WPS_COMPONENT(5, "WPS Component"),
+    /**
+     * Designates a condition component
+     */
     @XmlEnumValue("6")
-    CONDITION(6, "Condition");
+    CONDITION(6, "Condition"),
+    /**
+     * Designates an OGC Process component
+     */
+    OGC_PROCESS(7, "OGC Process");
 
     private final int value;
     private final String description;
