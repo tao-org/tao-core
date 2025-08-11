@@ -108,6 +108,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     public List<ExecutionTask> listWMSExecuting() { return repository.getWMSExecutingTasks(); }
 
     @Override
+    public List<ExecutionTask> listOGCProcessesExecuting() {
+        return repository.getOGCProcessesExecutingTasks();
+    }
+
+    @Override
     public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
 
     @Override

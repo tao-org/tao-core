@@ -20,7 +20,7 @@ INSERT INTO component.condition (id, description) VALUES
 
 -- Container type
 INSERT INTO component.container_type (id, description) VALUES
-(1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC'), (5, 'WMS');
+(1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC'), (5, 'WMS'), (6, 'WMTS'), (7, 'OGC_PROCESS');
 
 -- Container visibility
 INSERT INTO component.container_visibility (id, description) VALUES
@@ -81,7 +81,7 @@ INSERT INTO component.template_type (type) VALUES
 
 -- Component type
 INSERT INTO workflow.component_type (id, description) VALUES
-(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP'), (5, 'WPS_COMPONENT'), (6, 'CONDITION');
+(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP'), (5, 'WPS_COMPONENT'), (6, 'CONDITION'), (7, 'OGC_COMPONENT');
 
 -- Behavior
 INSERT INTO workflow.node_behavior (id, description) VALUES

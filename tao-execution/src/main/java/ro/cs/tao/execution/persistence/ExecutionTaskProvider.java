@@ -47,6 +47,13 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     List<ExecutionTask> listWMSExecuting();
 
     /**
+     * Retrieves a list of execution tasks that are currently in execution for OGC Processes.
+     *
+     * @return a list of {@code ExecutionTask} objects representing tasks that are being executed for OGC Processes.
+     */
+    List<ExecutionTask> listOGCProcessesExecuting();
+
+    /**
      * Retrieves a list of execution tasks associated with a specific host.
      *
      * @param hostName the name of the host for which the execution tasks are to be retrieved

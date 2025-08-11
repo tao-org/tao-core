@@ -913,3 +913,76 @@ ALTER TABLE component.condition_component_parameters ADD CONSTRAINT FK_condition
     FOREIGN KEY (component_id) REFERENCES component.condition_component (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.condition_component_parameters ADD CONSTRAINT FK_condition_component_parameters_processing_parameter
     FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.ogc_component
+DROP TABLE IF EXISTS component.ogc_component CASCADE;
+CREATE TABLE component.ogc_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text,
+	authors varchar(1024),
+	copyright text,
+	node_affinity varchar(250) NULL,
+    remote_address varchar(1024) NOT NULL,
+	capability  varchar(512) NOT NULL,
+	visibility_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	container_id varchar(1024) NOT NULL,
+	parameters json NULL,
+    active boolean NULL DEFAULT true,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL
+);
+ALTER TABLE component.ogc_component ADD CONSTRAINT PK_ogc_component
+	PRIMARY KEY (id);
+ALTER TABLE component.ogc_component ADD CONSTRAINT FK_ogc_component_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.ogc_component_sources
+DROP TABLE IF EXISTS component.ogc_component_sources CASCADE;
+CREATE TABLE component.ogc_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.ogc_component_sources ADD CONSTRAINT PK_ogc_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.ogc_component_sources ADD CONSTRAINT FK_ogc_component_sources_ogc_component
+	FOREIGN KEY (component_id) REFERENCES component.ogc_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.ogc_component_sources ADD CONSTRAINT FK_ogc_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.ogc_component_targets
+DROP TABLE IF EXISTS component.ogc_component_targets CASCADE;
+CREATE TABLE component.ogc_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.ogc_component_targets ADD CONSTRAINT PK_ogc_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.ogc_component_targets ADD CONSTRAINT FK_ogc_component_targets_ogc_component
+	FOREIGN KEY (component_id) REFERENCES component.ogc_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.ogc_component_targets ADD CONSTRAINT FK_ogc_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: ogc_component_parameters
+DROP TABLE IF EXISTS component.ogc_component_parameters CASCADE;
+CREATE TABLE component.ogc_component_parameters
+(
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.ogc_component_parameters ADD CONSTRAINT PK_ogc_component_parameters
+    PRIMARY KEY (component_id, processing_parameter_id);
+ALTER TABLE component.ogc_component_parameters ADD CONSTRAINT FK_ogc_component_parameters_processing_component
+    FOREIGN KEY (component_id) REFERENCES component.ogc_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.ogc_component_parameters ADD CONSTRAINT FK_ogc_component_parameters_processing_parameter
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
