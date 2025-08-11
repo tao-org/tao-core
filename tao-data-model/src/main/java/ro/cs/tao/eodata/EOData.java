@@ -161,6 +161,32 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
         }
     }
 
+    public List<Attribute> filterAttributes(String name) {
+        List<Attribute> filtered = null;
+        if (this.attributes != null) {
+            filtered = new ArrayList<>();
+            for(Attribute attr : this.attributes) {
+                if(attr.getName().contains(name)) {
+                    filtered.add(attr);
+                }
+            }
+        }
+        return filtered;
+    }
+
+    public List<Attribute> excludeAttributes(String name) {
+        List<Attribute> filtered = null;
+        if (this.attributes != null) {
+            filtered = new ArrayList<>();
+            for(Attribute attr : this.attributes) {
+                if(!attr.getName().contains(name)) {
+                    filtered.add(attr);
+                }
+            }
+        }
+        return filtered;
+    }
+
     public String getCrs() {
         try {
             return new CRSAdapter().unmarshal(this.crs);
