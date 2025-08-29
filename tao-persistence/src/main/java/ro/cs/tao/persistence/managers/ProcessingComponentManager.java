@@ -116,8 +116,10 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
                     d.setId(UUID.randomUUID().toString());
                 }
                 ParameterExpansionRule expansionRule = d.getExpansionRule();
-                if (expansionRule != null && !d.getId().equals(expansionRule.getId())) {
-                    expansionRule.setId(d.getId());
+                if (expansionRule != null) {
+                    if (!d.getId().equals(expansionRule.getId())) {
+                        expansionRule.setId(d.getId());
+                    } // in case their ID is identical (UUID set identical in JSON descriptor), save them like that
                     map.put(d, expansionRule);
                     d.setExpansionRule(null);
                 }
