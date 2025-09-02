@@ -13,6 +13,7 @@ import ro.cs.tao.TaoEnum;
  * Enum Constants:
  * - DEFAULT: Represents the default environment configuration.
  * - KUBERNETES: Represents an environment configured for Kubernetes.
+ * - SIMPIPE: Represents an environment configured for executing on SIM-PIPE.
  */
 public enum Environment implements TaoEnum<Integer> {
     DEFAULT(1, "Default"),
