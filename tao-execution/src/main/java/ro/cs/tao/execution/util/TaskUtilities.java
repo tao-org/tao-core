@@ -675,7 +675,7 @@ public class TaskUtilities {
             for (Tuple<String, String> tuple : list) {
                 try {
                     FileUtilities.replaceWithLink(Paths.get(tuple.getKeyOne()), Paths.get(tuple.getKeyTwo()));
-                    logger.fine("Symlink " + tuple.getKeyOne() + " restored");
+                    logger.finest("Symlink " + tuple.getKeyOne() + " restored");
                     counter++;
                 } catch (IOException e) {
                     logger.warning("Cannot replace " + tuple.getKeyOne() + " with " + tuple.getKeyTwo());
