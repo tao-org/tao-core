@@ -72,6 +72,25 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
     List<ProcessingComponentInfo> getUserScriptComponents(String userId);
 
     /**
+     * Finds processing components that are similar to the provided text and belong to the specified user.
+     *
+     * @param text  The text to compare for similarity.
+     * @param userId The unique identifier of the user whose components will be searched.
+     * @return A list of processing components that match the similarity criteria.
+     */
+    List<ProcessingComponentInfo> findBySimilarity(String text, String userId);
+
+    /**
+     * Finds and retrieves a list of labels based on their similarity to the provided text
+     * and belonging to the specified user.
+     *
+     * @param text  The text to compare for similarity.
+     * @param userId The unique identifier of the user whose labels will be searched.
+     * @return A list of labels that match the similarity criteria.
+     */
+    List<String> findLabelsBySimilarity(String text, String userId);
+
+    /**
      * Retrieves all the tags associated to components
      */
     List<Tag> getComponentTags();
