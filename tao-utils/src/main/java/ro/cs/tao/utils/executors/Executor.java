@@ -76,6 +76,8 @@ public abstract class Executor<T> implements Runnable {
     OutputConsumer outputConsumer;
     File workingDirectory;
     ActivityListener monitor;
+    Runnable onSuccessCallable;
+    Runnable onFailureCallable;
 
     private volatile int retCode = Integer.MAX_VALUE;
     private CountDownLatch counter;
@@ -515,6 +517,16 @@ public abstract class Executor<T> implements Runnable {
 
     public CountDownLatch getWaitObject() { return this.counter; }
 
+    public Executor<T> onSuccess(Runnable onSuccess) {
+        this.onSuccessCallable = onSuccess;
+        return this;
+    }
+
+    public Executor<T> onError(Runnable onError) {
+        this.onFailureCallable = onError;
+        return this;
+    }
+
     @Override
     public void run() {
         try {
@@ -526,6 +538,23 @@ public abstract class Executor<T> implements Runnable {
                 this.counter = new CountDownLatch(1);
             }
             retCode = execute(true);
+            if (this.onSuccessCallable != null) {
+                if (retCode == 0) {
+                    try {
+                        this.onSuccessCallable.run();
+                    } catch (Exception e) {
+                        logger.warning("On success callback threw an exception:" + e.getMessage());
+                    }
+                } else {
+                    if (this.onFailureCallable != null) {
+                        try {
+                            this.onFailureCallable.run();
+                        } catch (Exception ex) {
+                            logger.warning("On failure callback threw an exception:" + ex.getMessage());
+                        }
+                    }
+                }
+            }
         } catch (Exception e) {
             retCode = -255;
             logger.severe(e.getMessage());

@@ -1383,6 +1383,34 @@ public class FileUtilities {
     }
 
     /**
+     * Determines the longest common prefix that corresponds to a valid directory path
+     * for all the provided paths in the set.
+     *
+     * @param paths a set of strings, where each string represents a file or directory path
+     * @return the longest common directory path shared by all paths in the provided set,
+     *         or an empty string if no common path exists
+     */
+    public static String getCommonPath(Set<String> paths) {
+        String commonPart = "";
+        int min = 0;
+        for (String path : paths) {
+            if (min == 0) {
+                commonPart = path;
+                min = commonPart.length();
+                continue;
+            }
+            min = Math.min(min, path.length());
+            for (int i = 0; i < min; i++) {
+                if (path.charAt(i) != commonPart.charAt(i)) {
+                    min = i;
+                    break;
+                }
+            }
+        }
+        return commonPart.substring(0, Math.min(min, commonPart.lastIndexOf('/')));
+    }
+
+    /**
      * Appends a path fragment to a parent path.
      * The child fragment must be relative.
      * @param parent    The parent path
