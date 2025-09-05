@@ -41,4 +41,11 @@ public interface ProcessingComponentRepository extends AuditableEntityRepository
     @Query(value = "SELECT * FROM component.processing_component WHERE label = :label AND container_id = :containerId", nativeQuery = true)
     ProcessingComponent getByLabelAndContainer(@Param("label") String label, @Param("containerId") String containerId);
 
+    @Query(value = "SELECT * FROM component.processing_component WHERE (visibility_id = 1 OR (owner_user_id = :userId)) AND " +
+                   "(similarity(label, :text) >= 0.3 OR similarity(tags, :text) >= 0.3) LIMIT 5", nativeQuery = true)
+    List<ProcessingComponent> findBySimilarity(@Param("text") String text, @Param("userId") String userId);
+
+    @Query(value = "SELECT label FROM component.processing_component WHERE (visibility_id = 1 OR (owner_user_id = :userId)) AND " +
+                   "(similarity(label, :text) >= 0.3 OR similarity(tags, :text) >= 0.3) LIMIT 5", nativeQuery = true)
+    List<String> findLabelsBySimilarity(@Param("text") String text, @Param("userId") String userId);
 }

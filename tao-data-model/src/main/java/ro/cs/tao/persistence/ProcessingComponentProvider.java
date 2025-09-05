@@ -84,6 +84,26 @@ public interface ProcessingComponentProvider extends EntityProvider<ProcessingCo
      */
     List<ProcessingComponent> listByContainer(String containerId);
     /**
+     * Finds a list of {@link ProcessingComponent} instances based on their similarity to a given text
+     * and their association with a specific user.
+     *
+     * @param text the text used as a basis for determining similarity
+     * @param userId the identifier of the user to filter the associated components
+     * @return a list of {@link ProcessingComponent} instances that are similar to the provided text
+     *         and associated with the specified user, or an empty list if no matching components are found
+     */
+    List<ProcessingComponent> findBySimilarity(String text, String userId);
+    /**
+     * Finds a list of labels based on their similarity to a given text
+     * and their association with a specific user.
+     *
+     * @param text the text used as a basis for determining similarity
+     * @param userId the identifier of the user to filter the associated labels
+     * @return a list of labels that are similar to the provided text
+     *         and associated with the specified user, or an empty list if no matching labels are found
+     */
+    List<String> findLabelsBySimilarity(String text, String userId);
+    /**
      * Checks whether a copy component is associated with the specified container.
      *
      * @param containerId the unique identifier of the container to check for an associated copy component

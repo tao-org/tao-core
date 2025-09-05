@@ -171,14 +171,24 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
      */
     private static final String PROPERTY_NAME_ENTITYMANAGER_PACKAGES_TO_SCAN = "entitymanager.packages.to.scan";
 
+    private static  String databaseProvider = "PostgreSQL";
+
     /**
      * Application environment, used to extract the properties
      */
     @Resource
     private Environment environment;
 
-    private String databaseProvider = "PostgreSQL";
     private final List<ComboPooledDataSource> createdBeans = new ArrayList<>();
+
+    /**
+     * Determines whether the database provider supports extended SQL syntax capabilities.
+     *
+     * @return true if the database provider is "PostgreSQL", false otherwise.
+     */
+    public static boolean supportsExtendedSQL() {
+        return "PostgreSQL".equals(databaseProvider);
+    }
 
     /**
      * Empty constructor
@@ -259,7 +269,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
         final LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
         entityManagerFactoryBean.setDataSource(dataSource());
         entityManagerFactoryBean
-          .setPackagesToScan(environment.getRequiredProperty(PROPERTY_NAME_ENTITYMANAGER_PACKAGES_TO_SCAN));
+                .setPackagesToScan(environment.getRequiredProperty(PROPERTY_NAME_ENTITYMANAGER_PACKAGES_TO_SCAN));
         entityManagerFactoryBean.setPersistenceProviderClass(HibernatePersistenceProvider.class);
         entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         //entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
@@ -267,14 +277,14 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 
         final Properties jpaProperties = new Properties();
 
-        if(databaseProvider == "H2"){
+        if ("H2".equals(databaseProvider)) {
             // for accessing H2's embedded GUI console at /h2-console
             jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE,
-                    environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE));
+                              environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE));
             jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_PATH,
-                    environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_PATH));
+                              environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_PATH));
             jpaProperties.put(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW,
-                    environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW));
+                              environment.getRequiredProperty(PROPERTY_SPRING_H2_CONSOLE_WEB_ALLOW));
         }
         entityManagerFactoryBean.setMappingResources("META-INF/common_orm.xml", "META-INF/eo_orm.xml");
 

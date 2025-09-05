@@ -25,6 +25,7 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
 import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
@@ -104,6 +105,20 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     @Override
     public List<ProcessingComponent> listByLabel(String label) {
         return repository.getByLabel(label);
+    }
+
+    @Override
+    public List<ProcessingComponent> findBySimilarity(String text, String userId) {
+        return DatabaseConfiguration.supportsExtendedSQL()
+                ? repository.findBySimilarity(text, userId)
+                : List.of();
+    }
+
+    @Override
+    public List<String> findLabelsBySimilarity(String text, String userId) {
+        return DatabaseConfiguration.supportsExtendedSQL()
+                ? repository.findLabelsBySimilarity(text, userId)
+                : List.of();
     }
 
     @Override
