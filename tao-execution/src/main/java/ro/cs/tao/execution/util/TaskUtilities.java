@@ -45,6 +45,7 @@ import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.*;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 import ro.cs.tao.workspaces.Repository;
 import ro.cs.tao.workspaces.RepositoryType;
@@ -71,9 +72,7 @@ public class TaskUtilities {
 
     private static final WorkflowNodeProvider workflowNodeProvider;
     private static final ProcessingComponentProvider processingComponentProvider;
-    private static final DataSourceComponentProvider dataSourceComponentProvider;
-    private static final GroupComponentProvider groupComponentProvider;
-    private static final ConditionComponentProvider conditionComponentProvider;
+    private static final EnumMap<ComponentType, EntityProvider<? extends TaoComponent, String>> componentProviders;
     /*private static final ExecutionJobProvider jobProvider;*/
     private static final ExecutionTaskProvider taskProvider;
     private static final ExecutionJobProvider jobProvider;
@@ -95,10 +94,12 @@ public class TaskUtilities {
         workflowNodeProvider = context.getService(WorkflowNodeProvider.class);
         taskProvider = context.getService(ExecutionTaskProvider.class);
         jobProvider = context.getService(ExecutionJobProvider.class);
+        componentProviders = new EnumMap<>(ComponentType.class);
         processingComponentProvider = context.getService(ProcessingComponentProvider.class);
-        dataSourceComponentProvider = context.getService(DataSourceComponentProvider.class);
-        groupComponentProvider = context.getService(GroupComponentProvider.class);
-        conditionComponentProvider = context.getService(ConditionComponentProvider.class);
+        componentProviders.put(ComponentType.PROCESSING, processingComponentProvider);
+        componentProviders.put(ComponentType.DATASOURCE, context.getService(DataSourceComponentProvider.class));
+        componentProviders.put(ComponentType.GROUP, context.getService(GroupComponentProvider.class));
+        componentProviders.put(ComponentType.CONDITION, context.getService(ConditionComponentProvider.class));
         containerProvider = context.getService(ContainerProvider.class);
         repositoryProvider = context.getService(RepositoryProvider.class);
         symLinks = Collections.synchronizedMap(new HashMap<>());
@@ -158,21 +159,8 @@ public class TaskUtilities {
      */
     public static TaoComponent getComponentFor(WorkflowNodeDescriptor node) {
         TaoComponent component = null;
-        if (node != null) {
-            switch (node.getComponentType()) {
-                case PROCESSING:
-                    component = processingComponentProvider.get(node.getComponentId());
-                    break;
-                case DATASOURCE:
-                    component = dataSourceComponentProvider.get(node.getComponentId());
-                    break;
-                case GROUP:
-                    component = groupComponentProvider.get(node.getComponentId());
-                    break;
-                case CONDITION:
-                    component = conditionComponentProvider.get(node.getComponentId());
-                    break;
-            }
+        if (node != null && componentProviders.containsKey(node.getComponentType())) {
+            component = componentProviders.get(node.getComponentType()).get(node.getComponentId());
         }
         return component;
     }
@@ -277,30 +265,26 @@ public class TaskUtilities {
 
     public static boolean isAlive(ProcessingExecutionTask task) {
         final NodeDescription node = TopologyManager.getInstance().getNode(task.getExecutionNodeHostName());
+        AtomicBoolean ret = new AtomicBoolean(false);
         if (node != null) {
             final List<String> command = ProcessHelper.tokenizeCommands(ALIVE_CMD, task.getCommand());
-            ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
-                                                  node.getId(),
-                                                  node.getUserName(),
-                                                  node.getUserPass(),
-                                                  command, false, SSHMode.EXEC);
-            OutputAccumulator accumulator = new OutputAccumulator();
+            final ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2, node.getId(),
+                                                        node.getUserName(), node.getUserPass(),
+                                                        command, false, SSHMode.EXEC);
+            final OutputAccumulator accumulator = new OutputAccumulator();
             accumulator.preserveLineSeparator(true);
-            logger.fine("Executing " + String.join(" ", command));
-            int retCode = -1;
+            logger.finest("Executing " + String.join(" ", command));
             try {
-                retCode = Executor.execute(accumulator, job, 5, TimeUnit.SECONDS).getReturnCode();
+                final Executor executor = Executor.prepare(accumulator, job);
+                executor.onSuccess(() -> ret.set(accumulator.getOutput().split("\n").length > 1))
+                        .onError(() -> logger.warning(String.format("Command %s failed with code %d",
+                                                                    String.join(" ", command), executor.getReturnCode())))
+                        .execute(5, TimeUnit.SECONDS, false);
             } catch (Exception e) {
                 logger.warning("Process timed out: " + e.getMessage());
             }
-            if (retCode == 0) {
-                final String output = accumulator.getOutput();
-                return output.split("\n").length > 1;
-            } else {
-                logger.warning(String.format("Command %s failed with code %d", String.join(" ", command), retCode));
-            }
         }
-        return false;
+        return ret.get();
     }
 
     /**
