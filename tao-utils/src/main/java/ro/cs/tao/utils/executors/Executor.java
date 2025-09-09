@@ -568,6 +568,21 @@ public abstract class Executor<T> implements Runnable {
     }
 
     /**
+     * Executes a series of operations with the specified timeout and logging option.
+     *
+     * @param timeout the maximum time to wait, in the given time unit
+     * @param unit the unit of time for the timeout
+     * @param logMessages specifies whether to log messages during execution
+     * @return the return code indicating the result of the execution
+     * @throws Exception if an error occurs during execution
+     */
+    public int execute(long timeout, TimeUnit unit, boolean logMessages) throws Exception {
+        execute(logMessages);
+        getWaitObject().await(timeout, TimeUnit.SECONDS);
+        return getReturnCode();
+    }
+
+    /**
      * Performs the actual execution, optionally logging the execution output and returning the output as a list
      * of messages.
      *
