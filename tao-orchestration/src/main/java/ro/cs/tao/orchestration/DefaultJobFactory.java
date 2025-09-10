@@ -129,7 +129,6 @@ public class DefaultJobFactory implements JobFactory {
                     }
                     ExecutionTask task = createTask(job, workflow, node, taskInputs);
                     task.setLevel(node.getLevel());
-                    task.setContext(context);
                     if (task.getId() == null) {
                         task = taskProvider.save(task, job);
                     } else {
@@ -182,7 +181,6 @@ public class DefaultJobFactory implements JobFactory {
         for (Map.Entry<String, Map<String, String>> entry : inputs.entrySet()) {
             ExecutionTask task = createWPSComponentExecutionTask(entry.getKey(), entry.getValue());
             task.setLevel(1);
-            task.setContext(context);
             if (task.getId() == null) {
                 taskProvider.save(task, job);
             } else {
@@ -211,7 +209,6 @@ public class DefaultJobFactory implements JobFactory {
         job = jobProvider.save(job);
         ExecutionTask task = createWMSComponentExecutionTask(jobName, inputs);
         task.setLevel(1);
-        task.setContext(context);
         if (task.getId() == null) {
             taskProvider.save(task, job);
         } else {
@@ -704,12 +701,10 @@ public class DefaultJobFactory implements JobFactory {
                             // Reset the output values to prevent appending to any existing value
                             clonedPrimaryDataTask.setOutputParameterValues(null);
                             clonedPrimaryDataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, tuples.get(i).getKeyOne());
-                            clonedPrimaryDataTask.setContext(primaryTask.getContext());
                             clonedPrimaryDataTask.setCardinality(1);
                             taskProvider.update(clonedPrimaryDataTask);
                             clonedSecondaryDataTask.setOutputParameterValues(null);
                             clonedSecondaryDataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, tuples.get(i).getKeyTwo());
-                            clonedSecondaryDataTask.setContext(dataTask.getContext());
                             clonedSecondaryDataTask.setCardinality(1);
                             taskProvider.update(clonedSecondaryDataTask);
                             clonedJob = jobProvider.update(clonedJob);
@@ -747,7 +742,6 @@ public class DefaultJobFactory implements JobFactory {
                                 clonedDataTask.setOutputParameterValues(null);
                                 clonedDataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, list.get(i));
                                 clonedDataTask.setCardinality(1);
-                                clonedDataTask.setContext(dataTask.getContext());
                                 clonedDataTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
                                 taskProvider.update(clonedDataTask);
                                 clonedJob = jobProvider.update(clonedJob);
@@ -817,7 +811,6 @@ public class DefaultJobFactory implements JobFactory {
                             querryDescriptor.getDataDescriptor().setLocation(tuples.get(i).getKeyOne());
                             dataSourceComponentProvider.save(clonedPrimaryComponent);
                             clonedPrimaryDataTask.setComponent(clonedPrimaryComponent);
-                            clonedPrimaryDataTask.setContext(primaryTask.getContext());
                             clonedPrimaryDataTask.setCardinality(1);
                             taskProvider.update(clonedPrimaryDataTask);
 
@@ -837,7 +830,6 @@ public class DefaultJobFactory implements JobFactory {
                             querryDescriptor.getDataDescriptor().setLocation(tuples.get(i).getKeyTwo());
                             dataSourceComponentProvider.save(clonedSecondaryComponent);
                             clonedSecondaryDataTask.setComponent(clonedSecondaryComponent);
-                            clonedSecondaryDataTask.setContext(dataTask.getContext());
                             clonedSecondaryDataTask.setCardinality(1);
                             taskProvider.update(clonedSecondaryDataTask);
                             clonedJob = jobProvider.update(clonedJob);
@@ -921,7 +913,6 @@ public class DefaultJobFactory implements JobFactory {
                                 dataSourceComponentProvider.save(clonedComponent);
                                 clonedDataTask.setComponent(clonedComponent);
                                 clonedDataTask.setCardinality(1);
-                                clonedDataTask.setContext(dataTask.getContext());
                                 clonedDataTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
                                 taskProvider.update(clonedDataTask);
                                 clonedJob = jobProvider.update(clonedJob);
@@ -1039,7 +1030,6 @@ public class DefaultJobFactory implements JobFactory {
         }
         clone.setLevel(original.getLevel());
         clone.setWorkflowNodeId(node.getId());
-        clone.setContext(original.getContext());
         return taskProvider.save(clone, clonedJob);
     }
 

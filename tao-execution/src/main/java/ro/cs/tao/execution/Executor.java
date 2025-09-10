@@ -29,8 +29,6 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.persistence.PersistenceException;
-import ro.cs.tao.security.SessionContext;
-import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.Tuple;
@@ -55,7 +53,6 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     protected final AtomicBoolean isInitialized = new AtomicBoolean(false);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
-    private final Map<Long, SessionContext> contextMap = new HashMap<>();
 
     /**
      * Retrieves the resources currently in use by a specific user.
@@ -223,7 +220,6 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     protected void markTaskFinished(ExecutionTask task, ExecutionStatus status) {
         task.setEndTime(LocalDateTime.now());
         changeTaskStatus(task, status, status.friendlyName());
-        this.contextMap.remove(task.getId());
     }
 
     /**
@@ -237,7 +233,6 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     protected void markTaskFinished(ExecutionTask task, ExecutionStatus status, String reason) {
         task.setEndTime(LocalDateTime.now());
         changeTaskStatus(task, status, reason);
-        this.contextMap.remove(task.getId());
     }
 
     /**
@@ -289,12 +284,6 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             }
             final String name = TaskUtilities.getTaskDescriptiveName(task);
             try {
-                if (!this.contextMap.containsKey(task.getId())) {
-                    if (task.getContext() == null) {
-                        logger.warning(String.format("Context for task %s is null!", name));
-                    }
-                    this.contextMap.put(task.getId(), task.getContext());
-                }
                 final String userId = task.getJob().getUserId();
                 final int cpu = task.getUsedCPU();
                 final long memory = task.getUsedRAM();
@@ -331,11 +320,6 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             } catch (Exception e) {
                 logger.severe(e.getMessage());
             }
-            SessionContext context = this.contextMap.get(task.getId());
-            if (context == null) {
-                context = SystemSessionContext.instance();
-            }
-            //Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
             final String message;
             if (task instanceof ProcessingExecutionTask) {
                 message = "Task " + name
