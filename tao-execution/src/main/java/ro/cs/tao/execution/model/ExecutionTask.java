@@ -19,14 +19,17 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.security.SessionContext;
-import ro.cs.tao.security.SystemSessionContext;
+import ro.cs.tao.security.SystemPrincipal;
+import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
+import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.logger.Logger;
 
 import java.beans.Transient;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -203,8 +206,33 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.job = job;
     }
 
-    public SessionContext getContext() { return context != null ? context : SystemSessionContext.instance(); }
-    public void setContext(SessionContext context) { this.context = context; }
+    /**
+     * Retrieves the {@link SessionContext} associated with the execution task.
+     * If the context is not already initialized, it creates a new instance
+     * of {@link SessionContext} with custom implementations for setting
+     * the principal and preferences.
+     *
+     * @return the {@link SessionContext} representing the current session
+     *         for this execution task.
+     */
+    public SessionContext getContext() {
+        if (this.context == null) {
+            this.context = new SessionContext() {
+                @Override
+                public Principal setPrincipal(Principal principal) {
+                    return ExecutionTask.this.job != null
+                            ? new UserPrincipal(ExecutionTask.this.job.getUserId())
+                            : SystemPrincipal.instance();
+                }
+
+                @Override
+                protected List<UserPreference> setPreferences() {
+                    return List.of();
+                }
+            };
+        }
+        return this.context;
+    }
 
     public int getInstanceId() { return instanceId; }
     public void setInstanceId(int instanceId) { this.instanceId = instanceId; }

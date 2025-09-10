@@ -30,7 +30,7 @@ public class CancelledStatusHandler extends TaskStatusHandler {
         ExecutionJob job = task.getJob();
         ExecutionStatus taskStatus = task.getExecutionStatus();
         List<ExecutionTask> tasks = job.orderedTasks().stream()
-                .filter(t -> TaskCommand.STOP.getAllowedStates().contains(t.getExecutionStatus()))
+                .filter(t -> TaskCommand.STOP.allowedStates().contains(t.getExecutionStatus()))
                 .collect(Collectors.toList());
         stopTasks(tasks);
         bulkSetStatus(tasks, taskStatus);

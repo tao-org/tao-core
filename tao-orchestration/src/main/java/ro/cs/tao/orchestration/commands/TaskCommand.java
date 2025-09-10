@@ -45,13 +45,13 @@ public abstract class TaskCommand {
     }*/
 
     private TaskCommand() {
-        this.allowedStates = getAllowedStates();
+        this.allowedStates = allowedStates();
     }
 
     /**
      * Returns the set of states a task should be into when applying this command.
      */
-    public abstract Set<ExecutionStatus> getAllowedStates();
+    public abstract Set<ExecutionStatus> allowedStates();
 
     /**
      * The action to be performed in order to transition to the desired state.
@@ -90,7 +90,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        public Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.UNDETERMINED);
         }
         @Override
@@ -98,7 +98,6 @@ public abstract class TaskCommand {
             ExecutionsManager executionsManager = ExecutionsManager.getInstance();
             if (task instanceof ExecutionGroup) {
                 ExecutionTask first = ((ExecutionGroup) task).getTasks().get(0);
-                first.setContext(task.getContext());
                 executionsManager.execute(first);
             } else {
                 executionsManager.execute(task);
@@ -113,7 +112,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        public Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.UNDETERMINED, ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
         }
         @Override
@@ -134,7 +133,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        public Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
         }
         @Override
@@ -151,7 +150,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        public Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.SUSPENDED);
         }
         @Override

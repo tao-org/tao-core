@@ -111,7 +111,7 @@ public class Orchestrator extends Notifiable {
                                                                                ExecutionStatus.PENDING_FINALISATION);
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
-    private final BlockingQueue<AbstractMap.SimpleEntry<Message, SessionContext>> messageQueue;
+    private final BlockingQueue<Message> messageQueue;
 
     static {
         instance = new Orchestrator();
@@ -586,8 +586,7 @@ public class Orchestrator extends Notifiable {
             }
         } else {
             try {
-                final SessionContext context = new MessageContext(message);
-                messageQueue.put(new AbstractMap.SimpleEntry<>(message, context));
+                messageQueue.put(message);
             } catch (InterruptedException e) {
                 logger.severe(e.getMessage());
             }
@@ -696,7 +695,7 @@ public class Orchestrator extends Notifiable {
         this.jobTaskSelector.setTaskByNodeProvider(nodeProvider);
     }
 
-    private synchronized void processMessage(Message message, SessionContext currentContext) {
+    private synchronized void processMessage(Message message) {
         final String taskId = message.getItem(Message.SOURCE_KEY);
         String payload = message.getPayload();
         if (StringUtilities.isNullOrEmpty(payload)) {
@@ -707,8 +706,6 @@ public class Orchestrator extends Notifiable {
         final ExecutionJob job = task.getJob();
         final String user = job.getUserId();
         try {
-            currentContext.setPrincipal(new UserPrincipal(user));
-            task.setContext(currentContext);
             if (!(status == ExecutionStatus.QUEUED_ACTIVE &&
                     (task.getExecutionStatus() == ExecutionStatus.RUNNING || task.getExecutionStatus() == ExecutionStatus.PENDING_FINALISATION))) {
                 // it may happen that the notification of Queue_Active to arrive after the task was actually put
@@ -806,7 +803,6 @@ public class Orchestrator extends Notifiable {
                                     }
                                 }
                                 TaskUtilities.transferParentOutputs(nextTask);
-                                nextTask.setContext(currentContext);
                                 if (!this.runningTasks.contains(nextTask.getId())) {
                                     this.runningTasks.add(nextTask.getId());
                                     TaskCommand.START.applyTo(nextTask);
@@ -815,7 +811,6 @@ public class Orchestrator extends Notifiable {
                                 logger.fine("Task " + nextTask.getId() + " has still predecessors that did not complete");
                             }
                         } else {
-                            nextTask.setContext(currentContext);
                             if (!this.runningTasks.contains(nextTask.getId())) {
                                 this.runningTasks.add(nextTask.getId());
                                 TaskCommand.START.applyTo(nextTask);
@@ -824,9 +819,7 @@ public class Orchestrator extends Notifiable {
 
                     }
                 } else {
-                    //final ExecutionJob job = jobProvider.get(job.getId());
                     if (TaskUtilities.haveAllTasksCompleted(job)) {
-                        //logger.fine(String.format("Job %s: no more child tasks to execute after the current task", job.getId()));
                         if (job.orderedTasks().stream()
                                 .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
                                                t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)) {
@@ -841,13 +834,11 @@ public class Orchestrator extends Notifiable {
                             taskNode instanceof WorkflowNodeGroupDescriptor && taskNode.getPreserveOutput()) {
                             persistOutputProducts(task);
                         }
-                        //WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
                         Duration time = null;
                         if (job.getStartTime() != null && job.getEndTime() != null) {
                             time = Duration.between(job.getStartTime(), job.getEndTime());
                         }
                         notifyJobListeners(job);
-                        //tryRestoreSymlinks(job);
                         tryRemoveTemporaryWorkflow(job);
                         cleanupTransientComponents(job);
                     } else {
@@ -1412,30 +1403,29 @@ public class Orchestrator extends Notifiable {
      *                           Contains the key-value pair to be used during resolution.
      */
     private void resolveTargetName(ExecutionTask nextTask, Variable overriddenOutParam) {
-        List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
+        final List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
         if (originatingTasks != null && !originatingTasks.isEmpty()) {
             boolean succeeded = false;
-            StringBuilder error = new StringBuilder();
+            final StringBuilder error = new StringBuilder();
             for (DataSourceExecutionTask originatingTask : originatingTasks) {
-                String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
-                List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
+                final String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+                final List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
                 if (!rules.isEmpty()) {
                     if (nextTask instanceof ConditionExecutionTask) {
                         ((ConditionExecutionTask) nextTask).setRules(rules);
                         succeeded = true;
                         continue;
                     }
-                    NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                    final NameExpressionParser parser = new NameExpressionParser(rules.get(0));
                     final List<Variable> oValues = originatingTask.getOutputParameterValues();
                     if (oValues != null && !oValues.isEmpty()) {
-                        final List<String> oValuesList;
-                        oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
+                        final List<String> oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
                         final int size = oValuesList.size();
+                        Path path;
                         for (int i = 0; i < size; i++) {
                             try {
-                                Path path = FileUtilities.isURI(oValuesList.get(i))
-                                            ? Paths.get(new URI(oValuesList.get(i)))
-                                            : Paths.get(oValuesList.get(i));
+                                String val = oValuesList.get(i);
+                                path = FileUtilities.isURI(val) ? Paths.get(new URI(val)) : Paths.get(val);
                                 oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
                             } catch (URISyntaxException e) {
                                 logger.warning(e.getMessage());
@@ -1473,29 +1463,24 @@ public class Orchestrator extends Notifiable {
     private void resolveVariable(ExecutionTask nextTask, Variable variable) {
         final String value = variable.getValue();
         if (value != null && value.contains("${")) {
-            List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
+            final List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
             if (originatingTasks != null && !originatingTasks.isEmpty()) {
                 boolean succeeded = false;
-                StringBuilder error = new StringBuilder();
+                final StringBuilder error = new StringBuilder();
                 for (DataSourceExecutionTask originatingTask : originatingTasks) {
-                    String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
-                    List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
+                    final String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+                    final List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
                     if (!rules.isEmpty()) {
-                        NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                        final NameExpressionParser parser = new NameExpressionParser(rules.get(0));
                         final List<Variable> oValues = originatingTask.getOutputParameterValues();
                         if (oValues != null && !oValues.isEmpty()) {
-                            final List<String> oValuesList;
-                            oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
+                            final List<String> oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
                             final int size = oValuesList.size();
+                            Path path;
                             for (int i = 0; i < size; i++) {
                                 try {
                                     final String val = oValuesList.get(i);
-                                    Path path;
-                                    if (FileUtilities.isURI(val)) {
-                                        path = Paths.get(new URI(val));
-                                    } else {
-                                        path = Paths.get(val);
-                                    }
+                                    path = FileUtilities.isURI(val) ? Paths.get(new URI(val)) : Paths.get(val);
                                     oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
                                 } catch (URISyntaxException e) {
                                     logger.warning(e.getMessage());
@@ -1656,10 +1641,11 @@ public class Orchestrator extends Notifiable {
                             logger.warning(String.format("No suitable metadata inspector found for output %s", outValue));
                         }
                     } else {
-                        product = new EOProduct();
-                        product.addReference(userId);
-                        product.setVisibility(Visibility.PRIVATE);
-                        product.setAcquisitionDate(LocalDateTime.now());
+                        product = new EOProduct() {{
+                           addReference(userId);
+                           setVisibility(Visibility.PRIVATE);
+                           setAcquisitionDate(LocalDateTime.now());
+                        }};
                     }
                 } else {
                     logger.warning("No such file: " + path);
@@ -1782,15 +1768,12 @@ public class Orchestrator extends Notifiable {
         if (workflow != null && workflow.isTemporary()) {
             synchronized (lock) {
                 final List<ExecutionJob> jobs = jobProvider.listByWorkflow(workflow.getId());
-                if (jobs.stream().allMatch(j -> j.getExecutionStatus() == ExecutionStatus.FAILED ||
-                        j.getExecutionStatus() == ExecutionStatus.DONE ||
-                        j.getExecutionStatus() == ExecutionStatus.CANCELLED)) {
+                if (jobs.stream().allMatch(j -> notFurtherRunnableStatuses.contains(j.getExecutionStatus()))) {
                     final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
-                    final Map<Long, Long> idMap = new HashMap<>();
-                    long originalWorkflowId = workflow.getCreatedFromWorkflowId();
-                    for (WorkflowNodeDescriptor node : nodes) {
-                        idMap.put(node.getId(), node.getCreatedFromNodeId());
-                    }
+                    final long originalWorkflowId = workflow.getCreatedFromWorkflowId();
+                    final Map<Long, Long> idMap = nodes.stream()
+                                                       .collect(Collectors.toMap(WorkflowNodeDescriptor::getId,
+                                                                                 WorkflowNodeDescriptor::getCreatedFromNodeId));
                     try {
                         for (ExecutionJob jb : jobs) {
                             final List<ExecutionTask> tasks = jb.getTasks();
@@ -2010,9 +1993,9 @@ public class Orchestrator extends Notifiable {
             //noinspection InfiniteLoopStatement
             while (true) {
                 try {
-                    AbstractMap.SimpleEntry<Message, SessionContext> entry = messageQueue.take();
-                    logger.finest("Dequeued message " + entry.getKey());
-                    Orchestrator.this.messageWorker.submit(() -> processMessage(entry.getKey(), entry.getValue()));
+                    Message entry = messageQueue.take();
+                    logger.finest("Dequeued message " + entry);
+                    Orchestrator.this.messageWorker.submit(() -> processMessage(entry));
                 } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
                 }
