@@ -592,7 +592,7 @@ public class DataSourceComponent extends TaoComponent {
                     } catch (java.lang.InterruptedException ex) {
                     }
                     errorMessage = null;
-                } else {
+                } else if (!e.continueWithNext()) {
                     throw e;
                 }
             } catch (Exception e) {

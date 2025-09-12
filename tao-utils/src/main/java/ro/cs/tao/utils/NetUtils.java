@@ -54,11 +54,13 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
  */
 public class NetUtils {
 
+    public static final int DEFAULT_CONNECT_TIMEOUT = 10000;
+    public static final int DEFAULT_READ_TIMEOUT = 10000;
     private static final AutoEvictableCache<CompositeKey, WrappedCloseableHttpClient> httpClients;
     private static Proxy javaNetProxy;
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
-    private static int timeout = 30000;
+    private static int timeout = DEFAULT_CONNECT_TIMEOUT;
 
     static {
         allowSelfSignedCertificates();
