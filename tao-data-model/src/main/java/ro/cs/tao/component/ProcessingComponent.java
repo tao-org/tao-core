@@ -643,7 +643,7 @@ public class ProcessingComponent extends TaoComponent {
                     final Pattern pattern = Pattern.compile(String.format(paramRegex, descriptor.getName(), descriptor.getLabel()));
                     for (String line : lines) {
                         Matcher matcher = pattern.matcher(line) ;
-                        if (!matcher.matches()) {
+                        if (!matcher.find()) {
                             builder.append(line).append("\n");
                         } else {
                             if (StringUtilities.count("$", line) > 1) {

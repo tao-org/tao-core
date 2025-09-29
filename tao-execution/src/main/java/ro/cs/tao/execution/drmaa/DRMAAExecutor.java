@@ -441,10 +441,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
      * @param host the name of the host whose requested memory is to be decremented
      * @param amount the amount of memory, in megabytes, to decrement from the host's requested memory
      */
-    private void decrementMemory(String host, long amount) {
+    public void decrementMemory(String host, long amount) {
         Tuple<NodeDescription, AtomicLong> tuple = this.hostMemoryRequests.get(host);
         if (tuple != null) {
-            tuple.getKeyTwo().getAndAdd(-amount);
+            AtomicLong aLong = tuple.getKeyTwo();
+            aLong.getAndAdd(-amount);
+            if (aLong.get() <= 0) {
+                aLong.set(0);
+            }
             logger.fine("Host " + host + " has " + this.hostMemoryRequests.get(host).getKeyTwo().get() + "MB requested memory");
         }
     }
