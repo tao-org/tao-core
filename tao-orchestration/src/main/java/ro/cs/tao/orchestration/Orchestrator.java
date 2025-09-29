@@ -35,6 +35,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.JobCompletedListener;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
+import ro.cs.tao.execution.drmaa.DRMAAExecutor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
@@ -907,6 +908,7 @@ public class Orchestrator extends Notifiable {
             job.getTasks().forEach(t -> {
                 if (t.getExecutionStatus() != ExecutionStatus.DONE && t.getExecutionStatus() != ExecutionStatus.FAILED) {
                     t.setExecutionStatus(ExecutionStatus.CANCELLED);
+                    DRMAAExecutor.getInstance().decrementMemory(t.getExecutionNodeHostName(), t.getUsedRAM());
                     try {
                         taskProvider.update(t);
                     } catch (PersistenceException e) {
@@ -1772,6 +1774,7 @@ public class Orchestrator extends Notifiable {
                     final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
                     final long originalWorkflowId = workflow.getCreatedFromWorkflowId();
                     final Map<Long, Long> idMap = nodes.stream()
+                                                       .filter(n -> n.getCreatedFromNodeId() != null)
                                                        .collect(Collectors.toMap(WorkflowNodeDescriptor::getId,
                                                                                  WorkflowNodeDescriptor::getCreatedFromNodeId));
                     try {
