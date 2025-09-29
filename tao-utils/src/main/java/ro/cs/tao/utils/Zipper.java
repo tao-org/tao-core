@@ -21,9 +21,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
@@ -43,6 +41,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class Zipper {
 
+    private static final String TAR_MAGIC = "ustar";
     private static final Logger logger = Logger.getLogger(Zipper.class.getName());
 
     public static void main(String[] args) throws IOException {
@@ -189,26 +188,30 @@ public class Zipper {
             try (InputStream is = Files.newInputStream(source);
                  ZipInputStream zis = new ZipInputStream(is)) {
                 ZipEntry entry = zis.getNextEntry();
-                while (entry != null) {
-                    Path newFile = target.resolve(entry.getName());
-                    if (entry.isDirectory()) {
-                        FileUtilities.createDirectories(newFile);
-                    } else {
-                        FileUtilities.createDirectories(newFile.getParent());
-                        try (OutputStream outputStream = Files.newOutputStream(newFile)) {
-                            int read;
-                            while ((read = zis.read(buffer)) > 0) {
-                                outputStream.write(buffer, 0, read);
-                                totalRead += (double) read * ((double) entry.getCompressedSize() / entry.getSize());
-                                if (listener != null && iterations++ % 128 == 0) { // report progress at each 128MB read
-                                    listener.notifyProgress(totalRead / total);
+                if (entry == null && isTar(source)) {
+                    decompressTar(source, target);
+                } else {
+                    while (entry != null) {
+                        Path newFile = target.resolve(entry.getName());
+                        if (entry.isDirectory()) {
+                            FileUtilities.createDirectories(newFile);
+                        } else {
+                            FileUtilities.createDirectories(newFile.getParent());
+                            try (OutputStream outputStream = Files.newOutputStream(newFile)) {
+                                int read;
+                                while ((read = zis.read(buffer)) > 0) {
+                                    outputStream.write(buffer, 0, read);
+                                    totalRead += (double) read * ((double) entry.getCompressedSize() / entry.getSize());
+                                    if (listener != null && iterations++ % 128 == 0) { // report progress at each 128MB read
+                                        listener.notifyProgress(totalRead / total);
+                                    }
                                 }
                             }
                         }
+                        entry = zis.getNextEntry();
                     }
-                    entry = zis.getNextEntry();
+                    zis.closeEntry();
                 }
-                zis.closeEntry();
             }
         } catch (IOException e) {
             logger.warning(ExceptionUtils.getStackTrace(logger, e));
@@ -285,6 +288,32 @@ public class Zipper {
         return target;
     }
 
+    public static Path decompressTar(Path source, Path target) throws IOException {
+        if (source == null) {
+            return null;
+        }
+        try (InputStream is = Files.newInputStream(source);
+             TarArchiveInputStream tarStream = new TarArchiveInputStream(is)) {
+            TarArchiveEntry entry;
+            while ((entry = tarStream.getNextTarEntry()) != null) {
+                final Path currentPath = target.resolve(entry.getName());
+                if (entry.isDirectory()) {
+                    FileUtilities.createDirectories(currentPath);
+                } else {
+                    int count;
+                    final byte[] buffer = new byte[65536];
+                    FileUtilities.createDirectories(currentPath.getParent());
+                    try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
+                        while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
+                            outputStream.write(buffer, 0, count);
+                        }
+                    }
+                }
+            }
+        }
+        return target;
+    }
+
     /**
      * Decompresses a tar.gz (or tar) file into a specified target directory. Optionally deletes
      * the source file after successful decompression.
@@ -324,25 +353,7 @@ public class Zipper {
                 }
             } catch (IOException e) {
                 if (e.getMessage().equals("Input is not in the .gz format")) {
-                    try (InputStream is = Files.newInputStream(source);
-                         TarArchiveInputStream tarStream = new TarArchiveInputStream(is)) {
-                        TarArchiveEntry entry;
-                        while ((entry = tarStream.getNextTarEntry()) != null) {
-                            final Path currentPath = target.resolve(entry.getName());
-                            if (entry.isDirectory()) {
-                                FileUtilities.createDirectories(currentPath);
-                            } else {
-                                int count;
-                                final byte[] buffer = new byte[65536];
-                                FileUtilities.createDirectories(currentPath.getParent());
-                                try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
-                                    while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
-                                        outputStream.write(buffer, 0, count);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    decompressTar(source, target);
                 }
             }
             if (deleteAfterDecompress) {
@@ -353,6 +364,26 @@ public class Zipper {
             throw ex;
         }
         return target;
+    }
+
+    public static boolean isTar(Path file) throws IOException {
+        if (file == null || !Files.exists(file) || Files.isDirectory(file)) {
+            return false;
+        }
+        final StringBuilder buffer = new StringBuilder();
+        try (InputStream is = Files.newInputStream(file);
+             Reader reader = new BufferedReader(new InputStreamReader(is))) {
+                 reader.skip(256);
+                 int read;
+                 for (int i = 0; i < 4; i++) {
+                     if ((read = reader.read()) != -1) {
+                         buffer.append((char) read);
+                     } else {
+                         break;
+                     }
+                 }
+                 return TAR_MAGIC.equals(buffer.toString());
+        }
     }
 
     private static boolean delete(Path path) {
