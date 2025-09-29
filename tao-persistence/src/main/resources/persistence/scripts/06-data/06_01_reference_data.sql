@@ -331,6 +331,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (4, 'tao.remote.subscriptions.synchronize.rate', '1', 'Interval (in hours) to synchronize external subscriptions', 'int', 'Remote subscription synchronize rate', null, now()),
 (4, 'execution.environment', 'Default', 'Default execution environment', 'string', 'Execution environment', '{"allowed_values":[{"value":"Default","display":"SSH"},{"value":"Kubernetes","display":"Kubernetes"}]}', now()),
 (4, 'other.workflows.visibility', 'public', 'Workflow visibility mode', 'string', 'Workflow visibility mode', '{"allowed_values":[{"value":"public","display":"Public"},{"value":"subscription","display":"Subscription"}]}', now()),
+(4, 'execution.reserved.memory', '4096', 'Worker node reserved memory (MB)', 'int', 'Worker node reserved memory (MB)', null, now()),
 (5, 'mail.smtp.auth', 'true', 'Enable SMTP authentication', 'bool', 'Enable SMTP authentication', null, now()),
 (5, 'mail.smtp.starttls.enable', 'true', 'SMTP uses TLS', 'bool', 'SMTP uses TLS', null, now()),
 (5, 'mail.smtp.host', 'smtp.gmail.com', 'SMTP server', 'string', 'SMTP server', null, now()),

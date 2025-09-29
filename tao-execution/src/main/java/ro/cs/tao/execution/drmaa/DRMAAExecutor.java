@@ -22,6 +22,7 @@ import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentType;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.DockerVolumeMap;
@@ -466,9 +467,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (hostData != null) {
             long installed = hostData.getKeyOne().getFlavor().getMemory() * hostData.getKeyOne().getFlavor().getMemoryUnit().value() / MemoryUnit.MB.value();
             long requested = hostData.getKeyTwo().get();
-            if (installed <= requested + newMemory) {
-                logger.finest(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",
-                                             host, installed, requested));
+            long reserved = Long.parseLong(ConfigurationManager.getInstance().getValue("execution.reserved.memory", "4096"));
+            if (installed <= requested + newMemory + reserved) {
+                logger.finest(String.format("Host %s may not have enough available memory (installed: %d, reserved: %d, requested: %d)",
+                                             host, installed, reserved, requested));
                 canSubmit = false;
             } else {
                 canSubmit = true;
