@@ -365,6 +365,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (7, 'aws.secret.key', null, 'AWS secret key', 'string', 'Secret key', null, now()),
 (7, 'aws.bucket', null, 'AWS S3 bucket', 'string', 'S3 bucket', null, now()),
 (7, 'aws.use.username.as.root', 'false', 'Use user name as bucket root', 'bool', 'Use user name as bucket root', null, now()),
+(8, 'query.cache.enabled', 'false', 'Cache query results for 1 day', 'bool', 'Cache query results for 1 day', null, now()),
 (8, 'datasource.filter.category', null, 'Category filter', 'string', 'Category filter', null, now()),
 (8, 'datasource.filter.collection', null, 'Collection filter', 'string', 'Collection filter', null, now()),
 (8, 'datasource.filter.provider', null, 'Provider filter', 'string', 'Provider filter', null, now()),
