@@ -20,6 +20,7 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.ogc.WMSComponent;
 import ro.cs.tao.component.ogc.WPSComponent;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.beans.Query;
@@ -979,7 +980,8 @@ public class DefaultJobFactory implements JobFactory {
             clone.setQueryId(original.getQueryId());
             clone.setUserId(original.getUserId());
             clone.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-            clone.setJobOutputPath(original.getJobOutputPath() + "_" + cloneNumber);
+            final boolean useParentFolder = ConfigurationManager.getInstance().getBooleanValue("execution.use.parent.job.folder");
+            clone.setJobOutputPath(original.getJobOutputPath() + (useParentFolder ? "" : "_" + cloneNumber));
             clone.setJobType(original.getJobType());
             clone.setEnvironment(original.getEnvironment());
             clone = jobProvider.save(clone);

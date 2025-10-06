@@ -303,14 +303,15 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                         this.internalState == null ? "" : this.internalState + "-",
                                                         this.component.getId());
                 final Path jobPath = Paths.get(getJob().getJobOutputPath());
+                final Path taskPath = ConfigurationManager.getInstance().getBooleanValue("execution.task.separate.folders")
+                        ? jobPath.resolve(folderName)
+                        : jobPath;
                 try {
-                    //FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
-                    FileUtilities.ensureExists(jobPath.resolve(folderName));
+                    FileUtilities.ensureExists(taskPath);
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                //setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));
-                setInstanceTargetOutput(FileUtilities.asUnixPath(jobPath.resolve(folderName).resolve(fileName), true));
+                setInstanceTargetOutput(FileUtilities.asUnixPath(taskPath.resolve(fileName), true));
                 setInstanceTemporaryOutput(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerTemporaryFolder() + "/" + fileName);
             }
         }
@@ -344,15 +345,14 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                               this.getId(),
                                               this.internalState == null ? "" : this.internalState + "-",
                                               FileUtilities.getFilenameWithoutExtension(fileName));
-            final boolean useDistinctFolder = Boolean.parseBoolean(ConfigurationManager.getInstance()
-                                                                                       .getValue("execution.folder.task",
-                                                                                                 "true"));
+            final boolean useDistinctFolder = ConfigurationManager.getInstance().getBooleanValue("execution.task.use.distinct.folders");
+            final Path taskPath = useDistinctFolder ? jobPath.resolve(folderName) : jobPath;
             outPath = new String[] {
                     useDistinctFolder
-                            ? FileUtilities.asUnixPath(jobPath.resolve(folderName), false)
+                            ? FileUtilities.asUnixPath(taskPath, false)
                             : FileUtilities.asUnixPath(jobPath, false),
                     useDistinctFolder
-                            ? FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()).resolve(folderName), true)
+                            ? FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true)
                             : FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()), true)
             };
         }
