@@ -780,7 +780,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         task.setUsedCPU(cpu);
                     }
                     if (mem > 0) {
-                        long arg = memory > 0 ? memory : Math.min(8192, mem);
+                        long arg = memory > 0 ? memory + 2048 : Math.min(8192, mem);
                         unit.addArgument("--memory", arg + "MB");
                         task.setUsedRAM((int) arg);
                     }
@@ -844,7 +844,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             task.setUsedCPU(cpu);
                         }
                         if (mem > 0) {
-                            long arg = memory > 0 ? memory : Math.min(8192, mem);
+                            long arg = memory > 0 ? memory + 2048 : Math.min(8192, mem);
                             add("--memory");    // Enforce the memory limit to be used
                             // memory, if not 0, is expressed in MB
                             add(arg + "MB");
