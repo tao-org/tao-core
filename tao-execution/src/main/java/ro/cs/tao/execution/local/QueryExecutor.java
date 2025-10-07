@@ -299,12 +299,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         }
                     }
                     if (tuples != null) {
-                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                     serializeGroups(tuples));
+                        message = serializeGroups(tuples);
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(), message);
                     } else {
-                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                     serializeResults(products));
+                        message = serializeResults(products);
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(), message);
                     }
+                    task.setLog(message);
                     status = ExecutionStatus.DONE;
                 } else {
                     message = "Query returned no results";
