@@ -54,6 +54,7 @@ public class DockerManager {
     private static final String dockerRunningInstanceByIdCmd;
     private static final String dockerRunningInstancesCmd;
     private static final String dockerHubCheckImageCmd;
+    private static final String dockerRemoveImageCmd;
     private static final DockerManager instance;
 
     private final ContainerProvider containerProvider;
@@ -76,6 +77,7 @@ public class DockerManager {
         dockerHubCheckImageCmd = SystemUtils.IS_OS_WINDOWS
                                  ? "docker manifest inspect %s > NUL & echo %%ERRORLEVEL%%"
                                  : "docker manifest inspect %s > /dev/null ; echo $?";
+        dockerRemoveImageCmd = "docker rmi -f %s";
         instance = new DockerManager();
     }
 
@@ -274,6 +276,16 @@ public class DockerManager {
      */
     public static int getNextFreePort() {
         return instance.getAvailablePort();
+    }
+
+    /**
+     * Removes an image identified by the given image ID from the system.
+     *
+     * @param imageId the unique identifier of the image to be removed
+     * @return true if the image was removed successfully, false otherwise
+     */
+    public static boolean removeImage(String imageId) {
+        return instance.remove(imageId);
     }
 
     private DockerManager() {
@@ -543,6 +555,33 @@ public class DockerManager {
             logger.severe(message);
         }
         return container;
+    }
+
+    /**
+     * Removes the specified image by executing the provided Docker remove image command.
+     *
+     * @param imageId the ID of the image to be removed
+     * @return {@code true} if the removal was successful, {@code false} otherwise
+     */
+    private boolean remove(String imageId) {
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerRemoveImageCmd, imageId);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
+        int retCode;
+        final Executor<?> executor = Executor.execute(accumulator, job);
+        waitFor(executor, 10, TimeUnit.SECONDS);
+        boolean result = (retCode = executor.getReturnCode()) == 0;
+        if (!result) {
+            String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                           retCode, accumulator.getOutput());
+            logger.severe(message);
+        }
+        return result;
     }
 
     /**
