@@ -113,7 +113,8 @@ public abstract class TaskCommand {
         }
         @Override
         public Set<ExecutionStatus> allowedStates() {
-            return EnumSet.of(ExecutionStatus.UNDETERMINED, ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
+            return EnumSet.of(ExecutionStatus.UNDETERMINED, ExecutionStatus.QUEUED_ACTIVE,
+                              ExecutionStatus.RUNNING, ExecutionStatus.PENDING_FINALISATION);
         }
         @Override
         protected void doAction(ExecutionTask task) {
