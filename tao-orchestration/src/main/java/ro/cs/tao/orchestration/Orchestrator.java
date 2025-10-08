@@ -110,6 +110,10 @@ public class Orchestrator extends Notifiable {
                                                                                       ExecutionStatus.FAILED);
     private static final Set<ExecutionStatus> completedOkStatuses = EnumSet.of(ExecutionStatus.DONE,
                                                                                ExecutionStatus.PENDING_FINALISATION);
+    private static final Set<ExecutionStatus> stopableStatuses = EnumSet.of(ExecutionStatus.QUEUED_ACTIVE,
+                                                                            ExecutionStatus.RUNNING,
+                                                                            ExecutionStatus.PENDING_FINALISATION,
+                                                                            ExecutionStatus.SUSPENDED);
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
     private final BlockingQueue<Message> messageQueue;
@@ -491,10 +495,7 @@ public class Orchestrator extends Notifiable {
         } catch (Exception e) {
             logger.warning(e.getMessage());
         } finally {
-            if (status == ExecutionStatus.QUEUED_ACTIVE ||
-                status == ExecutionStatus.RUNNING ||
-                status == ExecutionStatus.PENDING_FINALISATION ||
-                status == ExecutionStatus.SUSPENDED) {
+            if (stopableStatuses.contains(status)) {
                 notifyJobListeners(job);
             }
         }

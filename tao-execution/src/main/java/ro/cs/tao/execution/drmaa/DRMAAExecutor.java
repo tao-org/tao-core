@@ -165,6 +165,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
             isInitialized.set(sessions.size() > 0);
             if (isInitialized.get()) {
+                logger.info("Available DRMAA environments: " + sessions.keySet().stream().map(Environment::name).collect(Collectors.joining(",")));
                 this.queueWorker.start();
             }
         }
@@ -212,7 +213,6 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             if (task.getResourceId() != null) {
                 final Session session = getSession(task.getJob().getEnvironment());
                 session.control(task.getResourceId(), Session.TERMINATE);
-                //session.control(task.getResourceId(), Session.TERMINATE);
             }
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getId(), e);
@@ -254,7 +254,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
 
     @Override
     public void monitorExecutions() {
-        if(!isInitialized.get()) {
+        if (!isInitialized.get()) {
             return;
         }
         final List<ExecutionTask> tasks = taskProvider.listExecuting(appId);
@@ -611,7 +611,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             NodeDescription node;
             final int cpu;
             final long mem;
-            if(job.getEnvironment() == Environment.DEFAULT || job.getEnvironment() == Environment.SIMPIPE) {
+            if (job.getEnvironment() == Environment.DEFAULT || job.getEnvironment() == Environment.SIMPIPE) {
                 NodeData nodeData;
                 final Integer parallelism = component.getParallelism();
                 final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
@@ -620,9 +620,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     try {
                         TimeUnit.SECONDS.sleep(15);
                     } catch (InterruptedException ignored) { }
-                    //if (nodeData == null) {
-                        nodeData = strategy.getNode(memory);
-                    //}
+                    nodeData = strategy.getNode(memory);
                 }
                 node = nodeData.getNode();
                 if (node == null) {
