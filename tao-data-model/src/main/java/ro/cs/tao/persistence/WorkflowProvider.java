@@ -77,9 +77,10 @@ public interface WorkflowProvider extends EntityProvider<WorkflowDescriptor, Lon
      * Retrieves a list of {@link WorkflowDescriptor} objects that are visible to the specified user.
      *
      * @param user the username of the user for whom the visible workflows are to be retrieved
+     * @param active flag to retrieve either active or inactive visible workflows
      * @return a list of {@link WorkflowDescriptor} objects that the user can access
      */
-    List<WorkflowDescriptor> listUserVisible(String user);
+    List<WorkflowDescriptor> listUserVisible(String user, boolean active);
 
     /**
      * Retrieves a map of workflow image IDs and their corresponding image representations
