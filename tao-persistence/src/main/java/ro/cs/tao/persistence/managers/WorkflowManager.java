@@ -138,7 +138,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserVisible(String userId) {
+    public List<WorkflowDescriptor> listUserVisible(String userId, boolean active) {
         final List<WorkflowDescriptor> workflows = repository.getUserWorkflows(userId);
         final String value = ConfigurationManager.getInstance().getValue("other.workflows.visibility");
         if (value != null && Enum.valueOf(Visibility.class, value.toUpperCase()).equals(Visibility.SUBSCRIPTION)) {
@@ -150,6 +150,11 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
             workflows.addAll(repository.getOtherPublicWorkflows(userId));
         }
         workflows.removeIf(WorkflowDescriptor::isTemporary);
+        if (active) {
+            workflows.removeIf(s -> !s.isActive());
+        } else {
+            workflows.removeIf(WorkflowDescriptor::isActive);
+        }
         return workflows;
     }
 

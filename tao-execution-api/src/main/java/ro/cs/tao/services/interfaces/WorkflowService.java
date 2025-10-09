@@ -88,9 +88,10 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Returns all the workflows visible to the given user.
      * The list consists in all the workflows of the user plus the published workflows of other users.
      * @param userId  The user identifier
+     * @param active  Flag to retrieve either active or inactive visible workflows
      * @return The workflow information list (not the full workflow structures)
      */
-    List<WorkflowInfo> getUserVisibleWorkflows(String userId);
+    List<WorkflowInfo> getUserVisibleWorkflows(String userId, boolean active);
 
     /**
      * Returns the workflows to which a user has subscribed.
