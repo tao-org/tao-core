@@ -41,9 +41,14 @@ public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
         if (this.actions == null) {
             this.actions = new LinkedHashMap<>();
         }
+        if (this.repository == null) {
+            throw new IllegalArgumentException("A repository must be first associated with this storage service");
+        }
         if (!this.actions.containsKey(action.name())) {
-            action.associateWith(this);
-            this.actions.put(action.name(), action);
+            if (action.canBeUsedWith(this.repository)) {
+                action.associateWith(this);
+                this.actions.put(action.name(), action);
+            }
         }
     }
 
