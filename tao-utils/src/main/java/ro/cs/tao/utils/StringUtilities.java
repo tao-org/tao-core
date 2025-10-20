@@ -16,6 +16,8 @@
 
 package ro.cs.tao.utils;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 /**
@@ -171,5 +173,9 @@ public class StringUtilities {
             idx += length;
         }
         return count;
+    }
+
+    public static String replaceSpecialCharacters(String value) {
+        return URLDecoder.decode(value, StandardCharsets.US_ASCII).replaceAll("[&+',`]", "_");
     }
 }
