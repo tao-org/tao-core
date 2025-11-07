@@ -141,7 +141,8 @@ public class DescriptionParser {
                         this.currentEndpoint.addParameter(this.currentParameter.getSystemName(),
                                                           new DataSourceParameter(this.currentParameter.getSystemName(),
                                                                                   this.currentParameter.getRemoteName(),
-                                                                                  this.currentParamClass, null, false));
+                                                                                  this.currentParamClass != null ? this.currentParamClass : String.class,
+                                                                                  this.currentParameter.getRemoteName(), false));
                         this.currentParamClass = null;
                     }
                     break;
