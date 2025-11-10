@@ -248,7 +248,7 @@ CREATE TABLE component.processing_parameter
     unit varchar(250),
     format varchar(250),
     value_set text,
-    value_set_label text,
+    value_set_labels text,
     not_null boolean,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
