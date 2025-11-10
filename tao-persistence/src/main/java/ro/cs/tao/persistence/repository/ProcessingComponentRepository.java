@@ -2,11 +2,13 @@ package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ProcessingComponent;
 
+import javax.persistence.QueryHint;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +25,7 @@ public interface ProcessingComponentRepository extends AuditableEntityRepository
 
     @Query(value = "SELECT * FROM component.processing_component WHERE owner_user_id = :userId AND component_type_id = :typeId",
             nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true"), @QueryHint(name = "org.hibernate.cacheable", value = "true") })
     List<ProcessingComponent> getUserComponentsByType(@Param("userId") String userId,
                                                       @Param("typeId") int typeId);
 
@@ -33,6 +36,7 @@ public interface ProcessingComponentRepository extends AuditableEntityRepository
     List<ProcessingComponent> getOtherComponents(Set<String> ids);
 
     @Query(value = "SELECT * FROM component.processing_component WHERE container_id = :containerId", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true"), @QueryHint(name = "org.hibernate.cacheable", value = "true") })
     List<ProcessingComponent> getByContainer(@Param("containerId") String containerId);
 
     @Query(value = "SELECT * FROM component.processing_component WHERE id = :id AND container_id = :containerId", nativeQuery = true)
