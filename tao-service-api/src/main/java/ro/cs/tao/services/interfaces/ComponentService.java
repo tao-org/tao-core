@@ -123,4 +123,31 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      * @param component The component to be exported
      */
     String exportComponent(ProcessingComponent component) throws SerializationException;
+
+    /**
+     * Transforms the specified processing component into a source descriptor.
+     *
+     * @param parameterId      The unique identifier of the parameter to be transformed into a source descriptor.
+     * @param parentComponent  The parent processing component to which the transformation applies.
+     */
+    void transformIntoSource(String parameterId, ProcessingComponent parentComponent);
+
+    /**
+     * Transforms the specified parameter into a target descriptor within the context of the provided parent processing component.
+     *
+     * @param parameterId      The unique identifier of the parameter to be transformed into a target descriptor.
+     * @param parentComponent  The parent processing component to which the transformation is applied.
+     */
+    void transformIntoTarget(String parameterId, ProcessingComponent parentComponent);
+
+    /**
+     * Transforms the specified source or target descriptor into a parameter within the context
+     * of the provided parent processing component.
+     *
+     * @param sourceOrTargetDescriptorId The unique identifier of the descriptor (either source or target)
+     *                                   to be transformed into a parameter.
+     * @param parentComponent            The parent processing component to which the transformation applies.
+     */
+    void transformIntoParameter(String sourceOrTargetDescriptorId, ProcessingComponent parentComponent);
+
 }
