@@ -70,7 +70,7 @@ public class ConditionComponent extends TaoComponent {
         component.addTarget(target2);
         component.addParameter(new ParameterDescriptor(ONE_CONDITION_COMPONENT_ID + "-condition",
                                                        "condition", ParameterType.REGULAR, JavaType.STRING, null, "Condition", "Condition", "n/a",
-                                                       null, null, null, true));
+                                                       null, null, null, null, true));
         component.setTemplateContents("#if ($condition)\noutput1\n#else\noutput2\n#end");
         component.setLabel("Single condition");
         component.setDescription("Condition component that acts like an if-else");
@@ -110,10 +110,10 @@ public class ConditionComponent extends TaoComponent {
         component.addTarget(target3);
         component.addParameter(new ParameterDescriptor(TWO_CONDITIONS_COMPONENT_ID + "-condition-1",
                                                        "condition1", ParameterType.REGULAR, JavaType.STRING, null, "First Condition", "First Condition", "n/a",
-                                                       null, null, null, true));
+                                                       null, null, null, null, true));
         component.addParameter(new ParameterDescriptor(TWO_CONDITIONS_COMPONENT_ID + "-condition-2",
                                                        "condition2", ParameterType.REGULAR, JavaType.STRING, null, "Second Condition", "Second Condition", "n/a",
-                                                       null, null, null, true));
+                                                       null, null, null, null, true));
         component.setTemplateContents("#if ($condition1)\noutput1\n#elseif ($condition2)\noutput2\n#else\noutput3\n#end");
         component.setLabel("Double condition");
         component.setDescription("Condition component that acts like an if-elseif-else");
