@@ -572,6 +572,7 @@
         <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter" attribute-name="type" />
         <convert converter="ro.cs.tao.persistence.convert.DataTypeConverter" attribute-name="dataType" />
         <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
+        <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSetLabel" />
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
@@ -596,6 +597,9 @@
             </basic>
             <basic name="valueSet">
                 <column name="value_set" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="valueSetLabels">
+                <column name="value_set_labels" nullable="true" column-definition="text NULL"/>
             </basic>
             <basic name="format">
                 <column name="format" nullable="true" column-definition="varchar(250) NULL"/>
@@ -823,7 +827,7 @@
                                                     WPSExecutionTask         inherits from ExecutionTask-->
         <inheritance strategy="SINGLE_TABLE"/>
 
-        <!-- define discriminator in root class, avoid default DTYPE -->
+        <!-- define discriminator in collectionDescription class, avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
@@ -1780,7 +1784,7 @@
 
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
-            <basic name="aggregator" fetch="EAGER">
+            <basic name="aggregator">
                 <column name="aggregator" nullable="true" column-definition="varchar(512)"/>
                 <convert converter="ro.cs.tao.persistence.convert.AggregatorConverter" attribute-name="aggregator"/>
             </basic>

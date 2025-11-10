@@ -243,12 +243,13 @@ CREATE TABLE component.processing_parameter
     type_id integer NOT NULL,
     label varchar(512) NOT NULL,
     data_type varchar(512) NOT NULL,
-    default_value text NULL,
-    description text NULL,
-    unit varchar(250) NULL,
-    format varchar(250) NULL,
-    value_set text NULL,
-    not_null boolean NULL,
+    default_value text,
+    description text,
+    unit varchar(250),
+    format varchar(250),
+    value_set text,
+    value_set_label text,
+    not_null boolean,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );

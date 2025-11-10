@@ -51,6 +51,7 @@ public class ParameterDescriptor extends StringIdentifiable {
     private String label;
     private String unit;
     private String[] valueSet;
+    private String[] valueSetLabels;
     private String format;
     private boolean notNull;
     private Validator customValidator;
@@ -70,6 +71,7 @@ public class ParameterDescriptor extends StringIdentifiable {
                                @JsonProperty("label") String label,
                                @JsonProperty("unit") String unit,
                                @JsonProperty("valueSet") String[] valueSet,
+                               @JsonProperty("valueSetLabels") String[] valueSetLabels,
                                @JsonProperty("format") String format,
                                @JsonProperty("expansionRule") ParameterExpansionRule rule,
                                @JsonProperty("notNull") boolean notNull) {
@@ -81,14 +83,15 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.description = description;
         this.label = label;
         this.valueSet = valueSet;
+        this.valueSetLabels = valueSetLabels;
         this.format = format;
         this.expansionRule = rule;
         this.notNull = notNull;
     }
 
     public ParameterDescriptor(String id, String name, ParameterType type, Class<?> dataType, String defaultValue,
-                               String description, String label, String unit, String[] valueSet, String format,
-                               boolean notNull, ParameterExpansionRule expansionRule) {
+                               String description, String label, String unit, String[] valueSet, String[] valueSetLabels,
+                               String format, boolean notNull, ParameterExpansionRule expansionRule) {
         super(id);
         this.name = name;
         this.type = type;
@@ -171,6 +174,14 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public void setValueSet(String[] valueSet) {
         this.valueSet = valueSet;
+    }
+
+    public String[] getValueSetLabels() {
+        return valueSetLabels;
+    }
+
+    public void setValueSetLabels(String[] valueSetLabels) {
+        this.valueSetLabels = valueSetLabels;
     }
 
     /**
