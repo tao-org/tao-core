@@ -920,7 +920,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                  (t.getDataDescriptor().getLocation() != null && t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")) ||
                          "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
                                     || finalOutput.endsWith(".dim");
-        final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt");
+        final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt") || initialCmd.equals("/opt/esa-snap/bin/gpt");
         final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
         if (isLocal) {
