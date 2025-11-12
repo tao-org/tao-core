@@ -16,6 +16,7 @@
 
 package ro.cs.tao.execution.local;
 
+import reactor.jarjar.jsr166e.extra.AtomicDouble;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
@@ -50,6 +51,7 @@ import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.ComponentType;
@@ -332,7 +334,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     final boolean shouldReplace = job.getJobType() == JobType.EXECUTION
                                                   && ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
                     final double total = list.length;
-                    double counter = 0;
+                    final AtomicDouble counter = new AtomicDouble(0);
                     for (String item : list) {
                         try {
                             Path path = FileUtilities.toPath(item);
@@ -342,11 +344,15 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                             }
                             if (shouldReplace && Files.isSymbolicLink(path)) {
                                 sendMessage(task, "Product " + path.getFileName() + " is being copied locally.");
-                                counter += 1.0;
-                                sendProgressMessage(task, counter / total);
-                                final String linkTarget = FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true);
+                                final String linkTarget = FileUtilities.asUnixPath(FileUtilities.replaceLink(path, new ProgressListener() {
+                                    @Override
+                                    public void notifyProgress(double progressValue) {
+                                        sendProgressMessage(task, (counter.get() + progressValue) / total * 100.0);
+                                    }
+                                }), true);
                                 builder.append(linkTarget);
                                 TaskUtilities.addLinkReplacement(task.getJob().getId(), path, linkTarget);
+                                counter.addAndGet(1);
                             } else {
                                 builder.append(FileUtilities.asUnixPath(path, true));
                             }

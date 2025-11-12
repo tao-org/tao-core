@@ -35,7 +35,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -97,12 +99,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private NodeRefreshTask nodeRefreshTask;
     private volatile boolean refreshInProgress;
     private NodeRuntime lastUsedNode;
+    private long averageCreationTime;
 
     protected NodeManager() {
         this.nodes = new HashMap<>();
         this.refreshInProgress = false;
         this.nodeLimit = 0;
         this.nodeUpdates = new HashMap<>();
+        this.averageCreationTime = nodeCreationWaitTime / 2;
         Messaging.subscribe(this, Topic.CONFIGURATION.value());
     }
 
@@ -490,15 +494,23 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                     final NodeDescription finalNode = node;
                     Messaging.send(userId, Topic.INFORMATION.value(), "Trying to provision node " + finalNode.getId());
                     final Future<NodeDescription> future = executor.submit(() -> TopologyManager.getInstance().addNode(finalNode));
+                    Timer timer = new Timer();
                     try {
+                        timer.scheduleAtFixedRate(new ProgressTask(userId, node.getId(), averageCreationTime), 0, 10000);
+                        long start = System.currentTimeMillis();
                         node = nodeCreationWaitTime > 0
                                ? future.get(nodeCreationWaitTime, TimeUnit.SECONDS)
                                : future.get();
+                        averageCreationTime = averageCreationTime > 0
+                                ? (averageCreationTime + (System.currentTimeMillis() - start)) / 2
+                                : (System.currentTimeMillis() - start);
                         // The new node should be added into this.nodes in onCompleted() method
                         // addNewInstalledNode(node);
                     } catch (Exception e) {
                         logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
                         throw new TopologyException(e);
+                    } finally {
+                        timer.cancel();
                     }
                     return node;
                 }
@@ -764,14 +776,22 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         final NodeDescription finalNode = node;
         Messaging.send(userId, Topic.INFORMATION.value(), "Trying to provision node " + finalNode.getId());
         final Future<NodeDescription> future = executor.submit(() -> TopologyManager.getInstance().addNode(finalNode));
+        Timer timer = new Timer();
         try {
+            timer.scheduleAtFixedRate(new ProgressTask(userId, node.getId(), averageCreationTime), 0, 10000);
+            long start = System.currentTimeMillis();
             node = nodeCreationWaitTime > 0
                    ? future.get(nodeCreationWaitTime, TimeUnit.SECONDS)
                    : future.get();
+            averageCreationTime = averageCreationTime > 0
+                    ? (averageCreationTime + (System.currentTimeMillis() - start)) / 2
+                    : (System.currentTimeMillis() - start);
             // The new node should be added into this.nodes in onCompleted() method
         } catch (Exception e) {
             logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
             throw e;
+        } finally {
+            timer.cancel();
         }
         return node;
     }
@@ -1164,6 +1184,25 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             } finally {
                 refreshInProgress = false;
             }
+        }
+    }
+
+    private static class ProgressTask extends TimerTask {
+        private final String nodeId;
+        private final String userId;
+        private final LocalDateTime end;
+
+        public ProgressTask(String userId, String nodeId, long duration) {
+            this.userId = userId;
+            this.nodeId = nodeId;
+            this.end = LocalDateTime.now().plus(duration, ChronoUnit.MILLIS);
+        }
+
+        @Override
+        public void run() {
+            long seconds = Math.max(Duration.between(LocalDateTime.now(), this.end).getSeconds(), 0);
+            Messaging.send(userId, Topic.INFORMATION.value(),
+                           "Node " + nodeId + " will be ready " + (seconds > 0 ? " in " + seconds + "s" : "soon"));
         }
     }
 }
