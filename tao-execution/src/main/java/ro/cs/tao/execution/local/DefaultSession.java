@@ -20,6 +20,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.DrmaaJobExtensions;
 import ro.cs.tao.execution.drmaa.JobExitHandler;
+import ro.cs.tao.execution.model.NodeData;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -216,7 +217,8 @@ public class DefaultSession implements Session, JobExitHandler {
                 }
                 if (job.hasAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE)) {
                     String host = (String) job.getAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE);
-                    node = this.nodes != null ? Arrays.stream(this.nodes).filter(n -> host.equals(n.getId())).findFirst().orElse(null) : null;
+                    NodeData data = NodeManager.getInstance().getNode(host);
+                    node = data != null ? data.getNode() : null;
                 }
                 if (job.hasAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE)) {
                     final Object attrValue = job.getAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE);
