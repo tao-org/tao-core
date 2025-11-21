@@ -33,6 +33,7 @@ import ro.cs.tao.workflow.enums.Status;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -340,6 +341,14 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @throws SerializationException
      */
     WorkflowDescriptor importWorkflow(InputStream source) throws IOException, SerializationException, PersistenceException;
+
+    /**
+     * Attempts to convert a CWL Workflow into a TAO Workflow. If any of the CWL steps is not
+     * properly defined , the conversion will fail.
+     *
+     * @param sources  The input paths
+     */
+    WorkflowDescriptor importWorkflow(List<Path> sources) throws IOException, SerializationException, PersistenceException;
 
     /**
      * Exports the definition of a workflow in JSON
