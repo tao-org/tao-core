@@ -108,6 +108,14 @@ public class WorkflowDescriptor
         return orderNodes(this.nodes, null);
     }
 
+    public List<WorkflowNodeDescriptor> orderNodesByLevel() {
+        return orderNodesByLevel(this.nodes);
+    }
+
+    public WorkflowNodeDescriptor getNodeById(Long id) {
+        return this.nodes.stream().filter(n -> n.getId().equals(id)).findFirst().orElse(null);
+    }
+
     // addNode and removeNode are needed for bidirectional relationship
     public void addNode(WorkflowNodeDescriptor node) {
         if (this.nodes == null) {
