@@ -86,6 +86,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     LocalDateTime getLastRun(@Param("host") String host);
 
     @Query(value = "SELECT t.* FROM execution.task t JOIN component.data_source_component c ON c.id = t.component_id WHERE t.job_id = :jobId", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
     List<ExecutionTask> getDataSourceTasks(@Param("jobId") long jobId);
 
     @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t " +
@@ -123,7 +124,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
            nativeQuery = true)
     Integer getTransitionBehavior(@Param("taskId") long taskId);
 
-    @Query(value = "SELECT * FROM execution.task WHERE actual_target LIKE %?1%", nativeQuery = true)
+    @Query(value = "SELECT * FROM execution.task WHERE actual_target LIKE CONCAT('%', :output, '%')", nativeQuery = true)
     @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
     ExecutionTask getTaskByOutput(@Param("output") String output);
 
