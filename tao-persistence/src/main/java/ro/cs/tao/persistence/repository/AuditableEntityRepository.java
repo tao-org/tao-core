@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * @param <ID> the type of the entity's identifier
  */
 @NoRepositoryBean
-public interface AuditableEntityRepository<T, ID> extends PagingAndSortingRepository<T, ID> {
+public interface AuditableEntityRepository<T, ID> extends OptimisedPagingAndSortingRepository<T, ID> {
 
     final ExecutorService executor = Executors.newSingleThreadExecutor();
     final String UPDATE_MODIFIED_QUERY = "UPDATE %s SET modified = now() WHERE id = ?";

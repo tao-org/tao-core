@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,7 @@ import java.util.Set;
 @Repository
 @Qualifier(value = "workflowDescriptorRepository")
 @Transactional
-public interface WorkflowDescriptorRepository extends PagingAndSortingRepository<WorkflowDescriptor, Long> {
+public interface WorkflowDescriptorRepository extends OptimisedPagingAndSortingRepository<WorkflowDescriptor, Long> {
 
     @Query(value = "SELECT w FROM WorkflowDescriptor w JOIN FETCH w.nodes n " +
             "LEFT JOIN FETCH n.incomingLinks l " +
