@@ -15,6 +15,7 @@ public class ExecutionRequest {
     private String label;
     private String jobType;
     private String environment;
+    private boolean optimize;
     private Map<Long, String> inputs;
     private Map<String, Map<String, String>> parameters;
 
@@ -27,6 +28,7 @@ public class ExecutionRequest {
         this.label = other.label;
         this.jobType = other.jobType;
         this.environment = other.environment;
+        this.optimize = other.optimize;
         if (other.inputs != null) {
             this.inputs = new HashMap<>(other.inputs);
         }
@@ -56,6 +58,13 @@ public class ExecutionRequest {
     }
     public void setEnvironment(String environment) {
         this.environment = environment;
+    }
+
+    public boolean isOptimize() {
+        return optimize;
+    }
+    public void setOptimize(boolean optimize) {
+        this.optimize = optimize;
     }
 
     public Map<Long, String> getInputs() {
