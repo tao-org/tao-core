@@ -277,6 +277,20 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.cardinality = cardinality;
     }
 
+    @Transient
+    public boolean isRunning() {
+        return this.executionStatus == ExecutionStatus.RUNNING ||
+               this.executionStatus == ExecutionStatus.PENDING_FINALISATION;
+    }
+
+    @Transient
+    public boolean hasNotCompleted() {
+        return this.executionStatus == ExecutionStatus.UNDETERMINED ||
+               this.executionStatus == ExecutionStatus.QUEUED_ACTIVE ||
+               this.executionStatus == ExecutionStatus.RUNNING ||
+               this.executionStatus == ExecutionStatus.PENDING_FINALISATION;
+    }
+
     public abstract String buildExecutionCommand();
 
     @Transient

@@ -97,9 +97,14 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * The singleton orchestrator of task executions.
+ * The Orchestrator class serves as the central component for managing and executing workflows within the system.
+ * It provides functionalities for creating, starting, stopping, pausing, and resuming jobs and workflows,
+ * as well as managing execution states and monitoring system activity.
  *
- * @author Cosmin Cara
+ * This class operates as a singleton, ensuring a single instance for centralized orchestration and task management.
+ *
+ * @author  Cosmin Cara
+ * @since   1.0
  */
 public class Orchestrator extends Notifiable {
 
@@ -122,6 +127,11 @@ public class Orchestrator extends Notifiable {
         instance = new Orchestrator();
     }
 
+    /**
+     * Returns the singleton instance of the Orchestrator class.
+     *
+     * @return the single instance of Orchestrator
+     */
     public static Orchestrator getInstance() {
         return instance;
     }
@@ -371,10 +381,9 @@ public class Orchestrator extends Notifiable {
      *
      * @param context      The session context
      * @param request    The execution request
-     * @param optimize  If <code>true</code>, the workflow will be optimized if possible
      * @throws ExecutionException In case anything goes wrong
      */
-    public ExecutionJob createJob(SessionContext context, ExecutionRequest request, boolean optimize)  throws ExecutionException {
+    public ExecutionJob createJob(SessionContext context, ExecutionRequest request)  throws ExecutionException {
         try {
             final WorkflowDescriptor descriptor = workflowProvider.loadWorkflowDescriptor(request.getWorkflowId());
             if (descriptor == null) {
@@ -387,7 +396,7 @@ public class Orchestrator extends Notifiable {
                 throw new ExecutionException("Quota exceeded for user " + principal.getName());
             }
             WorkflowDescriptor optimized = descriptor;
-            if (optimize) {
+            if (request.isOptimize() | ConfigurationManager.getInstance().getBooleanValue("optimize.workflows")) {
                 optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor, request.getParameters());
                 if (optimized == null) {
                     optimized = descriptor;
@@ -420,13 +429,12 @@ public class Orchestrator extends Notifiable {
      *
      * @param context      The session context
      * @param request    The execution request
-     * @param optimize  If <code>true</code>, the workflow will be optimized if possible
      * @throws ExecutionException In case anything goes wrong
      */
-    public List<ExecutionJob> createJobs(SessionContext context, ExecutionRequest request, boolean optimize)  throws ExecutionException {
+    public List<ExecutionJob> createJobs(SessionContext context, ExecutionRequest request)  throws ExecutionException {
         try {
         	// create the job as before. 
-        	final ExecutionJob mainJob = createJob(context, request, optimize);
+        	final ExecutionJob mainJob = createJob(context, request);
         	if (mainJob == null) {
         		return null;
         	}
@@ -617,9 +625,7 @@ public class Orchestrator extends Notifiable {
         List<ExecutionJob> jobs = jobProvider.list(ExecutionStatus.RUNNING);
         if (jobs != null) {
             for (ExecutionJob job : jobs) {
-                runningTasks = job.getTasks().stream()
-                                                      .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
-                                                      .collect(Collectors.toList());
+                runningTasks = job.getTasks().stream().filter(ExecutionTask::isRunning).collect(Collectors.toList());
                 final Iterator<ExecutionTask> taskIterator = runningTasks.iterator();
                 while (taskIterator.hasNext()) {
                     ExecutionTask t = taskIterator.next();
@@ -665,7 +671,7 @@ public class Orchestrator extends Notifiable {
     private void initializeGroupSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
                                          TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
         String groupTaskSelectorClass = ConfigurationManager.getInstance().getValue(GROUP_TASK_SELECTOR_KEY,
-                                                                                        DefaultGroupTaskSelector.class.getName());
+                                                                                    DefaultGroupTaskSelector.class.getName());
         final Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
                 .getServiceRegistry(TaskSelector.class).getServices()
                 .stream().filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass()))
@@ -686,7 +692,7 @@ public class Orchestrator extends Notifiable {
     private void initializeJobSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
                                        TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
         String jobTaskSelectorClass = ConfigurationManager.getInstance().getValue(JOB_TASK_SELECTOR_KEY,
-                                                                                      DefaultJobTaskSelector.class.getName());
+                                                                                  DefaultJobTaskSelector.class.getName());
         final Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
                 .getServiceRegistry(TaskSelector.class).getServices()
                 .stream().filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
@@ -829,9 +835,7 @@ public class Orchestrator extends Notifiable {
                     }
                 } else {
                     if (TaskUtilities.haveAllTasksCompleted(job)) {
-                        if (job.orderedTasks().stream()
-                                .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
-                                               t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)) {
+                        if (job.orderedTasks().stream().anyMatch(ExecutionTask::hasNotCompleted)) {
                             return;
                         }
                         job.setExecutionStatus(ExecutionStatus.DONE);
@@ -1061,7 +1065,7 @@ public class Orchestrator extends Notifiable {
         final Path sourcePath = Paths.get(source);
         String result;
         final Path inspectionPath = sourcePath.getParent();
-        try(Stream<Path> stream = Files.list(inspectionPath)) {
+        try (Stream<Path> stream = Files.list(inspectionPath)) {
             Path file = isFile
                         ? stream.filter(FileUtilities::isRaster)
                                 .max((o1, o2) -> {
@@ -1693,7 +1697,7 @@ public class Orchestrator extends Notifiable {
      * @return the created ExecutionJob instance, or null if the job creation fails
      */
     private ExecutionJob tryCreateJob(String user, SessionContext context, ExecutionRequest request) {
-        return createJob(context, request, ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
+        return createJob(context, request);
     }
 
     /**
