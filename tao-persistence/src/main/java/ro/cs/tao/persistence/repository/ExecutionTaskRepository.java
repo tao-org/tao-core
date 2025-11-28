@@ -124,7 +124,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
            nativeQuery = true)
     Integer getTransitionBehavior(@Param("taskId") long taskId);
 
-    @Query(value = "SELECT * FROM execution.task WHERE actual_target LIKE CONCAT('%', :output, '%')", nativeQuery = true)
+    @Query(value = "SELECT * FROM execution.task WHERE actual_target LIKE CONCAT('%', CAST(:output as text), '%')", nativeQuery = true)
     @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
     ExecutionTask getTaskByOutput(@Param("output") String output);
 
