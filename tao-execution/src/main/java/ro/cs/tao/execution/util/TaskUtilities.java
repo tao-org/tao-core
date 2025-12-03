@@ -100,6 +100,7 @@ public class TaskUtilities {
         componentProviders.put(ComponentType.DATASOURCE, context.getService(DataSourceComponentProvider.class));
         componentProviders.put(ComponentType.GROUP, context.getService(GroupComponentProvider.class));
         componentProviders.put(ComponentType.CONDITION, context.getService(ConditionComponentProvider.class));
+        componentProviders.put(ComponentType.PASS_THROUGH, context.getService(PassThroughComponentProvider.class));
         containerProvider = context.getService(ContainerProvider.class);
         repositoryProvider = context.getService(RepositoryProvider.class);
         symLinks = Collections.synchronizedMap(new HashMap<>());
@@ -463,6 +464,8 @@ public class TaskUtilities {
             component = ((WMSExecutionTask) task).getComponent().getId();
         } else if (task instanceof ConditionExecutionTask) {
             component = ((ConditionExecutionTask) task).getComponent().getId();
+        } else if (task instanceof PassThroughExecutionTask) {
+            component = ((PassThroughExecutionTask) task).getComponent().getId();
         } else {
             component = "unknown component";
         }
