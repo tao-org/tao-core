@@ -160,6 +160,10 @@ public class ExecutionsManager {
             optional = services.stream()
                                .filter(x -> x.supports(((ConditionExecutionTask) task).getComponent()))
                                .findFirst();
+        } else if (task instanceof PassThroughExecutionTask) {
+            optional = services.stream()
+                               .filter(x -> x.supports(((PassThroughExecutionTask) task).getComponent()))
+                               .findFirst();
         } else {
             optional = services.stream()
                     .filter(x -> x.supports(((DataSourceExecutionTask) task).getComponent()))

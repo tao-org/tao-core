@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.ConditionComponent;
+import ro.cs.tao.component.PassThroughComponent;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.ogc.WMSComponent;
@@ -164,6 +165,9 @@ public class PersistenceManager {
 
     @Autowired
     private DryRunMetricsManager dryRunMetricsManager;
+
+    @Autowired
+    private PassThroughComponentManager passThroughComponentManager;
 
     @PostConstruct
     public void initialize() {
@@ -505,6 +509,8 @@ public class PersistenceManager {
      */
     public DryRunMetricsManager dryRunMetrics() { return dryRunMetricsManager; }
 
+    public PassThroughComponentManager passThroughComponents() { return passThroughComponentManager; }
+
     /**
      * Retrieves the appropriate manager for the given {@link TaoComponent} instance. The method determines
      * the type of the provided component and returns the corresponding manager instance. If the component
@@ -526,6 +532,8 @@ public class PersistenceManager {
             return (M) dataSourceComponents();
         } else if (component instanceof ConditionComponent) {
             return (M) conditionComponents();
+        } else if (component instanceof PassThroughComponent) {
+            return (M) passThroughComponents();
         } else {
             return null;
         }

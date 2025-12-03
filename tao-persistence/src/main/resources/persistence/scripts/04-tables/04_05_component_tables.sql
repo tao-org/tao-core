@@ -987,3 +987,62 @@ ALTER TABLE component.ogc_component_parameters ADD CONSTRAINT FK_ogc_component_p
     FOREIGN KEY (component_id) REFERENCES component.ogc_component (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.ogc_component_parameters ADD CONSTRAINT FK_ogc_component_parameters_processing_parameter
     FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: passthrough_component
+DROP TABLE IF EXISTS component.passthrough_component CASCADE;
+CREATE TABLE component.passthrough_component
+(
+	id varchar(512) NOT NULL,
+	label varchar NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+    category_id int NULL DEFAULT 6,
+	owner_user_id varchar NULL,
+	visibility_id integer NOT NULL,
+	node_affinity varchar(250) NULL,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+	active boolean NULL DEFAULT true
+);
+ALTER TABLE component.passthrough_component ADD CONSTRAINT PK_passthrough_component
+	PRIMARY KEY (id);
+ALTER TABLE component.passthrough_component ADD CONSTRAINT FK_passthrough_component_user
+	FOREIGN KEY (owner_user_id) REFERENCES usr.user (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.passthrough_component ADD CONSTRAINT FK_passthrough_component_component_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.passthrough_component ADD CONSTRAINT FK_passthrough_component_component_category
+	FOREIGN KEY (category_id) REFERENCES component.component_category (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.passthrough_component_sources
+DROP TABLE IF EXISTS component.passthrough_component_sources CASCADE;
+CREATE TABLE component.passthrough_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.passthrough_component_sources ADD CONSTRAINT PK_passthrough_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.passthrough_component_sources ADD CONSTRAINT FK_passthrough_component_sources_passthrough_component
+	FOREIGN KEY (component_id) REFERENCES component.passthrough_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.passthrough_component_sources ADD CONSTRAINT FK_passthrough_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.cpassthrough_component_targets
+DROP TABLE IF EXISTS component.passthrough_component_targets CASCADE;
+CREATE TABLE component.passthrough_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.passthrough_component_targets ADD CONSTRAINT PK_passthrough_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.passthrough_component_targets ADD CONSTRAINT FK_passthrough_component_targets_passthrough_component
+	FOREIGN KEY (component_id) REFERENCES component.passthrough_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.passthrough_component_targets ADD CONSTRAINT FK_passthrough_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;

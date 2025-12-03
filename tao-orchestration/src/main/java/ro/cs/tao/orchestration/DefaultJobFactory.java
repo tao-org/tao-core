@@ -63,6 +63,7 @@ public class DefaultJobFactory implements JobFactory {
     protected final QueryProvider queryProvider;
     protected final ProcessingComponentProvider processingComponentProvider;
     protected final ConditionComponentProvider conditionComponentProvider;
+    protected final PassThroughComponentProvider passThroughComponentProvider;
     protected final WPSComponentProvider wpsComponentProvider;
     protected final WMSComponentProvider wmsComponentProvider;
     protected final DataSourceComponentProvider dataSourceComponentProvider;
@@ -83,6 +84,7 @@ public class DefaultJobFactory implements JobFactory {
         this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
         this.workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
         this.conditionComponentProvider = SpringContextBridge.services().getService(ConditionComponentProvider.class);
+        this.passThroughComponentProvider = SpringContextBridge.services().getService(PassThroughComponentProvider.class);
         this.logger = Logger.getLogger(DefaultJobFactory.class.getName());
     }
 
@@ -303,6 +305,9 @@ public class DefaultJobFactory implements JobFactory {
                     break;
                 case CONDITION:
                     task = createConditionExecutionTask(workflowNode, links, inputs);
+                    break;
+                case PASS_THROUGH:
+                    task = createPassThroughExecutionTask(workflowNode, links, inputs);
                     break;
                 case GROUP:
                 default:
@@ -653,6 +658,49 @@ public class DefaultJobFactory implements JobFactory {
         final NodeAffinity nodeAffinity = affinityParam != null
                                           ? NodeAffinity.of(affinityParam.getParameterValue())
                                           : component.getNodeAffinity();
+        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity.getValue());
+        }
+        if (inputs != null) {
+            for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                task.setInputParameterValue(entry.getKey(), entry.getValue());
+            }
+        }
+        task.setCardinality(1);
+        return task;
+    }
+
+    protected PassThroughExecutionTask createPassThroughExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
+                                                                      Map<String, String> inputs) {
+        final List<ParameterValue> customValues = workflowNode.getCustomValues();
+        final PassThroughComponent component = passThroughComponentProvider.get(workflowNode.getComponentId());
+        final PassThroughExecutionTask task = new PassThroughExecutionTask();
+        task.setComponent(component);
+        // Placeholders for inputs of previous tasks
+        if (incomingLinks != null) {
+            incomingLinks.forEach(link -> {
+                String name = link.getOutput().getName();
+                task.setInputParameterValue(name, null);
+            });
+        }
+        // Placeholders for outputs of this task
+        final List<TargetDescriptor> targets = component.getTargets();
+        if (targets != null) {
+            targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
+        }
+        ParameterValue affinityParam = null;
+        if (customValues != null) {
+            for (ParameterValue param : customValues) {
+                if (!"nodeAffinity".equals(param.getParameterName())) {
+                    task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                } else {
+                    affinityParam = param;
+                }
+            }
+        }
+        final NodeAffinity nodeAffinity = affinityParam != null
+                ? NodeAffinity.of(affinityParam.getParameterValue())
+                : component.getNodeAffinity();
         if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) && !NodeAffinity.SameNode.equals(nodeAffinity)) {
             task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
