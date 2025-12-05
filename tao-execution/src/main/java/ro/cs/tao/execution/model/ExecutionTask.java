@@ -279,16 +279,14 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
 
     @Transient
     public boolean isRunning() {
-        return this.executionStatus == ExecutionStatus.RUNNING ||
-               this.executionStatus == ExecutionStatus.PENDING_FINALISATION;
+        return this.executionStatus == ExecutionStatus.RUNNING;
     }
 
     @Transient
     public boolean hasNotCompleted() {
         return this.executionStatus == ExecutionStatus.UNDETERMINED ||
                this.executionStatus == ExecutionStatus.QUEUED_ACTIVE ||
-               this.executionStatus == ExecutionStatus.RUNNING ||
-               this.executionStatus == ExecutionStatus.PENDING_FINALISATION;
+               this.executionStatus == ExecutionStatus.RUNNING;
     }
 
     public abstract String buildExecutionCommand();
