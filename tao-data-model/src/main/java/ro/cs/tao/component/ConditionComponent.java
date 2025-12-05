@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
  */
 @XmlRootElement(name = "conditionComponent")
 public class ConditionComponent extends TaoComponent {
+    public static final String PASS_THROUGH_COMPONENT_ID = "pass-through-component";
     public static final String ONE_CONDITION_COMPONENT_ID = "one-condition-component";
     public static final String TWO_CONDITIONS_COMPONENT_ID = "two-conditions-component";
     private static final Logger logger = Logger.getLogger(ConditionComponent.class.getName());
@@ -46,6 +47,31 @@ public class ConditionComponent extends TaoComponent {
     private Set<ParameterDescriptor> parameters;
     private boolean active;
     private String owner;
+
+
+    public static ConditionComponent passThroughComponent() {
+        final ConditionComponent component = new ConditionComponent();
+        component.setId(PASS_THROUGH_COMPONENT_ID);
+        final SourceDescriptor source = new SourceDescriptor(PASS_THROUGH_COMPONENT_ID + "-input");
+        source.setName("input");
+        source.setCardinality(1);
+        source.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
+        component.addSource(source);
+        final TargetDescriptor target1 = new TargetDescriptor(PASS_THROUGH_COMPONENT_ID + "-output");
+        target1.setName("output");
+        target1.setCardinality(1);
+        target1.setDataDescriptor(new DataDescriptor(DataFormat.ANY));
+        component.addTarget(target1);
+        component.setTemplateContents("output");
+        component.setLabel("Pass through");
+        component.setDescription("Component that routes the input to the output");
+        component.setAuthors("CS GROUP");
+        component.setCopyright("(C)2025");
+        component.setVersion("1.0");
+        component.setNodeAffinity(NodeAffinity.Any);
+        component.setVisibility(ProcessingComponentVisibility.SYSTEM);
+        return component;
+    }
 
     /**
      * Creates a condition component with one condition (if - else)
@@ -279,6 +305,9 @@ public class ConditionComponent extends TaoComponent {
      * @throws ParseException if an error occurs during the parsing of condition expressions within the template
      */
     public String processTemplate(List<NamingRule> rules, List<Variable> values) throws ParseException {
+        if (PASS_THROUGH_COMPONENT_ID.equals(this.id)) {
+            return getTemplateContents();
+        }
         String transformedTemplate;
         if (!rules.isEmpty() && rules.size() == 1 && values != null && !values.isEmpty()) {
             NameExpressionParser parser = new NameExpressionParser(rules.get(0));
