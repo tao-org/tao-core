@@ -63,16 +63,7 @@ public enum ComponentType implements TaoEnum<Integer> {
     /**
      * Designates an OGC Process component
      */
-    OGC_PROCESS(7, "OGC Process"),
-    /**
-     * Represents a pass-through component in the workflow system.
-     *
-     * A pass-through component does not perform any specific processing or operations
-     * on the data it receives. Instead, it simply passes the data through to the next
-     * component in the workflow as-is. This type of component can be used in workflows
-     * to maintain a seamless flow of data without altering its content.
-     */
-    PASS_THROUGH(8, "Pass-through Component");
+    OGC_PROCESS(7, "OGC Process");
 
     private final int value;
     private final String description;
