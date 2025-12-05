@@ -737,7 +737,7 @@
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
             <basic name="category">
-                <column name="category_id" nullable="true" column-definition="integer NULL DEFAULT 6"/>
+                <column name="category_id" nullable="true" column-definition="integer NULL DEFAULT 5"/>
             </basic>
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
@@ -758,46 +758,6 @@
 
             <transient name="template" />
             <transient name="templateEngine" />
-        </attributes>
-    </entity>
-
-    <entity class="ro.cs.tao.component.PassThroughComponent" access="PROPERTY">
-        <table name="component.passthrough_component"/>
-
-        <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
-        </entity-listeners>
-
-        <association-override name="sources">
-            <join-table name="component.passthrough_component_sources">
-                <join-column name="component_id" referenced-column-name="id"/>
-                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
-            </join-table>
-        </association-override>
-
-        <association-override name="targets">
-            <join-table name="component.passthrough_component_targets">
-                <join-column name="component_id" referenced-column-name="id"/>
-                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
-            </join-table>
-        </association-override>
-
-        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
-        <convert converter="ro.cs.tao.persistence.convert.ComponentCategoryConverter" attribute-name="category" />
-
-        <attributes>
-            <basic name="visibility">
-                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
-            </basic>
-            <basic name="active">
-                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
-            </basic>
-            <basic name="category">
-                <column name="category_id" nullable="true" column-definition="integer NULL DEFAULT 7"/>
-            </basic>
-            <basic name="owner">
-                <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
-            </basic>
         </attributes>
     </entity>
 
@@ -1013,21 +973,14 @@
     </entity>
 
     <entity class="ro.cs.tao.execution.model.ConditionExecutionTask" access="PROPERTY">
+
         <discriminator-value>15</discriminator-value>
+
         <attributes>
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ConditionComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
             <transient name="rules"/>
-        </attributes>
-    </entity>
-
-    <entity class="ro.cs.tao.execution.model.PassThroughExecutionTask" access="PROPERTY">
-        <discriminator-value>16</discriminator-value>
-        <attributes>
-            <one-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.PassThroughComponent">
-                <join-column name="component_id" nullable="false"/>
-            </one-to-one>
         </attributes>
     </entity>
 
