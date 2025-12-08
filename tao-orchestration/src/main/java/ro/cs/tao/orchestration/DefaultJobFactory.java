@@ -345,10 +345,19 @@ public class DefaultJobFactory implements JobFactory {
         ParameterValue affinityParam = null;
         if (customValues != null) {
             for (ParameterValue param : customValues) {
-                if (!"nodeAffinity".equals(param.getParameterName())) {
-                    task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
-                } else {
-                    affinityParam = param;
+                switch (param.getParameterName()) {
+                    case "nodeAffinity":
+                        affinityParam = param;
+                        break;
+                    case "formatName":
+                        task.setExternalCommonParameters(new HashSet<String>() {{
+                                add("formatName");
+                            }});
+                        task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                        break;
+                    default:
+                        task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                        break;
                 }
             }
         }

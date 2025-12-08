@@ -73,15 +73,39 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
 
     public ExecutionTask() { }
 
+    /**
+     * Retrieves the execution group associated with this task.
+     * The execution group represents a collection or grouping
+     * of tasks that share a common context or configuration.
+     *
+     * @return the associated ExecutionGroup object
+     */
     public ExecutionGroup getGroupTask() { return groupTask; }
     public void setGroupTask(ExecutionGroup groupTask) { this.groupTask = groupTask; }
 
+    /**
+     * Retrieves the identifier of the workflow node associated with this execution task.
+     * The workflow node ID represents a unique identifier for a specific node within a workflow.
+     *
+     * @return the workflow node ID as a {@code Long}, or {@code null} if not set
+     */
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
+    /**
+     * Retrieves the current level of the execution task.
+     * The level typically represents the task's depth or hierarchy within a workflow.
+     *
+     * @return the level of the execution task as an integer
+     */
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
 
+    /**
+     * Retrieves the command string associated with this object.
+     *
+     * @return the command string
+     */
     public String getCommand() { return command; }
     public void setCommand(String command) { this.command = command; }
 
@@ -98,6 +122,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         return executionStatus;
     }
 
+    /**
+     * Retrieves the log message.
+     *
+     * @return the log message as a string
+     */
     public String getLog() { return log; }
     public void setLog(String log) { this.log = log; }
 
@@ -150,6 +179,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
             this.stateHandler.nextState() : null;
     }
 
+    /**
+     * Sets the resource ID for this instance.
+     *
+     * @param resourceId the identifier of the resource to set
+     */
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
     }
@@ -157,6 +191,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         return resourceId;
     }
 
+    /**
+     * Retrieves the hostname of the execution node.
+     *
+     * @return the hostname of the execution node as a String
+     */
     public String getExecutionNodeHostName() {
         return executionNodeHostName;
     }
@@ -164,25 +203,63 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.executionNodeHostName = executionNodeHostName;
     }
 
+    /**
+     * Retrieves the list of input parameter values. These values represent
+     * the input parameters required for a specific operation or process.
+     *
+     * @return a list of Variable objects representing the input parameter values
+     */
     public List<Variable> getInputParameterValues() {
         return inputParameterValues;
     }
     public void setInputParameterValues(List<Variable> inputParameterValues) {
         this.inputParameterValues = inputParameterValues;
     }
+
+    /**
+     * Sets the input parameter value for the specified parameter ID.
+     *
+     * @param parameterId the unique identifier of the parameter whose value is to be set
+     * @param value the value to assign to the specified parameter
+     */
     public abstract void setInputParameterValue(String parameterId, String value);
+
+    /**
+     * Sets the value of an input parameter identified by its parameter ID.
+     *
+     * @param parameterId the unique identifier of the input parameter
+     * @param value the value to set for the input parameter
+     * @param sortLexicographically a flag indicating whether the input parameter value should be sorted lexicographically
+     */
     public void setInputParameterValue(String parameterId, String value, boolean sortLexicographically) {
         setInputParameterValue(parameterId, value);
     }
 
+    /**
+     * Retrieves the list of output parameter values.
+     *
+     * @return a list of Variable objects representing the output parameter values.
+     */
     public List<Variable> getOutputParameterValues() {
         return outputParameterValues;
     }
     public void setOutputParameterValues(List<Variable> parameterValues) {
         this.outputParameterValues = parameterValues;
     }
+
+    /**
+     * Sets the value of an output parameter identified by its ID.
+     *
+     * @param parameterId the identifier of the output parameter to be set.
+     * @param value the value to assign to the specified output parameter.
+     */
     public abstract void setOutputParameterValue(String parameterId, String value);
 
+    /**
+     * Retrieves the start time of the event or process.
+     *
+     * @return the start time as a LocalDateTime object
+     */
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -190,6 +267,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.startTime = startTime;
     }
 
+    /**
+     * Retrieves the end time associated with this object.
+     *
+     * @return the end time as a LocalDateTime object
+     */
     public LocalDateTime getEndTime() {
         return endTime;
     }
@@ -197,6 +279,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.endTime = endTime;
     }
 
+    /**
+     * Retrieves the timestamp of the last update.
+     *
+     * @return a LocalDateTime object representing the last updated date and time.
+     */
     public LocalDateTime getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
 
@@ -234,9 +321,19 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         return this.context;
     }
 
+    /**
+     * Returns the identifier of the orchestrator instance that launched this task.
+     *
+     * @return the instance ID as an integer
+     */
     public int getInstanceId() { return instanceId; }
     public void setInstanceId(int instanceId) { this.instanceId = instanceId; }
 
+    /**
+     * Retrieves the amount of CPU currently in use.
+     *
+     * @return the amount of CPU currently in use as an integer
+     */
     public int getUsedCPU() {
         if (usedCPU == null) {
             usedCPU = 0;
@@ -245,6 +342,12 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
     public void setUsedCPU(Integer usedCPU) { this.usedCPU = usedCPU; }
 
+    /**
+     * Retrieves the amount of currently used RAM.
+     * If the used RAM value is not initialized, it defaults to 0.
+     *
+     * @return the amount of used RAM in integer format
+     */
     public int getUsedRAM() {
         if (usedRAM == null) {
             usedRAM = 0;
@@ -253,6 +356,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
     public void setUsedRAM(Integer usedRAM) { this.usedRAM = usedRAM; }
 
+    /**
+     * Retrieves the temporary output for the current instance.
+     *
+     * @return the temporary output associated with the instance
+     */
     public String getInstanceTemporaryOutput() {
         return instanceTemporaryOutput;
     }
@@ -261,6 +369,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.instanceTemporaryOutput = instanceTemporaryOutput;
     }
 
+    /**
+     * Retrieves the target output of the instance.
+     *
+     * @return the target output of the instance as a String
+     */
     public String getInstanceTargetOutput() {
         return instanceTargetOutput;
     }
@@ -269,6 +382,11 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.instanceTargetOutput = instanceTargetOutput;
     }
 
+    /**
+     * Retrieves the cardinality.
+     *
+     * @return the cardinality as an Integer
+     */
     public Integer getCardinality() {
         return cardinality;
     }
@@ -289,13 +407,34 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
                this.executionStatus == ExecutionStatus.RUNNING;
     }
 
+    /**
+     * Constructs and returns the command string to be executed.
+     *
+     * The implementation defines how the command is constructed, which
+     * may include parameters, flags, or other details required to
+     * execute the command in a specific context.
+     *
+     * @return a string representing the constructed execution command
+     */
     public abstract String buildExecutionCommand();
 
+    /**
+     * Converts a delimited string into a list of string values using a StringListAdapter.
+     *
+     * @param valuesAsString the delimited string containing the list values
+     * @return a list of string values parsed from the input string
+     */
     @Transient
     protected List<String> getListParameterValues(String valuesAsString) {
         return new StringListAdapter().marshal(valuesAsString);
     }
 
+    /**
+     * Converts a list of strings into a single string value.
+     *
+     * @param values the list of strings to be converted
+     * @return a single string value representing the content of the provided list
+     */
     protected String convertListToSingleValue(List<String> values) {
         return new StringListAdapter().unmarshal(values);
     }
