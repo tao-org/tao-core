@@ -39,6 +39,7 @@ public class SourceDescriptor extends StringIdentifiable {
     private static final String DEFAULT_NAME = "Input";
     private String parentId;
     private String name;
+    private String description;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
     private int cardinality;
@@ -71,6 +72,19 @@ public class SourceDescriptor extends StringIdentifiable {
         return name;
     }
     public void setName(String name) { this.name = name; }
+
+    /**
+     * Retrieves the description of the source descriptor.
+     *
+     * @return a string representing the description of the source descriptor
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     /**
      * Returns the cardinality of inputs.

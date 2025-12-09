@@ -1241,6 +1241,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="varchar"/>
+            </basic>
             <basic name="cardinality">
                 <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
@@ -1265,6 +1268,9 @@
             </basic>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="varchar"/>
             </basic>
             <basic name="cardinality">
                 <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
