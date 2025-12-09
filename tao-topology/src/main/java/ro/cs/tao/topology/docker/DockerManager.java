@@ -75,7 +75,7 @@ public class DockerManager {
         dockerRunningInstanceByIdCmd = "docker ps --filter \"id=%s\" --filter \"status=running\"";
         dockerRunningInstancesCmd = "docker ps --filter \"ancestor=%s\" --filter \"status=running\"";
         dockerHubCheckImageCmd = SystemUtils.IS_OS_WINDOWS
-                                 ? "docker manifest inspect %s > NUL & echo %%ERRORLEVEL%%"
+                                 ? "cmd /c \"docker manifest inspect %s > NUL & echo %%ERRORLEVEL%%\""
                                  : "docker manifest inspect %s > /dev/null ; echo $?";
         dockerRemoveImageCmd = "docker rmi -f %s";
         instance = new DockerManager();
@@ -519,7 +519,7 @@ public class DockerManager {
             final String output = accumulator.getOutput();
             return "0".equals(output.substring(output.length() - 1));
         } else {
-            String message = String.format("Docker command failed wit code %s. Details: '%s'",
+            String message = String.format("Docker command failed with code %s. Details: '%s'",
                                            retCode, accumulator.getOutput());
             logger.severe(message);
             return false;
