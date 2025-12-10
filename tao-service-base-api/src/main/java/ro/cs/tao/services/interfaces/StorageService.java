@@ -40,7 +40,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author Cosmin Cara
  */
-public interface StorageService<T, U> extends TAOService {
+public interface StorageService<T> extends TAOService {
 
     String FOLDER_PLACEHOLDER = ".s3keep";
     String CONTENTS_ATTRIBUTE = "contents";
@@ -59,10 +59,28 @@ public interface StorageService<T, U> extends TAOService {
      */
     default void associate(Repository repository) { }
 
+    /**
+     * Sets the product provider to be used.
+     *
+     * @param productProvider the instance of EOProductProvider to set as the product provider
+     */
     default void setProductProvider(EOProductProvider productProvider) { }
 
+    /**
+     * Sets the vector data provider responsible for supplying vector data.
+     * This method allows integration with a custom data provider that
+     * handles the retrieval and management of vector data for this component.
+     *
+     * @param vectorDataProvider the VectorDataProvider instance to be used
+     *                           for managing vector data
+     */
     default void setVectorDataProvider(VectorDataProvider vectorDataProvider) { }
 
+    /**
+     * Sets the auxiliary data provider to supply additional data required by this component.
+     *
+     * @param auxiliaryDataProvider the provider responsible for supplying auxiliary data
+     */
     default void setAuxiliaryDataProvider(AuxiliaryDataProvider auxiliaryDataProvider) { }
 
     /**
@@ -97,12 +115,26 @@ public interface StorageService<T, U> extends TAOService {
      * Stores a file in the given folder, in the user workspace
      *
      * @param stream            The input stream of the file object
-     * @param length            The file length. If unknown, pass a value less than 0
      * @param relativeFolder    The folder path, relative to the workspace of the calling user
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storeFile(InputStream stream, long length, String relativeFolder, String description) throws Exception;
+    default String storeFile(InputStream stream, String relativeFolder, String description) throws Exception {
+        return storeFile(stream, 0, relativeFolder, description);
+    }
+
+    /**
+     * Stores a file from the given input stream to the specified relative folder with an associated description.
+     *
+     * @param stream         the input stream containing the file data to be stored
+     * @param length         the length of the file in bytes
+     * @param relativeFolder the relative folder path where the file should be stored
+     * @param description    a description associated with the file being stored
+     * @throws Exception     if an error occurs during file storage
+     */
+    default String storeFile(InputStream stream, long length, String relativeFolder, String description) throws Exception {
+        return null;
+    }
 
     /**
      * Checks if the given relative path exists in the workspace
@@ -128,6 +160,13 @@ public interface StorageService<T, U> extends TAOService {
      */
     void move(String source, String destination) throws IOException;
 
+    /**
+     * Renames a file or directory from the specified source path to the target path.
+     *
+     * @param source the current name or path of the file or directory to be renamed
+     * @param target the new desired name or path for the file or directory
+     * @throws IOException if an I/O error occurs during the renaming process
+     */
     default void rename(String source, String target) throws IOException {
 
     }
@@ -150,6 +189,17 @@ public interface StorageService<T, U> extends TAOService {
      */
     List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth) throws IOException;
 
+    /**
+     * Lists files from the specified path based on the provided parameters.
+     *
+     * @param fromPath       the starting directory path from which files will be listed
+     * @param exclusions     a set of file or directory names to be excluded from the results
+     * @param lastItem       the last processed item, used for pagination or continuation of listing
+     * @param depth          the maximum depth of directories to traverse
+     * @param excludedPaths  a set of specific paths to be excluded from traversal
+     * @return a list of FileObject representing the files found based on the given criteria
+     * @throws IOException if an I/O error occurs while accessing the file system
+     */
     default List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth, Set<Path> excludedPaths) throws IOException {
         return listFiles(fromPath, exclusions, lastItem, depth);
     }
@@ -229,7 +279,7 @@ public interface StorageService<T, U> extends TAOService {
      *
      * @throws IOException
      */
-    U download(String path) throws IOException;
+    InputStream download(String path) throws IOException;
 
     /**
      * Packs the children of an object into the given zip stream.
@@ -250,7 +300,7 @@ public interface StorageService<T, U> extends TAOService {
      *
      * @throws IOException
      */
-    default String readAsText(U resource, int lines, int skipLines) throws IOException {
+    default <S extends InputStream> String readAsText(S stream, int lines, int skipLines) throws IOException {
         return null;
     }
 
@@ -304,5 +354,17 @@ public interface StorageService<T, U> extends TAOService {
      */
     default String computeHash(String path) throws IOException, NoSuchAlgorithmException {
         return Crypto.hash(new ArrayList<>() {{ add(path); }});
+    }
+
+    /**
+     * Transfers a file from a remote storage service to the current storage service.
+     *
+     * @param other      the remote storage service from which the file will be downloaded
+     * @param thisPath   the local path in the current storage service where the file will be stored
+     * @param remotePath the path in the remote storage service from which the file will be downloaded
+     * @throws Exception if an error occurs during the file transfer process
+     */
+    default void transferFrom(StorageService other, String thisPath, String remotePath) throws Exception {
+        storeFile(other.download(remotePath), thisPath, remotePath);
     }
 }

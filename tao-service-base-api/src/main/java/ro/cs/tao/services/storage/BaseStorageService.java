@@ -21,7 +21,7 @@ import java.util.Map;
  * @param <T>   The type of objects that can be used to upload items to this storage
  * @param <U>   The type of objects that can be used to download items from this storage
  */
-public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
+public abstract class BaseStorageService<T> implements StorageService<T> {
     protected ProgressListener progressListener;
     private Repository repository;
     private Map<String, ItemAction> actions;

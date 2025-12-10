@@ -2,11 +2,13 @@ package ro.cs.tao.services.factory;
 
 import ro.cs.tao.persistence.AuxiliaryDataProvider;
 import ro.cs.tao.persistence.EOProductProvider;
+import ro.cs.tao.persistence.RepositoryProvider;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.interfaces.StorageService;
 import ro.cs.tao.services.model.ItemAction;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workspaces.Repository;
 import ro.cs.tao.workspaces.RepositoryType;
 
@@ -22,6 +24,7 @@ public class StorageServiceFactory {
     private static EOProductProvider productProvider;
     private static VectorDataProvider vectorDataProvider;
     private static AuxiliaryDataProvider auxiliaryDataProvider;
+    private static RepositoryProvider repositoryProvider;
 
     private final static Map<Repository, WeakReference<StorageService>> cachedServices = Collections.synchronizedMap(new HashMap<>());
     private final static Map<RepositoryType, List<ItemAction>> cachedActions = new HashMap<>();
@@ -36,6 +39,10 @@ public class StorageServiceFactory {
 
     public static void setAuxiliaryDataProvider(AuxiliaryDataProvider auxiliaryDataProvider) {
         StorageServiceFactory.auxiliaryDataProvider = auxiliaryDataProvider;
+    }
+
+    public static void setRepositoryProvider(RepositoryProvider repositoryProvider) {
+        StorageServiceFactory.repositoryProvider = repositoryProvider;
     }
 
     /**
@@ -117,5 +124,17 @@ public class StorageServiceFactory {
         return service;
     }
 
-
+    public static final StorageService getInstance(String userId, String root) {
+        if (StringUtilities.isNullOrEmpty(userId) || StringUtilities.isNullOrEmpty(root)) {
+            throw new IllegalArgumentException("userId or root is null or empty");
+        }
+        final List<Repository> repositories = repositoryProvider.getByUser(userId);
+        if (repositories != null && !repositories.isEmpty()) {
+            final Repository repository = repositories.stream().filter(r -> r.root().equals(root)).findFirst().orElse(null);
+            if (repository != null) {
+                return getInstance(repository);
+            }
+        }
+        throw new NoSuchElementException("No repository found for userId=" + userId + " and root=" + root);
+    }
 }
