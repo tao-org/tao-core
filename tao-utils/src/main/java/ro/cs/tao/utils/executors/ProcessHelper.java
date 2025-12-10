@@ -67,7 +67,7 @@ public final class ProcessHelper {
         String regex = quoteChar + "([^']*)" + quoteChar + "|(;)|([^;\\s]+)";
         final List<String> tokens = new ArrayList<>();
         String cmd = replacements != null && replacements.length > 0 ? String.format(commandString, replacements) : commandString;
-        Matcher m = Pattern.compile(regex).matcher(String.format(cmd, replacements));
+        Matcher m = Pattern.compile(regex).matcher(cmd);
         while (m.find()) {
             if (m.group(1) != null) {
                 tokens.add(quoteChar + m.group(1) + quoteChar);
