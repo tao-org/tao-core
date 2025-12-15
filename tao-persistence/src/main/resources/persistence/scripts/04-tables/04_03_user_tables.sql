@@ -65,6 +65,8 @@ CREATE TABLE usr."user"
 	-- external boolean NULL DEFAULT false,
 	user_type_id integer NOT NULL,
 	password_reset_key varchar(255) NULL,
+    api_key varchar(50) NULL,
+    api_key_expiration timestamp,
 	created timestamp NULL DEFAULT now(),
 	expiration_date timestamp NULL,
 	modified timestamp NULL

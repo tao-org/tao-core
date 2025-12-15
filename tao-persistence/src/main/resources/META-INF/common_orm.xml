@@ -1417,10 +1417,16 @@
                 <column name="user_type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="passwordResetKey">
-                <column name="password_reset_key" nullable="true" column-definition="character varying(255) NULL"/>
+                <column name="password_reset_key" nullable="true" column-definition="character varying(255)"/>
+            </basic>
+            <basic name="apiKey">
+                <column name="api_key" nullable="true" column-definition="character varying(50)"/>
+            </basic>
+            <basic name="apiKeyExpiration">
+                <column name="api_key_expiration" nullable="true" column-definition="timestamp"/>
             </basic>
             <basic name="expiresOn">
-                <column name="expiration_date" nullable="true" column-definition="timestamp NULL"/>
+                <column name="expiration_date" nullable="true" column-definition="timestamp"/>
             </basic>
 
             <many-to-many name="groups" fetch="LAZY">

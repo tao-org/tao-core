@@ -37,11 +37,13 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.ContainerProvider;
+import ro.cs.tao.persistence.NodeDBProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeRole;
 import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.utils.ExecutionUnitFormat;
 import ro.cs.tao.utils.FileUtilities;
@@ -79,6 +81,7 @@ import java.util.stream.Collectors;
 public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private static String masterHost;
     private static ContainerProvider containerProvider;
+    private static NodeDBProvider nodeDBProvider;
     private static DRMAAExecutor instance;
     private static String appId;
     //private Session session;
@@ -95,6 +98,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
      * @param provider the {@link ContainerProvider} instance to be set
      */
     public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
+
+    public static void setNodeDBProvider(NodeDBProvider nodeDBProvider) {
+        DRMAAExecutor.nodeDBProvider = nodeDBProvider;
+    }
 
     /**
      * Sets the orchestrator id.
@@ -637,8 +644,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 mem = nodeData.getMemory();
             } else {
                 // Kubernetes
-                node = new NodeDescription();
-                node.setId("k8s-master");
+                List<NodeDescription> nodes = nodeDBProvider.getActiveNodesByRole(NodeRole.K8S.value());
+                if (nodes != null && !nodes.isEmpty()) {
+                    node = nodes.get(0);
+                } else {
+                    node = new NodeDescription();
+                    node.setId("k8s-master");
+                }
                 setHost(jt, node.getId());
                 task.setExecutionNodeHostName(node.getId());
                 cpu = 0;

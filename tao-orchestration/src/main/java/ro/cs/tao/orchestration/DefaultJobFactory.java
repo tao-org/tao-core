@@ -383,8 +383,7 @@ public class DefaultJobFactory implements JobFactory {
     }
 
     protected ExecutionTask createDataSourceExecutionTask(ExecutionJob job, WorkflowNodeDescriptor workflowNode,
-                                                        Map<String, String> inputs)
-            throws PersistenceException {
+                                                          Map<String, String> inputs) throws PersistenceException {
         DataSourceExecutionTask task = new DataSourceExecutionTask();
         final Map<String, String> taskInputs;
         List<ParameterValue> customValues = workflowNode.getCustomValues();
@@ -421,31 +420,12 @@ public class DefaultJobFactory implements JobFactory {
                 }
             }
         }
-        int val;
-        String value = taskInputs.get("pageNumber");
-        if (value != null) {
-            val = Integer.parseInt(value);
-            taskInputs.remove("pageNumber");
-        } else {
-            val = 1;
-        }
-        query.setPageNumber(val);
-        value = taskInputs.get("pageSize");
-        if (value != null) {
-            val = Integer.parseInt(value);
-            taskInputs.remove("pageSize");
-        } else {
-            val = 1;
-        }
-        query.setPageSize(val);
-        value = taskInputs.get("limit");
-        if (value != null) {
-            val = Integer.parseInt(value);
-            taskInputs.remove("limit");
-        } else {
-            val = 1;
-        }
-        query.setLimit(val);
+        query.setPageNumber(Integer.parseInt(taskInputs.getOrDefault("pageNumber", "1")));
+        taskInputs.remove("pageNumber");
+        query.setPageSize(Integer.parseInt(taskInputs.getOrDefault("pageSize", "1")));
+        taskInputs.remove("pageSize");
+        query.setLimit(Integer.parseInt(taskInputs.getOrDefault("limit", "1")));
+        taskInputs.remove("limit");
         query.setValues(taskInputs);
         query.setUserId(job.getUserId());
         if (query.getId() == null || query.getId() == 0) {
@@ -467,8 +447,8 @@ public class DefaultJobFactory implements JobFactory {
         List<ParameterValue> customValues = workflowNode.getCustomValues();
         if (customValues != null) {
             taskInputs = new HashMap<>(customValues.stream()
-                                               .collect(Collectors.toMap(ParameterValue::getParameterName,
-                                                                         ParameterValue::getParameterValue)));
+                                                   .collect(Collectors.toMap(ParameterValue::getParameterName,
+                                                                             ParameterValue::getParameterValue)));
         } else {
             taskInputs = new HashMap<>();
         }
@@ -494,31 +474,12 @@ public class DefaultJobFactory implements JobFactory {
                 }
             }
         }
-        int val;
-        String value = taskInputs.get("pageNumber");
-        if (value != null) {
-            val = Integer.parseInt(value);
-            taskInputs.remove("pageNumber");
-        } else {
-            val = 1;
-        }
-        localQuery.setPageNumber(val);
-        value = taskInputs.get("pageSize");
-        if (value != null) {
-            val = Integer.parseInt(value);
-            taskInputs.remove("pageSize");
-        } else {
-            val = 1;
-        }
-        localQuery.setPageSize(val);
-        value = taskInputs.get("limit");
-        if (value != null) {
-            val = Integer.parseInt(value);
-            taskInputs.remove("limit");
-        } else {
-            val = 1;
-        }
-        localQuery.setLimit(val);
+        query.setPageNumber(Integer.parseInt(taskInputs.getOrDefault("pageNumber", "1")));
+        taskInputs.remove("pageNumber");
+        query.setPageSize(Integer.parseInt(taskInputs.getOrDefault("pageSize", "1")));
+        taskInputs.remove("pageSize");
+        query.setLimit(Integer.parseInt(taskInputs.getOrDefault("limit", "1")));
+        taskInputs.remove("limit");
         localQuery.setValues(taskInputs);
         localQuery.setUserId(job.getUserId());
         queryProvider.save(localQuery);
@@ -652,10 +613,10 @@ public class DefaultJobFactory implements JobFactory {
         ParameterValue affinityParam = null;
         if (customValues != null) {
             for (ParameterValue param : customValues) {
-                if (!"nodeAffinity".equals(param.getParameterName())) {
-                    task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
-                } else {
+                if ("nodeAffinity".equals(param.getParameterName())) {
                     affinityParam = param;
+                } else {
+                    task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
                 }
             }
         }
@@ -678,9 +639,7 @@ public class DefaultJobFactory implements JobFactory {
     public List<ExecutionJob> splitJob(ExecutionJob job) throws PersistenceException, CloneNotSupportedException {
         final List<ExecutionJob> jobs = new ArrayList<>();
         List<ExecutionTask> tasks = job.getTasks();
-        //jobs.add(job);
         if (tasks != null) {
-            //DataSourceExecutionTask dataTask = (DataSourceExecutionTask) tasks.stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
             final List<DataSourceExecutionTask> dataTasks = tasks.stream().filter(t -> t instanceof DataSourceExecutionTask)
                                                            .map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
             if (dataTasks.size() == 2) {
@@ -775,9 +734,7 @@ public class DefaultJobFactory implements JobFactory {
     public List<ExecutionJob> splitJobBeforeExecution(ExecutionJob job) throws PersistenceException, CloneNotSupportedException {
         final List<ExecutionJob> jobs = new ArrayList<>();
         List<ExecutionTask> tasks = job.getTasks();
-        //jobs.add(job);
         if (tasks != null) {
-            //DataSourceExecutionTask dataTask = (DataSourceExecutionTask) tasks.stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
             final List<DataSourceExecutionTask> dataTasks = tasks.stream().filter(t -> t instanceof DataSourceExecutionTask)
                                                            .map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
             if (dataTasks.size() == 2) {
@@ -853,12 +810,12 @@ public class DefaultJobFactory implements JobFactory {
                         clonedPrimaryComponent.getTargets().stream().forEach(t ->
                         	{t.setParentId(clonedPrimaryComponent.getId());t.setCardinality(1);}
                         );
-                        SourceDescriptor querryDescriptor = clonedPrimaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
-                        if (querryDescriptor == null) {
+                        SourceDescriptor queryDescriptor = clonedPrimaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                        if (queryDescriptor == null) {
                         	throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned correctly. Missing querry parameter descriptor");
                         }
-                        querryDescriptor.setCardinality(1);
-                        querryDescriptor.getDataDescriptor().setLocation(tuples.get(0).getKeyOne());
+                        queryDescriptor.setCardinality(1);
+                        queryDescriptor.getDataDescriptor().setLocation(tuples.get(0).getKeyOne());
                         dataSourceComponentProvider.save(clonedPrimaryComponent);
                         primaryTask.setComponent(clonedPrimaryComponent);
                         primaryTask.setCardinality(1);
@@ -871,12 +828,12 @@ public class DefaultJobFactory implements JobFactory {
                         clonedSecondaryComponent.getTargets().stream().forEach(t ->
                         	{t.setParentId(clonedSecondaryComponent.getId());t.setCardinality(1);}
                         );
-                        querryDescriptor = clonedSecondaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
-                        if (querryDescriptor == null) {
+                        queryDescriptor = clonedSecondaryComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                        if (queryDescriptor == null) {
                         	throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned correctly. Missing querry parameter descriptor");
                         }
-                        querryDescriptor.setCardinality(1);
-                        querryDescriptor.getDataDescriptor().setLocation(tuples.get(0).getKeyTwo());
+                        queryDescriptor.setCardinality(1);
+                        queryDescriptor.getDataDescriptor().setLocation(tuples.get(0).getKeyTwo());
                         dataSourceComponentProvider.save(clonedSecondaryComponent);
                         dataTask.setComponent(clonedSecondaryComponent);
                         dataTask.setCardinality(1);
@@ -888,13 +845,6 @@ public class DefaultJobFactory implements JobFactory {
                 for (DataSourceExecutionTask dataTask : dataTasks) {
                 	SourceDescriptor sourceDescriptor;
 					sourceDescriptor = dataTask.getComponent().getSources().stream().filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
-                	
-                	//Variable values = dataTask.getInputParameterValues().stream().filter(v -> v.getKey().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
-                	
-//                    Variable values = dataTask.getOutputParameterValues()
-//                                              .stream()
-//                                              .filter(v -> v.getKey().equals(DataSourceComponent.RESULTS_PARAMETER))
-//                                              .findFirst().orElse(null);
                     if (sourceDescriptor != null && sourceDescriptor.getDataDescriptor() != null
                             && sourceDescriptor.getDataDescriptor().getLocation() != null) {
                         List<String> list = Arrays.asList(sourceDescriptor.getDataDescriptor().getLocation().split(","));
@@ -939,12 +889,12 @@ public class DefaultJobFactory implements JobFactory {
                         		{t.setParentId(clonedComponent.getId());t.setCardinality(1);}
                             );
 
-                            final SourceDescriptor querryDescriptor = clonedComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
-                            if (querryDescriptor == null) {
+                            final SourceDescriptor queryDescriptor = clonedComponent.getSources().stream().filter(sd -> sd.getName().equals(DataSourceComponent.QUERY_PARAMETER)).findFirst().orElse(null);
+                            if (queryDescriptor == null) {
                             	throw new CloneNotSupportedException("Invalid DataSourceExecutionTask. Missing querry parameter descriptor");
                             }
-                            querryDescriptor.setCardinality(1);
-                            querryDescriptor.getDataDescriptor().setLocation(list.get(0));
+                            queryDescriptor.setCardinality(1);
+                            queryDescriptor.getDataDescriptor().setLocation(list.get(0));
                             dataSourceComponentProvider.save(clonedComponent);
                             dataTask.setComponent(clonedComponent);
                             dataTask.setCardinality(1);
@@ -1028,7 +978,6 @@ public class DefaultJobFactory implements JobFactory {
         } else if (original instanceof WPSExecutionTask) {
             clone = createWPSComponentExecutionTask(node, node.getIncomingLinks(), params);
         } else if (original instanceof DataSourceExecutionTask) {
-            //throw new CloneNotSupportedException(DataSourceExecutionTask.class.getSimpleName());
             clone = createDataSourceExecutionTask(clonedJob, node, params);
             clone.setInputParameterValues(null);
         } else if (original instanceof ExecutionGroup) {

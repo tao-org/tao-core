@@ -621,5 +621,25 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
         return repository.getId(userName);
     }
 
+    @Override
+    public String getUserApiKey(String userId) {
+        return repository.getApiKey(userId);
+    }
+
+    @Override
+    public void updateUserApiKey(String userId, String apiKey, LocalDateTime expiration) {
+        repository.updateApiKey(userId, apiKey, expiration);
+    }
+
+    @Override
+    public User getByApiKey(String apiKey) {
+        return repository.findByApiKey(apiKey);
+    }
+
+    @Override
+    public void deleteExpiredApiKeys() {
+        repository.deleteApiKeysOlderThan(LocalDateTime.now());
+    }
+
     //endregion
 }

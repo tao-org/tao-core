@@ -296,6 +296,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (1, 'quicklook.extension', '.png', 'Extension for product quicklooks', 'string', 'Quicklook extension', null, now()),
 (1, 'extract.statistics', 'true', 'Include raster statistics in produced metadata', 'bool', 'Extract statistics', null, now()),
 (1, 'api.token', '13cd8418-0b76-4346-b89b-2f5d7f5a5959', 'API token for development purposes', 'string', 'API token', null, now()),
+(1, 'api.token.expiration', '60', 'API token expiration (in days)', 'int', 'API token expiraiton (days)', null, now()),
 (1, 'serialize.downloads', 'true', 'Perform downloads sequentially', 'bool', 'Sequential downloads', null, now()),
 (1, 'replace.local.symlinks', 'true', 'Replace symlinks to products with actual products', 'bool', 'Replace symlinks when processing', null, now()),
 (2, 'topology.node.poll.interval', '15', 'Time (in seconds) between node polling requests', 'int', 'Node polling interval (s)', null, now()),
