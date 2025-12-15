@@ -80,6 +80,16 @@ public interface UserProvider extends EntityProvider<User, String> {
      * @return the User object corresponding to the specified username, or null if no user is found
      */
     User getByName(String userName);
+
+    /**
+     * Retrieves a User object associated with the provided API key.
+     *
+     * @param apiKey the API key used to identify the User
+     * @return the User object corresponding to the provided API key,
+     *         or null if no matching User is found
+     */
+    User getByApiKey(String apiKey);
+
     /**
      * Retrieves a list of preferences for a specific user.
      *
@@ -277,4 +287,30 @@ public interface UserProvider extends EntityProvider<User, String> {
      * @param rootFunctor a consumer function that operates on the root repository of each workspace
      */
     default void createWorkspaces(String userId, Consumer<Repository> rootFunctor) { }
+
+    /**
+     * Retrieves the API key associated with the specified user.
+     *
+     * @param userId the unique identifier of the user whose API key is to be retrieved
+     * @return the API key of the specified user, or null if no key exists for the user
+     */
+    String getUserApiKey(String userId);
+
+    /**
+     * Updates the API key associated with a specific user.
+     *
+     * @param userId The unique identifier of the user whose API key will be updated.
+     * @param apiKey The new API key to associate with the user.
+     * @param expiration Tge expiration datetime of the API key
+     */
+    void updateUserApiKey(String userId, String apiKey, LocalDateTime expiration);
+
+    /**
+     * Deletes API keys that have expired based on their expiration date.
+     * This method removes expired keys from the storage or database to ensure
+     * that obsolete data is cleaned up and no longer accessible for use.
+     * It is intended to help maintain system security and prevent misuse of
+     * expired API credentials.
+     */
+    void deleteExpiredApiKeys();
 }

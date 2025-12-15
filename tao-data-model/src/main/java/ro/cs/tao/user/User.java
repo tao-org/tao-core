@@ -62,6 +62,9 @@ public class User extends StringIdentifiable {
     private UserType userType;
     // key used for 1st time password set for TAO internal users, or for future password resets requested by TAO internal users
     private String passwordResetKey;
+    // key used for API calls on behalf of the user
+    private String apiKey;
+    private LocalDateTime apiKeyExpiration;
 
     private LocalDateTime created;
     private LocalDateTime expiresOn;
@@ -188,6 +191,22 @@ public class User extends StringIdentifiable {
 
     public void setPasswordResetKey(String passwordResetKey) {
         this.passwordResetKey = passwordResetKey;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public LocalDateTime getApiKeyExpiration() {
+        return apiKeyExpiration;
+    }
+
+    public void setApiKeyExpiration(LocalDateTime apiKeyExpiration) {
+        this.apiKeyExpiration = apiKeyExpiration;
     }
 
     public LocalDateTime getCreated() {

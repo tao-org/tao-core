@@ -75,4 +75,12 @@ public interface NodeDBProvider extends EntityProvider<NodeDescription, String> 
      * @return an integer indicating the outcome of the update operation
      */
     int updateModifiedDate(String nodeId);
+    /**
+     * Retrieves a list of active node descriptions filtered by the specified role.
+     *
+     * @param role the role of the nodes to filter by; this specifies the functional
+     *             responsibility or designation of the nodes.
+     * @return a list of {@code NodeDescription} objects that are active and match the specified role.
+     */
+    List<NodeDescription>getActiveNodesByRole(String role);
 }

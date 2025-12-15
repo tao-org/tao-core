@@ -1,6 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -50,6 +52,14 @@ public interface UserRepository extends OptimisedPagingAndSortingRepository<User
      */
     List<User> findByStatus(final UserStatus status);
 
+    /**
+     * Finds a User entity based on the provided API key.
+     *
+     * @param apiKey - the API key of the user
+     * @return the corresponding User entity, or null if no user is found with the given API key
+     */
+    User findByApiKey(final String apiKey);
+
     @Query(value = "SELECT u.* FROM usr.user u JOIN usr.user_group ug ON ug.user_id = u.id " +
             "WHERE ug.group_id = 1 AND u.status_id = 2", nativeQuery = true)
     List<User> getAdministrators();
@@ -64,5 +74,17 @@ public interface UserRepository extends OptimisedPagingAndSortingRepository<User
     String login(@Param("usr") String user, @Param("pwd") String password);
 
     @Query(value = "SELECT id FROM usr.user WHERE username = :usr", nativeQuery = true)
-    String getId(@Param("usr") String user);
+    String getId(@Param("usr") String userName);
+
+    @Query(value = "SELECT api_key FROM usr.user WHERE id = :id", nativeQuery = true)
+    String getApiKey(@Param("id") String userId);
+
+    @Query(value = "UPDATE usr.user SET api_key = :apiKey, api_key_expiration = :expiration WHERE id = :id", nativeQuery = true)
+    @Modifying
+    void updateApiKey(@Param("id") String userId, @Param("apiKey") String apiKey,
+                      @Param("expiration") LocalDateTime expiration);
+
+    @Query(value = "UPDATE usr.user SET api_key = NULL WHERE api_key_expiration <= :expiration", nativeQuery = true)
+    @Modifying
+    void deleteApiKeysOlderThan(@Param("expiration") LocalDateTime expiration);
 }

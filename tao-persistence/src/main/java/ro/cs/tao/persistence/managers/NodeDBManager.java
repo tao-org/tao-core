@@ -231,4 +231,9 @@ public class NodeDBManager extends EntityManager<NodeDescription, String, NodeRe
         String sql = "UPDATE topology.node SET modified = now() WHERE topology.node.id = ?";
         return jdbcTemplate.update(sql, nodeId);
     }
+
+    @Override
+    public List<NodeDescription> getActiveNodesByRole(String role) {
+        return repository.getActiveNodesByRole(role);
+    }
 }

@@ -232,7 +232,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
         Object value = strValue;
         if (descriptor != null && (descriptor.getDataType().isArray())) {
             if (arrayChars.contains(strValue.substring(0, 1)) &&
-                    arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+                arrayChars.contains(strValue.substring(strValue.length() - 1))) {
                 strValue = strValue.substring(1, strValue.length() - 1);
             }
             final String[] values = strValue.split("[,;]");
@@ -248,7 +248,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
             // it may be a source descriptor value, which is not marked as array
         } else if (arrayChars.contains(strValue.substring(0, 1)) &&
-                arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+                   arrayChars.contains(strValue.substring(strValue.length() - 1))) {
             strValue = strValue.substring(1, strValue.length() - 1);
             value = strValue.replaceAll("[,;]", " ");
         } else if ((strValue.contains(" ") || (!FileUtilities.isPath(strValue) && strValue.contains("/"))) &&
@@ -278,11 +278,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
             if (this.instanceTargetOutput != null) {
                 Path path = Paths.get(this.instanceTargetOutput);
-                //SessionContext context = getContext();
                 if (!path.isAbsolute()) {
-                    //path = context.getNetSpace().resolve(path);
-                    /*path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                                .resolve(context.getPrincipal().getName()).resolve(path);*/
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
                                 .resolve(getJob().getUserId()).resolve(path);
                 }
