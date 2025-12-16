@@ -16,6 +16,7 @@
 package ro.cs.tao.workflow;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
@@ -63,10 +64,12 @@ public class WorkflowNodeDescriptor extends GraphObject {
     public void setComponentType(ComponentType componentType) { this.componentType = componentType; }
 
     @XmlTransient
+    @JsonGetter("xCoord")
     public float getxCoord() { return xCoord; }
     public void setxCoord(float xCoord) { this.xCoord = xCoord; }
 
     @XmlTransient
+    @JsonGetter("yCoord")
     public float getyCoord() { return yCoord; }
     public void setyCoord(float yCoord) { this.yCoord = yCoord; }
 

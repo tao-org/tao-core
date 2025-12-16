@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.serialization;
 
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -47,6 +48,18 @@ public interface Serializer<S, R> {
      *                                 missing data, or other related errors.
      */
     S deserialize(String source) throws SerializationException;
+
+    /**
+     * Deserializes data from the provided {@code InputStream} into an object of type {@code S}.
+     * The input stream must contain data in the format expected by the deserialization process.
+     *
+     * @param stream The {@code InputStream} containing the serialized data. It must be properly
+     *               initialized and readable, providing the input for deserialization.
+     * @return The deserialized object of type {@code S}.
+     * @throws SerializationException If the deserialization process fails due to invalid format,
+     *                                 corrupted data, or any other issue related to the input stream.
+     */
+    S deserialize(InputStream stream) throws SerializationException;
     /**
      * Deserializes the provided string input into a list of objects of type {@code S}.
      *

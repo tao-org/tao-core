@@ -18,6 +18,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.Sort;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.component.ProcessingComponentInfo;
@@ -150,4 +151,11 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      */
     void transformIntoParameter(String sourceOrTargetDescriptorId, ProcessingComponent parentComponent);
 
+    /**
+     * Retrieves a TaoComponent instance based on its unique identifier.
+     *
+     * @param id the unique identifier of the component to be retrieved.
+     * @return the TaoComponent instance corresponding to the provided identifier, or null if no matching component is found.
+     */
+    TaoComponent getComponent(String id);
 }
