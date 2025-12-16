@@ -340,7 +340,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @throws IOException
      * @throws SerializationException
      */
-    WorkflowDescriptor importWorkflow(InputStream source) throws IOException, SerializationException, PersistenceException;
+    WorkflowDescriptor importWorkflow(InputStream source, String userId) throws IOException, SerializationException, PersistenceException;
 
     /**
      * Attempts to convert a CWL Workflow into a TAO Workflow. If any of the CWL steps is not
@@ -348,7 +348,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      *
      * @param sources  The input paths
      */
-    WorkflowDescriptor importWorkflow(List<Path> sources) throws IOException, SerializationException, PersistenceException;
+    WorkflowDescriptor importWorkflow(List<Path> sources, String userId) throws IOException, SerializationException, PersistenceException;
 
     /**
      * Exports the definition of a workflow in JSON
