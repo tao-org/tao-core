@@ -181,7 +181,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         if (workflow.isEmpty()) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + entity.getId());
         }
-        final List<WorkflowNodeDescriptor> nodes = workflow.get().getOrderedNodes();
+        final List<WorkflowNodeDescriptor> nodes = workflow.get().getNodes();
         for (WorkflowNodeDescriptor node : nodes) {
             final List<Query> list = queryManager.list(entity.getUserId(), node.getId());
             if (list != null) {

@@ -17,16 +17,17 @@ package ro.cs.tao.serialization;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.cfg.ConfigFeature;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import ro.cs.tao.utils.Tuple;
 
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -44,6 +45,7 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     private Class<T> tClass;
     boolean formatOutput;
     boolean ignoreNullFields;
+    boolean overrideJAXBPrecedence;
     private Set<ConfigFeature> enabledConfigFeatures;
     private Set<ConfigFeature> disabledConfigFeatures;
     private Set<JsonParser.Feature> enabledParserFeatures;
@@ -63,6 +65,8 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     public void setIgnoreNullFields() {
         this.ignoreNullFields = true;
     }
+
+    public void setOverrideJAXBPrecedence() { this.overrideJAXBPrecedence = true; }
 
     public void enable(ConfigFeature feature) {
         if (this.enabledConfigFeatures == null) {
@@ -135,6 +139,21 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
             throw new SerializationException(e);
         }
     }
+
+    @Override
+    public T deserialize(InputStream stream) throws SerializationException {
+        if (stream == null) {
+            return null;
+        }
+        try {
+            ObjectMapper mapper = createMapper();
+            applyConfiguration(mapper);
+            return mapper.readerFor(this.tClass).readValue(stream);
+        } catch (Exception e) {
+            throw new SerializationException(e);
+        }
+    }
+
     @Override
     public List<T> deserialize(Class<T> clazz, String source) throws SerializationException {
         if (source == null || "null".equalsIgnoreCase(source)) {
@@ -220,6 +239,11 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
         if (this.ignoreNullFields) {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        }
+        if (this.overrideJAXBPrecedence) {
+            AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
+            AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(mapper.getTypeFactory());
+            mapper.setAnnotationIntrospector(new AnnotationIntrospectorPair(primary, secondary));
         }
         mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
         SimpleModule module = null;
