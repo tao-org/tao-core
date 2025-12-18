@@ -1,5 +1,7 @@
 package ro.cs.tao.quota;
 
+import ro.cs.tao.workspaces.RepositoryType;
+
 import java.security.Principal;
 
 /**
@@ -68,5 +70,25 @@ public interface QuotaManager {
      */
     void updateUserProcessingQuota(Principal principal) throws QuotaException;
 
+    /**
+     * Updates the CPU allocation for the specified user based on their current quotas
+     * and resource usage. This operation ensures that the user's CPU resources are
+     * adjusted according to the defined limits or changes in their resource entitlement.
+     *
+     * @param principal The user for whom the CPU allocation is being updated.
+     *                  This must represent the authenticated entity requesting the operation.
+     * @throws QuotaException If an error occurs during the update process, such as
+     *                        exceeding allocated quotas or internal system failures.
+     */
     void updateUserCPU(Principal principal) throws QuotaException;
+
+    /**
+     * Generates a detailed report of the storage usage for the specified repository type.
+     *
+     * @param repositoryType The type of repository for which the storage report is to be retrieved.
+     * @return A {@code StorageReport} object containing information about the storage usage and limits for the specified repository type.
+     * @throws QuotaException If an error occurs in generating the report due to quota restrictions or system failures.
+     */
+    StorageReport getStorageReport(RepositoryType repositoryType) throws QuotaException;
+
 }
