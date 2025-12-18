@@ -25,14 +25,13 @@ import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
+import ro.cs.tao.workspaces.RepositoryType;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -52,6 +51,14 @@ public interface StorageService<T> extends TAOService {
      * @param protocol  The protocol
      */
     boolean isIntendedFor(String protocol);
+
+    /**
+     * Determines whether a given repository type matches the intended purpose.
+     *
+     * @param repositoryType the type of the repository to evaluate
+     * @return true if the repository type is intended for the specified purpose, false otherwise
+     */
+    boolean isIntendedFor(RepositoryType repositoryType);
 
     /**
      * Associates a repository configuration to this service instance
@@ -366,5 +373,15 @@ public interface StorageService<T> extends TAOService {
      */
     default void transferFrom(StorageService other, String thisPath, String remotePath) throws Exception {
         storeFile(other.download(remotePath), thisPath, remotePath);
+    }
+
+    /**
+     * Retrieves a map representing user storage, where the keys are user identifiers
+     * and the values are associated storage amounts in bytes.
+     *
+     * @return a map containing user identifiers as keys and their corresponding storage amounts as values in bytes.
+     */
+    default Map<String, Long> getUserStorage() {
+        return new HashMap<>();
     }
 }

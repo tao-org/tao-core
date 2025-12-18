@@ -124,6 +124,32 @@ public class StorageServiceFactory {
         return service;
     }
 
+    /**
+     * Retrieves an instance of {@code StorageService} associated with the specified repository type.
+     * If no compatible instance is available, an {@code IllegalArgumentException} is thrown.
+     *
+     * @param repositoryType the type of repository for which the storage service instance is requested
+     * @return an instance of {@code StorageService} compatible with the given repository type
+     * @throws IllegalArgumentException if no matching storage service is found or none are available
+     */
+    public static final StorageService getInstance(RepositoryType repositoryType) {
+        final ServiceRegistry<StorageService> registry = ServiceRegistryManager.getInstance().getServiceRegistry(StorageService.class);
+        final Set<StorageService> services = registry.getServices();
+        if (services == null) {
+            throw new IllegalArgumentException("No remote file repository is available");
+        }
+        StorageService service = services.stream().filter(s -> s.isIntendedFor(repositoryType)).findFirst().orElse(null);
+        if (service == null) {
+            throw new IllegalArgumentException("No remote file repository for the given protocol is available");
+        }
+        try {
+            service = service.getClass().newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return service;
+    }
+
     public static final StorageService getInstance(String userId, String root) {
         if (StringUtilities.isNullOrEmpty(userId) || StringUtilities.isNullOrEmpty(root)) {
             throw new IllegalArgumentException("userId or root is null or empty");
