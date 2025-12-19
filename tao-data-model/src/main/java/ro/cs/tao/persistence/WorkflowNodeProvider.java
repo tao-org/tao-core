@@ -6,6 +6,8 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * WorkflowNodeProvider is an interface that defines operations for managing
@@ -60,4 +62,5 @@ public interface WorkflowNodeProvider extends EntityProvider<WorkflowNodeDescrip
 
     ComponentLink getLink(long fromNodeId, String fromOutputId, long toNodeId, String toInputId);
 
+    Map<Long, String> getNodeNames(Set<Long> nodeIds);
 }

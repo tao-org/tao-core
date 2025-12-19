@@ -37,7 +37,7 @@ public class ExecutionTaskInfo {
     @JsonBackReference
     private ExecutionGroupInfo groupTask;
 
-    private Long workflowNodeId;
+    private String workflowNodeId;
     private int level;
     private String componentId;
     private String executionNodeHostName;
@@ -55,7 +55,7 @@ public class ExecutionTaskInfo {
     public ExecutionTaskInfo(final ExecutionTask executionTask) {
         this.id = executionTask.getId();
         this.groupTask = executionTask.getGroupTask() != null ? new ExecutionGroupInfo(executionTask.getGroupTask()) : null;
-        this.workflowNodeId = executionTask.getWorkflowNodeId();
+        this.workflowNodeId = String.valueOf(executionTask.getWorkflowNodeId());
         this.level = executionTask.getLevel();
         try {
             TaoComponent component = null;
@@ -86,8 +86,12 @@ public class ExecutionTaskInfo {
         return groupTask;
     }
 
-    public Long getWorkflowNodeId() {
+    public String getWorkflowNodeId() {
         return workflowNodeId;
+    }
+
+    public void setWorkflowNodeId(String workflowNodeId) {
+        this.workflowNodeId = workflowNodeId;
     }
 
     public int getLevel() {
