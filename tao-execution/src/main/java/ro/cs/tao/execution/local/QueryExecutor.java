@@ -390,6 +390,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 task.setLog(strList);
                 status = ExecutionStatus.DONE;
             }
+            taskProvider.update(task);
             markTaskFinished(task, status, message);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());
