@@ -396,7 +396,7 @@ public class Orchestrator extends Notifiable {
                 throw new ExecutionException("Quota exceeded for user " + principal.getName());
             }
             WorkflowDescriptor optimized = descriptor;
-            if (request.isOptimize() | ConfigurationManager.getInstance().getBooleanValue("optimize.workflows")) {
+            if (request.isOptimize() && ConfigurationManager.getInstance().getBooleanValue("optimize.workflows")) {
                 optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor, request.getParameters());
                 if (optimized == null) {
                     optimized = descriptor;
