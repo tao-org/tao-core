@@ -353,7 +353,7 @@ public class DefaultJobFactory implements JobFactory {
                         task.setExternalCommonParameters(new HashSet<String>() {{
                                 add("formatName");
                             }});
-                        task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                        task.setOutputParameterValue(param.getParameterName(), param.getParameterValue());
                         break;
                     default:
                         task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
