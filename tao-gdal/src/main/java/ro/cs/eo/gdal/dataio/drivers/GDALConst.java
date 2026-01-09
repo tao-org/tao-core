@@ -1,5 +1,8 @@
 package ro.cs.eo.gdal.dataio.drivers;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * GDAL gdalconst JNI driver class
  *
@@ -11,6 +14,7 @@ public class GDALConst {
      * The name of JNI GDAL gdalconst class
      */
     static final String CLASS_NAME = "org.gdal.gdalconst.gdalconst";
+    static final Map<String, Integer> constants = new ConcurrentHashMap<>();
 
     /**
      * Creates new instance for this driver
@@ -25,7 +29,7 @@ public class GDALConst {
      * @return the JNI GDAL GA_ReadOnly constant
      */
     public static Integer gaReadonly() {
-        return GDALReflection.fetchGDALLibraryConstant(CLASS_NAME, "GA_ReadOnly");
+        return constants.computeIfAbsent("GA_ReadOnly", k -> GDALReflection.fetchGDALLibraryConstant(CLASS_NAME, k));
     }
 
     /**
@@ -34,7 +38,7 @@ public class GDALConst {
      * @return the JNI GDAL CE_Failure constant
      */
     public static Integer ceFailure() {
-        return GDALReflection.fetchGDALLibraryConstant(CLASS_NAME, "CE_Failure");
+        return constants.computeIfAbsent("CE_Failure", k -> GDALReflection.fetchGDALLibraryConstant(CLASS_NAME, k));
     }
 
     /**
@@ -43,6 +47,6 @@ public class GDALConst {
      * @return the JNI GDAL CE_None constant
      */
     public static Integer ceNone() {
-        return GDALReflection.fetchGDALLibraryConstant(CLASS_NAME, "CE_None");
+        return constants.computeIfAbsent("CE_None", k -> GDALReflection.fetchGDALLibraryConstant(CLASS_NAME, k));
     }
 }

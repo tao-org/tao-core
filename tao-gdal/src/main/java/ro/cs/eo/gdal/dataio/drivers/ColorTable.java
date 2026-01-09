@@ -8,7 +8,7 @@ import java.lang.invoke.MethodHandle;
  *
  * @author Adrian Drăghici
  */
-public class ColorTable extends GDALBase {
+public class ColorTable extends InstantiableGDALBase {
 
     /**
      * The name of JNI GDAL ColorTable class
@@ -20,7 +20,6 @@ public class ColorTable extends GDALBase {
         colorTableClass = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
     }
 
-    private final Object jniColorTable;
     private final MethodHandle getIndexColorModelHandle;
 
     /**
@@ -29,7 +28,7 @@ public class ColorTable extends GDALBase {
      * @param jniColorTable the JNI GDAL ColorTable class instance
      */
     ColorTable(Object jniColorTable) {
-        this.jniColorTable = jniColorTable;
+        super(jniColorTable);
         try {
             getIndexColorModelHandle = createHandle(colorTableClass, "getIndexColorModel", IndexColorModel.class, int.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -44,6 +43,6 @@ public class ColorTable extends GDALBase {
      * @return the JNI GDAL ColorTable class GetIndexColorModel(int bits) method result
      */
     public IndexColorModel getIndexColorModel(int bits) {
-        return (IndexColorModel) invoke(getIndexColorModelHandle, this.jniColorTable, bits);
+        return (IndexColorModel) invoke(getIndexColorModelHandle, this.jniInstance, bits);
     }
 }
