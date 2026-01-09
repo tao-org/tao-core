@@ -1,18 +1,31 @@
 package ro.cs.eo.gdal.dataio.drivers;
 
+import java.lang.invoke.MethodHandle;
+
 /**
  * GDAL SpatialReference JNI driver class
  *
  * @author Adrian Drăghici
  */
-public class SpatialReference {
+public class SpatialReference extends InstantiableGDALBase {
 
     /**
      * The name of JNI GDAL SpatialReference class
      */
     private static final String CLASS_NAME = "org.gdal.osr.SpatialReference";
+    static final Class<?> JNI_CLASS;
 
-    private Object jniSpatialReferenceInstance;
+    static {
+        JNI_CLASS = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
+    }
+
+    private final MethodHandle importFromEPSGHandle;
+    private final MethodHandle importFromWktHandle;
+    private final MethodHandle exportToWktHandle;
+    private final MethodHandle getAuthorityCodeHandle;
+    private final MethodHandle getAuthorityNameHandle;
+    private final MethodHandle setAxisMappingStrategyHandle;
+
 
     /**
      * Creates new instance for this driver
@@ -20,18 +33,32 @@ public class SpatialReference {
      * @param jniSpatialReferenceInstance the JNI GDAL SpatialReference class instance
      */
     public SpatialReference(Object jniSpatialReferenceInstance) {
-        this.jniSpatialReferenceInstance = jniSpatialReferenceInstance;
+        super(jniSpatialReferenceInstance);
+        try {
+            importFromEPSGHandle = createHandle(JNI_CLASS, "ImportFromEPSG", int.class, int.class);
+            importFromWktHandle = createHandle(JNI_CLASS, "ImportFromWkt", int.class, String.class);
+            exportToWktHandle = createHandle(JNI_CLASS, "ExportToWkt", int.class, String[].class);
+            getAuthorityCodeHandle = createHandle(JNI_CLASS, "GetAuthorityCode", String.class, String.class);
+            getAuthorityNameHandle = createHandle(JNI_CLASS, "GetAuthorityName", String.class, String.class);
+            setAxisMappingStrategyHandle = createHandle(JNI_CLASS, "SetAxisMappingStrategy", void.class, int.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Object newInstance() {
+        try {
+            return JNI_CLASS.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Creates new GDAL SpatialReference class instance
      */
     public SpatialReference() {
-        this.jniSpatialReferenceInstance = GDALReflection.fetchGDALLibraryClassInstance(CLASS_NAME, new Class[0], new Object[0]);
-    }
-
-    public Object getJniSpatialReferenceInstance() {
-        return jniSpatialReferenceInstance;
+        this(newInstance());
     }
 
     /**
@@ -41,7 +68,7 @@ public class SpatialReference {
      * @return the JNI GDAL SpatialReference class ImportFromEPSG(int arg) method result
      */
     public Integer importFromEPSG(int arg) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "ImportFromEPSG", Integer.class, this.jniSpatialReferenceInstance, new Class[]{int.class}, new Object[]{arg});
+        return (Integer) invoke(importFromEPSGHandle, this.jniInstance, arg);
     }
 
     /**
@@ -51,7 +78,7 @@ public class SpatialReference {
      * @return the JNI GDAL SpatialReference class ImportFromWkt(String ppszInput) method result
      */
     public Integer importFromWkt(String ppszInput) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "ImportFromWkt", Integer.class, this.jniSpatialReferenceInstance, new Class[]{String.class}, new Object[]{ppszInput});
+        return (Integer) invoke(importFromWktHandle, this.jniInstance, ppszInput);
     }
 
     /**
@@ -61,7 +88,7 @@ public class SpatialReference {
      * @return the JNI GDAL SpatialReference class ExportToWkt(String[] argout) method result
      */
     public Integer exportToWkt(String[] argout){
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "ExportToWkt", Integer.class, this.jniSpatialReferenceInstance, new Class[]{String[].class}, new Object[]{argout});
+        return (Integer) invoke(exportToWktHandle, this.jniInstance, argout);
     }
 
     /**
@@ -71,7 +98,7 @@ public class SpatialReference {
      * @return the JNI GDAL SpatialReference class GetAuthorityCode(String target_key) method result
      */
     public String getAuthorityCode(String target_key){
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetAuthorityCode", String.class, this.jniSpatialReferenceInstance, new Class[]{String.class}, new Object[]{target_key});
+        return  (String) invoke(getAuthorityCodeHandle, this.jniInstance, target_key);
     }
 
     /**
@@ -81,10 +108,15 @@ public class SpatialReference {
      * @return the JNI GDAL SpatialReference class GetAuthorityName(String target_key) method result
      */
     public String getAuthorityName(String target_key){
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetAuthorityName", String.class, this.jniSpatialReferenceInstance, new Class[]{String.class}, new Object[]{target_key});
+        return   (String) invoke(getAuthorityNameHandle, this.jniInstance, target_key);
     }
 
     public void setAxisMappingStrategy(int strategy) {
-        GDALReflection.callGDALLibraryMethod(CLASS_NAME, "SetAxisMappingStrategy", Void.class, this.jniSpatialReferenceInstance, new Class[] { int.class }, new Object[] { strategy });
+        invoke(setAxisMappingStrategyHandle, this.jniInstance, strategy);
     }
+
+    public void delete() {
+        close();
+    }
+
 }
