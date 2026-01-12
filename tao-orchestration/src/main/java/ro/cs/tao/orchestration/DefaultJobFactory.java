@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 public class DefaultJobFactory implements JobFactory {
 
     protected static final int DEFAULT_INSTANCE = 1;
-    protected static final String invalidChars = "[\\~\\#\\%\\&\\*\\{\\}\\\\\\:\\<\\>\\?\\/\\+\\|, ]";
+    protected static final String invalidChars = "[\\(\\)\\[\\]\\~\\#\\%\\&\\*\\{\\}\\\\\\:\\<\\>\\?\\/\\+\\|, ]";
     protected final ExecutionJobProvider jobProvider;
     protected final ExecutionTaskProvider taskProvider;
     protected final QueryProvider queryProvider;
@@ -290,7 +290,7 @@ public class DefaultJobFactory implements JobFactory {
             Set<ComponentLink> links = workflowNode.getIncomingLinks();
             switch (workflowNode.getComponentType()) {
                 case PROCESSING:
-                    task = createProcessingExecutionTask(workflowNode, links, inputs);
+                    task = createProcessingExecutionTask(job, workflowNode, links, inputs);
                     break;
                 case WPS_COMPONENT:
                     task = createWPSComponentExecutionTask(workflowNode, links, inputs);
@@ -315,7 +315,8 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
-    protected ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
+    protected ExecutionTask createProcessingExecutionTask(ExecutionJob job,
+                                                          WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
                                                           Map<String, String> inputs) {
         final List<ParameterValue> customValues = workflowNode.getCustomValues();
         final ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
@@ -370,7 +371,7 @@ public class DefaultJobFactory implements JobFactory {
         }
         if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
             task.setCommand(component.buildExecutionCommand(customValues.stream().collect(Collectors.toMap(ParameterValue::getParameterName, ParameterValue::getParameterValue)),
-                                                            null));
+                                                            null, job.getUserId()));
         }
         if (inputs != null) {
             for (Map.Entry<String, String> entry : inputs.entrySet()) {
@@ -699,8 +700,8 @@ public class DefaultJobFactory implements JobFactory {
                                               .findFirst().orElse(null);
                     if (values != null) {
                         List<String> list = deserializeResults(values.getValue());
-                        if (list != null && list.size() > 1) {
-                            final int size = list.size();
+                        final int size;
+                        if (list != null && (size = list.size()) > 1) {
                             for (int i = 1; i < size; i++) {
                                 ExecutionJob clonedJob = cloneJob(job, i + 1, size);
                                 ExecutionTask clonedDataTask = clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
@@ -974,7 +975,7 @@ public class DefaultJobFactory implements JobFactory {
             values.forEach(v -> params.put(v.getKey(), v.getValue()));
         }
         if (original instanceof ProcessingExecutionTask && !(original instanceof ScriptTask)) {
-            clone = createProcessingExecutionTask(node, node.getIncomingLinks(), params);
+            clone = createProcessingExecutionTask(clonedJob, node, node.getIncomingLinks(), params);
         } else if (original instanceof WPSExecutionTask) {
             clone = createWPSComponentExecutionTask(node, node.getIncomingLinks(), params);
         } else if (original instanceof DataSourceExecutionTask) {
