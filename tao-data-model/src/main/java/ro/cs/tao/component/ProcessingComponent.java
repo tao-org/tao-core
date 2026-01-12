@@ -389,7 +389,7 @@ public class ProcessingComponent extends TaoComponent {
         return newDescriptor;
     }
 
-    public String buildExecutionCommand(Map<String, Object> parameterValues, Map<String, String> variables) throws TemplateException {
+    public String buildExecutionCommand(Map<String, Object> parameterValues, Map<String, String> variables, String userId) throws TemplateException {
         TemplateEngine templateEngine = getTemplateEngine();
         Map<String, Object> clonedMap = new HashMap<>();
         Map<String, TemplateParameterDescriptor> templateParameters =
@@ -488,7 +488,7 @@ public class ProcessingComponent extends TaoComponent {
         switch (this.componentType) {
             case SCRIPT:
                 try {
-                    Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    Path scriptPath = SessionStore.getContext(userId).getWorkspace().resolve("scripts");
                     FileUtilities.createDirectories(scriptPath);
                     Path scriptFile = scriptPath.resolve(this.id + "-script");
                     Files.write(scriptFile, transformedTemplate.getBytes());
@@ -504,7 +504,7 @@ public class ProcessingComponent extends TaoComponent {
                 break;
             case AGGREGATE:
                 try {
-                    final Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    final Path scriptPath = SessionStore.getContext(userId).getWorkspace().resolve("scripts");
                     FileUtilities.createDirectories(scriptPath);
                     String scriptFileName = this.template.getName().replace(" ", "_") + "-" + System.currentTimeMillis();
                     final boolean velocityTemplate = this.templateType == TemplateType.VELOCITY;

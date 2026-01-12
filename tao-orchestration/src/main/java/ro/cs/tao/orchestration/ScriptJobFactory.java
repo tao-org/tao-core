@@ -6,6 +6,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ScriptTask;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 public class ScriptJobFactory extends DefaultJobFactory {
 
     @Override
-    protected ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks, Map<String, String> inputs) {
+    protected ExecutionTask createProcessingExecutionTask(ExecutionJob job, WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks, Map<String, String> inputs) {
         final List<ParameterValue> customValues = workflowNode.getCustomValues();
         final ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
         final ScriptTask task = new ScriptTask();
@@ -67,7 +68,7 @@ public class ScriptJobFactory extends DefaultJobFactory {
         }
         if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
             task.setCommand(component.buildExecutionCommand(customValues.stream().collect(Collectors.toMap(ParameterValue::getParameterName, ParameterValue::getParameterValue)),
-                                                            null));
+                                                            null, job.getUserId()));
         }
         if (inputs != null) {
             for (Map.Entry<String, String> entry : inputs.entrySet()) {

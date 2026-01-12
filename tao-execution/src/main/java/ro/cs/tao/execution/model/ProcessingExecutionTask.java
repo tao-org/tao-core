@@ -129,8 +129,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         if (!descriptorExists) {
-            throw new ValidationException(String.format("The output parameter ID [%s] does not exists in the component '%s'",
-                    parameterId, component.getLabel()));
+            if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterId)) {
+                throw new ValidationException(String.format("The output parameter ID [%s] does not exists in the component '%s'",
+                                                            parameterId, component.getLabel()));
+            }
         }
         if (this.outputParameterValues == null) {
             this.outputParameterValues = new ArrayList<>();
@@ -225,7 +227,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
         String[] outPath = buildOutputPath();
         variables.put("$TEMPLATE_REAL_PATH", outPath != null ? outPath[0] : null);
         variables.put("$TEMPLATE_CMD_PATH", outPath != null ? outPath[1] : null);
-        return this.component.buildExecutionCommand(inputParams, variables);
+        return this.component.buildExecutionCommand(inputParams, variables, this.getJob().getUserId());
     }
 
     private Object getParameterTypedValue(ParameterDescriptor descriptor, String strValue) {
