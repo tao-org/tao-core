@@ -16,10 +16,7 @@
 
 package ro.cs.tao.execution.local;
 
-import ro.cs.tao.eodata.DataHandlingException;
-import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.OutputDataHandler;
-import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.*;
 import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.eodata.util.Conversions;
@@ -68,6 +65,10 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                 product.setVisibility(Visibility.PRIVATE);
                 product.setProductStatus(ProductStatus.PRODUCED);
                 product.addReference(SessionStore.currentContext().getPrincipal().getName());
+                List<Attribute> attributes = product.getAttributes();
+                if (attributes != null) {
+                    attributes.removeIf(attr -> attr.getValue() == null);
+                }
                 product = SpringContextBridge.services().getService(EOProductProvider.class).save(product);
                 final String location = product.getLocation();
                 Path productPath = FileUtilities.isURI(location) ? Path.of(URI.create(location)) : Path.of(location);
