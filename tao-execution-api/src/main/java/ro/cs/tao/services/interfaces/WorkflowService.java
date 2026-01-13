@@ -356,4 +356,18 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @throws SerializationException
      */
     String exportWorkflow(WorkflowDescriptor descriptor) throws SerializationException;
+
+    /**
+     * Creates a WorkflowDescriptor from an array of component ID pairs.
+     *
+     * @param name      The name of the workflow
+     * @param listOfPairs a two-dimensional array, where each sub-array represents
+     *                    a pair of component IDS. The first element of each sub-array is
+     *                    the source of a workflow node link, and the second element is the
+     *                    destination of the link. The system will try to match the compatible
+     *                    ports from the two components.
+     * @return a WorkflowDescriptor constructed using the provided key-value pairs.
+     * @throws PersistenceException if there is an error while persisting or loading data.
+     */
+    WorkflowDescriptor createFromPairs(String name, String[][] listOfPairs) throws PersistenceException;
 }

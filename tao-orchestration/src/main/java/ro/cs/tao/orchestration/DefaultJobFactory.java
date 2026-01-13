@@ -32,6 +32,7 @@ import ro.cs.tao.drmaa.Environment;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.execution.util.ComponentUtilities;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.*;
 import ro.cs.tao.security.SessionContext;
@@ -378,8 +379,8 @@ public class DefaultJobFactory implements JobFactory {
                 task.setInputParameterValue(entry.getKey(), entry.getValue());
             }
         }
-        task.setCardinality(TaskUtilities.getTargetCardinality(component));
-        task.setUsedRAM(TaskUtilities.getComponentMemoryRequirements(component));
+        task.setCardinality(ComponentUtilities.getTargetCardinality(component));
+        task.setUsedRAM(ComponentUtilities.getComponentMemoryRequirements(component));
         return task;
     }
 
@@ -435,7 +436,7 @@ public class DefaultJobFactory implements JobFactory {
             queryProvider.update(query);
         }
         task.setComponent(dsComponent);
-        task.setCardinality(TaskUtilities.getTargetCardinality(dsComponent));
+        task.setCardinality(ComponentUtilities.getTargetCardinality(dsComponent));
         task.setInputParameterValue("query", query.toString());
         return task;
     }
@@ -485,7 +486,7 @@ public class DefaultJobFactory implements JobFactory {
         localQuery.setUserId(job.getUserId());
         queryProvider.save(localQuery);
         task.setComponent(component);
-        task.setCardinality(TaskUtilities.getTargetCardinality(component));
+        task.setCardinality(ComponentUtilities.getTargetCardinality(component));
         task.setInputParameterValue("local.query", localQuery.toString());
         task.setInputParameterValue("remote.query", query.toString());
         return task;
