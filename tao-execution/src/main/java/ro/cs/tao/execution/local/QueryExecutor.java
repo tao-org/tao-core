@@ -32,10 +32,7 @@ import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.sorting.*;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
-import ro.cs.tao.execution.model.DataSourceExecutionTask;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.JobType;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -217,7 +214,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     if (variable != null && variable.getValue() != null) {
                         // The current resultset must be synchronized with the one received in this parameter
                         // Synchronization means filtering by dates of the previous resultset
-                        WorkflowNodeDescriptor node = workflow.getNodes().stream().filter(n -> n.getId().equals(task.getWorkflowNodeId())).findFirst().get();
+                        WorkflowNodeDescriptor node = null;
+                        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+                        for (WorkflowNodeDescriptor n : nodes) {
+                            if (n.getId().equals(task.getWorkflowNodeId())) {
+                                node = n;
+                                break;
+                            }
+                        }
                         String[] filter = null;
                         Set<ComponentLink> links = node.getIncomingLinks();
                         if (links != null) {
@@ -344,10 +348,11 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                             }
                             if (shouldReplace && Files.isSymbolicLink(path)) {
                                 sendMessage(task, "Product " + path.getFileName() + " is being copied locally.");
+                                final ExecutionTask fTask = task;
                                 final String linkTarget = FileUtilities.asUnixPath(FileUtilities.replaceLink(path, new ProgressListener() {
                                     @Override
                                     public void notifyProgress(double progressValue) {
-                                        sendProgressMessage(task, (counter.get() + progressValue) / total * 100.0);
+                                        sendProgressMessage(fTask, (counter.get() + progressValue) / total * 100.0);
                                     }
                                 }), true);
                                 builder.append(linkTarget);
@@ -390,7 +395,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 task.setLog(strList);
                 status = ExecutionStatus.DONE;
             }
-            taskProvider.update(task);
+            task = (DataSourceExecutionTask) taskProvider.update(task);
             markTaskFinished(task, status, message);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());
