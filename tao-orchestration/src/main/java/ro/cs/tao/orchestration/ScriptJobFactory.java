@@ -47,7 +47,8 @@ public class ScriptJobFactory extends DefaultJobFactory {
         }
         final Container container = TaskUtilities.getComponentContainer(workflowNode);
         if (container != null && container.getFormatNameParameter() != null) {
-            task.setExternalCommonParameters(new HashSet<String>() {{ add(container.getFormatNameParameter()); }});
+            //task.setExternalCommonParameters(new HashSet<String>() {{ add(container.getFormatNameParameter()); }});
+            task.setExternalCommonParameters(new HashSet<String>() {{ add("formatName"); }});
         }
         ParameterValue affinityParam = null;
         if (customValues != null) {
