@@ -1,6 +1,9 @@
 package ro.cs.tao.services.utils;
 
 import ro.cs.tao.component.*;
+import ro.cs.tao.component.ogc.WPSComponent;
+import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -8,6 +11,7 @@ import ro.cs.tao.workflow.GraphObject;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
+import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.awt.geom.Rectangle2D;
 import java.util.*;
@@ -485,5 +489,17 @@ public class WorkflowUtilities {
             }
         }
         return level;
+    }
+
+    public static ComponentType getNodeComponentType(TaoComponent component) {
+        if (component != null) {
+            if (component instanceof ProcessingComponent) return ComponentType.PROCESSING;
+            if (component instanceof DataSourceComponent) return ComponentType.DATASOURCE;
+            if (component instanceof ConditionComponent) return ComponentType.CONDITION;
+            if (component instanceof GroupComponent) return ComponentType.GROUP;
+            if (component instanceof DataSourceComponentGroup) return ComponentType.DATASOURCE_GROUP;
+            if (component instanceof WPSComponent) return ComponentType.WPS_COMPONENT;
+        }
+        return null;
     }
 }

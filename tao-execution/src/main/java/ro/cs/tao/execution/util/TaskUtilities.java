@@ -22,7 +22,6 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceTopic;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
-import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
@@ -125,12 +124,6 @@ public class TaskUtilities {
         return containerProvider.get(component.getContainerId());
     }
 
-    public static int getComponentMemoryRequirements(ProcessingComponent component) {
-        Container container = containerProvider.get(component.getContainerId());
-        Application app = container.getApplications().stream().filter(a -> a.getName().equals(component.getId())).findFirst().orElse(null);
-        return app != null ? app.getMemoryRequirements() : 0;
-    }
-
     /**
      * Returns the defined transition behavior for the given task.
      * @param task  The task
@@ -179,23 +172,7 @@ public class TaskUtilities {
      */
     public static int getSourceCardinality(ExecutionTask task) {
         TaoComponent component = getComponentFor(task);
-        return getSourceCardinality(component);
-    }
-    /**
-     * Returns the cardinality of inputs for a given component
-     * @param component      The component
-     */
-    public static int getSourceCardinality(TaoComponent component) {
-        int cardinality = -1;
-        if (component != null) {
-            List<SourceDescriptor> sources = component.getSources();
-            if (sources != null && !sources.isEmpty()) {
-                cardinality = sources.stream()
-                        .max(Comparator.comparingInt(SourceDescriptor::getCardinality))
-                        .get().getCardinality();
-            }
-        }
-        return cardinality;
+        return ComponentUtilities.getSourceCardinality(component);
     }
 
     /**
@@ -207,22 +184,9 @@ public class TaskUtilities {
             return task.getCardinality();
         }
         TaoComponent component = getComponentFor(task);
-        return getTargetCardinality(component);
+        return ComponentUtilities.getTargetCardinality(component);
     }
-    /**
-     * Returns the cardinality of outputs for a given component
-     * @param component      The component
-     */
-    public static int getTargetCardinality(TaoComponent component) {
-        int cardinality = -1;
-        if (component != null) {
-            List<TargetDescriptor> targets = component.getTargets();
-            if (targets != null && !targets.isEmpty()) {
-                cardinality = targets.stream().mapToInt(TargetDescriptor::getCardinality).sum();
-            }
-        }
-        return cardinality;
-    }
+
     /**
      * Returns the mapping between two tasks. The map keys are the targetTask's inputs, while the map values
      * are the sourceTask's outputs.
