@@ -141,8 +141,12 @@ public class TaskUtilities {
     public static TaoComponent getComponentFor(ExecutionTask task) {
         TaoComponent component = null;
         if (task != null) {
-            WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-            component = getComponentFor(node);
+            if (ProcessingExecutionTask.class.isAssignableFrom(task.getClass())) {
+                component = ((ProcessingExecutionTask) task).getComponent();
+            } else {
+                WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
+                component = getComponentFor(node);
+            }
         }
         return component;
     }
