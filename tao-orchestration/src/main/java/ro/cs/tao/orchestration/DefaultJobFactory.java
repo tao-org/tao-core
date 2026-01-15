@@ -220,6 +220,18 @@ public class DefaultJobFactory implements JobFactory {
         return job;
     }
 
+    /**
+     * Creates a task group for the specified execution job and workflow group node.
+     * The method initializes an {@link ExecutionGroup}, assigns tasks based on the provided
+     * workflow group node, and manages their parallelism and dependencies.
+     *
+     * @param job The execution job for which the task group is created.
+     * @param workflow The workflow descriptor containing workflow details.
+     * @param groupNode The group node descriptor representing a collection of workflow nodes.
+     * @param inputs A map of input parameters and their values passed to the tasks.
+     * @return An {@link ExecutionTask} representing the created task group.
+     * @throws PersistenceException If there is an error during task group persistence.
+     */
     protected ExecutionTask createTaskGroup(ExecutionJob job, WorkflowDescriptor workflow, WorkflowNodeGroupDescriptor groupNode,
                                             Map<String, String> inputs)
             throws PersistenceException {
@@ -257,6 +269,17 @@ public class DefaultJobFactory implements JobFactory {
         return group;
     }
 
+    /**
+     * Creates an {@link ExecutionTask} representing a group task for a data source within the
+     * specified execution job and workflow node. This method initializes an {@link ExecutionGroup},
+     * assigns tasks based on the provided workflow node and its associated data source components,
+     * and persists the tasks and group in the context of the provided execution job.
+     *
+     * @param job The execution job for which the data source group task is created.
+     * @param groupNode The workflow node descriptor representing the data source group to process.
+     * @return An {@link ExecutionTask} that represents the created group task.
+     * @throws PersistenceException If there is an error while persisting the group or tasks.
+     */
     protected  ExecutionTask createDataSourceGroupTask(ExecutionJob job, WorkflowNodeDescriptor groupNode)
             throws PersistenceException {
         ExecutionGroup group = new ExecutionGroup();
@@ -281,6 +304,20 @@ public class DefaultJobFactory implements JobFactory {
         return group;
     }
 
+    /**
+     * Creates an execution task for the specified execution job and workflow node.
+     * Based on the type of workflow node, this method initializes the appropriate
+     * type of {@link ExecutionTask}, sets its properties such as workflow node ID
+     * and execution status, and returns the created task. If the workflow node
+     * represents a group, a task group is created instead.
+     *
+     * @param job The execution job for which the task is being created.
+     * @param workflow The workflow descriptor containing the details of the workflow.
+     * @param workflowNode The node descriptor representing the workflow node for which the task is being created.
+     * @param inputs A map of input parameters and their values to be provided to the created task.
+     * @return The created {@link ExecutionTask} representing the task for the specified workflow node.
+     * @throws PersistenceException If there is an error during task creation or persistence.
+     */
     protected ExecutionTask createTask(ExecutionJob job, WorkflowDescriptor workflow, WorkflowNodeDescriptor workflowNode,
                                      Map<String, String> inputs)
             throws PersistenceException {
@@ -316,6 +353,21 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
+    /**
+     * Creates and configures a new {@link ProcessingExecutionTask} based on the provided execution job,
+     * workflow node descriptor, input links, and additional input parameters.
+     *
+     * @param job           The {@link ExecutionJob} associated with this processing task. This contains
+     *                      metadata and contextual information about the execution environment and user.
+     * @param workflowNode  The {@link WorkflowNodeDescriptor} representing the workflow node to be processed.
+     *                      It defines the component to execute and any custom parameter values.
+     * @param incomingLinks A set of {@link ComponentLink} objects that represent connections from prior
+     *                      tasks or components in the workflow. These are used to configure input placeholders.
+     * @param inputs        A map of additional input parameter names and their corresponding values. These
+     *                      are used to override or supplement task-specific input configurations.
+     * @return A fully configured {@link ProcessingExecutionTask} instance containing all necessary
+     *         parameters, component configurations, and execution settings.
+     */
     protected ExecutionTask createProcessingExecutionTask(ExecutionJob job,
                                                           WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
                                                           Map<String, String> inputs) {
@@ -384,6 +436,16 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
+    /**
+     * Creates and returns a {@link DataSourceExecutionTask} for a given execution job and workflow node.
+     * The method initializes the task with inputs, performs query operations, and sets the necessary parameters.
+     *
+     * @param job the {@link ExecutionJob} for which the task is being created
+     * @param workflowNode the {@link WorkflowNodeDescriptor} representing the node within the workflow
+     * @param inputs a map of input parameters to be used for the task
+     * @return a fully initialized {@link DataSourceExecutionTask}
+     * @throws PersistenceException if there is an error interacting with the persistence layer during query operations
+     */
     protected ExecutionTask createDataSourceExecutionTask(ExecutionJob job, WorkflowNodeDescriptor workflowNode,
                                                           Map<String, String> inputs) throws PersistenceException {
         DataSourceExecutionTask task = new DataSourceExecutionTask();
@@ -441,6 +503,18 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
+    /**
+     * Creates and configures a DataSourceExecutionTask for the given execution job, workflow node,
+     * data source component, and query. The task prepares and persists a local query representation,
+     * processes custom values, and sets task-specific input parameters.
+     *
+     * @param job The execution job triggering the creation of the data source execution task.
+     * @param workflowNode The descriptor of the workflow node for which the task is being created.
+     * @param component The data source component defining the context of the task.
+     * @param query The query to be modified and attached to the execution task.
+     * @return A configured instance of DataSourceExecutionTask for execution.
+     * @throws PersistenceException If an error occurs while saving the query or interacting with the persistence layer.
+     */
     protected ExecutionTask createDataSourceExecutionTask(ExecutionJob job, WorkflowNodeDescriptor workflowNode,
                                                           DataSourceComponent component, Query query)
             throws PersistenceException {
@@ -492,6 +566,16 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
+    /**
+     * Creates a WPS component execution task for a given workflow node. This method initializes
+     * the task with input and output parameter placeholders, custom parameter values, node affinity,
+     * and any additional input mappings provided.
+     *
+     * @param workflowNode the descriptor of the workflow node for which the task is being created.
+     * @param incomingLinks a set of component links representing the input connections to the workflow node.
+     * @param inputs a map of input parameter names and their respective values to be set for the task.
+     * @return a fully configured {@link WPSExecutionTask} ready for execution.
+     */
     protected WPSExecutionTask createWPSComponentExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
                                                                Map<String, String> inputs) {
         final List<ParameterValue> customValues = workflowNode.getCustomValues();
@@ -534,6 +618,15 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
+    /**
+     * Creates a WPS (Web Processing Service) component execution task configured with the specified
+     * component identifier and input parameters.
+     *
+     * @param wpsComponentId The unique identifier of the WPS component to be executed.
+     * @param inputs A map of input parameter names and their corresponding values. The map may include
+     *               parameters prefixed with "service~", which will be processed separately as extra parameters.
+     * @return A configured {@link WPSExecutionTask} instance ready for execution.
+     */
     protected WPSExecutionTask createWPSComponentExecutionTask(String wpsComponentId, Map<String, String> inputs) {
         final WPSComponent component = wpsComponentProvider.get(wpsComponentId);
         final WPSExecutionTask task = new WPSExecutionTask();
@@ -567,6 +660,15 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
+    /**
+     * Creates a WMSComponentExecutionTask for the specified WMS component ID and input parameters.
+     * The task is configured with the corresponding component, its target descriptors, node affinity,
+     * and input parameters.
+     *
+     * @param wmsComponentId the unique identifier of the WMS component to be executed
+     * @param inputs a map containing input parameter names and their respective values
+     * @return a fully configured instance of WMSExecutionTask for the specified WMS component
+     */
     protected WMSExecutionTask createWMSComponentExecutionTask(String wmsComponentId, Map<String, String> inputs) {
         final WMSComponent component = wmsComponentProvider.get(wmsComponentId);
         final WMSExecutionTask task = new WMSExecutionTask();
@@ -594,6 +696,16 @@ public class DefaultJobFactory implements JobFactory {
         return task;
     }
 
+    /**
+     * Creates a {@link ConditionExecutionTask} based on the provided workflow node descriptor,
+     * incoming links, and input parameters. The task is initialized with component information,
+     * placeholders for inputs and outputs, node affinity information, and any custom parameters.
+     *
+     * @param workflowNode the descriptor of the workflow node associated with the task
+     * @param incomingLinks a set of incoming links providing dependencies for the node; can be null
+     * @param inputs a map of input parameter names and their corresponding values; can be null
+     * @return a newly created and configured {@link ConditionExecutionTask} instance
+     */
     protected ConditionExecutionTask createConditionExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
                                                                   Map<String, String> inputs) {
         final List<ParameterValue> customValues = workflowNode.getCustomValues();
