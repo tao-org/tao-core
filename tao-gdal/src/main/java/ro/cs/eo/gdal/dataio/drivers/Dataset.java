@@ -68,7 +68,7 @@ public class Dataset extends InstantiableGDALBase {
             setProjectionHandle = createHandle(datasetClass, "SetProjection", int.class, String.class);
             setGeoTransformHandle = createHandle(datasetClass, "SetGeoTransform", int.class, double[].class);
             getDescriptionHandle = createHandle(datasetClass, "GetDescription", String.class);
-            getSpatialRefHandle = createHandle(datasetClass, "GetSpatialRef", Object.class);
+            getSpatialRefHandle = createHandle(datasetClass, "GetSpatialRef", GDALReflection.fetchGDALLibraryClass(SpatialReference.CLASS_NAME));
             getMetadataDomainListHandle = createHandle(datasetClass, "GetMetadataDomainList", Vector.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);

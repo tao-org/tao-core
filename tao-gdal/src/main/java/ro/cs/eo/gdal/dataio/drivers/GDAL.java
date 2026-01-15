@@ -69,8 +69,8 @@ public class GDAL extends GDALBase {
                                              GDALReflection.fetchGDALLibraryClass(RasterizeOptions.CLASS_NAME));
         getLastErrorHandle = createStaticHandle(gdalClass, "GetLastErrorMsg", String.class);
         translateHandle = createStaticHandle(gdalClass, "Translate",
-                                             int.class,
                                              gdalDatasetClass,
+                                             String.class,
                                              gdalDatasetClass,
                                              GDALReflection.fetchGDALLibraryClass(TranslateOptions.CLASS_NAME));
 

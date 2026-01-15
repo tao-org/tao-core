@@ -106,7 +106,7 @@ public class Band extends InstantiableGDALBase {
             getStatisticsHandle = createHandle(bandClass, "GetStatistics", int.class, boolean.class, boolean.class,
                                                double[].class, double[].class, double[].class, double[].class);
             getHistogramHandle = createHandle(bandClass, "GetHistogram", int.class, int[].class);
-            getDefaultRATHandle = createHandle(bandClass, "GetDefaultRAT", int.class, GDALReflection.fetchGDALLibraryClass(RasterAttributeTable.CLASS_NAME));
+            getDefaultRATHandle = createHandle(bandClass, "GetDefaultRAT", GDALReflection.fetchGDALLibraryClass(RasterAttributeTable.CLASS_NAME));
             getChecksumHandle = createHandle(bandClass, "Checksum", int.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
