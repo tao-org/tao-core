@@ -12,7 +12,7 @@ public class SpatialReference extends InstantiableGDALBase {
     /**
      * The name of JNI GDAL SpatialReference class
      */
-    private static final String CLASS_NAME = "org.gdal.osr.SpatialReference";
+    static final String CLASS_NAME = "org.gdal.osr.SpatialReference";
     static final Class<?> JNI_CLASS;
 
     static {

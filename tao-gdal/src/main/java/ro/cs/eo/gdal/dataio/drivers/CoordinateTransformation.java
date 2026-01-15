@@ -12,7 +12,7 @@ public class CoordinateTransformation extends InstantiableGDALBase {
     /**
      * The name of JNI GDAL CoordinateTransformation class
      */
-    private static final String CLASS_NAME = "org.gdal.osr.CoordinateTransformation";
+    static final String CLASS_NAME = "org.gdal.osr.CoordinateTransformation";
     private static final Class<?> JNI_CLASS;
 
     static {
