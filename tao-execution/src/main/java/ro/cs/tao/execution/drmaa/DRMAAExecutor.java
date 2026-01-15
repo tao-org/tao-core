@@ -193,18 +193,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
-            final ExecutionJob job = task.getJob();
-            /*final String userId = job.getUserId();
-            if (job.getJobType() == JobType.EXECUTION && job.getEnvironment() == Environment.DEFAULT) {
-                logger.fine("Trying to provision a worker node for user " + userId);
-                NodeDescription node;
-                if ((node = NodeManager.getInstance().createWorkerNode(userId)) != null) {
-                    final String message = "Node " + node.getId() + " created";
-                    logger.fine(message);
-                    sendMessage(task, message);
-                }
-            }*/
-            JobTemplate jt = createJobTemplate(task);
+            final JobTemplate jt = createJobTemplate(task);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true, ExecutionStatus.QUEUED_ACTIVE.friendlyName());
             this.queue.put(new Tuple<>(jt, task));
             logger.finest(String.format("Task %s has been added to the wait queue", task.getId()));
@@ -691,15 +680,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             // Insert parallel arguments, if any
             if (pArgs != null) {
                 int idx = executionCmd.indexOf('\n');
-                executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", pArgs) +
-                        executionCmd.substring(idx);
+                executionCmd = StringUtilities.insertAt(executionCmd,
+                                                        idx,
+                                                        "\n" + String.join("\n", pArgs));
             }
             // Insert common parameters, if defined at container level
             final String commonParameters = container.getCommonParameters();
             if (commonParameters != null) {
                 int idx = executionCmd.indexOf('\n');
-                executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", commonParameters.split(" ")) +
-                        executionCmd.substring(idx);
+                executionCmd = StringUtilities.insertAt(executionCmd,
+                                                        idx,
+                                                        "\n" + String.join("\n", commonParameters.split(" ")));
             }
             // Insert output format name, if supported by the container and defined in component or by user
             final String formatNameParameter = container.getFormatNameParameter();
@@ -718,8 +709,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 }
                 if (formatVariable != null && (formats == null || formats.contains(formatVariable.getValue()))) {
                     int idx = executionCmd.indexOf('\n');
-                    executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", formatNameParameter, formatVariable.getValue()) +
-                            executionCmd.substring(idx);
+                    executionCmd = StringUtilities.insertAt(executionCmd,
+                                                            idx,
+                                                            "\n" + String.join("\n", formatNameParameter, formatVariable.getValue()));
                 }
             }
             List<String> argsList = new ArrayList<>();

@@ -175,6 +175,24 @@ public class StringUtilities {
         return count;
     }
 
+    /**
+     * Inserts a substring into a given source string at the specified index.
+     * If the source string is null or empty, the method returns the insertion string.
+     * If the specified index exceeds the length of the source string, the insertion string
+     * is appended to the end of the source string.
+     *
+     * @param source    The original string into which the insertion is performed.
+     * @param index     The position at which the insertion string is added.
+     * @param insertion The string to be inserted into the source string.
+     * @return A new string with the insertion string added at the specified index,
+     *         or the insertion string if the source is null or empty.
+     */
+    public static String insertAt(String source, int index, String insertion) {
+        if (isNullOrEmpty(source)) return insertion;
+        if (index >= source.length()) return source + insertion;
+        return source.substring(0, index) + insertion + source.substring(index);
+    }
+
     public static String replaceSpecialCharacters(String value) {
         return URLDecoder.decode(value, StandardCharsets.US_ASCII).replaceAll("[&+',`]", "_");
     }
