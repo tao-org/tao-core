@@ -32,6 +32,9 @@ public class Dataset extends InstantiableGDALBase {
     private final MethodHandle getGCPCountHandle;
     private final MethodHandle setProjectionHandle;
     private final MethodHandle setGeoTransformHandle;
+    private final MethodHandle getDescriptionHandle;
+    private final MethodHandle getSpatialRefHandle;
+    private final MethodHandle getMetadataDomainListHandle;
 
     static {
         datasetClass = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
@@ -64,6 +67,9 @@ public class Dataset extends InstantiableGDALBase {
             getGCPCountHandle = createHandle(datasetClass, "GetGCPCount", int.class);
             setProjectionHandle = createHandle(datasetClass, "SetProjection", int.class, String.class);
             setGeoTransformHandle = createHandle(datasetClass, "SetGeoTransform", int.class, double[].class);
+            getDescriptionHandle = createHandle(datasetClass, "GetDescription", String.class);
+            getSpatialRefHandle = createHandle(datasetClass, "GetSpatialRef", Object.class);
+            getMetadataDomainListHandle = createHandle(datasetClass, "GetMetadataDomainList", Vector.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -223,11 +229,8 @@ public class Dataset extends InstantiableGDALBase {
      * @return the JNI GDAL Dataset class GetSpatialRef() method result
      */
     public SpatialReference getSpatialRef() {
-        Object jniSpatialReferenceInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetSpatialRef", Object.class, this.jniInstance, new Class[]{}, new Object[]{});
-        if (jniSpatialReferenceInstance != null) {
-            return new SpatialReference(jniSpatialReferenceInstance);
-        }
-        return null;
+        Object instance = invoke(getSpatialRefHandle, this.jniInstance);
+        return instance != null ? new SpatialReference(instance) : null;
     }
 
     /**
@@ -236,7 +239,7 @@ public class Dataset extends InstantiableGDALBase {
      * @return the JNI GDAL Dataset class GetDescription() method result
      */
     public String getDescription() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetDescription", String.class, this.jniInstance, new Class[]{}, new Object[]{});
+        return (String) invoke(getDescriptionHandle, this.jniInstance);
     }
 
     /**
@@ -245,6 +248,6 @@ public class Dataset extends InstantiableGDALBase {
      * @return the JNI GDAL Dataset class GetMetadataDomainList() method result
      */
     public Vector getMetadataDomainList(){
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetMetadataDomainList", Vector.class, this.jniInstance, new Class[]{}, new Object[]{});
+        return (Vector) invoke(getMetadataDomainListHandle, this.jniInstance);
     }
 }

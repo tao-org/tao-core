@@ -28,6 +28,7 @@ public class GDAL extends GDALBase {
     private final MethodHandle rasterizeHandle;
     private final MethodHandle rasterize2Handle;
     private final MethodHandle getLastErrorHandle;
+    private final MethodHandle translateHandle;
 
     static {
         gdalClass = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
@@ -67,6 +68,11 @@ public class GDAL extends GDALBase {
                                              gdalDatasetClass,
                                              GDALReflection.fetchGDALLibraryClass(RasterizeOptions.CLASS_NAME));
         getLastErrorHandle = createStaticHandle(gdalClass, "GetLastErrorMsg", String.class);
+        translateHandle = createStaticHandle(gdalClass, "Translate",
+                                             int.class,
+                                             gdalDatasetClass,
+                                             gdalDatasetClass,
+                                             GDALReflection.fetchGDALLibraryClass(TranslateOptions.CLASS_NAME));
 
     }
 
@@ -228,13 +234,8 @@ public class GDAL extends GDALBase {
      * @return the JNI GDAL gdal class Translate(String dest, Dataset dataset, TranslateOptions translateOptions) method result
      */
     public static Dataset translate(String dest, Dataset dataset, TranslateOptions translateOptions) {
-        Object jniDatasetInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "Translate", Object.class, null,
-                                                                         new Class[] { dest.getClass(), dataset.getJniInstance().getClass(), translateOptions.getJniInstance().getClass() },
-                                                                         new Object[] { dest, dataset.getJniInstance(), translateOptions.getJniInstance() });
-        if (jniDatasetInstance != null) {
-            return new Dataset(jniDatasetInstance);
-        }
-        return null;
+        Object objInstance = invokeStatic(instance.translateHandle, dest, dataset.getJniInstance(), translateOptions.getJniInstance());
+        return objInstance != null ? new Dataset(objInstance) : null;
     }
 
 }

@@ -12,7 +12,7 @@ public class TranslateOptions extends GDALOptions {
     /**
      * The name of JNI GDAL TranslateOptions class
      */
-    private static final String CLASS_NAME = "org.gdal.gdal.TranslateOptions";
+    static final String CLASS_NAME = "org.gdal.gdal.TranslateOptions";
 
     /**
      * Creates new instance for this driver
