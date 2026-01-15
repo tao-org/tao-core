@@ -7,7 +7,7 @@ public class RasterAttributeTable extends InstantiableGDALBase {
     /**
      * The name of JNI GDAL RasterAttributeTable class
      */
-    private static final String CLASS_NAME = "org.gdal.gdal.RasterAttributeTable";
+    static final String CLASS_NAME = "org.gdal.gdal.RasterAttributeTable";
     private static final Class<?> JNI_CLASS;
 
     private final MethodHandle getColumnCountHandle;

@@ -49,6 +49,10 @@ public class Band extends InstantiableGDALBase {
     private final MethodHandle writeRasterFloatHandle;
     private final MethodHandle writeRasterDoubleHandle;
     private final MethodHandle writeRasterDirectHandle;
+    private final MethodHandle getStatisticsHandle;
+    private final MethodHandle getHistogramHandle;
+    private final MethodHandle getDefaultRATHandle;
+    private final MethodHandle getChecksumHandle;
 
     /**
      * Creates new instance for this driver
@@ -65,14 +69,14 @@ public class Band extends InstantiableGDALBase {
             getYSizeHandle = createHandle(bandClass, "GetYSize", int.class);
             getOverviewCountHandle = createHandle(bandClass, "GetOverviewCount", int.class);
             getRasterColorInterpretationHandle = createHandle(bandClass, "GetRasterColorInterpretation", int.class);
-            getRasterColorTableHandle = createHandle(bandClass, "GetRasterColorTable", GDALReflection.fetchGDALLibraryClass("org.gdal.gdal.ColorTable"));
+            getRasterColorTableHandle = createHandle(bandClass, "GetRasterColorTable", GDALReflection.fetchGDALLibraryClass(ColorTable.CLASS_NAME));
             getDescriptionHandle = createHandle(bandClass, "GetDescription", String.class);
-            getOverviewHandle = createHandle(bandClass, "GetOverview", GDALReflection.fetchGDALLibraryClass("org.gdal.gdal.Band"), int.class);
+            getOverviewHandle = createHandle(bandClass, "GetOverview", GDALReflection.fetchGDALLibraryClass(CLASS_NAME), int.class);
             getOffsetHandle = createHandle(bandClass, "GetOffset", void.class, Double[].class);
             getScaleHandle = createHandle(bandClass, "GetScale", void.class, Double[].class);
             getUnitTypeHandle = createHandle(bandClass, "GetUnitType", String.class);
             getNoDataValueHandle = createHandle(bandClass, "GetNoDataValue", void.class, Double[].class);
-            getMaskBandHandle = createHandle(bandClass, "GetMaskBand", GDALReflection.fetchGDALLibraryClass("org.gdal.gdal.Band"));
+            getMaskBandHandle = createHandle(bandClass, "GetMaskBand", GDALReflection.fetchGDALLibraryClass(CLASS_NAME));
             getMaskFlagsHandle = createHandle(bandClass, "GetMaskFlags", int.class);
             readBlockDirectHandle = createHandle(bandClass, "ReadBlock_Direct", int.class, int.class, int.class, ByteBuffer.class);
             readRasterDirectHandle = createHandle(bandClass, "ReadRaster_Direct", int.class,
@@ -99,6 +103,11 @@ public class Band extends InstantiableGDALBase {
                                                    int.class, int.class, int.class, int.class, double[].class);
             writeRasterDirectHandle = createHandle(bandClass, "WriteRaster_Direct", int.class,
                                                    int.class, int.class, int.class, int.class, int.class, ByteBuffer.class);
+            getStatisticsHandle = createHandle(bandClass, "GetStatistics", int.class, boolean.class, boolean.class,
+                                               double[].class, double[].class, double[].class, double[].class);
+            getHistogramHandle = createHandle(bandClass, "GetHistogram", int.class, int[].class);
+            getDefaultRATHandle = createHandle(bandClass, "GetDefaultRAT", int.class, GDALReflection.fetchGDALLibraryClass(RasterAttributeTable.CLASS_NAME));
+            getChecksumHandle = createHandle(bandClass, "Checksum", int.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -427,7 +436,7 @@ public class Band extends InstantiableGDALBase {
      * @return the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method result
      */
     public Integer getStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetStatistics", Integer.class, this.jniInstance, new Class[]{boolean.class, boolean.class, double[].class, double[].class, double[].class, double[].class}, new Object[]{approxOk, force, min, max, mean, stddev});
+        return (Integer) invoke(getStatisticsHandle, this.jniInstance, approxOk, force, min, max, mean, stddev);
     }
 
     /**
@@ -437,7 +446,7 @@ public class Band extends InstantiableGDALBase {
      * @return the JNI GDAL Band class GetHistogramGetHistogram(int[] buckets) method result
      */
     public Integer getHistogram(int[] buckets) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetHistogram", Integer.class, this.jniInstance, new Class[]{int[].class}, new Object[]{buckets});
+        return (Integer) invoke(getHistogramHandle, this.jniInstance, buckets);
     }
 
     /**
@@ -446,11 +455,8 @@ public class Band extends InstantiableGDALBase {
      * @return the JNI GDAL Band class GetDefaultRAT() method result
      */
     public RasterAttributeTable getDefaultRAT() {
-        Object jniRasterAttributeTableInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetDefaultRAT", Object.class, this.jniInstance, new Class[]{}, new Object[]{});
-        if (jniRasterAttributeTableInstance != null) {
-            return new RasterAttributeTable(jniRasterAttributeTableInstance);
-        }
-        return null;
+        Object instance = invoke(getDefaultRATHandle, this.jniInstance);
+        return instance != null ? new RasterAttributeTable(instance) : null;
     }
 
     /**
@@ -459,6 +465,6 @@ public class Band extends InstantiableGDALBase {
      * @return the JNI GDAL Band class Checksum() method result
      */
     public Integer checksum() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "Checksum", Integer.class, this.jniInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getChecksumHandle, this.jniInstance);
     }
 }
