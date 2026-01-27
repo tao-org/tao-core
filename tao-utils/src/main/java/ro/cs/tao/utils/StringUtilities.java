@@ -18,6 +18,7 @@ package ro.cs.tao.utils;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -27,8 +28,10 @@ import java.util.regex.Pattern;
  * @since   1.0
  */
 public class StringUtilities {
-    //a991206e-3ba2-457a-bbd6-ec38d2853e8c
+    // a991206e-3ba2-457a-bbd6-ec38d2853e8c
     private static final Pattern guidPattern = Pattern.compile("[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}");
+    // name_3
+    private static final Pattern numberedNamePattern = Pattern.compile("([A-Za-z0-9-]+)(?:_(\\d+))");
     /**
      * Convenience method to check if a string is null or empty
      * @param value     The string to check
@@ -193,7 +196,62 @@ public class StringUtilities {
         return source.substring(0, index) + insertion + source.substring(index);
     }
 
+    /**
+     * Replaces special characters (&, +, ', `) in the given string with underscores (_)
+     * and decodes the input string using US-ASCII encoding.
+     *
+     * @param value The input string to process. It must not be null.
+     * @return A new string where special characters are replaced with underscores and
+     *         the input string is decoded using US-ASCII encoding.
+     * @throws NullPointerException if the input string is null.
+     */
     public static String replaceSpecialCharacters(String value) {
         return URLDecoder.decode(value, StandardCharsets.US_ASCII).replaceAll("[&+',`]", "_");
+    }
+
+    /**
+     * Increments a numeric suffix of the input string if the provided reference string
+     * matches the input string and contains a numeric suffix as well. The numeric suffix
+     * of the reference is added to the input string's base to generate the incremented value.
+     * If the input string does not have a numeric suffix, one is added based on the reference.
+     *
+     * @param value The base string to be incremented. Must not be null or empty.
+     * @param reference The reference string to compare with. Might contain a numeric suffix.
+     * @return The incremented string if {@code value} matches {@code reference} and
+     *         both contain numeric suffixes; otherwise, returns the input value unchanged.
+     * @throws NullPointerException if {@code value} is null or empty.
+     */
+    public static String incrementIfDuplicate(final String value, final String reference) {
+        if  (isNullOrEmpty(value)) {
+            throw new NullPointerException("[value]");
+        }
+        if (isNullOrEmpty(reference)) return value;
+        int refNumber;
+        if (value.equals(reference)) {
+            int valueNumber = 0;
+            refNumber = 1;
+            int idx = 0;
+            char c;
+            while ((c =  value.charAt(value.length() - 1 - idx)) > '0' && c <= '9') {
+                valueNumber +=  (c - '0') * Math.pow(10, idx++);
+            }
+            idx = 0;
+            while ((c =  reference.charAt(reference.length() - 1 - idx)) > '0' && c <= '9') {
+                refNumber +=  (c - '0') * Math.pow(10, idx++);
+            }
+            return (valueNumber == 0 ? value : value.replace("_" + String.valueOf(valueNumber), "")) + "_" + refNumber;
+        } else {
+            Matcher matcher = numberedNamePattern.matcher(reference);
+            if (matcher.find()) {
+                refNumber = Integer.parseInt(matcher.group(2)) + 1;
+                if (value.equals(matcher.group(1))) {
+                    return value + "_" + (Integer.parseInt(matcher.group(2)) + 1);
+                } else {
+                    matcher = numberedNamePattern.matcher(value);
+                    return matcher.find() ? matcher.group(1) + "_" + refNumber : value;
+                }
+            }
+            return value;
+        }
     }
 }
