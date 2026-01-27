@@ -73,11 +73,11 @@ public enum ComponentCategory implements TaoEnum<Integer> {
 
     static {
         compatibilityMap = new HashMap<>();
-        compatibilityMap.put(RASTER, EnumSet.of(RASTER, OPTICAL, RADAR));
-        compatibilityMap.put(VECTOR, EnumSet.of(VECTOR, RASTER, MISC));
-        compatibilityMap.put(OPTICAL, EnumSet.of(OPTICAL, RASTER));
-        compatibilityMap.put(RADAR, EnumSet.of(RADAR, RASTER, MISC));
-        compatibilityMap.put(MISC, EnumSet.of(MISC, RADAR, OPTICAL, VECTOR));
+        compatibilityMap.put(RASTER, EnumSet.of(RASTER, OPTICAL, RADAR, MISC, CONDITION));
+        compatibilityMap.put(VECTOR, EnumSet.of(VECTOR, RASTER, MISC, CONDITION));
+        compatibilityMap.put(OPTICAL, EnumSet.of(OPTICAL, RASTER, MISC, CONDITION));
+        compatibilityMap.put(RADAR, EnumSet.of(RADAR, RASTER, MISC, CONDITION));
+        compatibilityMap.put(MISC, EnumSet.of(RASTER, VECTOR, OPTICAL, RADAR, MISC));
         compatibilityMap.put(CONDITION, EnumSet.of(RASTER, VECTOR, OPTICAL, RADAR, MISC));
     }
 
