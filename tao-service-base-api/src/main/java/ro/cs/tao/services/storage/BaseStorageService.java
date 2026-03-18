@@ -25,10 +25,16 @@ public abstract class BaseStorageService<T> implements StorageService<T> {
     protected ProgressListener progressListener;
     private Repository repository;
     private Map<String, ItemAction> actions;
+    private boolean cancelRequested;
 
     @Override
     public void associate(Repository repository) {
         this.repository = repository;
+    }
+
+    @Override
+    public void cancelCurrentOperation() {
+        this.cancelRequested = true;
     }
 
     @Override
@@ -66,6 +72,14 @@ public abstract class BaseStorageService<T> implements StorageService<T> {
         final String path = repository.resolve(item.getRelativePath());
         action.setActionUser(repository.getUserId());
         action.doAction(Paths.get(path));
+    }
+
+    protected boolean cancelRequested() {
+        return this.cancelRequested;
+    }
+
+    protected void resetCancelFlag() {
+        this.cancelRequested = false;
     }
 
     protected InputStream wrapStream(InputStream inputStream) {

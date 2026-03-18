@@ -90,12 +90,12 @@ public class RepositoryFactory {
                 String value;
                 for (String key : parameters.keySet()) {
                     if (type.rootKey().equals(key)) {
-                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(type.rootKey());
+                        value = dbParams.getOrDefault(key, cfgProvider.getValue(type.rootKey()));
                         if (value != null) {
                             value += "/" + userId;
                         }
                     } else {
-                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(key);
+                        value = dbParams.getOrDefault(key, cfgProvider.getValue(key));
                     }
                     if (value == null) {
                         throw new TopologyException("Values for default workspace of type " + type.name() + " not configured");
