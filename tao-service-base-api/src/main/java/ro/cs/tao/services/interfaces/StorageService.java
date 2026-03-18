@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -383,5 +384,58 @@ public interface StorageService<T> extends TAOService {
      */
     default Map<String, Long> getUserStorage() {
         return new HashMap<>();
+    }
+
+    /**
+     * Cancels the current long-running operation in progress (eg. a list of a remote folder containing many
+     * items. The default implementation does nothing, it is up to implementors to overwrite this behavior.
+     */
+    default void cancelCurrentOperation() {
+
+    }
+
+    /**
+     * Lists the most recently modified files from the specified directory path, limited by the specified count.
+     *
+     * @param fromPath the directory path from which to list files
+     * @param limit the maximum number of files to return
+     * @return a list of the most recently modified files, sorted by modification date in descending order
+     * @throws IOException if an I/O error occurs while accessing the directory or files
+     */
+    default List<FileObject> listLastFiles(String fromPath, int limit) throws IOException {
+        final List<FileObject> files = listFiles(fromPath, null, null, 1);
+        return files.stream().sorted(new FileObjectDescending()).limit(limit).collect(Collectors.toList());
+    }
+
+    class FileObjectDescending implements Comparator<FileObject> {
+        @Override
+        public int compare(FileObject o1, FileObject o2) {
+            return o1.getLastModified() != null && o2.getLastModified() != null
+                    ? o2.getLastModified().compareTo(o1.getLastModified())
+                    : o2.getDisplayName().compareTo(o1.getDisplayName());
+        }
+    }
+
+    class FileObjectAscending implements Comparator<FileObject> {
+        @Override
+        public int compare(FileObject o1, FileObject o2) {
+            return o1.getLastModified() != null && o2.getLastModified() != null
+                    ? o1.getLastModified().compareTo(o2.getLastModified())
+                    : o1.getDisplayName().compareTo(o2.getDisplayName());
+        }
+    }
+
+    class PathDescending implements Comparator<Path> {
+        @Override
+        public int compare(Path o1, Path o2) {
+            return o2.compareTo(o1);
+        }
+    }
+
+    class PathAscending implements Comparator<Path> {
+        @Override
+        public int compare(Path o1, Path o2) {
+            return o1.compareTo(o2);
+        }
     }
 }
