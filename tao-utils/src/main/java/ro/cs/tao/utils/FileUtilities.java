@@ -132,17 +132,22 @@ public class FileUtilities {
     }
 
     public static String toUnixPath(String path) {
-        String transformed = path;
-        if (isURI(path)) {
-            transformed = path.substring(path.indexOf("://") + 3);
-            if (":".equals(transformed.substring(2, 3))) {
-                // Windows case
-                transformed = transformed.substring(transformed.indexOf(":") + 1);
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        final int schemeIdx = path.indexOf("://");
+        String transformed = schemeIdx >= 0 ? path.substring(schemeIdx + 3) : path;
+        if (transformed.indexOf('\\') >= 0) {
+            transformed = transformed.replace('\\', '/');
+        }
+        if (schemeIdx >= 0) {
+            // Windows URI case, e.g. file:///C:/tmp -> /tmp
+            if (transformed.length() > 2 && transformed.charAt(2) == ':') {
+                transformed = transformed.substring(transformed.indexOf(':', 2) + 1);
             }
         } else {
-            transformed = transformed.replace("\\", "/");
-            int idx;
-            if ((idx = transformed.indexOf(":")) > 0) {
+            final int idx = transformed.indexOf(':');
+            if (idx > 0) {
                 transformed = transformed.substring(idx + 1);
             }
         }

@@ -1005,7 +1005,7 @@ public class Orchestrator extends Notifiable {
             if (variable != null) {
                 String targetOutput = variable.getValue();
                 // if the output came from a remote note, we need to translate the node volumes to master volumes
-                String instanceTargetOuptut = translateOutputToMasterPath(pcTask);
+                String instanceTargetOuptut = translateOutputToMasterPath(pcTask, t);
                 if (targetOutput == null || instanceTargetOuptut == null) {
                     logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
                 }
@@ -1014,10 +1014,7 @@ public class Orchestrator extends Notifiable {
                     // get what was produced and map it to the target output
                     final String variableName = variable.getKey();
                     instanceTargetOuptut = handleUnmanagedPath(instanceTargetOuptut,
-                                                               pcTask.getComponent()
-                                                                      .getTargets().stream()
-                                                                                   .filter(tr -> tr.getName().equalsIgnoreCase(variableName))
-                                                                       .findFirst().get().getDataDescriptor().getFormatType() != DataFormat.FOLDER);
+                                                               t.getDataDescriptor().getFormatType() != DataFormat.FOLDER);
                 }
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
@@ -1731,38 +1728,39 @@ public class Orchestrator extends Notifiable {
      * workspace and handles specific data formats accordingly.
      *
      * @param task the processing execution task that contains the output path and related metadata
-     * @return the translated output path relative to the master environment, or null if the path could not be determined
      */
-    private String translateOutputToMasterPath(ProcessingExecutionTask task) {
-        String path = task.getInstanceTargetOutput();
+    private String translateOutputToMasterPath(ProcessingExecutionTask task, TargetDescriptor descriptor) {
+        String path = task.getInstanceTargetOutput(descriptor.getName());
         final String masterRoot = SystemVariable.ROOT.value().replace("\\", "/");
-        if (path.startsWith(masterRoot)) {
-            return path;
-        }
-        final DockerVolumeMap workerVolumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
-        String outPath = path.replace(workerVolumeMap.getContainerWorkspaceFolder(), masterRoot);
-        if (!task.getComponent().isOutputManaged()) {
-            DataFormat type = task.getComponent().getTargets().get(0).getDataDescriptor().getFormatType();
-            switch (type) {
-                case RASTER:
-                case VECTOR:
-                case FOLDER:
-                    Path taskFolder = Paths.get(outPath).getParent();
-                    try (Stream<Path> list = Files.list(taskFolder)) {
-                        Path producedPath = list.findFirst().orElse(null);
-                        if (producedPath != null) {
-                            outPath = outPath.substring(0, outPath.lastIndexOf('/') + 1) + producedPath.getFileName();
-                        } else {
-                            outPath = null;
+        String outPath = null;
+        if (!path.startsWith(masterRoot)) {
+            final DockerVolumeMap workerVolumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
+            outPath = path.replace(workerVolumeMap.getContainerWorkspaceFolder(), masterRoot);
+            if (!task.getComponent().isOutputManaged()) {
+                DataFormat type = descriptor.getDataDescriptor().getFormatType();
+                switch (type) {
+                    case RASTER:
+                    case VECTOR:
+                    case FOLDER:
+                        Path taskFolder = Paths.get(outPath).getParent();
+                        try (Stream<Path> list = Files.list(taskFolder)) {
+                            Path producedPath = list.findFirst().orElse(null);
+                            if (producedPath != null) {
+                                outPath = outPath.substring(0, outPath.lastIndexOf('/') + 1) + producedPath.getFileName();
+                            } else {
+                                outPath = null;
+                            }
+                        } catch (IOException e) {
+                            logger.severe(ExceptionUtils.getStackTrace(logger, e));
                         }
-                    } catch (IOException e) {
-                        logger.severe(ExceptionUtils.getStackTrace(logger, e));
-                    }
-                    break;
-                default:
-                    outPath = null;
-                    break;
+                        break;
+                    default:
+                        outPath = null;
+                        break;
+                }
             }
+        } else {
+            outPath = path;
         }
         return outPath;
     }

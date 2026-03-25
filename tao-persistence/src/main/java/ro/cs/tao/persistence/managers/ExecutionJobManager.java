@@ -72,14 +72,15 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
             PreparedStatement statement =
                     con.prepareStatement("WITH executions as ( " +
                                          "SELECT t.job_id, t.id, t.end_time, " +
-                                         "REGEXP_REPLACE(t.actual_target, '.*/', '') AS filename, t.actual_target, COALESCE(d.data_format_id, 7) as data_format_id, " +
+                                         "REGEXP_REPLACE(SUBSTRING(t.actual_target,'\"(\\/[\\/a-zA-Z0-9._-]+)\"'), '.*/', '') AS filename, " +
+                                         "SUBSTRING(t.actual_target,'\"(\\/[\\/a-zA-Z0-9._-]+)\"') AS actual_target, COALESCE(d.data_format_id, 7) as data_format_id, " +
                                          "CASE WHEN d.data_format_id = 1 THEN rdp.approximate_size ELSE -1 END AS \"size\" " +
                                          "FROM execution.task t " +
                                          "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 AND e.job_type = 0 " +
                                          "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
                                          "JOIN component.processing_component_targets ct ON ct.processing_component_id = t.component_id " +
                                          "JOIN component.target_descriptor d ON d.id = ct.target_descriptor_id " +
-                                         "LEFT JOIN product.raster_data_product rdp ON rdp.entry_point = REGEXP_REPLACE(t.actual_target, '.*/', '') " +
+                                         "LEFT JOIN product.raster_data_product rdp ON rdp.entry_point = REGEXP_REPLACE(SUBSTRING(t.actual_target,'\"(\\/[\\/a-zA-Z0-9._-]+)\"'), '.*/', '') " +
                                          "WHERE e.workflow_id = ? AND e.user_id = ?), " +
                                          "scripts as (" +
                                          "SELECT e.id as job_id, (SELECT id FROM execution.task where job_id = e.id ORDER BY end_time LIMIT 1) as id, e.end_time, " +

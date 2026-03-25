@@ -31,9 +31,7 @@ import java.beans.Transient;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Base class for an execution item.
@@ -63,8 +61,8 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private int instanceId;
     private Integer usedCPU;
     private Integer usedRAM;
-    protected String instanceTemporaryOutput;
-    protected String instanceTargetOutput;
+    protected Map<String, String> instanceTemporaryOutput;
+    protected Map<String, String> instanceTargetOutput;
     protected String internalState;
     List<Variable> inputParameterValues = new ArrayList<>();
     List<Variable> outputParameterValues = new ArrayList<>();
@@ -361,12 +359,23 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
      *
      * @return the temporary output associated with the instance
      */
-    public String getInstanceTemporaryOutput() {
+    public Map<String, String> getInstanceTemporaryOutput() {
         return instanceTemporaryOutput;
     }
 
-    public void setInstanceTemporaryOutput(String instanceTemporaryOutput) {
+    public String getInstanceTemporaryOutput(String key) {
+        return instanceTemporaryOutput != null ? instanceTemporaryOutput.get(key) : null;
+    }
+
+    public void setInstanceTemporaryOutput(Map<String, String> instanceTemporaryOutput) {
         this.instanceTemporaryOutput = instanceTemporaryOutput;
+    }
+
+    public void setInstanceTemporaryOutput(String key, String value) {
+        if (this.instanceTemporaryOutput == null) {
+            this.instanceTemporaryOutput = new HashMap<>();
+        }
+        this.instanceTemporaryOutput.put(key, value);
     }
 
     /**
@@ -374,12 +383,23 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
      *
      * @return the target output of the instance as a String
      */
-    public String getInstanceTargetOutput() {
+    public Map<String, String> getInstanceTargetOutput() {
         return instanceTargetOutput;
     }
 
-    public void setInstanceTargetOutput(String instanceTargetOutput) {
+    public String getInstanceTargetOutput(String key) {
+        return instanceTargetOutput != null && key != null ? instanceTargetOutput.get(key) : null;
+    }
+
+    public void setInstanceTargetOutput(Map<String, String> instanceTargetOutput) {
         this.instanceTargetOutput = instanceTargetOutput;
+    }
+
+    public void setInstanceTargetOutput(String key, String value) {
+        if (this.instanceTargetOutput == null) {
+            this.instanceTargetOutput = new HashMap<>();
+        }
+        this.instanceTargetOutput.put(key, value);
     }
 
     /**

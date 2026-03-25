@@ -206,15 +206,19 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
+            final String descriptorName = descriptor.getName();
             Variable variable = outputParameterValues.stream()
-                    .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+                                                     .filter(v -> descriptorName.equals(v.getKey())).findFirst().orElse(null);
             if (variable != null) {
                 String location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
                 if (location != null && !this.getJob().isExternal()) {
-                    this.instanceTargetOutput = computeTargetOutput(location);
-                    final String output = getInstanceTemporaryOutput() != null ? getInstanceTemporaryOutput() : this.instanceTargetOutput;
-                    inputParams.put(descriptor.getName(), output);
-                    setInputParameterValue(descriptor.getName(), output);
+                    setInstanceTargetOutput(descriptorName,
+                                            computeTargetOutput(descriptorName, location));
+                    final String output = getInstanceTemporaryOutput(descriptorName) != null
+                            ? getInstanceTemporaryOutput(descriptorName)
+                            : getInstanceTargetOutput(descriptorName);
+                    inputParams.put(descriptorName, output);
+                    setInputParameterValue(descriptorName, output);
                 }
             }
         }
@@ -273,13 +277,14 @@ public class ProcessingExecutionTask extends ExecutionTask {
      * it may represent a name expression that will be externally parsed.
      * @param location  The template value of the target of this task.
      */
-    public String computeTargetOutput(String location) {
+    public String computeTargetOutput(String descriptorName, String location) {
         if (this.instanceTargetOutput == null) {
             if (location != null) {
-                this.instanceTargetOutput = location;
+                setInstanceTargetOutput(descriptorName, location);
             }
-            if (this.instanceTargetOutput != null) {
-                Path path = Paths.get(this.instanceTargetOutput);
+            String targetOutput = getInstanceTargetOutput(descriptorName);
+            if (targetOutput != null) {
+                Path path = Paths.get(targetOutput);
                 if (!path.isAbsolute()) {
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
                                 .resolve(getJob().getUserId()).resolve(path);
@@ -309,11 +314,14 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                setInstanceTargetOutput(FileUtilities.asUnixPath(taskPath.resolve(fileName), true));
-                setInstanceTemporaryOutput(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerTemporaryFolder() + "/" + fileName);
+                setInstanceTargetOutput(descriptorName,
+                                        FileUtilities.asUnixPath(taskPath.resolve(fileName), true));
+                setInstanceTemporaryOutput(descriptorName,
+                                           ExecutionConfiguration.getWorkerContainerVolumeMap()
+                                                                 .getContainerTemporaryFolder() + "/" + fileName);
             }
         }
-        return this.instanceTargetOutput;
+        return getInstanceTargetOutput(descriptorName);
     }
 
     public String[] buildOutputPath() {

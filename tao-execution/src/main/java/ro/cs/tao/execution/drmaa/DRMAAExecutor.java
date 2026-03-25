@@ -79,6 +79,12 @@ import java.util.stream.Collectors;
  * @author Cosmin Udroiu
  */
 public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
+
+    private static final List<String> cifsArgs = new ArrayList<String>() {{
+            add("-i"); add("--sig-proxy=true"); add("--rm");
+            add("--volume-driver"); add("cifs");
+        }};
+    private static final Pattern preserveQuotePattern = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
     private static String masterHost;
     private static ContainerProvider containerProvider;
     private static NodeDBProvider nodeDBProvider;
@@ -321,16 +327,19 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 notifyExternalListeners(executionTask, ExecutionStatus.PENDING_FINALISATION.friendlyName(), 0, null);
                             }
                             if (masterHost.equals(task.getExecutionNodeHostName()) && !SystemUtils.IS_OS_WINDOWS) {
-                                String taskOutputLocation = task.getInstanceTargetOutput();
-                                if (taskOutputLocation != null) {
-                                    DockerVolumeMap volumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
-                                    String location = taskOutputLocation;
-                                    if (!location.startsWith(volumeMap.getHostWorkspaceFolder()) &&
-                                        taskOutputLocation.startsWith(volumeMap.getContainerWorkspaceFolder())) {
-                                        location = taskOutputLocation.replace(volumeMap.getContainerWorkspaceFolder(),
-                                                                              volumeMap.getHostWorkspaceFolder());
+                                Map<String, String> output = task.getInstanceTargetOutput();
+                                for (Map.Entry<String, String> entry : output.entrySet()) {
+                                    String taskOutputLocation = entry.getValue();
+                                    if (taskOutputLocation != null) {
+                                        DockerVolumeMap volumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
+                                        String location = taskOutputLocation;
+                                        if (!location.startsWith(volumeMap.getHostWorkspaceFolder()) &&
+                                            taskOutputLocation.startsWith(volumeMap.getContainerWorkspaceFolder())) {
+                                            location = taskOutputLocation.replace(volumeMap.getContainerWorkspaceFolder(),
+                                                                                  volumeMap.getHostWorkspaceFolder());
+                                        }
+                                        FileUtilities.takeOwnership(Paths.get(location).getParent());
                                     }
-                                    FileUtilities.takeOwnership(Paths.get(location).getParent());
                                 }
                             }
                             UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
@@ -564,7 +573,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, parentIds);
                 if (parentIds != null && !parentIds.isEmpty()) {
                     template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT,
-                                          taskProvider.list(parentIds).stream().map(ExecutionTask::getInstanceTargetOutput).collect(Collectors.joining(",")));
+                                          taskProvider.list(parentIds).stream().map(ExecutionTask::getInstanceTargetOutput).collect(Collectors.toList()));
                 } else {
                     template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT, null);
                 }
@@ -647,8 +656,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
 
             String location = task.getComponent().getFileLocation();
-            if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
-                    (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
+            if (!Paths.get(location).isAbsolute() &&
+                ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/")) || (SystemUtils.IS_OS_LINUX))) {
                 String path = container.getApplicationPath();
                 path = path == null ? "" : path;
                 if (!path.isEmpty() && !path.endsWith("/")) {
@@ -718,7 +727,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             String cmd;
 
             // split the execution command but preserving the entities between double quotes
-            final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
+            final Matcher m = preserveQuotePattern.matcher(executionCmd);
             while (m.find()) {
                 argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
             }
@@ -735,18 +744,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
                             .collect(Collectors.toMap(SourceDescriptor::getName, d -> d.getDataDescriptor().getLocation()));
                     unit = new ContainerUnit(ContainerType.DOCKER);
-                    unit.setArguments(new ArrayList<String>() {{
-                        add("-i");
-                        add("--sig-proxy=true");
-                        add("--rm");
-                        add("--volume-driver");
-                        add("cifs");
-                        // -u $(id -u ${USER}):$(id -g ${USER})
-                        /*if (!masterHost.equals(node.getId())) {
-                            add("-u");
-                            add("$(id -u ${USER}):$(id -g ${USER})");
-                        }*/
-                    }});
+                    unit.setArguments(cifsArgs);
                     unit.setEnvironmentVariables(dbSources);
                     final DockerVolumeMap volumeMount;
                     if (isLocal) {
@@ -794,10 +792,16 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                                   task.getInstanceTemporaryOutput(),
                                                   isLocal
                                                     ? task.getInstanceTargetOutput()
-                                                    : task.getInstanceTargetOutput()
-                                                          .replace(ExecutionConfiguration.getMasterContainerVolumeMap(job.getEnvironment() == Environment.KUBERNETES)
-                                                                                         .getHostWorkspaceFolder(),
-                                                                   volumeMount.getContainerWorkspaceFolder()),
+                                                    : task.getInstanceTargetOutput().entrySet()
+                                                          .stream()
+                                                          .collect(Collectors.toMap(Map.Entry::getKey,
+                                                                                    e -> {
+                                                                                        return e.getValue()
+                                                                                                .replace(ExecutionConfiguration.getMasterContainerVolumeMap(job.getEnvironment() == Environment.KUBERNETES)
+                                                                                                                               .getHostWorkspaceFolder(),
+                                                                                                         volumeMount.getContainerWorkspaceFolder());
+                                                                                    })),
+
                                                   isLocal);
                     }
                 } else {
@@ -897,36 +901,70 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
      * @return the shell executable (e.g., "/bin/bash") for the invocation
      */
     private String wrapShellInvocation(ProcessingComponent component, final List<String> argsList, String initialCmd,
-                                       final String tempOutput, final String finalOutput, final boolean isLocal) {
+                                       final Map<String, String> temporaryOutputs, final Map<String, String> finalOutputs,
+                                       final boolean isLocal) {
         final boolean isOutputManaged = component.isOutputManaged();
-        final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
-        String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
         final String workspaceFolder = SystemUtils.IS_OS_WINDOWS && !volumeMap.getHostWorkspaceFolder().startsWith("/")
-                                       ? volumeMap.getHostWorkspaceFolder().substring(2).replace("\\", "/")
-                                       : volumeMap.getHostWorkspaceFolder();
+                ? volumeMap.getHostWorkspaceFolder().substring(2).replace("\\", "/")
+                : volumeMap.getHostWorkspaceFolder();
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
-        if (finalPath.startsWith(workspaceFolder)) {
-            if (isLocal) {
-                try {
-                    FileUtilities.ensureExists(Paths.get(finalPath));
-                } catch (IOException e) {
-                    logger.warning(e.getMessage());
+        for (Map.Entry<String, String> finalEntry : finalOutputs.entrySet()) {
+            final String finalOutput = finalEntry.getValue();
+            final String tempOutput = temporaryOutputs.get(finalEntry.getKey());
+            final String tmpPath = isOutputManaged
+                    ? tempOutput
+                    : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
+            String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+            if (finalPath.startsWith(workspaceFolder)) {
+                if (isLocal) {
+                    try {
+                        FileUtilities.ensureExists(Paths.get(finalPath));
+                    } catch (IOException e) {
+                        logger.warning(e.getMessage());
+                    }
                 }
+                final String replacement = containerWorkspaceFolder.charAt(containerWorkspaceFolder.length() - 1) == '/'
+                        ? containerWorkspaceFolder
+                        : containerWorkspaceFolder + "/";
+                finalPath = finalPath.replace(workspaceFolder, replacement);
             }
-            final String replacement = containerWorkspaceFolder.endsWith("/")
-                                       ? containerWorkspaceFolder
-                                       : containerWorkspaceFolder + "/";
-            finalPath = finalPath.replace(workspaceFolder, replacement);
+            finalPath = finalPath.replace("//", "/");
+            final TargetDescriptor descriptor = component.getTargets().stream()
+                                                         .filter(t -> t.getName().equals(finalEntry.getKey()))
+                                                         .findFirst().get();
+            final boolean isSnapDimap = ((descriptor.getDataDescriptor().getLocation() != null
+                                          && descriptor.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim"))
+                                         || "beam-dimap".equalsIgnoreCase(descriptor.getDataDescriptor().getFormatName()))
+                                        || finalOutput.endsWith(".dim");
+            final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt") || initialCmd.equals("/opt/esa-snap/bin/gpt");
+            final boolean recursiveCondition = !isOutputManaged || isSnapDimap || DataFormat.FOLDER == descriptor.getDataDescriptor().getFormatType();
+            argsList.add(0, initialCmd);
+            addCopyRemoveCommands(argsList, isLocal, isSnap, isOutputManaged, tmpPath, tempOutput, finalPath, recursiveCondition, isSnapDimap);
         }
-        finalPath = finalPath.replace("//", "/");
-        final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> 
-                 (t.getDataDescriptor().getLocation() != null && t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")) ||
-                         "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
-                                    || finalOutput.endsWith(".dim");
-        final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt") || initialCmd.equals("/opt/esa-snap/bin/gpt");
-        final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
-        argsList.add(0, initialCmd);
+        // all the existing args are merged into a single string as argument to -c
+        final String quoteChar = isLocal
+                ? SystemUtils.IS_OS_WINDOWS
+                    ? "\""
+                    : ""
+                : "\"";
+        // before joining the arguments, check replace double quoted arguments with single quotes
+        argsList.replaceAll(new UnaryOperator<String>() {
+            @Override
+            public String apply(String arg) {
+                return arg.replace("\"", "'");
+            }
+        });
+        final String singleArg = quoteChar + String.join(" ", argsList) + quoteChar;
+        argsList.clear();
+        argsList.add("-c");
+        argsList.add(singleArg);
+        return "/bin/bash";
+    }
+
+    private void addCopyRemoveCommands(final List<String> argsList, final boolean isLocal, final boolean isSnap, final boolean isOutputManaged,
+                                       final String tmpPath, final String tempOutput, final String finalPath, final boolean recursiveCondition,
+                                       final boolean isSnapDimap) {
         if (isLocal) {
             Path p = Path.of(tmpPath);
             try {
@@ -941,14 +979,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         } else {
             argsList.add(0, "mkdir");
             argsList.add(1, "-p");
-            if (component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
+            if (recursiveCondition) {
                 argsList.add(2, tmpPath);
             } else {
                 argsList.add(2, tmpPath.substring(0, tmpPath.lastIndexOf('/')));
             }
             argsList.add(3, "&&");
         }
-        if (isSnap && isOutputManaged && tempOutput.toLowerCase().endsWith(".tif")) {
+        if (isSnap && isOutputManaged && tempOutput.toLowerCase().endsWith(".tif") &&
+            !StringUtilities.containsSequence(argsList, "-f", "GeoTIFF")) {
             argsList.add("-f");
             argsList.add("GeoTIFF");
         }
@@ -969,40 +1008,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         argsList.add(finalPath);
-        // Execute rm even if the previous failed, to clear the workdir
-        argsList.add(";");
-        argsList.add("rm");
-        //if (recursiveCondition) {
-        argsList.add("-r");
-        argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
-        //}
-        /*if (!isOutputManaged) {
-            argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
-        } else {
-            if (isSnapDimap) {
-                argsList.add(tmpPath.replace(tmpPath.substring(tmpPath.lastIndexOf('.')), ".*"));
-            } else {
-                argsList.add(tmpPath);
-            }
-        }*/
-        // all the existing args are merged into a single string as argument to -c
-        final String quoteChar = isLocal
-                ? SystemUtils.IS_OS_WINDOWS
-                    ? "\""
-                    : ""
-                : "\"";
-        // before joining the arguments, check replace double quoted arguments with single quotes
-        argsList.replaceAll(new UnaryOperator<String>() {
-            @Override
-            public String apply(String arg) {
-                return arg.replace("\"", "'");
-            }
-        });
-        final String singleArg = quoteChar + String.join(" ", argsList) + quoteChar;
-        argsList.clear();
-        argsList.add("-c");
-        argsList.add(singleArg);
-        return "/bin/bash";
+        // Being a folder, we need to check if another rm -r with the same argument was added.
+        // If so, it is not appended since it would error at runtime
+        final String rmArg = tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*";
+        if (!StringUtilities.containsSequence(argsList, "rm", "-r", rmArg)) {
+            // Execute rm even if the previous failed, to clear the workdir
+            argsList.add(";");
+            argsList.add("rm");
+            //if (recursiveCondition) {
+            argsList.add("-r");
+            argsList.add(rmArg);
+        }
     }
 
     /**

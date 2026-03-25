@@ -391,7 +391,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 if (StringUtilities.isNullOrEmpty(strList)) {
                     throw new QueryException("Empty product set");
                 }
-                task.setInstanceTargetOutput(strList);
+                task.setInstanceTargetOutput(outPort, strList);
                 task.setLog(strList);
                 status = ExecutionStatus.DONE;
             }

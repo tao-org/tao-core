@@ -831,6 +831,8 @@
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="instanceTemporaryOutput" />
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="instanceTargetOutput" />
         <attributes>
             <basic name="resourceId">
                 <column name="resource_id" nullable="true" column-definition="character varying(512) NULL"/>
