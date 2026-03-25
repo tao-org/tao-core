@@ -18,6 +18,7 @@ package ro.cs.tao.utils;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -253,5 +254,29 @@ public class StringUtilities {
             }
             return value;
         }
+    }
+
+    /**
+     * Checks if a sequence of one or more strings is present in a list.
+     * @param list      The list to be checked
+     * @param elements  The sequence to search for
+     * @return      <code>true</code> if the sequence is found, <code>false</code> otherwise.
+     */
+    public static boolean containsSequence(final List<String> list, String...elements) {
+        if (list == null || list.isEmpty() || elements == null || elements.length == 0) return false;
+        final int size = list.size();
+        for (int i = 0; i < size; i++) {
+            // use String.valueOf to catch null values
+            if (String.valueOf(list.get(i)).equals(String.valueOf(elements[0]))) {
+                if (size - i + 1 < elements.length) return false;
+                for (int j = 1; j < elements.length; j++) {
+                    if (!String.valueOf(list.get(i + j)).equals(String.valueOf(elements[j]))) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
     }
 }

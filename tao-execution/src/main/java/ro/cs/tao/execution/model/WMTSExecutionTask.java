@@ -110,6 +110,7 @@ public class WMTSExecutionTask extends ExecutionTask {
     }
 
     public String buildOutputPath() {
+        String descriptorName = null;
         if (this.instanceTargetOutput == null) {
             String location = null;
             for (TargetDescriptor descriptor : this.component.getTargets()) {
@@ -118,6 +119,7 @@ public class WMTSExecutionTask extends ExecutionTask {
                 if (variable != null) {
                     location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
                     if (location != null) {
+                        descriptorName = descriptor.getName();
                         break;
                     }
                 }
@@ -144,9 +146,9 @@ public class WMTSExecutionTask extends ExecutionTask {
                         throw new RuntimeException(e);
                     }
                 }
-                this.instanceTargetOutput = FileUtilities.asUnixPath(path.resolve(fileName), true);
+                setInstanceTargetOutput(descriptorName, FileUtilities.asUnixPath(path.resolve(fileName), true));
             }
         }
-        return this.instanceTargetOutput;
+        return getInstanceTargetOutput(descriptorName);
     }
 }

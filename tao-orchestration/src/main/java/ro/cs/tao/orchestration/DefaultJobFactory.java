@@ -142,7 +142,8 @@ public class DefaultJobFactory implements JobFactory {
                         final List<TargetDescriptor> targets = scriptTask.getComponent().getTargets();
                         if (targets != null) {
                             targets.forEach(t -> scriptTask.setOutputParameterValue(t.getName(),
-                                                                                    scriptTask.computeTargetOutput(t.getDataDescriptor().getLocation())));
+                                                                                    scriptTask.computeTargetOutput(t.getName(),
+                                                                                                                   t.getDataDescriptor().getLocation())));
                             taskProvider.update(scriptTask);
                         }
 
