@@ -14,7 +14,7 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */package ro.cs.tao.eodata;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -55,3 +55,4 @@ public class Attribute implements Serializable {
         return Objects.hash(name);
     }
 }
+

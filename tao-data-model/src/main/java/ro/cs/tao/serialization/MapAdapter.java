@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.serialization;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -63,3 +63,4 @@ public class MapAdapter extends XmlAdapter<Map<String, String>, String> {
         return map;
     }
 }
+

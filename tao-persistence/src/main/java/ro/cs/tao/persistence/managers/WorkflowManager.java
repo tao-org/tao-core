@@ -45,7 +45,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
                              implements WorkflowProvider {
 
 //    @PersistenceContext
-//    private javax.persistence.EntityManager em;
+//    private jakarta.persistence.EntityManager em;
     @Autowired
     private QueryManager queryManager;
     @Autowired
@@ -138,7 +138,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserVisible(String userId) {
+    public List<WorkflowDescriptor> listUserVisible(String userId, boolean active) {
         final List<WorkflowDescriptor> workflows = repository.getUserWorkflows(userId);
         final String value = ConfigurationManager.getInstance().getValue("other.workflows.visibility");
         if (value != null && Enum.valueOf(Visibility.class, value.toUpperCase()).equals(Visibility.SUBSCRIPTION)) {
@@ -150,6 +150,11 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
             workflows.addAll(repository.getOtherPublicWorkflows(userId));
         }
         workflows.removeIf(WorkflowDescriptor::isTemporary);
+        if (active) {
+            workflows.removeIf(s -> !s.isActive());
+        } else {
+            workflows.removeIf(WorkflowDescriptor::isActive);
+        }
         return workflows;
     }
 
@@ -176,7 +181,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         if (workflow.isEmpty()) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + entity.getId());
         }
-        final List<WorkflowNodeDescriptor> nodes = workflow.get().getOrderedNodes();
+        final List<WorkflowNodeDescriptor> nodes = workflow.get().getNodes();
         for (WorkflowNodeDescriptor node : nodes) {
             final List<Query> list = queryManager.list(entity.getUserId(), node.getId());
             if (list != null) {
@@ -253,3 +258,4 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
                : entityId == null;
     }
 }
+

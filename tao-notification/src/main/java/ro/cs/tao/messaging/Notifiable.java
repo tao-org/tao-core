@@ -15,8 +15,6 @@
  */
 package ro.cs.tao.messaging;
 
-import reactor.bus.Event;
-
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -25,7 +23,7 @@ import java.util.logging.Logger;
  *
  * @author Cosmin Cara
  */
-public abstract class Notifiable implements Consumer<Event<Message>> {
+public abstract class Notifiable implements Consumer<MessageEvent> {
     protected final Logger logger;
 
     public Notifiable() {
@@ -33,9 +31,8 @@ public abstract class Notifiable implements Consumer<Event<Message>> {
     }
 
     @Override
-    public void accept(Event<Message> messageEvent) {
-        final Message payload = messageEvent.getData();
-        onMessageReceived(payload);
+    public void accept(MessageEvent messageEvent) {
+        onMessageReceived(messageEvent.getData());
     }
 
     /**

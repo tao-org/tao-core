@@ -25,6 +25,13 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+/**
+ * Abstract base class for testing implementations of the {@code DataSource} class.
+ * Provides methods and configuration for performing common data source operations,
+ * such as querying and asserting the results.
+ *
+ * @param <T> type of the data source, extends {@code DataSource}
+ */
 public abstract class DataSourceTest<T extends DataSource> extends BaseTest {
     protected static final int pageSize;
     protected static final int maxResults;

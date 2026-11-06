@@ -15,9 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.persistence.AttributeConverter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -59,3 +59,4 @@ public class ConstraintsConverter implements AttributeConverter<List<String>, St
         return result;
     }
 }
+

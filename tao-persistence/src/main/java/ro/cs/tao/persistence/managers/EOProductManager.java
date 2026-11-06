@@ -23,6 +23,9 @@ public class EOProductManager extends EntityManager<EOProduct, String, EOProduct
 
     @Override
     public List<EOProduct> getByLocation(String... locations) {
+        if(locations.length == 0 ){
+            return new ArrayList<EOProduct>();
+        }
         return repository.getProductsByLocation(new HashSet<>(Arrays.asList(locations)));
     }
 
@@ -89,6 +92,11 @@ public class EOProductManager extends EntityManager<EOProduct, String, EOProduct
     @Override
     public List<EOProduct> getJobOutputs(long jobId) {
         return repository.getJobOutputs(jobId);
+    }
+
+    @Override
+    public List<EOProduct> saveAll(List<EOProduct> products) {
+        return repository.saveAll(products);
     }
 
     @Override

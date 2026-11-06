@@ -16,9 +16,9 @@
 
 package ro.cs.tao.component;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -122,7 +122,7 @@ public class GroupComponent extends TaoComponent {
         super.removeSource(source);
         if (this.descriptorIndex != null) {
             this.descriptorIndex.entrySet().stream()
-                    .filter(e -> e.getValue().getId().equals(source.getId()))
+                    .filter(e -> e.getValue() instanceof SourceDescriptor && ((SourceDescriptor) e.getValue()).getId().equals(source.getId()))
                     .findFirst().ifPresent(entry -> this.descriptorIndex.remove(entry.getKey()));
         }
     }
@@ -144,7 +144,7 @@ public class GroupComponent extends TaoComponent {
         super.removeTarget(target);
         if (this.descriptorIndex != null) {
             this.descriptorIndex.entrySet().stream()
-                    .filter(e -> e.getValue().getId().equals(target.getId()))
+                    .filter(e -> e.getValue() instanceof TargetDescriptor && ((TargetDescriptor) e.getValue()).getId().equals(target.getId()))
                     .findFirst().ifPresent(entry -> this.descriptorIndex.remove(entry.getKey()));
         }
     }
@@ -158,3 +158,4 @@ public class GroupComponent extends TaoComponent {
         return newDescriptor;
     }
 }
+

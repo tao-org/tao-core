@@ -6,16 +6,29 @@ import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
+ * Utility class for running parallel iterations over a range of integers or collections.
+ * It provides static methods for parallel loops with customizable levels of parallelism.
+ *
  * @author Cosmin Cara
  */
 public class Parallel {
     static final int PARALLELISM = Math.max(Runtime.getRuntime().availableProcessors() - 1, 2);
     private static final Logger logger = Logger.getLogger(NamedThreadPoolExecutor.class.getName());
+
+    private static int validateParallelism(int parallelism) {
+        if (parallelism < 1) {
+            throw new IllegalArgumentException("parallelism must be >= 1");
+        }
+        return parallelism;
+    }
+
     /**
      * The loop code wrapper
      */
@@ -27,19 +40,29 @@ public class Parallel {
         void run(T i, Signal cancelSignal);
     }
 
+    /**
+     * A utility class used to manage and control the execution of a collection of tasks represented as {@link Future} objects.
+     * This class provides functionality to signal cancellation of all tasks that are not yet completed.
+     */
     public static class Signal {
         private final List<Future<?>> tasks;
+        private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
         public Signal(List<Future<?>> tasks) {
             this.tasks = tasks;
         }
 
         public void signal() {
+            cancelled.set(true);
             for (Future<?> task : tasks) {
                 if (!task.isDone()) {
                     task.cancel(true);
                 }
             }
+        }
+
+        public boolean isCancelled() {
+            return cancelled.get();
         }
     }
 
@@ -77,7 +100,7 @@ public class Parallel {
      */
     public static <T> void ForEach(String name, Iterable <T> params, int parallelism, final Runnable<T> code) {
         final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("pi" + (name == null ? "" : "-" + name),
-                                                                             Math.max(PARALLELISM, parallelism));
+                                                                             validateParallelism(parallelism));
         try {
             List<Future<?>> tasks = new LinkedList<>();
             for (final T param : params) {
@@ -146,7 +169,7 @@ public class Parallel {
      */
     public static void For(String name, int start, int stop, int parallelism, final Runnable<Integer> code) {
         final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor((name == null ? "" : name + "-") + "pf",
-                                                                             Math.max(PARALLELISM, parallelism));
+                                                                             validateParallelism(parallelism));
         try {
             List<Future<?>> tasks  = new LinkedList<>();
             for (int i = start; i < stop; i++) {
@@ -168,18 +191,41 @@ public class Parallel {
         }
     }
 
+    /**
+     * Executes a parallel for-loop from the specified start index to the specified stop index.
+     *
+     * @param start The start index of the loop (inclusive).
+     * @param stop The stop index of the loop (exclusive).
+     * @param code The loop code to execute, which accepts the current index and a signal for cancellation handling.
+     */
     public static void For(int start, int stop, final Cancellable<Integer> code) {
         For(null, start, stop, PARALLELISM, code);
     }
 
+    /**
+     * Executes a parallel for-loop across a range of integers, with specified settings
+     * including loop naming and degree of parallelism. This method provides support for
+     * cancellation mechanisms via a {@link Signal} object.
+     *
+     * @param name        The name of the loop, useful for identification in thread pool configurations.
+     * @param start       The start index of the loop (inclusive).
+     * @param stop        The end index of the loop (exclusive).
+     * @param parallelism The degree of parallelism defining how many threads can run concurrently.
+     * @param code        The loop code to execute, which accepts the current index and a signal for
+     *                    cancellation handling.
+     */
     public static void For(String name, int start, int stop, int parallelism, final Cancellable<Integer> code) {
-        final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("pfc" + (name == null ? "" : "-" + name), Math.max(PARALLELISM, parallelism));
+        final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("pfc" + (name == null ? "" : "-" + name),
+                                                                             validateParallelism(parallelism));
         try {
-            final List<Future<?>> tasks = new LinkedList<>();
+            final List<Future<?>> tasks = new CopyOnWriteArrayList<>();
             final Signal cancelSignal = new Signal(tasks);
-            for (int i = start; i < stop; i++) {
+            for (int i = start; i < stop && !cancelSignal.isCancelled(); i++) {
                 final Integer index = i;
                 tasks.add(executor.submit(() -> {
+                    if (cancelSignal.isCancelled()) {
+                        return;
+                    }
                     try {
                         code.run(index, cancelSignal);
                     } catch (Exception e) {

@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
 
 /**
  * @author Cosmin Cara
@@ -52,3 +51,4 @@ public enum OrbitDirection implements TaoEnum<Integer> {
         return this.value;
     }
 }
+

@@ -1,11 +1,10 @@
 package ro.cs.tao.component.constraints;
 
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
-
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
  * Constraint that indicates that the given source and target descriptors should have
@@ -26,3 +25,4 @@ public class SelfCardinalityConstraint extends IOConstraint {
         return source != null && target != null && source.getCardinality() == target.getCardinality();
     }
 }
+

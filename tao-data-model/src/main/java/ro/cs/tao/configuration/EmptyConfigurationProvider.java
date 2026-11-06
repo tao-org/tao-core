@@ -42,6 +42,36 @@ public class EmptyConfigurationProvider implements ConfigurationProvider {
     }
 
     @Override
+    public int getIntValue(String name) {
+        return Integer.parseInt(this.properties.getProperty(name, "0"));
+    }
+
+    @Override
+    public String getUserValue(String userId, String name) {
+        return getValue(name);
+    }
+
+    @Override
+    public String getUserValue(String userId, String name, String defaultValue) {
+        return getValue(name, defaultValue);
+    }
+
+    @Override
+    public boolean getUserBooleanValue(String userId, String name) {
+        return getBooleanValue(name);
+    }
+
+    @Override
+    public int getUserIntValue(String userId, String name) {
+        return getIntValue(name);
+    }
+
+    @Override
+    public void setUserValue(String userId, String name, String value) {
+        setValue(name, value);
+    }
+
+    @Override
     public Map<String, String> getValues(String filter) {
         final Map<String, String> entries = new HashMap<>();
         this.properties.stringPropertyNames().forEach(name -> {

@@ -8,7 +8,7 @@ INSERT INTO component.processing_component_type (id, type) VALUES
 
 -- Processing components category
 INSERT INTO component.component_category (id, category) VALUES
-(1, 'RASTER'), (2, 'VECTOR'), (3, 'OPTICAL'), (4, 'RADAR'), (5, 'MISC');
+(1, 'RASTER'), (2, 'VECTOR'), (3, 'OPTICAL'), (4, 'RADAR'), (5, 'MISC'), (6, 'CONDITION');
 
 -- Tag type
 INSERT INTO common.tag_type (id, description) VALUES
@@ -20,7 +20,7 @@ INSERT INTO component.condition (id, description) VALUES
 
 -- Container type
 INSERT INTO component.container_type (id, description) VALUES
-(1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC'), (5, 'WMS');
+(1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC'), (5, 'WMS'), (6, 'WMTS'), (7, 'OGC_PROCESS');
 
 -- Container visibility
 INSERT INTO component.container_visibility (id, description) VALUES
@@ -28,7 +28,7 @@ INSERT INTO component.container_visibility (id, description) VALUES
 
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
-('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON');
+('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON'),('ANY');
 
 -- Data types
 INSERT INTO product.data_type (type) VALUES
@@ -81,7 +81,7 @@ INSERT INTO component.template_type (type) VALUES
 
 -- Component type
 INSERT INTO workflow.component_type (id, description) VALUES
-(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP');
+(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP'), (5, 'WPS_COMPONENT'), (6, 'CONDITION'), (7, 'OGC_COMPONENT');
 
 -- Behavior
 INSERT INTO workflow.node_behavior (id, description) VALUES
@@ -118,10 +118,18 @@ VALUES
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='admin'), 1);
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='SystemAccount'), 1);
 
+-- Memory units
+INSERT INTO topology.memory_unit (id, short_description) VALUES
+(1, 'B'),
+(2, 'KB'),
+(3, 'MB'),
+(4, 'GB'),
+(5, 'TB');
+
 -- Node flavor
-INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx) VALUES
-('master', 8, 32, 1024, 32, 1.0),
-('k8s', 8, 32, 1024, 32, 1.0);
+INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx, unit_id) VALUES
+('master', 8, 32, 1024, 32, 1.0, 4),
+('k8s', 8, 32, 1024, 32, 1.0, 4);
 
 -- localhost execution node
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)
@@ -133,12 +141,14 @@ VALUES ('k8s-master', '', '', 'k8s', 'K8s Node', 'k8s');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUES
-(1, 'Sentinel2', 'S2MSI1C,S2MSI2A,L1C,L2A' , '(S2[A-B])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
-(2, 'Sentinel1', 'GRD,SLC', '(S1[A-B])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
+(1, 'Sentinel2', 'S2MSI1C,S2MSI2A,L1C,L2A' , '(S2[A-D])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
+(2, 'Sentinel1', 'GRD,SLC', '(S1[A-D])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
 (3, 'Landsat8', 'L1T,L1GT,L1TP,L2SP', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming'),
 (4, 'GeoTIFF', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.(tif|TIF|tiff|TIFF+)', 'Generic GeoTIFF product'),
 (5, 'Generic', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.([A-Za-z.]+)', 'Generic product'),
-(6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming');
+(6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming'),
+(7, 'Enmap', 'ENMAP', '(ENMAP01)-____(L[1-2][A-C])-DT(\d{9,10})_(\d{8})T(\d{6})Z_(\d{3})_V(\d{6})_(\d{8}T\d{6})Z', 'ENMAP product naming'),
+(8, 'Sentinel3', 'OL_1_EFR___,OL_1_ERR___,OL_2_LFR___,OL_2_LRR___,OL_2_WFR___,OL_2_WRR___,SL_1_RBT___,SL_2_AOD___,SL_2_FRP___,SL_2_LST___,SL_2_WST___,SR_1_SRA___,SR_1_SRA_A_,SR_1_SRA_BS,SR_2_LAN___,SR_2_LAN_HY,SR_2_LAN_LI,SR_2_LAN_SI,SR_2_WAT___,SY_2_AOD___,SY_2_SYN___,SY_2_V10___,SY_2_VG1___,SY_2_VGP___','(S3[A-D])_(OL|SR|SL|ST|SY|DO|MW|GN|AX)_([012_])_(EFR\w{3}|CR0\w{3}|CR1\w{3}|ERR\w{3}|RAC\w{3}|SPC\w{3}|INS\w{3}|WFR\w{3}|WRR\w{3}|LFR\w{3}|LRR\w{3}|ATP\w{3}|AER\w{3}|LAP\w{3}|LVI\w{3}|SLT\w{3}|RBT\w{3}|WCT\w{3}|WST\w{3}|LST\w{3}|MISR__|SYN\w{3}|VGP\w{3}|VG1\w{3}|V10\w{3}|LAN\w{3}|WAT\w{3}|SRA\w{3}|CAL\w{3}|FRP\w{3})_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{8}T\d{6})_(((\d{4})_(\d{3})_(\d{3})_(\d{4}|____))|(\w{17}))_(\w{3})_([DFOR])_(NR|ST|NT)_(\d{3})(?:.SEN3)?','Sentinel3 product naming');
 
 INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
 (1, 'MISSION', 1, 'Mission identifier'),
@@ -206,6 +216,33 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (6, 'PDATE', 11, 'Processing date'),
 (6, 'PTIME', 12, 'Processing time');
 
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(7, 'MISSION', 1, 'Mission identifier'),
+(7, 'LEVEL', 2, 'Processing level'),
+(7, 'DTAKE', 3, 'Datatake identifier'),
+(7, 'ADATE', 4, 'Acquisition date'),
+(7, 'ATIME', 5, 'Acquisition time'),
+(7, 'TILE', 6, 'Tile identifier'),
+(7, 'VERSION', 7, 'Product version'),
+(7, 'PDATE', 8, 'Processing date');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(8, 'MISSION', 1, 'Mission identifier'),
+(8, 'DATASOURCE', 2, 'Data source / consumer'),
+(8, 'LEVEL', 3, 'Processing level'),
+(8, 'DATATYPE', 4, 'Data type identifier'),
+(8, 'DATESTART', 5, 'Data start date'),
+(8, 'TIMESTART', 6, 'Data start time'),
+(8, 'DATESTOP', 7, 'Data stop date'),
+(8, 'TIMESTOP', 8, 'Data stop time'),
+(8, 'PDATE', 9, 'Processing date'),
+(8, 'STIME', 10, 'Sensing time duration'),
+(8, 'SCYCLE', 11, 'Cycle number at the start sensing time'),
+(8, 'ORBIT', 12, 'Relative orbit'),
+(8, 'FRAME', 13, 'Frame start time'),
+(8, 'TILEID', 14, 'Tile identifier'),
+(8, 'CENTRE', 15, 'Product generating centre');
+
 -- Repository types
 INSERT INTO workspace.repository_type (id, name, params) VALUES
 (1, 'Local repository', '{"root":true}'),
@@ -251,85 +288,171 @@ INSERT INTO config.category (id, name, display_order) VALUES
 (7, 'Workspaces', 7),
 (8, 'Data Sources', 8),
 (9, 'Kubernetes', 9),
-(10, 'Github', 10);
+(10, 'Github', 10),
+(11, 'Retrieval-Augumented Generation', 11),
+(12, 'Large Language Models', 12),
+(13, 'Agent Tools', 13);
 
 -- Configuration items
-INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "values", last_updated) VALUES
-(1, 'allow.resumable.transfers', 'true', 'Enables persistence of transfer state', 'bool', 'Transfers can be resumed ?', null, now()),
-(1, 'quicklook.extension', '.png', 'Extension for product quicklooks', 'string', 'Quicklook extension', null, now()),
-(1, 'extract.statistics', 'true', 'Include raster statistics in produced metadata', 'bool', 'Extract statistics', null, now()),
-(1, 'api.token', '13cd8418-0b76-4346-b89b-2f5d7f5a5959', 'API token for development purposes', 'string', 'API token', null, now()),
-(1, 'serialize.downloads', 'true', 'Perform downloads sequentially', 'bool', 'Sequential downloads', null, now()),
-(1, 'replace.local.symlinks', 'true', 'Replace symlinks to products with actual products', 'bool', 'Replace symlinks when processing', null, now()),
-(2, 'topology.node.poll.interval', '15', 'Time (in seconds) between node polling requests', 'int', 'Node polling interval (s)', null, now()),
-(2, 'topology.master.user', 'taouser', 'User with privileges on the master node', 'string', 'Master node user', null, now()),
-(2, 'topology.master.password', 'taopassword', 'Password of the user with privileges on the master node', 'string', 'Master node user password', null, now()),
-(2, 'topology.node.name.prefix', 'TAO-', 'Prefix for new node names', 'string', 'Node prefix', null, now()),
-(2, 'topology.node.default.description', 'Worker node', 'Default description for new nodes', 'string', 'Node default description', null, now()),
-(2, 'topology.node.limit', '0', 'Maximum worker nodes (0 for unlimited)', 'int', 'Maximum worker nodes', null, now()),
-(2, 'topology.node.user.limit', '1', 'Maximum worker nodes per user (0 for unlimited)', 'int', 'Maximum user worker nodes', null, now()),
-(2, 'topology.node.create.wait', '60', 'Time in seconds to wait for a node to be alive', 'int', 'Node startup wait time (s)', null, now()),
-(2, 'topology.node.connection.retries', '-1', 'How many times to retry the connection with a node (-1 for each time)', 'int', 'Node connection retries', null, now()),
-(2, 'topology.dedicated.user.nodes', 'true', 'Use dedicated nodes for users', 'bool', 'Use dedicated nodes for users', null, now()),
-(3, 'tao.docker.images', '/mnt/tao/docker', 'Location for extracting container files for new Docker plugins', 'string', 'Dockerfiles location', null, now()),
-(3, 'tao.docker.registry', 'sen2agri-prod:5000', 'Docker registry', 'string', 'Docker registry', null, now()),
-(3, 'tao.docker.base.port', '8888', 'Start port for standalone user containers', 'int', 'Start port for standalone containers', null, now()),
-(3, 'master.docker.mappings', '{ "workspace.mount": "/mnt/tao/workspaces:/mnt/tao", "temp.mount": "/home/taouser/workdir:/mnt/workdir", "cfg.mount": "/mnt/tao/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on the master node', 'string', 'Master node volume map', null, now()),
-(3, 'node.docker.mappings', '{ "workspace.mount": "/mnt/tao:/mnt/tao", "temp.mount": "/home/tao/workdir:/mnt/workdir", "cfg.mount": "/mnt/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on worker nodes', 'string', 'Worker node volume map', null, now()),
-(3, 'docker.volume.map.style', 'docker', 'Docker host volume map style', 'string', 'Docker host volume map style', null, now()),
-(3, 'enable.tunnel.filters', 'false', 'Enable tunneling for accessing private containers', 'bool', 'Enable tunnel filters', null, now()),
-(4, 'tao.drmaa.polling.interval', '10', 'Time (in seconds) between inspections of the DRMAA system', 'int', 'DRMAA polling interval (s)', null, now()),
-(4, 'tao.force.memory.requirements', 'true', 'Enforce memory constraints for applications', 'bool', 'Enforce memory constraints', null, now()),
-(4, 'tao.ssh.async', 'true', 'Enable asynchronous mode for SSH invocations', 'bool', 'Enable SSH asynchronous mode', null, now()),
-(4, 'tao.user.jobs.limit', '20', 'Maximum number of jobs a user can submit', 'int', 'Job limit per user', null, now()),
-(4, 'tao.remove.intermediate.files', 'false', 'Remove the intermediate files when the execution finished successfuly', 'bool', 'Remove intermediate files', null, now()),
-(4, 'tao.upload.to.bucket', 'false', 'Move the execution results to the object storage', 'bool', 'Move results to bucket', null, now()),
-(4, 'tao.remove.invalid.products', 'false', 'Delete local products with invalid location', 'bool', 'Delete invalid products', null, now()),
-(4, 'optimize.workflows', 'false', 'Try to combine nodes from the same container', 'bool', 'Optimize workflows', null, now()),
-(4, 'tao.remote.subscriptions.synchronize.rate', '1', 'Interval (in hours) to synchronize external subscriptions', 'int', 'Remote subscription synchronize rate', null, now()),
-(5, 'mail.smtp.auth', 'true', 'Enable SMTP authentication', 'bool', 'Enable SMTP authentication', null, now()),
-(5, 'mail.smtp.starttls.enable', 'true', 'SMTP uses TLS', 'bool', 'SMTP uses TLS', null, now()),
-(5, 'mail.smtp.host', 'smtp.gmail.com', 'SMTP server', 'string', 'SMTP server', null, now()),
-(5, 'mail.smtp.port', '587', 'SMTP server port', 'int', 'SMTP server port', null, now()),
-(5, 'mail.smtp.username', 'sen2agri.system@gmail.com', 'SMTP user', 'string', 'SMTP user', null, now()),
-(5, 'mail.smtp.password', 'esa-sen2agri2019', 'SMTP password', 'string', 'SMTP password', null, now()),
-(5, 'mail.from', 'sen2agri.system@gmail.com', 'Sender', 'string', 'Sender', null, now()),
-(5, 'mail.to', 'kraftek@c-s.ro', 'Additional email receiving emails', 'string', 'Additional receiving email', null, now()),
-(6, 'openstack.auth.url', 'https://cf2.cloudferro.com:5000/v3', 'OpenStack authentication endpoint', 'string', 'Authentication endpoint', null, now()),
-(6, 'openstack.tenantId', 'e31d0ad8bb8b45968ac5d0167b0b32a7', 'OpenStack tenant (or project) ID', 'string', 'Project ID', null, now()),
-(6, 'openstack.domain', 'cloud_01569', 'OpenStack domain', 'string', 'Domain', null, now()),
-(6, 'openstack.user', 'kraftek@c-s.ro', 'OpenStack user', 'string', 'User', null, now()),
-(6, 'openstack.password', 'cei7pitici.', 'OpenStack password', 'string', 'Password', null, now()),
-(6, 'openstack.default.security.group', 'alow_ssh', 'VM security group', 'string', 'VM security group', null, now()),
-(6, 'openstack.private.network', 'private_network_01569', 'Internal network', 'string', 'Internal network', null, now()),
-(6, 'openstack.eodata.network', 'eodata', 'EO Data network', 'string', 'EO Data network', null, now()),
-(6, 'openstack.floating.ip.pool', 'external', 'External IP address pool', 'string', 'External IP pool', null, now()),
-(6, 'openstack.default.image', 'CentOS 7', 'Base OS image', 'string', 'Base OS image', null, now()),
-(6, 'openstack.keypair.name', 'dunia-tao', 'Key Pair name', 'string', 'Key pair name', null, now()),
-(6, 'openstack.volume.type.hdd', 'hdd', 'Label for HDD storage', 'string', 'HDD storage label', null, now()),
-(6, 'openstack.volume.type.ssd', 'ssd', 'Label for SSD storage', 'string', 'SSD storage label', null, now()),
-(6, 'openstack.volume.hdd.size', '4096', 'Default HDD storage size (GB)', 'int', 'HDD storage size (GB)', null, now()),
-(6, 'openstack.volume.hdd.device', '/dev/sdh', 'Linux device for HDD', 'string', 'HDD device', null, now()),
-(6, 'openstack.volume.ssd.size', '480', 'Default SDD storage size (GB)', 'int', 'SSD storage size (GB)', null, now()),
-(6, 'openstack.volume.ssd.device', '/dev/sds', 'Linux device for SSD', 'string', 'SSD device', null, now()),
-(6, 'openstack.execute.installers', 'false', 'Run post-install steps', 'bool', 'Run post-install steps', null, now()),
-(6, 'openstack.node.user', 'eouser', 'Default account on a new node', 'string', 'Default account', null, now()),
-(6, 'openstack.public.url', '', 'HTTPS URL for accessing the user bucket', 'string', 'HTTPS Swift URL', null, now()),
-(7, 'aws.region', 'eu-central-1', 'AWS region', 'string', 'AWS region', null, now()),
-(7, 'aws.access.key', null, 'AWS access key', 'string', 'Access key', null, now()),
-(7, 'aws.secret.key', null, 'AWS secret key', 'string', 'Secret key', null, now()),
-(7, 'aws.bucket', null, 'AWS S3 bucket', 'string', 'S3 bucket', null, now()),
-(7, 'aws.use.username.as.root', 'false', 'Use user name as bucket root', 'bool', 'Use user name as bucket root', null, now()),
-(8, 'datasource.filter.category', null, 'Category filter', 'string', 'Category filter', null, now()),
-(8, 'datasource.filter.collection', null, 'Collection filter', 'string', 'Collection filter', null, now()),
-(8, 'datasource.filter.provider', null, 'Provider filter', 'string', 'Provider filter', null, now()),
-(9, 'tao.kubernetes.master.url', 'https://127.0.0.1:6443', 'Cluster URL', 'string', 'Cluster URL', null, now()),
-(9, 'tao.kubernetes.token', null, 'Service account token', 'string', 'Service account token', null, now()),
-(9, 'tao.kubernetes.ca.cert.file', null, 'Service account certificate filepath', 'string', 'Service account certificate filepath', null, now()),
-(9, 'tao.kubernetes.pvc.mappings', '{"/mnt/tao":"tao-pvc","/home/taouser":"tao-user-pvc","/eodata":"tao-eodata-pvc"}', 'Cluster PVC mappings', 'string', 'Cluster PVC mappings', null, now()),
-(10, 'github.auth.url', 'https://github.com/login/oauth/access_token', 'Github OAuth URL', 'string', 'Github OAuth URL', null, now()),
-(10, 'github.client.id', '', 'Github OAuth client ID', 'string', 'Github OAuth client ID', null, now()),
-(10, 'github.client.secret', '', 'Github OAuth client secret', 'string', 'Github OAuth client secret', null, now());
+INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "values", per_user, last_updated) VALUES
+(1, 'allow.resumable.transfers', 'true', 'Enables persistence of transfer state', 'bool', 'Transfers can be resumed ?', null, false, now()),
+(1, 'quicklook.extension', '.png', 'Extension for product quicklooks', 'string', 'Quicklook extension', null, false, now()),
+(1, 'extract.statistics', 'true', 'Include raster statistics in produced metadata', 'bool', 'Extract statistics', null, false, now()),
+(1, 'api.token', '13cd8418-0b76-4346-b89b-2f5d7f5a5959', 'API token for development purposes', 'string', 'API token', null, false, now()),
+(1, 'api.token.expiration', '60', 'API token expiration (in days)', 'int', 'API token expiraiton (days)', null, false, now()),
+(1, 'serialize.downloads', 'true', 'Perform downloads sequentially', 'bool', 'Sequential downloads', null, false, now()),
+(1, 'replace.local.symlinks', 'true', 'Replace symlinks to products with actual products', 'bool', 'Replace symlinks when processing', null, false, now()),
+(2, 'topology.node.poll.interval', '15', 'Time (in seconds) between node polling requests', 'int', 'Node polling interval (s)', null, false, now()),
+(2, 'topology.master.user', 'taouser', 'User with privileges on the master node', 'string', 'Master node user', null, false, now()),
+(2, 'topology.master.password', 'taopassword', 'Password of the user with privileges on the master node', 'string', 'Master node user password', null, false, now()),
+(2, 'topology.node.name.prefix', 'TAO-', 'Prefix for new node names', 'string', 'Node prefix', null, false, now()),
+(2, 'topology.node.default.description', 'Worker node', 'Default description for new nodes', 'string', 'Node default description', null, false, now()),
+(2, 'topology.node.limit', '0', 'Maximum worker nodes (0 for unlimited)', 'int', 'Maximum worker nodes', null, false, now()),
+(2, 'topology.node.user.limit', '1', 'Maximum worker nodes per user (0 for unlimited)', 'int', 'Maximum user worker nodes', null, false, now()),
+(2, 'topology.node.create.wait', '60', 'Time in seconds to wait for a node to be alive', 'int', 'Node startup wait time (s)', null, false, now()),
+(2, 'topology.node.connection.retries', '-1', 'How many times to retry the connection with a node (-1 for each time)', 'int', 'Node connection retries', null, false, now()),
+(2, 'topology.dedicated.user.nodes', 'true', 'Use dedicated nodes for users', 'bool', 'Use dedicated nodes for users', null, false, now()),
+(2, 'topology.use.master.for.execution', 'false', 'Use Master node in executions', 'bool', 'Use Master node in executions', null, false, now()),
+(2, 'topology.default.user.block.storage', '10', 'User local storage (GB)', 'int', 'User local storage (GB)', null, false, now()),
+(2, 'topology.default.user.s3.storage', '50', 'User object storage (GB)', 'int', 'User object storage (GB)', null, false, now()),
+(2, 'topology.default.user.memory', '16384', 'User processing memory (MB)', 'int', 'User processing memory (MB)', null, false, now()),
+(2, 'topology.default.user.cpu', '4', 'User processing CPUs', 'int', 'User processing CPUs', null, false, now()),
+(3, 'tao.docker.images', '/mnt/tao/docker', 'Location for extracting container files for new Docker plugins', 'string', 'Dockerfiles location', null, false, now()),
+(3, 'tao.docker.registry', 'sen2agri-prod:5000', 'Docker registry', 'string', 'Docker registry', null, false, now()),
+(3, 'tao.docker.base.port', '8888', 'Start port for standalone user containers', 'int', 'Start port for standalone containers', null, false, now()),
+(3, 'master.docker.mappings', '{ "workspace.mount": "/mnt/tao/workspaces:/mnt/tao/workspaces", "temp.mount": "/home/taouser/workdir:/mnt/workdir", "cfg.mount": "/mnt/tao/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on the master node', 'string', 'Master node volume map', null, false, now()),
+(3, 'node.docker.mappings', '{ "workspace.mount": "/mnt/tao:/mnt/tao", "temp.mount": "/home/tao/workdir:/mnt/workdir", "cfg.mount": "/mnt/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on worker nodes', 'string', 'Worker node volume map', null, false, now()),
+(3, 'docker.volume.map.style', 'docker', 'Docker host volume map style', 'string', 'Docker host volume map style', '{"allowed_values":[{"value":"docker","display":"Docker"},{"value":"rancher","display":"Rancher"}]}', false, now()),
+(3, 'enable.tunnel.filters', 'true', 'Enable tunneling for accessing private containers', 'bool', 'Enable tunnel filters', null, false, now()),
+(4, 'tao.drmaa.polling.interval', '10', 'Time (in seconds) between inspections of the DRMAA system', 'int', 'DRMAA polling interval (s)', null, false, now()),
+(4, 'tao.force.memory.requirements', 'true', 'Enforce memory constraints for applications', 'bool', 'Enforce memory constraints', null, false, now()),
+(4, 'tao.ssh.async', 'true', 'Enable asynchronous mode for SSH invocations', 'bool', 'Enable SSH asynchronous mode', null, false, now()),
+(4, 'tao.user.jobs.limit', '20', 'Maximum number of jobs a user can submit', 'int', 'Job limit per user', null, false, now()),
+(4, 'tao.remove.intermediate.files', 'false', 'Remove the intermediate files when the execution finished successfuly', 'bool', 'Remove intermediate files', null, false, now()),
+(4, 'tao.upload.to.bucket', 'false', 'Move the execution results to the object storage', 'bool', 'Move results to bucket', null, false, now()),
+(4, 'tao.remove.invalid.products', 'false', 'Delete local products with invalid location', 'bool', 'Delete invalid products', null, false, now()),
+(4, 'optimize.workflows', 'false', 'Try to combine nodes from the same container', 'bool', 'Optimize workflows', null, false, now()),
+(4, 'tao.remote.subscriptions.synchronize.rate', '1', 'Interval (in hours) to synchronize external subscriptions', 'int', 'Remote subscription synchronize rate', null, false, now()),
+(4, 'execution.environment', 'Default', 'Default execution environment', 'string', 'Execution environment', '{"allowed_values":[{"value":"Default","display":"SSH"},{"value":"Kubernetes","display":"Kubernetes"}]}', false, now()),
+(4, 'other.workflows.visibility', 'public', 'Workflow visibility mode', 'string', 'Workflow visibility mode', '{"allowed_values":[{"value":"public","display":"Public"},{"value":"subscription","display":"Subscription"}]}', false, now()),
+(4, 'component.editor', 'zeppelin', 'Editor used for Python script processing modules', 'string', 'Component editor', '{"allowed_values":[{"value":"zeppelin","display":"Apache Zeppelin"},{"value":"jupyter","display":"JupyterLab"}]}', false, now()),
+(4, 'execution.reserved.memory', '4096', 'Worker node reserved memory (MB)', 'int', 'Worker node reserved memory (MB)', null, false, now()),
+(4, 'execution.use.parent.job.folder', 'false', 'Use parent job folder for executions', 'bool', 'Use parent job folder', null, false, now()),
+(4, 'execution.task.separate.folders', 'true', 'Distinct folders for tasks', 'bool', 'Distinct folders for tasks', null, false, now()),
+(5, 'mail.smtp.auth', 'true', 'Enable SMTP authentication', 'bool', 'Enable SMTP authentication', null, false, now()),
+(5, 'mail.smtp.starttls.enable', 'true', 'SMTP uses TLS', 'bool', 'SMTP uses TLS', null, false, now()),
+(5, 'mail.smtp.host', 'smtp.gmail.com', 'SMTP server', 'string', 'SMTP server', null, false, now()),
+(5, 'mail.smtp.port', '587', 'SMTP server port', 'int', 'SMTP server port', null, false, now()),
+(5, 'mail.smtp.username', 'sen2agri.system@gmail.com', 'SMTP user', 'string', 'SMTP user', null, false, now()),
+(5, 'mail.smtp.password', 'esa-sen2agri2019', 'SMTP password', 'string', 'SMTP password', null, false, now()),
+(5, 'mail.from', 'sen2agri.system@gmail.com', 'Sender', 'string', 'Sender', null, false, now()),
+(5, 'mail.to', 'kraftek@c-s.ro', 'Additional email receiving emails', 'string', 'Additional receiving email', null, false, now()),
+(6, 'openstack.auth.url', 'https://cf2.cloudferro.com:5000/v3', 'OpenStack authentication endpoint', 'string', 'Authentication endpoint', null, false, now()),
+(6, 'openstack.tenantId', 'e31d0ad8bb8b45968ac5d0167b0b32a7', 'OpenStack tenant (or project) ID', 'string', 'Project ID', null, false, now()),
+(6, 'openstack.domain', 'cloud_01569', 'OpenStack domain', 'string', 'Domain', null, false, now()),
+(6, 'openstack.user', 'kraftek@c-s.ro', 'OpenStack user', 'string', 'User', null, false, now()),
+(6, 'openstack.password', 'cei7pitici.', 'OpenStack password', 'string', 'Password', null, false, now()),
+(6, 'openstack.default.security.group', 'alow_ssh', 'VM security group', 'string', 'VM security group', null, false, now()),
+(6, 'openstack.private.network', 'private_network_01569', 'Internal network', 'string', 'Internal network', null, false, now()),
+(6, 'openstack.eodata.network', 'eodata', 'EO Data network', 'string', 'EO Data network', null, false, now()),
+(6, 'openstack.floating.ip.pool', 'external', 'External IP address pool', 'string', 'External IP pool', null, false, now()),
+(6, 'openstack.default.image', 'CentOS 7', 'Base OS image', 'string', 'Base OS image', null, false, now()),
+(6, 'openstack.keypair.name', 'dunia-tao', 'Key Pair name', 'string', 'Key pair name', null, false, now()),
+(6, 'openstack.volume.type.hdd', 'hdd', 'Label for HDD storage', 'string', 'HDD storage label', null, false, now()),
+(6, 'openstack.volume.type.ssd', 'ssd', 'Label for SSD storage', 'string', 'SSD storage label', null, false, now()),
+(6, 'openstack.volume.hdd.size', '4096', 'Default HDD storage size (GB)', 'int', 'HDD storage size (GB)', null, false, now()),
+(6, 'openstack.volume.hdd.device', '/dev/sdh', 'Linux device for HDD', 'string', 'HDD device', null, false, now()),
+(6, 'openstack.volume.ssd.size', '480', 'Default SDD storage size (GB)', 'int', 'SSD storage size (GB)', null, false, now()),
+(6, 'openstack.volume.ssd.device', '/dev/sds', 'Linux device for SSD', 'string', 'SSD device', null, false, now()),
+(6, 'openstack.execute.installers', 'false', 'Run post-install steps', 'bool', 'Run post-install steps', null, false, now()),
+(6, 'openstack.node.user', 'eouser', 'Default account on a new node', 'string', 'Default account', null, false, now()),
+(6, 'openstack.public.url', '', 'HTTPS URL for accessing the user bucket', 'string', 'HTTPS Swift URL', null, false, now()),
+(7, 'aws.region', 'eu-central-1', 'AWS region', 'string', 'AWS region', null, false, now()),
+(7, 'aws.access.key', null, 'AWS access key', 'string', 'Access key', null, false, now()),
+(7, 'aws.secret.key', null, 'AWS secret key', 'string', 'Secret key', null, false, now()),
+(7, 'aws.bucket', null, 'AWS S3 bucket', 'string', 'S3 bucket', null, false, now()),
+(7, 'aws.use.username.as.root', 'false', 'Use user name as bucket root', 'bool', 'Use user name as bucket root', null, false, now()),
+(8, 'query.cache.enabled', 'false', 'Cache query results for 1 day', 'bool', 'Cache query results for 1 day', null, false, now()),
+(8, 'datasource.filter.category', null, 'Category filter', 'string', 'Category filter', null, false, now()),
+(8, 'datasource.filter.collection', null, 'Collection filter', 'string', 'Collection filter', null, false, now()),
+(8, 'datasource.filter.provider', null, 'Provider filter', 'string', 'Provider filter', null, false, now()),
+(8, 'datasource.decompress.downloads', 'true', 'Decompress downloaded archives', 'bool', 'Decompress downloaded archives', null, false, now()),
+(9, 'tao.kubernetes.master.url', 'https://127.0.0.1:6443', 'Cluster URL', 'string', 'Cluster URL', null, false, now()),
+(9, 'tao.kubernetes.token', null, 'Service account token', 'string', 'Service account token', null, false, now()),
+(9, 'tao.kubernetes.ca.cert.file', null, 'Service account certificate filepath', 'string', 'Service account certificate filepath', null, false, now()),
+(9, 'tao.kubernetes.pvc.mappings', '{"/mnt/tao":"tao-pvc","/home/taouser":"tao-user-pvc","/eodata":"tao-eodata-pvc"}', 'Cluster PVC mappings', 'string', 'Cluster PVC mappings', null, false, now()),
+(10, 'github.auth.url', 'https://github.com/login/oauth/access_token', 'Github OAuth URL', 'string', 'Github OAuth URL', null, false, now()),
+(10, 'github.client.id', '', 'Github OAuth client ID', 'string', 'Github OAuth client ID', null, false, now()),
+(10, 'github.client.secret', '', 'Github OAuth client secret', 'string', 'Github OAuth client secret', null, false, now()),
+(11, 'rag.documents.path', '/mnt/tao/documents', 'Documents context path', 'string', 'Documents path', null, false, now()),
+(11, 'rag.max.results', '10', 'RAG maximum results', 'int', 'Max results', null, false, now()),
+(11, 'rag.min.score', '0.6', 'RAG minimum score for results', 'double', 'Min score', null, false, now()),
+(11, 'rag.vector.store.path', '/mnt/tao/vector-store/vector-store.json', 'RAG fallback vector store', 'string', 'Fallback vector store path', null, false, now()),
+(11, 'rag.qdrant.host', 'localhost', 'Qdrant host', 'string', 'Qdrant host', null, false, now()),
+(11, 'rag.qdrant.http.port', '6333', 'Qdrant HTTP port', 'int', 'Qdrant HTTP port', null, false, now()),
+(11, 'rag.qdrant.grpc.port', '6334', 'Qdrant GRPC port', 'int', 'Qdrant GRPC port', null, false, now()),
+(11, 'rag.qdrant.collection', 'tao', 'Qdrant collection name', 'string', 'Qdrant collection', null, false, now()),
+(11, 'rag.qdrant.use.tls', 'false', 'Qdrant uses TLS', 'bool', 'Qdrant TLS enabled', null, false, now()),
+(11, 'rag.qdrant.api.key', null, 'Qdrant API key', 'string', 'Qdrant API key', null, false, now()),
+(11, 'rag.qdrant.request.timeout.seconds', '15', 'Qdrant request timeout', 'int', 'Qdrant request timeout (s)', null, false, now()),
+(11, 'rag.qdrant.runtime.fallback.enabled', 'true', 'Qdrant fallbacks to local store', 'bool', 'Qdrant fallback to local', null, false, now()),
+(11, 'rag.qdrant.auto.start.with.docker', 'true', 'Qdrant runs from Docker', 'bool', 'Qdrant runs from container', null, false, now()),
+(11, 'rag.qdrant.pull.on.start', 'true', 'Pull the Docker container if not exists', 'bool', 'Pull container', null, false, now()),
+(11, 'rag.qdrant.docker.image', 'qdrant/qdrant:latest', 'Qdrant Docker image', 'string', 'Qdrant Docker image', null, false, now()),
+(11, 'rag.qdrant.docker.container.name', 'tao-qdrant', 'Qdrant Docker container name', 'string', 'Qdrant container name', null, false, now()),
+(11, 'rag.qdrant.docker.startup.timeout.seconds', '90', 'Qdrant container startup timeout', 'int', 'Qdrant container start timeout', null, false, now()),
+(11, 'rag.qdrant.docker.data.path', '/mnt/tao/qdrant-storage', 'Qdrant local storage', 'string', 'Qdrant local storage', null, false, now()),
+(12, 'llm.provider', 'mistral', 'LLM Provider', 'string', 'LLM Provider', null, true, now()),
+(12, 'jlama.model.path', '/mnt/tao/models/', 'Jlama model path', 'string', 'Jlama model path', null, true, now()),
+(12, 'jlama.chat.options.model', 'Llama-3-8B-Instruct-jlama-Q4', 'Jlama model', 'string', 'Jlama model', '{"allowed_values":[{"value":"Llama-3-8B-Instruct-jlama-Q4", "display": "Llama-3-8B-Instruct-jlama-Q4"},{"value":"Mistral-7B-Instruct-v0.3-Jlama-Q4", "display": "Mistral-7B-Instruct-v0.3-Jlama-Q4"},{"value":"EVE-Instruct", "display": "EVE-Instruct"},{"value":"Ministral-3-14B-Reasoning-2512-Q4_K_M.gguf","display":"Ministral 3 14B Q4"}]}', true, now()),
+(12, 'jlama.prompt.template', 'auto', 'Provide complete and not truncated answers. If the answer is long, you will continue until you finalize the idea.\n\n{prompt}', 'string', 'Jlama prompt template', null, true, now()),
+(12, 'jlama.prompt.system', '', 'You are an AI assistant for Earth Observation data processing. You answer only to questions from Earth Observation data processing domain.', 'string', 'Jlama system prompt', null, true, now()),
+(12, 'jlama.max.tokens', '200', 'Jlama max tokens', 'int', 'Jlama max tokens', null, true, now()),
+(12, 'jlama.temperature', '0.7', 'Jlama temperature', 'float', 'Jlama temperature', null, true, now()),
+(12, 'jlama.model.download.enabled', 'true', 'Jlama model download enabled', 'bool', 'Jlama model download enabled', null, true, now()),
+(12, 'jlama.model.default.owner', 'tjake', 'Jlama default model owner', 'string', 'Jlama default model owner', null, true, now()),
+(12, 'jlama.model.repositories', 'Llama-3-8B-Instruct-jlama-Q4=tjake/Llama-3-8B-Instruct-jlama-Q4,Mistral-7B-Instruct-v0.3-Jlama-Q4=tjake/Mistral-7B-Instruct-v0.3-Jlama-Q4,EVE-Instruct=eve-esa/EVE-Instruct', 'Jlama model repositories', 'string', 'Jlama model repositories', null, true, now()),
+(12, 'jlama.model.download.branch', '', 'Jlama model download branch', 'string', 'Jlama model download branch', null, true, now()),
+(12, 'jlama.model.download.auth.token', '', 'Jlama model download auth token', 'string', 'Jlama model download auth token', null, true, now()),
+(12, 'mistral.prompt.system', 'You are an AI assistant for Earth Observation data processing. You answer only to questions from Earth Observation data processing domain.', 'Mistral system prompt', 'string', 'Mistral system prompt', null, true, now()),
+(12, 'mistral.prompt.template', 'Provide complete and not truncated answers. If the answer is long, you will continue until you finalize the idea.\n\n{prompt}', 'Mistral prompt template', 'string', 'Mistral prompt template', null, true, now()),
+(12, 'mistral.max.tokens', '4096', 'Mistral max tokens', 'int', 'Mistral max tokens', null, true, now()),
+(12, 'mistral.temperature', '0.7', 'Mistral temperature', 'float', 'Mistral temperature', null, true, now()),
+(12, 'mistral.chat.options.model', 'mistral-8b-latest', 'Mistral model', 'string', 'Mistral model', '{"allowed_values":[{"value":"mistral-8b-latest", "display": "mistral-8b-latest"},{"value":"mistral-small-latest", "display": "mistral-small-latest"},{"value":"mistral-medium-latest", "display": "mistral-medium-latest"},{"value":"mistral-large-latest", "display": "mistral-large-latest"}]}', true, now()),
+(12, 'mistral.base-url', 'https://api.mistral.ai', 'Mistral base URL', 'string', 'Mistral base URL', null, true, now()),
+(12, 'mistral.api-key', '', 'Mistral API key', 'string', 'Mistral API key', null, true, now()),
+(12, 'chatgpt.prompt.system', 'You are an AI assistant for Earth Observation data processing. You answer only to questions from Earth Observation data processing domain.', 'OpenAI system prompt', 'string', 'OpenAI system prompt', null, true, now()),
+(12, 'chatgpt.prompt.template', 'Provide complete and not truncated answers. If the answer is long, you will continue until you finalize the idea.\n\n{prompt}', 'OpenAI prompt template', 'string', 'OpenAI prompt template', null, true, now()),
+(12, 'chatgpt.chat.options.model', 'gpt-4o-mini', 'OpenAI model', 'string', 'OpenAI model', '{"allowed_values":[{"value":"gpt-4o-mini", "display": "gpt-4o-mini"},{"value":"gpt-4o", "display": "gpt-4o"},{"value":"gpt-4.1-mini", "display": "gpt-4.1-mini"},{"value":"gpt-4.1", "display": "gpt-4.1"}]}', true, now()),
+(12, 'chatgpt.max.tokens', '4096', 'OpenAI max tokens', 'int', 'OpenAI max tokens', null, true, now()),
+(12, 'chatgpt.temperature', '0.7', 'OpenAI temperature', 'float', 'OpenAI temperature', null, true, now()),
+(12, 'chatgpt.base-url', 'https://api.openai.com', 'OpenAI base URL', 'string', 'OpenAI base URL', null, true, now()),
+(12, 'chatgpt.api-key', '', 'OpenAI API key', 'string', 'OpenAI API key', null, true, now()),
+(12, 'chatgpt.max.rpm', '10', 'Maximum requests per minute', 'int', 'Maximum requests per minute', null, true, now()),
+(12, 'anthropic.prompt.system', 'You are an AI assistant for Earth Observation data processing. You answer only to questions from Earth Observation data processing domain.', 'Anthropic system prompt', 'string', 'Anthropic system prompt', null, true, now()),
+(12, 'anthropic.prompt.template', 'Provide complete and not truncated answers. If the answer is long, you will continue until you finalize the idea.\n\n{prompt}', 'Anthropic prompt template', 'string', 'Anthropic prompt template', null, true, now()),
+(12, 'anthropic.chat.options.model', 'claude-sonnet-4-20250514', 'Anthropic model', 'string', 'Anthropic model', '{"allowed_values":[{"value":"claude-sonnet-4-20250514", "display":"claude-sonnet-4-20250514"},{"value":"claude-opus-4-20250514", "display":"claude-opus-4-20250514"},{"value":"claude-3-7-sonnet-20250219", "display":"claude-3-7-sonnet-20250219"},{"value":"claude-3-5-haiku-20241022", "display":"claude-3-5-haiku-20241022"}]}', true, now()),
+(12, 'anthropic.max.tokens', '4096', 'Anthropic max tokens', 'int', 'Anthropic max tokens', null, true, now()),
+(12, 'anthropic.temperature', '0.7', 'Anthropic temperature', 'float', 'Anthropic temperature', null, true, now()),
+(12, 'anthropic.base-url', 'https://api.anthropic.com', 'Anthropic base URL', 'string', 'Anthropic base URL', null, true, now()),
+(12, 'anthropic.api-key', '', 'Anthropic API key', 'string', 'Anthropic API key', null, true, now()),
+(13, 'agent.tools.enabled', 'true', 'Enable agent tools', 'bool', 'Enable agent tools', null, false, now()),
+(13, 'agent.tools.timeout.ms', '30000', 'Tool execution timeout', 'int', 'Tool execution timeout', null, false, now()),
+(13, 'agent.tools.rate-limit.per-minute', '20', 'Tool requests per minute', 'int', 'Tool requests per minute', null, false, now()),
+(13, 'agent.tools.idempotency-window-seconds', '600', 'Idempotency window (s)', 'int', 'Idempotency window (s)', null, false, now());
+
+UPDATE config.config
+    SET depends_on_item_id = 'llm.provider', depends_on_item_value = 'jlama'
+    WHERE id like 'jlama%';
+UPDATE config.config
+    SET depends_on_item_id = 'llm.provider', depends_on_item_value = 'mistral'
+    WHERE id like 'mistral%';
+UPDATE config.config
+    SET depends_on_item_id = 'llm.provider', depends_on_item_value = 'chatgpt'
+    WHERE id like 'chatgpt%';
+UPDATE config.config
+    SET depends_on_item_id = 'llm.provider', depends_on_item_value = 'anthropic'
+    WHERE id like 'anthropic%';
 
 -- Subscriptions
 INSERT INTO subscription.subscription_type VALUES

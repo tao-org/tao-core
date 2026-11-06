@@ -16,11 +16,10 @@
 
 package ro.cs.tao.persistence.audit;
 
+import jakarta.persistence.PostRemove;
+import jakarta.persistence.PostUpdate;
 import ro.cs.tao.persistence.managers.SimpleCache;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
-
-import javax.persistence.PostRemove;
-import javax.persistence.PostUpdate;
 
 public class WorkflowNodeListener {
 
@@ -40,3 +39,4 @@ public class WorkflowNodeListener {
         }
     }
 }
+

@@ -1,16 +1,26 @@
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.DateUtils;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.executors.ProcessHelper;
 
+import java.net.URI;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
 public class UtilsTest {
+
+    public static void main(String[] args) throws Exception {
+
+    }
 
     @Test
     public void testDateFormat(){
@@ -39,7 +49,7 @@ public class UtilsTest {
     }
     @Test
     public void testDecrypt(){
-        String result = Crypto.decrypt("S8V2XqOPxN1y7/ovrtSvAg==", "silvia.ricolfi");
+        String result = Crypto.decrypt("HM6p+OYI9WRfTPB4jdfn40lNR98InEyw5AGCoIU1rc0=", "eouser");
         assertEquals("PggeAUVVQjCkku1l", result);
     }
     @Test
@@ -50,58 +60,5 @@ public class UtilsTest {
             System.out.println(jupyterLiteTokens.get(i));
             assertEquals(expected.get(i), jupyterLiteTokens.get(i));
         }
-    }
-
-    @Test
-    public void highlightMatchingParentheses() {
-        final String RED = "\u001B[41m";
-        final String BLUE = "\u001B[44m";
-        final String BLACK = "\u001B[0m";
-        final String test = "((?:[A-Za-z0-9_]*?(?=\\d{8}))((\\d{4})(\\d{2})(\\d{2}))?(?:[A-Za-z0-9_]*))\\.(tif|TIF|tiff|TIFF+)";
-        final List<Pair<Integer, Integer>> pairs = new ArrayList<>();
-        for (int i = 0; i < test.length(); i++) {
-            if (test.charAt(i) == '(') {
-                pairs.add(Pair.of(i, null));
-            }
-            if (test.charAt(i) == ')') {
-                if (pairs.size() == 0) {
-                    pairs.add(Pair.of(null, i));
-                } else {
-                    int idx = pairs.size() - 1;
-                    boolean found = false;
-                    for (int j = pairs.size() - 1; j >= 0; j--) {
-                        if (pairs.get(j).getRight() == null) {
-                            idx = j;
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found) {
-                        final Pair<Integer, Integer> pair = pairs.get(idx);
-                        pairs.set(idx, Pair.of(pair.getLeft(), i));
-                    } else {
-                        pairs.add(Pair.of(null, i));
-                    }
-                }
-            }
-        }
-        Integer fromStart, fromEnd;
-        for (int i = 0; i < pairs.size(); i++) {
-            fromStart = pairs.get(i).getLeft();
-            fromEnd = pairs.get(i).getRight();
-            if (fromStart == null) {
-                System.out.println(test.substring(0, fromEnd) + RED + test.charAt(fromEnd)
-                                           + BLACK + test.substring(fromEnd + 1));
-            } else if (fromEnd == null) {
-                System.out.println(test.substring(0, fromStart) + RED + test.charAt(fromStart)
-                                           + BLACK + test.substring(fromStart + 1));
-            } else {
-                System.out.println(test.substring(0, fromStart) + BLUE + test.charAt(fromStart)
-                                           + BLACK + test.substring(fromStart + 1, fromEnd)
-                                           + BLUE + test.charAt(fromEnd)
-                                           + BLACK + test.substring(fromEnd + 1));
-            }
-        }
-
     }
 }

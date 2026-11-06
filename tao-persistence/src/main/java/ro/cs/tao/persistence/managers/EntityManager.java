@@ -22,8 +22,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.SortDirection;
@@ -39,7 +39,7 @@ import java.util.Optional;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
-public abstract class EntityManager<T extends Identifiable<K>, K, R extends PagingAndSortingRepository<T, K>>
+public abstract class EntityManager<T extends Identifiable<K>, K, R extends JpaRepository<T, K>>
     implements EntityProvider<T, K> {
 
     @Autowired
@@ -119,7 +119,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
                 throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
             }
         }*/
-        return repository.save(entity);
+        return repository.saveAndFlush(entity);
     }
 
     @Transactional
@@ -134,7 +134,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
             throw new PersistenceException(String.format("There is no entity with the given identifier %s",
                                                          entity.getId()));
         }
-        return repository.save(entity);
+        return repository.saveAndFlush(entity);
     }
 
     @Transactional

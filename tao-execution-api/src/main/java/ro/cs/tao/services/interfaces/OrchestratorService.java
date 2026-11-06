@@ -19,11 +19,9 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.JobCompletedListener;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionJobSummary;
-import ro.cs.tao.execution.model.ExecutionRequest;
-import ro.cs.tao.execution.model.ExecutionTaskSummary;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.List;
@@ -45,10 +43,16 @@ public interface OrchestratorService extends TAOService {
     Map<String, List<Parameter>> getWorkflowParameters(long workflowId) throws PersistenceException;
 
     /**
-     * Returns the outputs (i.e. the target descriptors of terminal nodes) of a workflow.
+     * Returns the outputs of the executions of a workflow for a specific user.
+     * @param workflowId    The workflow identifier
+     * @param userId        The user identifier
+     */
+    List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId, String userId) throws PersistenceException;
+    /**
+     * Returns the output descriptors of the executions of a workflow.
      * @param workflowId    The workflow identifier
      */
-    List<TargetDescriptor> getWorkflowOutputs(long workflowId) throws PersistenceException;
+    List<TargetDescriptor> getWorkflowOutputDescriptors(long workflowId) throws PersistenceException;
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
@@ -72,6 +76,7 @@ public interface OrchestratorService extends TAOService {
      */
     //ExecutionJob createJobExternal(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
     ExecutionJob scriptJob(ExecutionRequest request) throws ExecutionException;
+
     /**
      * Stops the execution of the given job.
      *
@@ -109,29 +114,139 @@ public interface OrchestratorService extends TAOService {
      */
     List<ExecutionTaskSummary> getTasksStatus(long jobId);
 
+    /**
+     * Retrieves a list of all currently running jobs for a specific user.
+     *
+     * @param userId The identifier of the user for whom the running jobs are to be retrieved.
+     * @return A list of ExecutionJobSummary objects representing the running jobs for the specified user.
+     */
     List<ExecutionJobSummary> getRunningJobs(String userId);
 
+    /**
+     * Retrieves detailed information about a specific job identified by the given job ID.
+     *
+     * @param jobId The identifier of the job whose details are to be retrieved.
+     * @return An ExecutionJobSummary object containing the job details, such as status,
+     *         name, workflow name, start and end times, and associated task summaries.
+     */
     ExecutionJobSummary getJobInfo(long jobId);
 
+    /**
+     * Retrieves a list of all completed jobs for a specific user.
+     *
+     * @param userId The identifier of the user for whom the completed jobs are to be retrieved.
+     * @return A list of ExecutionJobSummary objects representing the completed jobs for the specified user.
+     */
     List<ExecutionJobSummary> getCompletedJobs(String userId);
 
+    List<ExecutionJobSummary> getCompletedJobs(String userId, int page, int pageSize);
+
+    /**
+     * Retrieves a queue of all currently queued execution jobs.
+     *
+     * @return a queue containing {@code ExecutionJobSummary} objects that represent the queued jobs.
+     */
     Queue<ExecutionJobSummary> getQueuedJobs();
 
+    /**
+     * Retrieves a queue of all currently queued execution jobs for a specific user.
+     *
+     * @param userId The identifier of the user for whom the queued jobs are to be retrieved.
+     * @return A queue containing {@code ExecutionJobSummary} objects that represent the queued jobs for the specified user.
+     */
     Queue<ExecutionJobSummary> getQueuedJobs(String userId);
 
+    /**
+     * Retrieves a mapping of user identifiers to their respective queues of currently queued execution jobs.
+     *
+     * @return A map where each key is a user identifier (as a String) and the corresponding value
+     *         is a queue of {@code ExecutionJobSummary} objects representing the queued jobs for that user.
+     */
     Map<String, Queue<ExecutionJobSummary>> getQueuedUserJobs();
 
+    /**
+     * Moves the specified job up in the execution queue for the user.
+     *
+     * @param jobId The identifier of the job to be moved up in the queue.
+     * @param userId The identifier of the user associated with the job.
+     */
     void moveJobUp(long jobId, String userId);
 
+    /**
+     * Moves the specified job down in the execution queue for the user.
+     *
+     * @param jobId The identifier of the job to be moved down in the queue.
+     * @param userId The identifier of the user associated with the job.
+     */
     void moveJobDown(long jobId, String userId);
 
+    /**
+     * Removes a specific job from the execution queue for the given user.
+     *
+     * @param userId The identifier of the user associated with the job to be removed.
+     * @param jobId  The identifier of the job to be removed from the queue.
+     * @throws PersistenceException If there is an issue accessing or modifying the persistence layer.
+     */
     void deleteJobFromQueue(String userId, long jobId) throws PersistenceException;
 
+    /**
+     * Clears the job history for a specified user.
+     *
+     * @param userId The identifier of the user whose job history will be cleared.
+     * @throws PersistenceException If there is an issue accessing or modifying the persistence layer.
+     */
     void clearJobHistory(String userId) throws PersistenceException;
 
+    /**
+     * Initiates the execution of an external workflow using the provided parameters.
+     *
+     * @param jsonGraph The JSON representation of the workflow graph to be executed.
+     * @param container The identifier of the container where the workflow will be executed.
+     * @param callback The endpoint descriptor for receiving callbacks or notifications related to the workflow execution.
+     * @return The unique identifier of the newly started workflow instance.
+     * @throws ExecutionException If an error occurs during the execution of the workflow.
+     */
     long startExternalWorkflow(String jsonGraph, String container, EndpointDescriptor callback) throws ExecutionException;
 
+    /**
+     * Invokes a WPS (Web Processing Service) operation identified by the given identifier and using
+     * the specified input parameters.
+     *
+     * @param identifier The unique identifier of the WPS operation to be invoked.
+     * @param inputs A map containing the input parameters for the WPS operation. The map's keys are
+     *               parameter names, and the values are nested maps where each key-value pair
+     *               represents specific parameter attributes or details.
+     * @return The unique identifier of the execution result for the invoked WPS operation.
+     * @throws ExecutionException If an error occurs during the invocation of the WPS operation.
+     */
     long invokeWPS(String identifier, Map<String, Map<String, String>> inputs) throws ExecutionException;
 
+    /**
+     * Invokes a WMS (Web Map Service) operation identified by the given identifier and using
+     * the specified input parameters.
+     *
+     * @param identifier The unique identifier of the WMS operation to be invoked.
+     * @param inputs A map containing the input parameters for the WMS operation. The map's keys are
+     *               parameter names, and the values are their corresponding input values.
+     * @return The unique identifier of the execution result for the invoked WMS operation.
+     * @throws ExecutionException If an error occurs during the invocation of the WMS operation.
+     */
     long invokeWMS(String identifier, Map<String, String> inputs) throws ExecutionException;
+
+    /**
+     * Registers a listener to be notified when a job is completed. The listener will receive
+     * callbacks when relevant job completion events occur. This method ensures the provided
+     * listener is added to the list of notification recipients for job completion events.
+     *
+     * @param listener The JobCompletedListener instance to register for job completion notifications.
+     */
+    void registerListener(JobCompletedListener listener);
+
+    /**
+     * Unregisters a previously registered listener so that it no longer receives notifications
+     * about job completion events.
+     *
+     * @param listener The JobCompletedListener instance to unregister from job completion notifications.
+     */
+    void unregisterListener(JobCompletedListener listener);
 }

@@ -92,7 +92,7 @@ public class MailSender {
         this.mailPassword = password;
         if (sender == null) {
             String appName = configurationProvider.getValue("spring.application.name", "TAO Services");
-            sender = "sysadm@" + appName.toLowerCase().replaceAll(" ", "_") + ".org";
+            sender = "sysadm@" + appName.toLowerCase().replace(" ", "_") + ".org";
         }
         this.mailFrom = sender;
         if (recipient == null || !emailPattern.matcher(recipient).matches()) {

@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.workflow.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * Workflow (editing) status enumeration
@@ -65,3 +64,4 @@ public enum Status implements TaoEnum<Integer> {
 
 
 }
+

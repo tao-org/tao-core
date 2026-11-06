@@ -15,9 +15,9 @@
  */
 package ro.cs.tao.topology;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 
 /**
  * A service represents a mandatory software component that should be on a topology node.
@@ -61,3 +61,4 @@ public class ServiceDescription {
     public void setDescription(String description) { this.description = description; }
 
 }
+

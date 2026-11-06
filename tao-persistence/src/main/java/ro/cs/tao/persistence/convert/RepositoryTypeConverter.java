@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.workspaces.RepositoryType;
-
-import javax.persistence.AttributeConverter;
 
 public class RepositoryTypeConverter implements AttributeConverter<RepositoryType, Integer> {
     @Override
@@ -16,3 +15,4 @@ public class RepositoryTypeConverter implements AttributeConverter<RepositoryTyp
         return value != null ? EnumUtils.getEnumConstantByValue(RepositoryType.class, value) : null;
     }
 }
+

@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
@@ -29,6 +30,10 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Configuration
 @EnableTransactionManagement
 @Component("workflowNodeDescriptorManager")
@@ -71,6 +76,17 @@ public class WorkflowNodeDescriptorManager extends EntityManager<WorkflowNodeDes
     @Override
     public void updatePosition(Long id, float[] coordinates) throws PersistenceException {
         this.repository.updatePosition(id, coordinates[0], coordinates[1]);
+    }
+
+    @Override
+    public ComponentLink getLink(long fromNodeId, String fromOutputId, long toNodeId, String toInputId) {
+        return this.repository.getLink(fromNodeId, fromOutputId, toNodeId, toInputId);
+    }
+
+    @Override
+    public Map<Long, String> getNodeNames(Set<Long> nodeIds) {
+        return this.repository.getWorkflowsById(nodeIds).stream()
+                              .collect(Collectors.toMap(WorkflowNodeDescriptor::getId, WorkflowNodeDescriptor::getName));
     }
 
     @Override

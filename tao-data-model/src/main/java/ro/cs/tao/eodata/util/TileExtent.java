@@ -29,6 +29,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Represents a mapping of tiles where each tile is identified by a unique code and is associated
+ * with a geographical extent defined as a Path2D.Double object.
+ * This class provides methods for reading tile extent data from input streams
+ * and files, writing data to files, handling tile extents in KML format,
+ * and performing geometric queries such as bounding boxes and intersection detection.
+ * It is designed to be extended to provide implementation-specific details.
+ *
  * @author Cosmin Cara
  */
 public abstract class TileExtent {
@@ -38,6 +45,12 @@ public abstract class TileExtent {
         tiles = new TreeMap<>();
     }
 
+    /**
+     * Reads and processes data from the provided input stream, updating the tile map with polygonal data.
+     *
+     * @param inputStream the input stream from which tile data is to be read
+     * @throws IOException if an I/O error occurs while reading from the stream
+     */
     public void read(InputStream inputStream) throws IOException {
         synchronized (tiles) {
             byte[] buffer = new byte[tileCodeSize()];
@@ -58,6 +71,13 @@ public abstract class TileExtent {
         }
     }
 
+    /**
+     * Writes the tile data, including tile identifiers and their associated geometric information
+     * (in the form of path segments), to the specified file.
+     *
+     * @param file the file path where the tile data will be written
+     * @throws IOException if an I/O error occurs during the write operation
+     */
     public void write(Path file) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(file.toFile());
              DataOutputStream dos = new DataOutputStream(fos)) {
@@ -77,6 +97,14 @@ public abstract class TileExtent {
         }
     }
 
+    /**
+     * Reads and processes a KML file from the given file path.
+     * This method attempts to open the file and delegate the reading
+     * and parsing of the KML content to the {@code fromKml} method.
+     *
+     * @param file the path to the KML file to be read
+     * @throws IOException if an I/O error occurs while reading the file
+     */
     public void fromKmlFile(String file) throws IOException {
         Path kmlFile = Paths.get(file);
         if (Files.exists(kmlFile)) {
@@ -84,8 +112,22 @@ public abstract class TileExtent {
         }
     }
 
+    /**
+     * Reads and processes KML data from the given BufferedReader.
+     * This method parses the provided input and updates the tile map
+     * with the parsed geometric data.
+     *
+     * @param bufferedReader the BufferedReader from which the KML content is read
+     * @throws IOException if an I/O error occurs while reading from the BufferedReader
+     */
     public abstract void fromKml(BufferedReader bufferedReader) throws IOException;
 
+    /**
+     * Retrieves a list of tile identifiers currently stored in the tile map.
+     * The resulting list contains the keys of the tile map, representing all available tiles.
+     *
+     * @return a list of all tile names in the tile map
+     */
     public List<String> getTileNames() {
         synchronized (tiles) {
             return new ArrayList<>(this.tiles.keySet());
@@ -99,6 +141,13 @@ public abstract class TileExtent {
         return tiles.size();
     }
 
+    /**
+     * Retrieves the geometric extent of the tile corresponding to the given tile code.
+     *
+     * @param tileCode the identifier of the tile whose extent is to be retrieved
+     * @return the geometric extent of the tile as a {@code Path2D.Double}, or {@code null}
+     *         if the tile code is not found
+     */
     public Path2D.Double getTileExtent(String tileCode) {
         return tiles.get(tileCode);
     }

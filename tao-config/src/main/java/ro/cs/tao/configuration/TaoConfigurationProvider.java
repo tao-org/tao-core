@@ -19,10 +19,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -42,6 +42,9 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     private Properties settings;
     private Map<String, String> environment;
     private PersistentConfigurationProvider dbConfigProvider;
+    private UserPersistentConfigurationProvider userConfigProvider;
+    private Map<String, List<ConfigurationItemChangeListener>> listeners;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public static TaoConfigurationProvider getInstance() {
         if (instance == null) {
@@ -73,6 +76,11 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     @Override
     public void setPersistentConfigurationProvider(PersistentConfigurationProvider provider) {
         this.dbConfigProvider = provider;
+    }
+
+    @Override
+    public void setUserPersistentConfigurationProvider(UserPersistentConfigurationProvider provider) {
+        this.userConfigProvider = provider;
     }
 
     @Override
@@ -134,6 +142,15 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     }
 
     @Override
+    public int getIntValue(String name) {
+        String strValue = getDbValue(name);
+        if (strValue == null) {
+            strValue = this.settings.getProperty(name);
+        }
+        return Integer.parseInt(strValue);
+    }
+
+    @Override
     public Map<String, String> getValues(String filter) {
         final Map<String, String> results = new HashMap<>();
         if (this.dbConfigProvider != null) {
@@ -169,8 +186,79 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
         if (this.dbConfigProvider != null) {
             ConfigurationItem item = this.dbConfigProvider.getItem(name);
             if (item != null) {
+                item.setValue(value);
+                item.setLastUpdated(LocalDateTime.now());
                 this.dbConfigProvider.saveItem(item);
+                notifyListeners(item);
             }
+        }
+    }
+
+    @Override
+    public String getUserValue(String userId, String name) {
+        return getUserValue(userId, name, null);
+    }
+
+    @Override
+    public String getUserValue(String userId, String name, String defaultValue) {
+        String value = getDbValue(userId, name);
+        if (value == null) {
+            value = this.settings.getProperty(name, defaultValue);
+        }
+        if (value != null) {
+            final Matcher matcher = PROPERTY_PATTERN.matcher(value);
+            while (matcher.find()) {
+                final String otherProperty = matcher.group(1);
+                value = value.replaceAll("\\$\\{" + otherProperty + "\\}", getValue(otherProperty));
+            }
+        }
+        return value;
+    }
+
+    @Override
+    public boolean getUserBooleanValue(String userId, String name) {
+        String strValue = getDbValue(userId, name);
+        if (strValue == null) {
+            strValue = getDbValue(name);
+        }
+        if (strValue == null) {
+            strValue = this.settings.getProperty(name);
+        }
+        return "1".equalsIgnoreCase(strValue) || "yes".equalsIgnoreCase(strValue) ||
+               "true".equalsIgnoreCase(strValue) || "on".equalsIgnoreCase(strValue);
+    }
+
+    @Override
+    public int getUserIntValue(String userId, String name) {
+        String strValue = getDbValue(userId, name);
+        if (strValue == null) {
+            strValue = getDbValue(name);
+        }
+        if (strValue == null) {
+            strValue = this.settings.getProperty(name);
+        }
+        return Integer.parseInt(strValue);
+    }
+
+    @Override
+    public void setUserValue(String userId, String name, String value) {
+        if (this.userConfigProvider != null) {
+            UserConfigurationItem item = this.userConfigProvider.getItem(userId, name);
+            if (item == null && this.dbConfigProvider != null) {
+                final ConfigurationItem configurationItem = this.dbConfigProvider.getItem(name);
+                if (configurationItem != null) {
+                    item = new UserConfigurationItem(userId, configurationItem);
+                }
+            }
+            if (item == null) {
+                item = new UserConfigurationItem();
+                item.setUserId(userId);
+                item.setKey(name);
+            }
+            item.setValue(value);
+            item.setLastUpdated(LocalDateTime.now());
+            this.userConfigProvider.saveItem(item);
+            notifyListeners(item);
         }
     }
 
@@ -184,10 +272,44 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
         this.environment = new HashMap<>(environment);
     }
 
+    @Override
+    public synchronized void addConfigurationItemChangeListener(String[] itemKeys, ConfigurationItemChangeListener listener) {
+        if (itemKeys == null || itemKeys.length == 0) {
+            return;
+        }
+        if (this.listeners == null) {
+            this.listeners = new HashMap<>();
+        }
+        for (String itemKey : itemKeys) {
+            if (!this.listeners.containsKey(itemKey)) {
+                this.listeners.put(itemKey, new ArrayList<>());
+            }
+            this.listeners.get(itemKey).add(listener);
+        }
+    }
+
     private String getDbValue(String name) {
         String value = null;
         if (this.dbConfigProvider != null) {
             final ConfigurationItem item = this.dbConfigProvider.getItem(name);
+            if (item != null) {
+                value = item.getValue();
+                if (value != null) {
+                    final Matcher matcher = PROPERTY_PATTERN.matcher(value);
+                    while (matcher.find()) {
+                        final String otherProperty = matcher.group(1);
+                        value = value.replaceAll("\\$\\{" + otherProperty + "\\}", getValue(otherProperty));
+                    }
+                }
+            }
+        }
+        return value;
+    }
+
+    private String getDbValue(String userId, String name) {
+        String value = null;
+        if (this.userConfigProvider != null) {
+            final UserConfigurationItem item = this.userConfigProvider.getItem(userId, name);
             if (item != null) {
                 value = item.getValue();
                 if (value != null) {
@@ -211,6 +333,32 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
                 os.write(buffer, 0, read);
             }
             os.flush();
+        }
+    }
+
+    private void notifyListeners(ConfigurationItem item) {
+        if (this.listeners != null) {
+            List<ConfigurationItemChangeListener> list = this.listeners.get(item.getId());
+            if (list != null) {
+                for (ConfigurationItemChangeListener listener : list) {
+                    executor.execute(() -> {
+                        listener.onChanged(item);
+                    });
+                }
+            }
+        }
+    }
+
+    private void notifyListeners(UserConfigurationItem item) {
+        if (this.listeners != null) {
+            List<ConfigurationItemChangeListener> list = this.listeners.get(item.getKey());
+            if (list != null) {
+                for (ConfigurationItemChangeListener listener : list) {
+                    executor.execute(() -> {
+                        listener.onChanged(item);
+                    });
+                }
+            }
         }
     }
 }

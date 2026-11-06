@@ -35,6 +35,14 @@ public class DownloadManager {
         }
     }
 
+    /**
+     * Sets the state persister for the download manager. The state persister is responsible
+     * for managing the persistence and retrieval of {@link DownloadQueueItem} objects,
+     * allowing the download queue to be saved and restored between application sessions.
+     *
+     * @param persister the {@link DownloadQueuePersister} instance responsible for
+     *                  handling download queue persistence
+     */
     public static void setStatePersister(DownloadQueuePersister persister) {
         instance.persister = persister;
     }
@@ -183,11 +191,25 @@ public class DownloadManager {
         return result;
     }
 
+    /**
+     * Retrieves the number of queued downloads for a specified data source.
+     *
+     * @param dataSourceName the name of the data source whose queued downloads are to be retrieved
+     * @return the number of downloads currently queued for the specified data source, or 0 if no executor exists for the given data source
+     */
     public static int getQueuedDownloads(String dataSourceName) {
         final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dataSourceName);
         return executor != null ? executor.getQueue().size() : 0;
     }
 
+    /**
+     * Initializes the given data source by setting up the appropriate
+     * maximum concurrent downloads and configuring the download executor or thread pool.
+     * The method adjusts concurrent download behavior based on the global serializeDownloads flag.
+     *
+     * @param dataSource the {@link DataSource} instance to initialize, which provides
+     *                   the data source ID and the maximum allowed concurrent transfers
+     */
     private static void initializeDatasource(DataSource<?, ?> dataSource) {
         String dsName = dataSource.getId();
         int maxTransfers;

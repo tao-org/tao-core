@@ -23,6 +23,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A generic comparator for comparing objects or fields within objects based on specified criteria.
+ * This class allows for multi-field comparisons where the order of comparison and sort direction
+ * are configurable through the constructor.
+ */
 public class GenericComparator implements Comparator<Object>  {
 
     private final Class objectClass;
@@ -63,13 +68,16 @@ public class GenericComparator implements Comparator<Object>  {
 
     @Override
     public int compare(Object o1, Object o2) {
-        int retValue = -1;
+        if (o1 == null && o2 == null) {
+            return 0;
+        }
         if (o1 == null) {
-            return retValue;
+            return -1;
         }
         if (o2 == null) {
-            return -retValue;
+            return 1;
         }
+        int retValue = -1;
         if (Byte.class.equals(o1.getClass()) || byte.class.equals(o1.getClass())) {
             retValue = Byte.compare((Byte)o1, (Byte)o2);
         } else if (Short.class.equals(o1.getClass()) || short.class.equals(o1.getClass())) {
@@ -93,19 +101,22 @@ public class GenericComparator implements Comparator<Object>  {
                 int index = 0;
                 retValue = 0;
                 while (retValue == 0 && index < fieldNames.length) {
+                    final String fieldName = fieldNames[index];
                     try {
-                        Field field = fields.get(fieldNames[index]);
+                        Field field = fields.get(fieldName);
                         if (field == null) {
-                            throw new NoSuchFieldException(fieldNames[index]);
+                            throw new NoSuchFieldException(fieldName);
                         }
-                        if (field.canAccess(o1)) {
-                            Object value1 = field.get(o1);
-                            Object value2 = field.get(o2);
-                            retValue = compare(value1, value2) * (ascendingOrder[index++] ? 1 : -1);
+                        if (!field.canAccess(o1)) {
+                            field.setAccessible(true);
                         }
+                        Object value1 = field.get(o1);
+                        Object value2 = field.get(o2);
+                        retValue = compare(value1, value2) * (ascendingOrder[index] ? 1 : -1);
+                        index++;
                     } catch (IllegalAccessException | NoSuchFieldException e) {
                         throw new RuntimeException(String.format("Class %s doesn't define field %s",
-                                                                 this.objectClass.getSimpleName(), fieldNames[index - 1]));
+                                                                 this.objectClass.getSimpleName(), fieldName), e);
                     }
                 }
             }

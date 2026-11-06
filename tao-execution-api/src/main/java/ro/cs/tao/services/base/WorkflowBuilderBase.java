@@ -21,6 +21,7 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.enums.Visibility;
+import ro.cs.tao.execution.util.ComponentUtilities;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -31,6 +32,7 @@ import ro.cs.tao.services.interfaces.DataSourceComponentService;
 import ro.cs.tao.services.interfaces.WorkflowBuilder;
 import ro.cs.tao.services.interfaces.WorkflowService;
 import ro.cs.tao.services.utils.WorkflowUtilities;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -42,7 +44,20 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * The WorkflowBuilderBase class is an abstract base class that provides common functionalities
+ * for building workflows, such as creating workflow descriptors, adding nodes, groups, and links.
+ * It integrates with various services to assist in workflow persistence and component management.
+ * Subclasses are expected to implement specific logic for adding nodes to a workflow.
+ *
+ * This class utilizes predefined services for tasks such as persistence management,
+ * component management, and workflow operations.
+ * It provides default implementations for creating or retrieving data source components
+ * and workflow descriptors, as well as adding workflow nodes, utility nodes, group nodes, and links.
+ */
 public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     protected static final PersistenceManager persistenceManager;
     protected static final ComponentService componentService;
@@ -211,6 +226,59 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             TaoComponent component2 = WorkflowUtilities.findComponent(node);
             workflowService.addLink(parentNode.getId(), targets.get(parentIndex).getId(),
                                     node.getId(), component2.getSources().get(0).getId());
+        }
+        return node;
+    }
+
+    public WorkflowNodeDescriptor addNode(WorkflowDescriptor workflow, String nodeName, String componentId,
+                                             Map<String, String> customValues, WorkflowNodeDescriptor parentNode,
+                                             Direction... relativeDirection) throws PersistenceException {
+        WorkflowNodeDescriptor node = new WorkflowNodeDescriptor();
+        node.setWorkflow(workflow);
+        node.setName(nodeName);
+        final AtomicInteger children = new AtomicInteger(0);
+        workflow.getNodes().forEach(n -> {
+            Set<ComponentLink> set = n.getIncomingLinks();
+            if (set != null) {
+                children.addAndGet((int) set.stream().filter(l -> l.getSourceNodeId() == parentNode.getId()).count());
+            }
+        });
+        Direction[] directions;
+        if (relativeDirection == null) {
+            directions = new Direction[children.get() + 1];
+            for (int i = 0; i < directions.length; i++) {
+                if (i < directions.length - 1) {
+                    directions[i] = Direction.BOTTOM;
+                } else {
+                    directions[i] = Direction.RIGHT;
+                }
+            }
+        } else {
+            directions = relativeDirection;
+        }
+        float[] coords = placeNode(parentNode, directions);
+        node.setxCoord(coords[0]);
+        node.setyCoord(coords[1]);
+        node.setComponentId(componentId);
+        TaoComponent component = ComponentUtilities.findComponent(componentId);
+        node.setComponentType(WorkflowUtilities.getNodeComponentType(component));
+        if (customValues != null) {
+            for (Map.Entry<String, String> entry : customValues.entrySet()) {
+                node.addCustomValue(entry.getKey(), entry.getValue());
+            }
+        }
+        node.setPreserveOutput(true);
+        node.setCreated(LocalDateTime.now());
+        node.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
+        node = workflowService.addNode(workflow.getId(), node);
+        if (parentNode != null) {
+            TaoComponent parentComponent = WorkflowUtilities.findComponent(parentNode);
+            Tuple<TargetDescriptor, SourceDescriptor> ports = ComponentUtilities.findMatchingPorts(parentComponent, component);
+            if (ports == null) {
+                throw new PersistenceException("Cannot find compatible ports for components " + parentComponent.getId() + " and " + componentId);
+            }
+            workflowService.addLink(parentNode.getId(), ports.getKeyOne().getId(),
+                                    node.getId(), ports.getKeyTwo().getId());
         }
         return node;
     }

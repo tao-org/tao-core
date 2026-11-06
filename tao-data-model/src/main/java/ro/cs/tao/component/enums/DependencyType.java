@@ -1,10 +1,17 @@
 package ro.cs.tao.component.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
 
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
-
+/**
+ * Represents different types of dependencies with associated values and descriptions.
+ * Each dependency type has a unique integer value and a descriptive friendly name.
+ *
+ * This enumeration implements the {@link TaoEnum} interface to provide additional properties
+ * such as a friendly name and value. It is annotated with {@code @XmlEnum} to facilitate
+ * XML binding and serialization.
+ */
 @XmlEnum(Integer.class)
 public enum DependencyType implements TaoEnum<Integer> {
     @XmlEnumValue("1")
@@ -28,3 +35,4 @@ public enum DependencyType implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

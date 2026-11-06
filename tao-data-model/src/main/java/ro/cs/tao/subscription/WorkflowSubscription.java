@@ -2,9 +2,9 @@ package ro.cs.tao.subscription;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.LongIdentifiable;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.time.LocalDateTime;
 
 /**
@@ -47,3 +47,4 @@ public class WorkflowSubscription extends LongIdentifiable {
         this.created = created;
     }
 }
+

@@ -15,14 +15,16 @@
  */
 package ro.cs.tao.component;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
 import ro.cs.tao.component.enums.ParameterType;
+import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.SensorType;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -34,25 +36,37 @@ import java.util.UUID;
  */
 //@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @XmlRootElement(name = "output")
-public class TargetDescriptor extends StringIdentifiable {
+public class TargetDescriptor {
     private static final String DEFAULT_NAME = "Output";
+    private String id;
     private String parentId;
     private String name;
+    private String description;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
     private int cardinality = 1;
     private String referencedTargetDescriptorId;
 
-    public TargetDescriptor() { }
+    public TargetDescriptor() {
+        this.id = UUID.randomUUID().toString();
+    }
 
     public TargetDescriptor(String identifier) {
-        super(identifier);
+        this.id = identifier;
         this.constraints = new ArrayList<>();
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     /**
      * Returns the component that owns this instance
      */
-    @XmlTransient
     public String getParentId() { return parentId; }
     /**
      * Sets the component that owns this instance
@@ -61,7 +75,6 @@ public class TargetDescriptor extends StringIdentifiable {
      */
     public void setParentId(String parent) { this.parentId = parent; }
 
-    @Override
     public String defaultId() { return UUID.randomUUID().toString(); }
 
     public String getName() {
@@ -70,6 +83,19 @@ public class TargetDescriptor extends StringIdentifiable {
         return name;
     }
     public void setName(String name) { this.name = name; }
+
+    /**
+     * Retrieves the description of this instance.
+     *
+     * @return the description as a string
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     /**
      * Returns the cardinality of outputs.
@@ -91,6 +117,69 @@ public class TargetDescriptor extends StringIdentifiable {
      */
     public void setDataDescriptor(DataDescriptor descriptor) {
         this.dataDescriptor = descriptor;
+    }
+
+    public DataFormat getFormatType() {
+        return this.dataDescriptor != null ? this.dataDescriptor.getFormatType() : null;
+    }
+
+    public void setFormatType(DataFormat formatType) {
+        ensureDataDescriptor().setFormatType(formatType);
+    }
+
+    public String getFormatName() {
+        return this.dataDescriptor != null ? this.dataDescriptor.getFormatName() : null;
+    }
+
+    public void setFormatName(String formatName) {
+        ensureDataDescriptor().setFormatName(formatName);
+    }
+
+    public String getGeometry() {
+        return this.dataDescriptor != null ? this.dataDescriptor.getGeometry() : null;
+    }
+
+    public void setGeometry(String geometry) {
+        ensureDataDescriptor().setGeometry(geometry);
+    }
+
+    public String getCrs() {
+        return this.dataDescriptor != null ? this.dataDescriptor.getCrs() : null;
+    }
+
+    public void setCrs(String crs) {
+        ensureDataDescriptor().setCrs(crs);
+    }
+
+    public SensorType getSensorType() {
+        return this.dataDescriptor != null ? this.dataDescriptor.getSensorType() : null;
+    }
+
+    public void setSensorType(SensorType sensorType) {
+        ensureDataDescriptor().setSensorType(sensorType);
+    }
+
+    public Dimension getDimension() {
+        return this.dataDescriptor != null ? this.dataDescriptor.getDimension() : null;
+    }
+
+    public void setDimension(Dimension dimension) {
+        ensureDataDescriptor().setDimension(dimension);
+    }
+
+    public String getLocation() {
+        return this.dataDescriptor != null ? this.dataDescriptor.getLocation() : null;
+    }
+
+    public void setLocation(String location) {
+        ensureDataDescriptor().setLocation(location);
+    }
+
+    private DataDescriptor ensureDataDescriptor() {
+        if (this.dataDescriptor == null) {
+            this.dataDescriptor = new DataDescriptor();
+        }
+        return this.dataDescriptor;
     }
 
     /**
@@ -196,3 +285,4 @@ public class TargetDescriptor extends StringIdentifiable {
         return list;
     }
 }
+

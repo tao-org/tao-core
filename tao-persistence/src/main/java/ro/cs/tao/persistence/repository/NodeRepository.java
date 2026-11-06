@@ -1,8 +1,8 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +20,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "nodeRepository")
 @Transactional
-public interface NodeRepository extends PagingAndSortingRepository<NodeDescription, String> {
+public interface NodeRepository extends JpaRepository<NodeDescription, String> {
 
     List<NodeDescription> findByFlavor(NodeFlavor flavor);
 
@@ -36,4 +36,8 @@ public interface NodeRepository extends PagingAndSortingRepository<NodeDescripti
     @Query(value = "SELECT * FROM topology.node n " +
             "WHERE n.owner_id = :userId AND n.flavor_id = :flavorId", nativeQuery = true)
     List<NodeDescription> getNodesByUserAndFlavor(@Param("userId") String userId, @Param("flavorId") String flavorId);
+
+    @Query(value = "SELECT * FROM topology.node WHERE active = true AND role = :role ORDER BY id", nativeQuery = true)
+    List<NodeDescription>getActiveNodesByRole(@Param("role") String role);
 }
+

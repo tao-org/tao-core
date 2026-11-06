@@ -16,10 +16,9 @@
 
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.ProcessingComponentType;
-
-import javax.persistence.AttributeConverter;
 
 public class ProcessingComponentTypeConverter implements AttributeConverter<ProcessingComponentType, Integer> {
     @Override
@@ -32,3 +31,4 @@ public class ProcessingComponentTypeConverter implements AttributeConverter<Proc
         return dbData != null ? EnumUtils.getEnumConstantByValue(ProcessingComponentType.class, dbData) : null;
     }
 }
+

@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.subscription.SubscriptionType;
-
-import javax.persistence.AttributeConverter;
 
 public class SubscriptionTypeConverter implements AttributeConverter<SubscriptionType, Integer> {
     @Override
@@ -16,3 +15,4 @@ public class SubscriptionTypeConverter implements AttributeConverter<Subscriptio
         return integer != null ? EnumUtils.getEnumConstantByValue(SubscriptionType.class, integer) : null;
     }
 }
+

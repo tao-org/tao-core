@@ -23,6 +23,11 @@ import java.io.Serializable;
 import java.security.Principal;
 import java.util.Set;
 
+/**
+ * Represents a user principal that implements the Principal and Serializable
+ * interfaces. This class encapsulates information about a user's unique identifier
+ * and associated roles.
+ */
 public class UserPrincipal implements Principal, Serializable {
 
     /** Generated serial ID. */
@@ -30,6 +35,7 @@ public class UserPrincipal implements Principal, Serializable {
 	
 	private final String id;
     private final Set<String> roles;
+    private final String masterId;
 
     public UserPrincipal(String id) {
         this(id, null);
@@ -37,12 +43,32 @@ public class UserPrincipal implements Principal, Serializable {
 
     public UserPrincipal(String id, Set<String> roles) {
         this.id = id;
+        this.masterId = null;
         this.roles = roles;
     }
 
+    public UserPrincipal(String id, String masterId, Set<String> roles) {
+        this.id = id;
+        this.masterId = masterId;
+        this.roles = roles;
+    }
+
+    /**
+     * Checks if the current user has the specified role.
+     *
+     * The method performs the following checks in sequence:
+     * 1. Verifies that the roles set of this user is not null.
+     * 2. Checks that the provided role string is not null or empty.
+     * 3. Determines if the role (converted to uppercase) is present in the roles set.
+     *
+     * @param role the role to check, provided as a non-null and non-empty string
+     * @return true if the user's roles contain the specified role (case-insensitive), false otherwise
+     */
     public boolean hasRole(String role) {
         return this.roles != null && !StringUtilities.isNullOrEmpty(role) && this.roles.contains(role.toUpperCase());
     }
+
+    public String getMasterId() { return this.masterId; }
 
     @Override
     public String getName() { return this.id; }

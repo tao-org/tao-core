@@ -16,11 +16,30 @@
 
 package ro.cs.tao.workflow.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
 
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
-
+/**
+ * Enumeration representing the behavior of workflow transitions when encountering errors.
+ *
+ * TransitionBehavior defines how the execution flow of a workflow should behave if an error occurs
+ * at the current node. This can be applicable to both regular nodes and group nodes, determining
+ * whether the workflow execution halts or continues based on the defined behavior.
+ *
+ * Each enum constant is associated with an integer value and a descriptive text, providing both
+ * functional and readable representations of the possible transition behaviors.
+ *
+ * Implements the {@code TaoEnum<Integer>} interface to provide additional properties and behavior,
+ * such as obtaining a descriptive friendly name and the enumerated value.
+ *
+ * Enum constants:
+ * 1. FAIL_ON_ERROR: The workflow execution halts if the current node fails.
+ *    For group nodes, the entire group fails if any sub-task fails.
+ * 2. CONTINUE_ON_ERROR: The workflow execution continues even if the current node fails.
+ *    For group nodes, the sub-task failure only affects the current sub-flow, and the group
+ *    proceeds with the next sub-flow.
+ */
 @XmlEnum(Integer.class)
 public enum TransitionBehavior implements TaoEnum<Integer> {
     /**
@@ -52,3 +71,4 @@ public enum TransitionBehavior implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

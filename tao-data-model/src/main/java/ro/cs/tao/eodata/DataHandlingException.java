@@ -18,6 +18,17 @@ package ro.cs.tao.eodata;
 
 import ro.cs.tao.BaseException;
 
+/**
+ * Represents an exception that is thrown when an issue occurs while handling data operations.
+ *
+ * <p>This class extends {@link BaseException} to provide additional context when data-related
+ * errors occur, allowing messages and causes to be specified for more detailed error reporting.</p>
+ *
+ * <ul>
+ * Key Feaures:
+ * - Can initialize with a custom message using constructors.
+ * - Can wrap and propagate underlying causes of errors, such as nested exceptions.
+ */
 public class DataHandlingException extends BaseException {
     public DataHandlingException() {
     }

@@ -1,8 +1,8 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "volatileInstanceRepository")
 @Transactional
-public interface VolatileInstanceRepository extends PagingAndSortingRepository<VolatileInstance, Long> {
+public interface VolatileInstanceRepository extends JpaRepository<VolatileInstance, Long> {
 
     List<VolatileInstance> findByUserId(String userId);
 
@@ -23,3 +23,4 @@ public interface VolatileInstanceRepository extends PagingAndSortingRepository<V
     List<VolatileInstance> getByNodeId(@Param("nodeId") String nodeId);
 
 }
+

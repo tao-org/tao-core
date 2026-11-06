@@ -1,9 +1,11 @@
 package ro.cs.tao.persistence.repository;
 
+import jakarta.persistence.QueryHint;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +22,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "executionTaskRepository")
 @Transactional
-public interface ExecutionTaskRepository extends PagingAndSortingRepository<ExecutionTask, Long> {
+public interface ExecutionTaskRepository extends JpaRepository<ExecutionTask, Long> {
 
     /**
      * Find ExecutionTask entity by its resource identifier
@@ -45,6 +47,11 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
             "WHERE c.id = :taskId ORDER BY p.id", nativeQuery = true)
     List<Long> findParentTaskIds(@Param("taskId") long taskId);
 
+    @Query(value = "SELECT p.* FROM execution.task p JOIN workflow.component_link l ON l.target_graph_node_id = p.graph_node_id " +
+            "JOIN execution.task c ON c.graph_node_id = l.source_graph_node_id AND c.job_id = p.job_id " +
+            "WHERE c.id = :taskId ORDER BY p.id", nativeQuery = true)
+    List<ExecutionTask> getChildrenTasks(@Param("taskId") long taskId);
+
     @Query(value = "SELECT * from execution.task where execution_status_id = 2", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getRunningTasks();
@@ -62,6 +69,10 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Transactional(readOnly = true)
     List<ExecutionTask> getWMSExecutingTasks();
 
+    @Query(value = "SELECT * FROM execution.task WHERE discriminator = 35 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Transactional(readOnly = true)
+    List<ExecutionTask> getOGCProcessesExecutingTasks();
+
     @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2, 7) AND execution_node_host_name = :host", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getTasksByHost(@Param("host") String host);
@@ -75,6 +86,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     LocalDateTime getLastRun(@Param("host") String host);
 
     @Query(value = "SELECT t.* FROM execution.task t JOIN component.data_source_component c ON c.id = t.component_id WHERE t.job_id = :jobId", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
     List<ExecutionTask> getDataSourceTasks(@Param("jobId") long jobId);
 
     @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t " +
@@ -112,4 +124,13 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
            nativeQuery = true)
     Integer getTransitionBehavior(@Param("taskId") long taskId);
 
+    @Query(value = "SELECT * FROM execution.task WHERE actual_target LIKE CONCAT('%', CAST(:output as text), '%')", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
+    ExecutionTask getTaskByOutput(@Param("output") String output);
+
+    @Query(value = "SELECT t.execution_log FROM execution.task t WHERE t.id = :taskId", nativeQuery = true)
+    String getTaskOutput(@Param("taskId") long taskId);
+
 }
+
+

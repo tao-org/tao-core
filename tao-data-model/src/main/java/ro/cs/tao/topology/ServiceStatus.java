@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.topology;
 
+import jakarta.xml.bind.annotation.XmlEnum;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
 
 /**
  * Possible statuses of a service.
@@ -45,3 +44,4 @@ public enum ServiceStatus implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

@@ -48,7 +48,7 @@ public interface DataSourceService extends TAOService {
     /**
      * Returns the list of descriptors for all the available data source plugins
      */
-    List<DataSourceDescriptor> getDatasourceInstances();
+    List<DataSourceDescriptor> getDatasourceInstances(String userId);
 
     Map<String, String[]> getDataSourceProviders();
 
@@ -59,6 +59,8 @@ public interface DataSourceService extends TAOService {
      * @param dataSourceName    The name of the data source
      */
     List<DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName);
+
+    String getProductTypeValue(String sensor, String productType, String dataSourceName);
 
     /**
      * Performs a count query using the given query definition
@@ -74,4 +76,6 @@ public interface DataSourceService extends TAOService {
     List<EOProduct> fetch(Query queryObject, List<EOProduct> products, FetchMode mode, String localPath, String pathFormat);
 
     DataSourceCredentials getDataSourceCredentials(String dataSource);
+
+    String lookupNameArea(String name);
 }

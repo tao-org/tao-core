@@ -15,18 +15,21 @@
  */
 package ro.cs.tao.execution.model;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.converters.ConverterFactory;
 import ro.cs.tao.component.converters.ParameterConverter;
 import ro.cs.tao.component.enums.ParameterType;
+import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Path;
@@ -66,8 +69,17 @@ public class ProcessingExecutionTask extends ExecutionTask {
         this.externalCommonParameters = parameterNames;
     }
 
+    public Set<String> getExternalCommonParameters() {
+        return this.externalCommonParameters;
+    }
+
     @Override
     public void setInputParameterValue(String parameterName, String value) {
+        setInputParameterValue(parameterName, value, true);
+    }
+
+    @Override
+    public void setInputParameterValue(String parameterName, String value, boolean sortLexicographically) {
         final boolean descriptorExists =
                 this.component.getParameterDescriptors().stream().anyMatch(d -> d.getName().equals(parameterName)) ||
                 this.component.getSources().stream().anyMatch(s -> s.getName().equals(parameterName)) ||
@@ -78,7 +90,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (!descriptorExists) {
             if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterName)) {
                 throw new ValidationException(String.format("The parameter [%s] does not exists in the component '%s'",
-                        parameterName, component.getLabel()));
+                                                            parameterName, component.getLabel()));
             }
         }
         if (this.inputParameterValues == null) {
@@ -89,15 +101,15 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                      .findFirst()
                                                      .orElse(null);
         SourceDescriptor sourceDescriptor = this.component.getSources().stream()
-                                                                       .filter(s -> s.getName().equals(parameterName))
-                                                                       .findFirst()
-                                                                       .orElse(null);
+                                                          .filter(s -> s.getName().equals(parameterName))
+                                                          .findFirst()
+                                                          .orElse(null);
         final int cardinality = sourceDescriptor != null ? sourceDescriptor.getCardinality() : 1;
         if (variable != null) {
             if (cardinality == 1) {
                 variable.setValue(value);
             } else {
-                variable.setValue(value != null ? appendValueToList(variable.getValue(), value) : value);
+                variable.setValue(value != null ? appendValueToList(variable.getValue(), value, sortLexicographically) : value);
             }
         } else {
             Variable var;
@@ -121,8 +133,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         if (!descriptorExists) {
-            throw new ValidationException(String.format("The output parameter ID [%s] does not exists in the component '%s'",
-                    parameterId, component.getLabel()));
+            if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterId)) {
+                throw new ValidationException(String.format("The output parameter ID [%s] does not exists in the component '%s'",
+                                                            parameterId, component.getLabel()));
+            }
         }
         if (this.outputParameterValues == null) {
             this.outputParameterValues = new ArrayList<>();
@@ -196,34 +210,39 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
+            final String descriptorName = descriptor.getName();
             Variable variable = outputParameterValues.stream()
-                    .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+                                                     .filter(v -> descriptorName.equals(v.getKey())).findFirst().orElse(null);
             if (variable != null) {
                 String location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
                 if (location != null && !this.getJob().isExternal()) {
-                    this.instanceTargetOutput = computeTargetOutput(location);
-                    final String output = getInstanceTemporaryOutput() != null ? getInstanceTemporaryOutput() : this.instanceTargetOutput;
-                    inputParams.put(descriptor.getName(), output);
-                    setInputParameterValue(descriptor.getName(), output);
+                    setInstanceTargetOutput(descriptorName,
+                                            computeTargetOutput(descriptorName, location));
+                    final String output = getInstanceTemporaryOutput(descriptorName) != null
+                            ? getInstanceTemporaryOutput(descriptorName)
+                            : getInstanceTargetOutput(descriptorName);
+                    inputParams.put(descriptorName, output);
+                    setInputParameterValue(descriptorName, output);
                 }
             }
         }
         Map<String, String> variables = new HashMap<>();
-        variables.put(SystemVariable.USER_WORKSPACE.key(), getContext().getWorkspace().toString());
+        final String workspace = TaskUtilities.getUserWorkspace(this);
+        variables.put(SystemVariable.UserWorkspace(getJob().getUserId()).key(), workspace);
         variables.put(SystemVariable.SHARED_WORKSPACE.key(), SystemVariable.SHARED_WORKSPACE.value());
-        variables.put(SystemVariable.USER_FILES.key(), getContext().getWorkspace().resolve("files").toString());
+        variables.put(SystemVariable.USER_FILES.key(), Path.of(workspace).resolve("files").toString());
         variables.put(SystemVariable.SHARED_FILES.key(), SystemVariable.SHARED_FILES.value());
         String[] outPath = buildOutputPath();
         variables.put("$TEMPLATE_REAL_PATH", outPath != null ? outPath[0] : null);
         variables.put("$TEMPLATE_CMD_PATH", outPath != null ? outPath[1] : null);
-        return this.component.buildExecutionCommand(inputParams, variables);
+        return this.component.buildExecutionCommand(inputParams, variables, this.getJob().getUserId());
     }
 
     private Object getParameterTypedValue(ParameterDescriptor descriptor, String strValue) {
         Object value = strValue;
         if (descriptor != null && (descriptor.getDataType().isArray())) {
             if (arrayChars.contains(strValue.substring(0, 1)) &&
-                    arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+                arrayChars.contains(strValue.substring(strValue.length() - 1))) {
                 strValue = strValue.substring(1, strValue.length() - 1);
             }
             final String[] values = strValue.split("[,;]");
@@ -239,14 +258,17 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
             // it may be a source descriptor value, which is not marked as array
         } else if (arrayChars.contains(strValue.substring(0, 1)) &&
-                arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+                   arrayChars.contains(strValue.substring(strValue.length() - 1))) {
             strValue = strValue.substring(1, strValue.length() - 1);
             value = strValue.replaceAll("[,;]", " ");
         } else if ((strValue.contains(" ") || (!FileUtilities.isPath(strValue) && strValue.contains("/"))) &&
                     strValue.charAt(0) != '\'' &&  strValue.charAt(0) != '\"') {
             // Parameter values containing spaces will break the command line invocation, hence
             // the value needs to be enclosed in quotes
-            value = "'" + strValue + "'";
+            // Except for the case of an aggregate component, for which we need the unquoted value
+            if (this.component.getComponentType() != ProcessingComponentType.AGGREGATE) {
+                value = "'" + strValue + "'";
+            }
         }
         return value;
     }
@@ -259,18 +281,15 @@ public class ProcessingExecutionTask extends ExecutionTask {
      * it may represent a name expression that will be externally parsed.
      * @param location  The template value of the target of this task.
      */
-    public String computeTargetOutput(String location) {
+    public String computeTargetOutput(String descriptorName, String location) {
         if (this.instanceTargetOutput == null) {
             if (location != null) {
-                this.instanceTargetOutput = location;
+                setInstanceTargetOutput(descriptorName, location);
             }
-            if (this.instanceTargetOutput != null) {
-                Path path = Paths.get(this.instanceTargetOutput);
-                //SessionContext context = getContext();
+            String targetOutput = getInstanceTargetOutput(descriptorName);
+            if (targetOutput != null) {
+                Path path = Paths.get(targetOutput);
                 if (!path.isAbsolute()) {
-                    //path = context.getNetSpace().resolve(path);
-                    /*path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                                .resolve(context.getPrincipal().getName()).resolve(path);*/
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
                                 .resolve(getJob().getUserId()).resolve(path);
                 }
@@ -291,18 +310,22 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                         this.internalState == null ? "" : this.internalState + "-",
                                                         this.component.getId());
                 final Path jobPath = Paths.get(getJob().getJobOutputPath());
+                final Path taskPath = ConfigurationManager.getInstance().getBooleanValue("execution.task.separate.folders")
+                        ? jobPath.resolve(folderName)
+                        : jobPath;
                 try {
-                    //FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
-                    FileUtilities.ensureExists(jobPath.resolve(folderName));
+                    FileUtilities.ensureExists(taskPath);
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                //setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));
-                setInstanceTargetOutput(FileUtilities.asUnixPath(jobPath.resolve(folderName).resolve(fileName), true));
-                setInstanceTemporaryOutput(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerTemporaryFolder() + "/" + fileName);
+                setInstanceTargetOutput(descriptorName,
+                                        FileUtilities.asUnixPath(taskPath.resolve(fileName)));
+                setInstanceTemporaryOutput(descriptorName,
+                                           ExecutionConfiguration.getWorkerContainerVolumeMap()
+                                                                 .getContainerTemporaryFolder() + "/" + fileName);
             }
         }
-        return this.instanceTargetOutput;
+        return getInstanceTargetOutput(descriptorName);
     }
 
     public String[] buildOutputPath() {
@@ -332,15 +355,18 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                               this.getId(),
                                               this.internalState == null ? "" : this.internalState + "-",
                                               FileUtilities.getFilenameWithoutExtension(fileName));
-            /*outPath = new String[] {
-                    FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()).resolve(principalName).resolve(folderName), false),
-                    FileUtilities.asUnixPath(path.getParent().resolve(folderName), true)
-            };*/
+            final boolean useDistinctFolder = ConfigurationManager.getInstance().getBooleanValue("execution.task.use.distinct.folders");
+            final Path taskPath = useDistinctFolder ? jobPath.resolve(folderName) : jobPath;
             outPath = new String[] {
-                    FileUtilities.asUnixPath(jobPath.resolve(folderName), false),
-                    FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()).resolve(folderName), true)
+                    useDistinctFolder
+                            ? FileUtilities.asUnixPath(taskPath)
+                            : FileUtilities.asUnixPath(jobPath),
+                    useDistinctFolder
+                            ? FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName))
+                            : FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()))
             };
         }
         return outPath;
     }
 }
+

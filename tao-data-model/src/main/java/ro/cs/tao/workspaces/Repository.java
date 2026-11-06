@@ -1,15 +1,19 @@
 package ro.cs.tao.workspaces;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
+/**
+ * Represents a repository that holds configuration and metadata for a workspace.
+ * A repository can have different types, parameters, and properties that define its behavior and structure.
+ */
 public class Repository extends StringIdentifiable {
     private String name;
     private String description;
@@ -179,11 +183,19 @@ public class Repository extends StringIdentifiable {
         if (StringUtilities.isNullOrEmpty(relativePath) || "/".equals(relativePath)) {
             return workspaceRoot;
         }
-        return relativePath.startsWith(workspaceRoot)
+        String resolved = relativePath.startsWith(workspaceRoot)
                 ? relativePath
                 : relativePath.startsWith("/")
                     ? workspaceRoot + relativePath
                     : workspaceRoot + "/" + relativePath;
+        if (getType() == RepositoryType.LOCAL) {
+            try {
+                return ro.cs.tao.utils.SafePaths.resolve(java.nio.file.Path.of(workspaceRoot), resolved).toString();
+            } catch (java.io.IOException e) {
+                throw new IllegalArgumentException("Path outside authorized workspace", e);
+            }
+        }
+        return resolved;
     }
 
     /**
@@ -243,7 +255,17 @@ public class Repository extends StringIdentifiable {
         if (StringUtilities.isNullOrEmpty(otherPath) || (refPath.charAt(0) != '/' && otherPath.charAt(0) == '/')) {
             return "";
         }
-        final String commonPath = FileUtilities.findCommonPath(refPath.charAt(0) == '/' ? refPath.substring(1) : refPath, otherPath);
+        final String firstPath;
+        if (refPath.charAt(0) == '/') {
+            if (otherPath.charAt(0) == '/') {
+                firstPath = refPath;
+            } else {
+                firstPath = refPath.substring(1);
+            }
+        } else {
+            firstPath = refPath;
+        }
+        final String commonPath = FileUtilities.findCommonPath(firstPath, otherPath);
         return commonPath != null ? otherPath.replace(commonPath + "/", "") : otherPath;
     }
 
@@ -287,3 +309,4 @@ public class Repository extends StringIdentifiable {
         return Objects.hash(super.hashCode(), name, description, urlPrefix, type, parameters);
     }
 }
+

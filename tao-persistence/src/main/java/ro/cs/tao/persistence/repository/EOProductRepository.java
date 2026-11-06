@@ -1,9 +1,9 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +21,7 @@ import java.util.Set;
 @Repository
 @Qualifier(value = "eoProductRepository")
 @Transactional
-public interface EOProductRepository extends PagingAndSortingRepository<EOProduct, String> {
+public interface EOProductRepository extends JpaRepository<EOProduct, String> {
 
     @Query(value = "SELECT * FROM product.raster_data_product WHERE location IN (:locations) OR location || CASE WHEN RIGHT(location, 1) = '/' THEN '' ELSE '/' END || entry_point IN (:locations)",
             nativeQuery = true)
@@ -87,3 +87,4 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
     @Transactional
     void deleteByName(String name);
 }
+

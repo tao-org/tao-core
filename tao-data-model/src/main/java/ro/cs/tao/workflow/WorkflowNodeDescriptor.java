@@ -15,15 +15,18 @@
  */
 package ro.cs.tao.workflow;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,11 +66,17 @@ public class WorkflowNodeDescriptor extends GraphObject {
     public void setComponentType(ComponentType componentType) { this.componentType = componentType; }
 
     @XmlTransient
+    @JsonGetter("xCoord")
     public float getxCoord() { return xCoord; }
+    @JsonSetter("xCoord")
+    @JsonAlias("xcoord")
     public void setxCoord(float xCoord) { this.xCoord = xCoord; }
 
     @XmlTransient
+    @JsonGetter("yCoord")
     public float getyCoord() { return yCoord; }
+    @JsonSetter("yCoord")
+    @JsonAlias("ycoord")
     public void setyCoord(float yCoord) { this.yCoord = yCoord; }
 
     public int getLevel() { return level; }
@@ -147,3 +156,4 @@ public class WorkflowNodeDescriptor extends GraphObject {
         return 31 * (name != null ? name.hashCode() : 0) + 67 * (id != null ? id.hashCode() : 0);
     }
 }
+

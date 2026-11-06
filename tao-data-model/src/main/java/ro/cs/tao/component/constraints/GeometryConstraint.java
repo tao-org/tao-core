@@ -15,12 +15,12 @@
  */
 package ro.cs.tao.component.constraints;
 
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.locationtech.jts.geom.Geometry;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
@@ -49,3 +49,4 @@ public class GeometryConstraint extends IOConstraint {
                         });
     }
 }
+

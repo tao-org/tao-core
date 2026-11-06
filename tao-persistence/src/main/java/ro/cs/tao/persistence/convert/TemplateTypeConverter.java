@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.template.TemplateType;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for TemplateType enum stored values
@@ -37,3 +36,4 @@ public class TemplateTypeConverter implements AttributeConverter<TemplateType, I
         return dbData != null ? EnumUtils.getEnumConstantByValue(TemplateType.class, dbData) : null;
     }
 }
+

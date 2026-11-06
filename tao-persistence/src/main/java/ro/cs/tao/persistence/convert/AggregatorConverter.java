@@ -1,12 +1,10 @@
 package ro.cs.tao.persistence.convert;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.component.Aggregator;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.logger.Logger;
-
-import javax.persistence.AttributeConverter;
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 public class AggregatorConverter implements AttributeConverter<Aggregator, String> {
     @Override
@@ -14,7 +12,7 @@ public class AggregatorConverter implements AttributeConverter<Aggregator, Strin
         try {
             return aggregator != null ?
                     JsonMapper.instance().writeValueAsString(aggregator) : null;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             Logger.getLogger(getClass()).warning(e.getMessage());
             return null;
         }
@@ -25,9 +23,11 @@ public class AggregatorConverter implements AttributeConverter<Aggregator, Strin
         try {
             return s != null ?
                     JsonMapper.instance().readerFor(Aggregator.class).readValue(s) : null;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             Logger.getLogger(getClass()).warning(e.getMessage());
             return null;
         }
     }
 }
+
+

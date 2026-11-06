@@ -20,6 +20,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.DrmaaJobExtensions;
 import ro.cs.tao.execution.drmaa.JobExitHandler;
+import ro.cs.tao.execution.model.NodeData;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -100,6 +101,7 @@ public class DefaultSession implements Session, JobExitHandler {
                     flavor.setMemory((int) (Runtime.getRuntime().maxMemory() / 0x40000000));
                     flavor.setDisk(256);
                     flavor.setRxtxFactor(1.0f);
+                    flavor.setMemoryUnit(MemoryUnit.GB);
                     localNode.setDescription("Master node (localhost)");
                     NodeDescription[] newNodes = new NodeDescription[this.nodes.length + 1];
                     System.arraycopy(this.nodes, 0, newNodes, 1, this.nodes.length);
@@ -191,8 +193,7 @@ public class DefaultSession implements Session, JobExitHandler {
 
     @Override
     public void cleanupJob(String jobId) {
-        this.jobOutputs.remove(jobId);
-        this.runningJobs.remove(jobId);
+        removeJob(jobId);
     }
 
     @Override
@@ -216,7 +217,8 @@ public class DefaultSession implements Session, JobExitHandler {
                 }
                 if (job.hasAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE)) {
                     String host = (String) job.getAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE);
-                    node = this.nodes != null ? Arrays.stream(this.nodes).filter(n -> host.equals(n.getId())).findFirst().orElse(null) : null;
+                    NodeData data = NodeManager.getInstance().getNode(host);
+                    node = data != null ? data.getNode() : null;
                 }
                 if (job.hasAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE)) {
                     final Object attrValue = job.getAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE);
@@ -261,17 +263,20 @@ public class DefaultSession implements Session, JobExitHandler {
                                           //Crypto.decrypt(node.getUserPass(), node.getUserName()),
                                           args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC,
                                           ConfigurationManager.getInstance().getBooleanValue(SSH_ASYNC_KEY),
-                                          jt.getJobName() + "_" + System.nanoTime(), ExecutionUnitFormat.TAO);            }
+                                          // The job name is the task resource id, so the async output file
+                                          // can be located from the task (see SSHExecutor.asyncOutputFile)
+                                          jt.getJobName(), ExecutionUnitFormat.TAO);            }
             if (memConstraint != null) {
                 unit.setMinMemory(memConstraint);
             }
             if (node != null) {
                 unit.setCertificate(node.getSshKey());
             }
-            final String jobId = jt.getJobName() + ":" + System.nanoTime();
+            final String jobId = jt.getJobName();//jt.getJobName() + ":" + System.nanoTime();
             final OutputAccumulator consumer = new OutputAccumulator();
             this.runningJobs.put(jobId, Executor.execute(consumer, unit));
             this.jobOutputs.put(jobId, consumer);
+            logger.finest("Job " + jobId + " added");
             return jobId;
         }
     }
@@ -367,8 +372,7 @@ public class DefaultSession implements Session, JobExitHandler {
             }
         } finally {
             for (Object obj : jobIds) {
-                this.runningJobs.remove(obj);
-                this.jobOutputs.remove(obj);
+                removeJob(jobIds.toString());
             }
         }
     }
@@ -393,8 +397,7 @@ public class DefaultSession implements Session, JobExitHandler {
             }
             return new DefaultJobInfo(jobId, runner);
         } finally {
-            this.runningJobs.remove(jobId);
-            this.jobOutputs.remove(jobId);
+            removeJob(jobId);
         }
     }
 
@@ -478,5 +481,11 @@ public class DefaultSession implements Session, JobExitHandler {
         if (!this.jobTemplates.containsKey(jobName)) {
             throw new InvalidJobTemplateException();
         }
+    }
+
+    private void removeJob(String jobId) {
+        this.runningJobs.remove(jobId);
+        this.jobOutputs.remove(jobId);
+        logger.finest("Job " + jobId + " removed");
     }
 }

@@ -1,11 +1,10 @@
 package ro.cs.tao.persistence.convert;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.configuration.Values;
 import ro.cs.tao.utils.logger.Logger;
-
-import javax.persistence.AttributeConverter;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 public class ValuesConverter implements AttributeConverter<Values, String> {
     private final ObjectMapper mapper = new ObjectMapper();
@@ -14,7 +13,7 @@ public class ValuesConverter implements AttributeConverter<Values, String> {
     public String convertToDatabaseColumn(Values values) {
         try {
             return values != null ? mapper.writerFor(Values.class).writeValueAsString(values) : null;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             Logger.getLogger(getClass()).warning(e.getMessage());
             return null;
         }
@@ -27,9 +26,11 @@ public class ValuesConverter implements AttributeConverter<Values, String> {
         }
         try {
             return mapper.readerFor(Values.class).readValue(value);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             Logger.getLogger(getClass()).warning(e.getMessage());
             return null;
         }
     }
 }
+
+

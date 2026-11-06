@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.JobType;
-
-import javax.persistence.AttributeConverter;
 
 public class JobTypeConverter implements AttributeConverter<JobType, Integer> {
     @Override
@@ -16,3 +15,4 @@ public class JobTypeConverter implements AttributeConverter<JobType, Integer> {
         return dbData != null ? EnumUtils.getEnumConstantByValue(JobType.class, dbData) : null;
     }
 }
+

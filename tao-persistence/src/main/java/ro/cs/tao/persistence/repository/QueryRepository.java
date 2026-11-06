@@ -1,7 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +18,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "queryRepository")
 @Transactional
-public interface QueryRepository extends PagingAndSortingRepository<Query, Long> {
+public interface QueryRepository extends JpaRepository<Query, Long> {
 
     Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId);
 
@@ -99,3 +99,4 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
     )
     Query getQuery(@Param("queryId") long queryId);
 }
+

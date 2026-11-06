@@ -6,6 +6,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ScriptTask;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -18,10 +19,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * The ScriptJobFactory is responsible for creating and configuring instances
+ * of script-based execution tasks within a workflow. This class extends the
+ * DefaultJobFactory and overrides the method for task creation specifically
+ * for processing components that involve scripts.
+ */
 public class ScriptJobFactory extends DefaultJobFactory {
 
     @Override
-    protected ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks, Map<String, String> inputs) {
+    protected ExecutionTask createProcessingExecutionTask(ExecutionJob job, WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks, Map<String, String> inputs) {
         final List<ParameterValue> customValues = workflowNode.getCustomValues();
         final ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
         final ScriptTask task = new ScriptTask();
@@ -40,7 +47,7 @@ public class ScriptJobFactory extends DefaultJobFactory {
         }
         final Container container = TaskUtilities.getComponentContainer(workflowNode);
         if (container != null && container.getFormatNameParameter() != null) {
-            task.setExternalCommonParameters(new HashSet<String>() {{ add(container.getFormatNameParameter()); }});
+            task.setExternalCommonParameters(new HashSet<String>() {{ add("formatName"); }});
         }
         ParameterValue affinityParam = null;
         if (customValues != null) {
@@ -55,12 +62,13 @@ public class ScriptJobFactory extends DefaultJobFactory {
         final NodeAffinity nodeAffinity = affinityParam != null
                 ? NodeAffinity.of(affinityParam.getParameterValue())
                 : component.getNodeAffinity();
-        if (nodeAffinity != null && !NodeAffinity.Any.equals(nodeAffinity) || !NodeAffinity.SameNode.equals(nodeAffinity)) {
+        if (nodeAffinity != null
+            && !(NodeAffinity.Any.equals(nodeAffinity) || NodeAffinity.SameNode.equals(nodeAffinity))) {
             task.setExecutionNodeHostName(nodeAffinity.getValue());
         }
         if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
             task.setCommand(component.buildExecutionCommand(customValues.stream().collect(Collectors.toMap(ParameterValue::getParameterName, ParameterValue::getParameterValue)),
-                                                            null));
+                                                            null, job.getUserId()));
         }
         if (inputs != null) {
             for (Map.Entry<String, String> entry : inputs.entrySet()) {

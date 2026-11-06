@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.serialization;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * Serialization adapter for string array objects.
@@ -37,3 +37,4 @@ public class StringArrayAdapter extends XmlAdapter<String[], String> {
         return v.split(",");
     }
 }
+

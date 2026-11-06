@@ -37,8 +37,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.FileSystem;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
@@ -73,7 +73,7 @@ public class FileUtilities {
     private static final DecimalFormat UNIT_FORMAT = new DecimalFormat("#,##0.#");
     private static final Pattern URI_PATTERN = Pattern.compile("\\w+:\\/{2,3}[A-Za-z0-9._/]+");
     private static final Pattern PATH_PATTERN = Pattern.compile("^/(.*)*");
-    private static final String INVALID_FILE_NAME_CHARACTERS = "[\\\\/:\"*?<>|]+";
+    private static final Pattern INVALID_FILE_NAME_PATTERN = Pattern.compile("[\\\\/:\"*?<>|]+");
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static String getExtension(Path path) {
@@ -94,8 +94,8 @@ public class FileUtilities {
     }
 
     public static boolean isRaster(Path file) {
-        final String strFile = file.toString();
-        return Files.isRegularFile(file) && KNOWN_RASTER_EXTENSIONS.stream().anyMatch(strFile::endsWith);
+        final String extension = getExtension(file);
+        return Files.isRegularFile(file) && KNOWN_RASTER_EXTENSIONS.contains(extension);
     }
 
     public static String getFilenameWithoutExtension(Path path) {
@@ -132,17 +132,22 @@ public class FileUtilities {
     }
 
     public static String toUnixPath(String path) {
-        String transformed = path;
-        if (isURI(path)) {
-            transformed = path.substring(path.indexOf("://") + 3);
-            if (":".equals(transformed.substring(2, 3))) {
-                // Windows case
-                transformed = transformed.substring(transformed.indexOf(":") + 1);
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        final int schemeIdx = path.indexOf("://");
+        String transformed = schemeIdx >= 0 ? path.substring(schemeIdx + 3) : path;
+        if (transformed.indexOf('\\') >= 0) {
+            transformed = transformed.replace('\\', '/');
+        }
+        if (schemeIdx >= 0) {
+            // Windows URI case, e.g. file:///C:/tmp -> /tmp
+            if (transformed.length() > 2 && transformed.charAt(2) == ':') {
+                transformed = transformed.substring(transformed.indexOf(':', 2) + 1);
             }
         } else {
-            transformed = transformed.replace("\\", "/");
-            int idx;
-            if ((idx = transformed.indexOf(":")) > 0) {
+            final int idx = transformed.indexOf(':');
+            if (idx > 0) {
                 transformed = transformed.substring(idx + 1);
             }
         }
@@ -211,7 +216,7 @@ public class FileUtilities {
                 try {
                     Files.createDirectories(folder);
                     if (!"root".equalsIgnoreCase(System.getProperty("user.name"))) {
-                        final List<String> args = new ArrayList<>();
+                        /*final List<String> args = new ArrayList<>();
                         args.add("chmod");
                         args.add("777");
                         args.add(folder.toAbsolutePath().toString());
@@ -222,7 +227,8 @@ public class FileUtilities {
                         executor.setOutputConsumer(accumulator);
                         if (executor.execute(true) != 0) {
                             throw new Exception(accumulator.getOutput());
-                        }
+                        }*/
+                        Files.setPosixFilePermissions(folder, PosixFilePermissions.fromString("rwxrwxrwx"));
                     }
                 } catch (Exception inner) {
                     logger.severe(ExceptionUtils.getStackTrace(logger, inner));
@@ -392,14 +398,13 @@ public class FileUtilities {
      * @param extension     The extension of the files
      * @return              A list of files
      */
-    public static List<Path> listFilesWithExtension(Path folder, String extension) {
-        final File[] files = folder.toFile().listFiles();
-        return files != null ?
-                Arrays.stream(files)
-                        .filter(f -> f.isFile() && f.getName().endsWith(extension))
-                        .map(File::toPath)
-                        .collect(Collectors.toList()) :
-                new ArrayList<>();
+    public static List<Path> listFilesWithExtension(Path folder, String extension) throws IOException {
+        try (Stream<Path> stream = Files.list(folder)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .filter(f -> f.getFileName().toString().endsWith(extension))
+                    .collect(Collectors.toList());
+        }
     }
     /**
      * Creates symbolic links from an input path.
@@ -574,6 +579,9 @@ public class FileUtilities {
         if (!Files.exists(path)) {
             throw new NoSuchFileException(path.toString());
         }
+        if (Files.isSymbolicLink(path)) {
+            return;
+        }
         if (!Files.exists(linkTarget)) {
             throw new NoSuchFileException(linkTarget.toString());
         }
@@ -583,6 +591,31 @@ public class FileUtilities {
             Files.delete(path);
         }
         linkFile(linkTarget, path);
+    }
+
+    public static String asUnixPath(Path path) {
+        if (SystemUtils.IS_OS_UNIX) {
+            return path.toString();
+        } else {
+            String strPath;
+            if (path.isAbsolute() || path.startsWith("\\")) {
+                final URI uri = path.toAbsolutePath().toUri();
+                final String stringValue = uri.getRawPath();
+                strPath = StringUtils.replaceEach(stringValue, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS);
+                if (strPath.charAt(2) == '/') {
+                    strPath = strPath.substring(2);
+                }
+            } else {
+                strPath = "/" +
+                          StringUtils.replaceEach(path.toString(), WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
+                          (Files.isDirectory(path) ? "/" : "");
+            }
+            return strPath;
+        }
+    }
+
+    public static String asUnixPath(String path) {
+        return asUnixPath(Paths.get(path));
     }
 
     /**
@@ -616,25 +649,7 @@ public class FileUtilities {
      * @param insideDocker  If <code>false</code>, on Windows it strips the partition letter.
      */
     public static String asUnixPath(String path, boolean insideDocker) {
-        if (SystemUtils.IS_OS_UNIX) {
-            return path;
-        } else {
-            String strPath;
-            Path pPath = Paths.get(path);
-            if (pPath.isAbsolute() || pPath.startsWith("\\")) {
-                final URI uri = pPath.toAbsolutePath().toUri();
-                final String stringValue = uri.getRawPath();
-                strPath = StringUtils.replaceEach(stringValue, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS);
-                if (insideDocker && strPath.charAt(2) == '/') {
-                    strPath = strPath.substring(2);
-                }
-            } else {
-                strPath = "/" +
-                        StringUtils.replaceEach(path, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
-                        (Files.isDirectory(pPath) ? "/" : "");
-            }
-            return strPath;
-        }
+        return asUnixPath(Paths.get(path), insideDocker);
     }
 
     public static int copy(Path source, Path destination) throws IOException {
@@ -1012,6 +1027,56 @@ public class FileUtilities {
         }
     }
 
+    public static void deleteTreesUnix(Path[] roots) throws IOException {
+        if (roots != null && roots.length > 0) {
+            final List<String> commands = new ArrayList<>();
+            for (Path root : roots) {
+                commands.add("rm");
+                commands.add("-rf");
+                commands.add(root.toString());
+                commands.add(";");
+            }
+            Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                   null,
+                                                   commands,
+                                                   true);
+            OutputAccumulator accumulator = new OutputAccumulator();
+            executor.setOutputConsumer(accumulator);
+            try {
+                if (executor.execute(false) != 0) {
+                    throw new IOException(accumulator.getOutput());
+                }
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+    }
+
+    public static void deleteTreesUnix(String[] roots) throws IOException {
+        if (roots != null && roots.length > 0) {
+            final List<String> commands = new ArrayList<>();
+            for (String root : roots) {
+                commands.add("rm");
+                commands.add("-rf");
+                commands.add(root);
+                commands.add(";");
+            }
+            Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                   null,
+                                                   commands,
+                                                   true);
+            OutputAccumulator accumulator = new OutputAccumulator();
+            executor.setOutputConsumer(accumulator);
+            try {
+                if (executor.execute(false) != 0) {
+                    throw new IOException(accumulator.getOutput());
+                }
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+    }
+
     public static void remoteDeleteTree(Path root, ChannelSftp channel) throws IOException {
         if (root != null) {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
@@ -1048,12 +1113,25 @@ public class FileUtilities {
         }
     }
 
-    public static long folderSize(Path folder) throws IOException {
-        try (Stream<Path> stream = Files.walk(folder)) {
-            return stream.filter(f -> Files.isRegularFile(f, LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(f))
-                         .mapToLong(p -> p.toFile().length())
-                         .sum();
+    public static long folderSize(Path folder) {
+        final long[] size = new long[] { 0L };
+        try {
+            Files.walkFileTree(folder, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    size[0] += attrs.size();
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            logger.warning("Cannot determine size for " + folder + ": " + e.getMessage());
         }
+        return size[0];
     }
 
     public static String toReadableString(long value) {
@@ -1296,9 +1374,10 @@ public class FileUtilities {
         }
         final int names = path1.getNameCount();
         Path common = null;
+        final Path name2 = path2.getName(0);
         for (int i = 0; i < names; i++) {
             if (common == null) {
-                if (path1.getName(i).equals(path2.getName(0))) {
+                if (path1.getName(i).equals(name2)) {
                     common = path1.getName(i);
                 }
             } else {
@@ -1344,6 +1423,34 @@ public class FileUtilities {
             }
         }
         return common != null ? String.join("/", common) : null;
+    }
+
+    /**
+     * Determines the longest common prefix that corresponds to a valid directory path
+     * for all the provided paths in the set.
+     *
+     * @param paths a set of strings, where each string represents a file or directory path
+     * @return the longest common directory path shared by all paths in the provided set,
+     *         or an empty string if no common path exists
+     */
+    public static String getCommonPath(Set<String> paths) {
+        String commonPart = "";
+        int min = 0;
+        for (String path : paths) {
+            if (min == 0) {
+                commonPart = path;
+                min = commonPart.length();
+                continue;
+            }
+            min = Math.min(min, path.length());
+            for (int i = 0; i < min; i++) {
+                if (path.charAt(i) != commonPart.charAt(i)) {
+                    min = i;
+                    break;
+                }
+            }
+        }
+        return commonPart.substring(0, Math.min(min, commonPart.lastIndexOf('/')));
     }
 
     /**
@@ -1398,8 +1505,7 @@ public class FileUtilities {
         String hash = null;
         if (path != null) {
             final MessageDigest shaDigest = MessageDigest.getInstance(algo);
-            final ByteBuffer buffer = ByteBuffer.allocate(MemoryUnit.MB.value().intValue());
-            int read;
+            final ByteBuffer buffer = ByteBuffer.allocate((int) MemoryUnit.MB.value());
             if (Files.isRegularFile(path)) {
                 try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
                     while (channel.read(buffer) != -1) {
@@ -1423,17 +1529,12 @@ public class FileUtilities {
                     }
                 });
             }
-            final byte[] digest = shaDigest.digest();
-            final StringBuilder builder = new StringBuilder();
-            for (byte b : digest) {
-                builder.append(String.format("%02x", b));
-            }
-            hash = builder.toString();
+            hash = StringUtilities.byteArrayToHexString(shaDigest.digest());
         }
         return hash;
     }
 
     public static String ensureValidFileName(String name) {
-        return name != null ? name.replaceAll(INVALID_FILE_NAME_CHARACTERS, "_") : null;
+        return name != null ? INVALID_FILE_NAME_PATTERN.matcher(name).replaceAll("_") : null;
     }
 }

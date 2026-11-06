@@ -15,12 +15,25 @@
  */
 package ro.cs.tao.eodata;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * The VectorData class is a specialized subclass of EOData that focuses on managing
+ * Earth Observation (EO) data with a specific emphasis on vector-based information.
+ * This class supports serialization and provides functionality to handle references
+ * associated with the EO data.
+ *
+ * VectorData inherits from EOData, which provides the foundational structure for managing
+ * spatial data, attributes, and metadata required for Earth Observation datasets. It adds
+ * additional capabilities specific to managing references.
+ *
+ * Key features of this class include:
+ * - A collection of references (`refs`) representing associated user-specific or contextual data.
+ * - Methods to add, retrieve, and remove references from the collection.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "eoData")
@@ -44,3 +57,4 @@ public class VectorData extends EOData implements Serializable {
         }
     }
 }
+

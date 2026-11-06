@@ -21,7 +21,7 @@ import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 import java.util.List;
 
 /**
@@ -56,3 +56,4 @@ public class ParameterListConverter implements AttributeConverter<List<Parameter
         }
     }
 }
+

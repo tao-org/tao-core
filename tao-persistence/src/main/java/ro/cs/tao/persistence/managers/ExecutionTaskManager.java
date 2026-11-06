@@ -27,6 +27,8 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
+import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import javax.sql.DataSource;
@@ -35,9 +37,12 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 @Configuration
 @EnableTransactionManagement
 @Component("executionManager")
@@ -103,7 +108,26 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     public List<ExecutionTask> listWMSExecuting() { return repository.getWMSExecutingTasks(); }
 
     @Override
+    public List<ExecutionTask> listOGCProcessesExecuting() {
+        return repository.getOGCProcessesExecutingTasks();
+    }
+
+    @Override
     public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
+
+    @Override
+    public Map<String, Integer> countRunning() {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        List<Tuple<String, Integer>> results = jdbcTemplate.query(
+                con -> con.prepareStatement("SELECT n.id, " +
+                                                    "(SELECT COUNT(t.id) FROM execution.task t WHERE t.execution_status_id IN (1, 2, 7) " +
+                                                    "AND t.execution_node_host_name = n.id) as cnt " +
+                                                    "FROM topology.node n")
+                , (rs, rowNum) -> {
+            return new Tuple<>(rs.getString(1), rs.getInt(2));
+        });
+        return results.stream().collect(Collectors.toMap(Tuple::getKeyOne, Tuple::getKeyTwo));
+    }
 
     @Override
     public int countByHostSince(String hostName, LocalDateTime since) { return repository.getRunningTaskCountByHostSince(hostName, since); }
@@ -123,16 +147,17 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
-                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE n.\"name\" END ELSE d.Label END \"componentName\", " +
+                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN CASE WHEN c.id IS NULL THEN 'group' ELSE 'condition' END ELSE n.\"name\" END ELSE d.Label END \"componentName\", " +
                                                  "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
                                                  "CASE WHEN ct.average_duration_seconds IS NULL OR ct.average_duration_seconds = 0 THEN -1 ELSE " +
-                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, t.execution_log, " +
+                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, " +
                                                  "COALESCE(t.used_cpu, -1), COALESCE(t.used_ram, -1), t.command, j.name, j.user_id " +
                                                  "FROM execution.task t " +
                                                  "INNER JOIN execution.job j ON j.id = t.job_id " +
                                                  "LEFT OUTER JOIN workflow.graph w ON w.id = j.workflow_id " +
                                                  "LEFT OUTER JOIN workflow.graph_node n ON n.id = t.graph_node_id " +
                                                  "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
+                                                 "LEFT OUTER JOIN component.condition_component c ON c.id = t.component_id " +
                                                  "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
                                                  "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
                                                  "WHERE job_id = ? " +
@@ -165,15 +190,15 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                 progress = 99;
             }
             result.setPercentComplete(progress);
-            result.setOutput(rs.getString(10));
+            /*result.setOutput(rs.getString(10));
             if (result.getOutput() == null) {
                 result.setOutput("");
-            }
-            result.setUsedCPU(rs.getInt(11));
-            result.setUsedRAM(rs.getInt(12));
-            result.setCommand(rs.getString(13));
-            result.setJobName(rs.getString(14));
-            result.setUserId(rs.getString(15));
+            }*/
+            result.setUsedCPU(rs.getInt(10));
+            result.setUsedRAM(rs.getInt(11));
+            result.setCommand(rs.getString(12));
+            result.setJobName(rs.getString(13));
+            result.setUserId(rs.getString(14));
             return result;
         });
     }
@@ -262,6 +287,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
+    public List<ExecutionTask> getChildrenTasks(long taskId) {
+        return repository.getChildrenTasks(taskId);
+    }
+
+    @Override
     public int getCPUsForUser(String userId) {
         return repository.getCPUsForUser(userId);
     }    
@@ -274,6 +304,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public int getRunningParents(long jobId, long taskId) {
         return repository.getRunningParents(jobId, taskId);
+    }
+
+    @Override
+    public String getTaskOutput(long taskId) {
+        return repository.getTaskOutput(taskId);
     }
 
     @Override
@@ -311,7 +346,8 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             }
 
             if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask) {
+                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask
+                    || task instanceof ConditionExecutionTask) {
 
                 // set the task parent job
                 task.setJob(job);
@@ -417,6 +453,16 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             behavior = 1;
         }
         return EnumUtils.getEnumConstantByValue(TransitionBehavior.class, behavior);
+    }
+
+    @Override
+    public ExecutionTask getTaskByOutput(String outputPath) {
+        try {
+            return StringUtilities.isNullOrEmpty(outputPath) ? null : repository.getTaskByOutput(outputPath);
+        } catch (Throwable t) {
+            logger.warning(t.getMessage());
+            return null;
+        }
     }
 
     //endregion

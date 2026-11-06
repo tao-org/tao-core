@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.SensorType;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for SensorType enum stored values
@@ -37,3 +36,4 @@ public class SensorTypeConverter implements AttributeConverter<SensorType, Integ
         return dbData != null ? EnumUtils.getEnumConstantByValue(SensorType.class, dbData) : null;
     }
 }
+

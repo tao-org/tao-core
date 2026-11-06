@@ -1,3 +1,5 @@
+-- DEPRECATED, NO LONGER USED
+
 -- trigger that updates the "modified" column value in "tao.processing_component" table when a component is updated
 
 -- the trigger function

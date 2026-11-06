@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.component.validation;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.ParameterDescriptor;
-
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Validator that checks for non-empty values.
@@ -39,3 +38,4 @@ public class NotEmptyValidator extends Validator {
         }
     }
 }
+

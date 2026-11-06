@@ -16,15 +16,24 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.EnumUtils;
+import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTaskOutput;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 
+import javax.sql.DataSource;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -36,14 +45,76 @@ import java.util.stream.Collectors;
 public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, ExecutionJobRepository>
                                  implements ExecutionJobProvider {
 
+    @Autowired
+    private DataSource dataSource;
+
+    @Override
+    public List<ExecutionJob> listByWorkflow(long workflowId, String userId) {
+        return repository.getNotRunningJobs(workflowId, userId);
+    }
+
     @Override
     public List<ExecutionJob> listByWorkflow(long workflowId) {
         return repository.findByWorkflowId(workflowId);
     }
 
     @Override
-    public List<String> getWorkflowOutputKeys(long workflowId) {
-        return repository.getWorkflowJobsOutputs(workflowId);
+    public List<String> getWorkflowOutputKeys(long workflowId, String userId) {
+        return repository.getWorkflowJobsOutputs(workflowId, userId);
+    }
+
+    @Override
+    public List<ExecutionTaskOutput> getWorkflowOutputs(long workflowId, String userId) {
+        //return repository.getWorkflowJobsOutputs(workflowId);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        final String ext = ConfigurationManager.getInstance().getValue("quicklook.extension", ".png");
+        return jdbcTemplate.query(con -> {
+            PreparedStatement statement =
+                    con.prepareStatement("WITH executions as ( " +
+                                         "SELECT t.job_id, t.id, t.end_time, " +
+                                         "REGEXP_REPLACE(SUBSTRING(t.actual_target,'\"(\\/[\\/a-zA-Z0-9._-]+)\"'), '.*/', '') AS filename, " +
+                                         "SUBSTRING(t.actual_target,'\"(\\/[\\/a-zA-Z0-9._-]+)\"') AS actual_target, COALESCE(d.data_format_id, 7) as data_format_id, " +
+                                         "CASE WHEN d.data_format_id = 1 THEN rdp.approximate_size ELSE -1 END AS \"size\" " +
+                                         "FROM execution.task t " +
+                                         "JOIN execution.job e ON e.id = t.job_id AND e.execution_status_id = 4 AND e.job_type = 0 " +
+                                         "JOIN workflow.graph_node n ON n.id = t.graph_node_id AND n.component_type_id = 2 " +
+                                         "JOIN component.processing_component_targets ct ON ct.processing_component_id = t.component_id " +
+                                         "JOIN component.target_descriptor d ON d.id = ct.target_descriptor_id " +
+                                         "LEFT JOIN product.raster_data_product rdp ON rdp.entry_point = REGEXP_REPLACE(SUBSTRING(t.actual_target,'\"(\\/[\\/a-zA-Z0-9._-]+)\"'), '.*/', '') " +
+                                         "WHERE e.workflow_id = ? AND e.user_id = ?), " +
+                                         "scripts as (" +
+                                         "SELECT e.id as job_id, (SELECT id FROM execution.task where job_id = e.id ORDER BY end_time LIMIT 1) as id, e.end_time, " +
+                                         "REGEXP_REPLACE(e.output_path, '.*/', '') AS filename, e.output_path as actual_target, 6 as data_format_id, -1 AS \"size\" " +
+                                         "FROM execution.job e " +
+                                         "WHERE e.execution_status_id = 4 AND e.job_type != 0 AND e.workflow_id = ? AND e.user_id = ?) " +
+                                         "SELECT job_id, id, end_time, filename, actual_target, data_format_id, \"size\" " +
+                                         "FROM executions " +
+                                         "UNION " +
+                                         "SELECT job_id, id, end_time, filename, actual_target, data_format_id, \"size\" " +
+                                         "FROM scripts " +
+                                         "ORDER BY job_id, end_time DESC");
+            statement.setLong(1, workflowId);
+            statement.setString(2, userId);
+            statement.setLong(3, workflowId);
+            statement.setString(4, userId);
+            return statement;
+        }, (rs, rowNum) -> {
+            ExecutionTaskOutput result = new ExecutionTaskOutput();
+            result.setJobId(rs.getLong(1));
+            result.setTaskId(rs.getLong(2));
+            Timestamp timestamp = rs.getTimestamp(3);
+            if (timestamp != null) {
+                result.setEndTime(timestamp.toLocalDateTime());
+            }
+            result.setName(rs.getString(4));
+            String path = rs.getString(5);
+            result.setUrl(path);
+            result.setPreviewUrl(path + ext);
+            result.setFormat(EnumUtils.getEnumConstantByValue(DataFormat.class, rs.getInt(6)));
+            final long value = rs.getLong(7);
+            result.setSize(value);
+            return result;
+        });
     }
 
     @Override
@@ -82,6 +153,19 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
         return userId != null ?
                 repository.findByStatusAndUser(statusIds, userId) :
                 repository.findByStatus(statusIds);
+    }
+
+    @Override
+    public List<ExecutionJob> list(String userId, Set<ExecutionStatus> statuses, int pageNo, int pageSize) {
+        Set<Integer> statusIds;
+        if (statuses == null) {
+            statusIds = Arrays.stream(ExecutionStatus.values()).map(ExecutionStatus::value).collect(Collectors.toSet());
+        } else {
+            statusIds = statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet());
+        }
+        // pages are 1-based, while the SQL OFFSET is 0-based
+        final int offset = (Math.max(pageNo, 1) - 1) * pageSize;
+        return repository.findByStatusAndUser(statusIds, userId, offset, pageSize);
     }
 
     @Override

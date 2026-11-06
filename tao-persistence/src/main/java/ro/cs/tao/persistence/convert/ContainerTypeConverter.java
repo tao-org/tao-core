@@ -16,10 +16,9 @@
 
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.docker.ContainerType;
-
-import javax.persistence.AttributeConverter;
 
 public class ContainerTypeConverter implements AttributeConverter<ContainerType, Integer> {
     @Override
@@ -32,3 +31,4 @@ public class ContainerTypeConverter implements AttributeConverter<ContainerType,
         return value != null ? EnumUtils.getEnumConstantByValue(ContainerType.class, value) : null;
     }
 }
+

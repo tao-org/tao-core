@@ -7,14 +7,12 @@ import java.util.Vector;
  *
  * @author Adrian Drăghici
  */
-public class BuildVRTOptions {
+public class BuildVRTOptions extends GDALOptions {
 
     /**
      * The name of JNI GDAL BuildVRTOptions class
      */
     static final String CLASS_NAME = "org.gdal.gdal.BuildVRTOptions";
-
-    private final Object jniBuildVRTOptionsInstance;
 
     /**
      * Creates new instance for this driver
@@ -22,18 +20,18 @@ public class BuildVRTOptions {
      * @param jniBuildVRTOptionsInstance the JNI GDAL BuildVRTOptions class instance
      */
     public BuildVRTOptions(Object jniBuildVRTOptionsInstance) {
-        this.jniBuildVRTOptionsInstance = jniBuildVRTOptionsInstance;
+        super(jniBuildVRTOptionsInstance);
     }
 
     /**
      * Creates new GDAL BuildVRTOptions class instance
      */
     public BuildVRTOptions(Vector options) {
-        this.jniBuildVRTOptionsInstance = GDALReflection.fetchGDALLibraryClassInstance(CLASS_NAME, new Class[]{Vector.class}, new Object[]{options});
+        super(options);
     }
 
-    public Object getJniBuildVRTOptionsInstance() {
-        return jniBuildVRTOptionsInstance;
+    @Override
+    protected String className() {
+        return CLASS_NAME;
     }
-
 }

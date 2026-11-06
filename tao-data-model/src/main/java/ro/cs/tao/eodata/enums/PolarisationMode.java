@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
 
 /**
  * @author Cosmin Cara
@@ -45,3 +44,4 @@ public enum PolarisationMode implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

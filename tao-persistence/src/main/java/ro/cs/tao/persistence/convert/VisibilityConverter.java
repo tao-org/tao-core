@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.Visibility;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for ProcessingComponentVisibility enum stored values
@@ -37,3 +36,4 @@ public class VisibilityConverter implements AttributeConverter<Visibility, Integ
         return dbData != null ? EnumUtils.getEnumConstantByValue(Visibility.class, dbData) : null;
     }
 }
+

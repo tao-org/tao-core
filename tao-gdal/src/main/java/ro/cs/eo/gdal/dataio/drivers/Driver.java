@@ -7,7 +7,7 @@ import java.lang.invoke.MethodHandle;
  *
  * @author Adrian Drăghici
  */
-public class Driver extends GDALBase {
+public class Driver extends InstantiableGDALBase {
 
     /**
      * The name of JNI GDAL Driver class
@@ -18,22 +18,21 @@ public class Driver extends GDALBase {
     static {
         driverClass = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
     }
-
-    private final Object jniDriverInstance;
+    
     private final MethodHandle getShortNameHandle;
     private final MethodHandle getLongNameHandle;
     private final MethodHandle create1Handle;
     private final MethodHandle create2Handle;
     private final MethodHandle createCopyHandle;
-    private final MethodHandle deleteHandle;
+    private final MethodHandle delete2Handle;
 
     /**
      * Creates new instance for this driver
      *
-     * @param jniDriverInstance the JNI GDAL Driver class instance
+     * @param jniInstance the JNI GDAL Driver class instance
      */
-    Driver(Object jniDriverInstance) {
-        this.jniDriverInstance = jniDriverInstance;
+    Driver(Object jniInstance) {
+        super(jniInstance);
         try {
             getShortNameHandle = createHandle(driverClass, "getShortName", String.class);
             getLongNameHandle = createHandle(driverClass, "getLongName", String.class);
@@ -43,7 +42,7 @@ public class Driver extends GDALBase {
                                          String.class, int.class, int.class, int.class, int.class, String[].class);
             createCopyHandle = createHandle(driverClass, "CreateCopy", GDALReflection.fetchGDALLibraryClass(Dataset.CLASS_NAME),
                                             String.class, GDALReflection.fetchGDALLibraryClass(Dataset.CLASS_NAME), String[].class);
-            deleteHandle = createHandle(driverClass, "Delete", int.class, String.class);
+            delete2Handle = createHandle(driverClass, "Delete", int.class, String.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -55,7 +54,7 @@ public class Driver extends GDALBase {
      * @return the JNI GDAL Driver class getShortName() method result
      */
     public String getShortName() {
-        return (String) invoke(getShortNameHandle, this.jniDriverInstance);
+        return (String) invoke(getShortNameHandle, this.jniInstance);
     }
 
     /**
@@ -64,7 +63,7 @@ public class Driver extends GDALBase {
      * @return the JNI GDAL Driver class getLongName() method result
      */
     public String getLongName() {
-        return (String) invoke(getLongNameHandle, this.jniDriverInstance);
+        return (String) invoke(getLongNameHandle, this.jniInstance);
     }
 
     /**
@@ -78,7 +77,7 @@ public class Driver extends GDALBase {
      * @return the JNI GDAL Driver class Create(String utf8Path, int xsize, int ysize, int bands) method result
      */
     public Dataset create(String utf8Path, int xsize, int ysize, int bands, int eType) {
-        Object jniDatasetInstance = invoke(create1Handle, this.jniDriverInstance, utf8Path, xsize, ysize, bands, eType);
+        Object jniDatasetInstance = invoke(create1Handle, this.jniInstance, utf8Path, xsize, ysize, bands, eType);
         return jniDatasetInstance != null ? new Dataset(jniDatasetInstance) : null;
     }
 
@@ -94,12 +93,12 @@ public class Driver extends GDALBase {
      * @return the JNI GDAL Driver class Create(String utf8Path, int xsize, int ysize, int bands, int eType, String[] options) method result
      */
     public Dataset create(String utf8Path, int xsize, int ysize, int bands, int eType, String[] options) {
-        Object jniDatasetInstance = invoke(create2Handle, this.jniDriverInstance, utf8Path, xsize, ysize, bands, eType, options);
+        Object jniDatasetInstance = invoke(create2Handle, this.jniInstance, utf8Path, xsize, ysize, bands, eType, options);
         return jniDatasetInstance != null ? new Dataset(jniDatasetInstance) : null;
     }
 
     public Dataset createCopy(String name, Dataset src, String[] options) {
-        Object jniDatasetInstance = invoke(createCopyHandle, this.jniDriverInstance, name, src.getJniDatasetInstance(), options);
+        Object jniDatasetInstance = invoke(createCopyHandle, this.jniInstance, name, src.getJniInstance(), options);
         return jniDatasetInstance != null ? new Dataset(jniDatasetInstance) : null;
     }
 
@@ -110,6 +109,6 @@ public class Driver extends GDALBase {
      * @return the JNI GDAL Dataset class Delete(String utf8_path) method result
      */
     public Integer delete(String utf8_path){
-        return (Integer) invoke(deleteHandle, this.jniDriverInstance, utf8_path);
+        return (Integer) invoke(deleteHandle, this.jniInstance, utf8_path);
     }
 }

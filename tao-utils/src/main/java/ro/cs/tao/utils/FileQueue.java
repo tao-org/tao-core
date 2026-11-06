@@ -1,10 +1,16 @@
 package ro.cs.tao.utils;
 
 import java.nio.file.Path;
-import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
+/**
+ * FileQueue is a file-backed implementation of the Queue interface that persists its elements on disk.
+ * It extends FileBackedCollection to provide the functionality of a queue with on-disk persistence.
+ *
+ * @param <E> The type of elements stored in this queue
+ */
 public class FileQueue<E> extends FileBackedCollection<E, Queue<E>> implements Queue<E> {
 
     public FileQueue(Path file, Class<E> elementClass) {
@@ -37,15 +43,15 @@ public class FileQueue<E> extends FileBackedCollection<E, Queue<E>> implements Q
     }
 
     public Iterator<E> descendingIterator() {
-        return ((ArrayDeque<E>) this.collection).descendingIterator();
+        return ((ConcurrentLinkedDeque<E>) this.collection).descendingIterator();
     }
 
     public E getLast() {
-        return ((ArrayDeque<E>) this.collection).getLast();
+        return ((ConcurrentLinkedDeque<E>) this.collection).getLast();
     }
 
     @Override
-    protected ArrayDeque<E> newCollection() {
-        return new ArrayDeque<>();
+    protected ConcurrentLinkedDeque<E> newCollection() {
+        return new ConcurrentLinkedDeque<>();
     }
 }

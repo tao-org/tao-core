@@ -1,8 +1,8 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +11,7 @@ import ro.cs.tao.subscription.ExternalResourceSubscription;
 @Repository
 @Qualifier(value = "externalResourceSubscriptionRepository")
 @Transactional
-public interface ExternalResourceSubscriptionRepository extends PagingAndSortingRepository<ExternalResourceSubscription, Long> {
+public interface ExternalResourceSubscriptionRepository extends JpaRepository<ExternalResourceSubscription, Long> {
 
     @Query(value = "SELECT * FROM subscription.external_resource_subscription WHERE name = :name ", nativeQuery = true)
     ExternalResourceSubscription getSubscriptionByName(@Param("name") String name);
@@ -35,3 +35,4 @@ public interface ExternalResourceSubscriptionRepository extends PagingAndSorting
 //    @Override
 //    default void deleteAll() { }
 }
+

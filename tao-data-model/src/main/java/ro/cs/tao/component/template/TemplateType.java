@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.component.template;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * Enumeration for the supported TAO components template types.
@@ -62,3 +61,4 @@ public enum TemplateType implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

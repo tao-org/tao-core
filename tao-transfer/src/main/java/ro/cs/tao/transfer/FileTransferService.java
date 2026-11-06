@@ -3,6 +3,7 @@ package ro.cs.tao.transfer;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
@@ -12,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.logging.Logger;
 
 /**
  * Utility service that allows transferring files to an execution node from a shared folder.
@@ -77,7 +79,7 @@ public class FileTransferService {
         if (!target.endsWith("/")) {
             target += "/";
         }
-        final String sourceRoot = getCommonPath(sourceFiles);
+        final String sourceRoot = FileUtilities.getCommonPath(sourceFiles);
         final int size = sourceFiles.size();
         final String[] values = new String[size];
         int idx = 0;
@@ -104,42 +106,24 @@ public class FileTransferService {
         }
         final String finalTarget = target;
         this.asyncCallbackWorker.execute(() -> {
+            final Map<String, String> transferredFiles = new LinkedHashMap<>();
             try {
                 final OutputAccumulator consumer = new OutputAccumulator();
                 if (Executor.execute(consumer, TIMEOUT, unit) != 0) {
-                    System.err.printf("Transfer to %s failed: %s%n", nodeName, consumer.getOutput());
+                    Logger.getLogger(FileTransferService.class.getName()).warning(String.format("Transfer to %s failed: %s%n",
+                                                                                                nodeName,
+                                                                                                consumer.getOutput()));
                 } else {
-                    final Map<String, String> files = new LinkedHashMap<>();
                     for (String srcFile : sourceFiles) {
-                        files.put(srcFile, srcFile.replace(sourceRoot, finalTarget));
+                        transferredFiles.put(srcFile, srcFile.replace(sourceRoot, finalTarget));
                     }
-                    notifyListeners(item.getTaskId(), files);
                 }
             } finally {
                 pendingTasks.remove(item.getTaskId());
+                notifyListeners(item.getTaskId(), transferredFiles);
             }
         });
         return null;
-    }
-
-    private String getCommonPath(Set<String> paths) {
-        String commonPart = "";
-        int min = 0;
-        for (String path : paths) {
-            if (min == 0) {
-                commonPart = path;
-                min = commonPart.length();
-                continue;
-            }
-            min = Math.min(min, path.length());
-            for (int i = 0; i < min; i++) {
-                if (path.charAt(i) != commonPart.charAt(i)) {
-                    min = i;
-                    break;
-                }
-            }
-        }
-        return commonPart.substring(0, Math.min(min, commonPart.lastIndexOf('/')));
     }
 
     private boolean isLocalHost(String host) {

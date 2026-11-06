@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * Image data formats
@@ -54,7 +53,12 @@ public enum DataFormat implements TaoEnum<Integer> {
      *  JSON
      */
     @XmlEnumValue("6")
-    JSON(6, "JSON");
+    JSON(6, "JSON"),
+    /**
+     *  Any format
+     */
+    @XmlEnumValue("7")
+    ANY(7, "Any");
 
     /**
      * Numerical value for enum constants
@@ -78,3 +82,4 @@ public enum DataFormat implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

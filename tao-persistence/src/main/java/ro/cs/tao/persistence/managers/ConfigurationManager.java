@@ -38,9 +38,24 @@ public class ConfigurationManager
     }
 
     @Override
+    public ConfigurationCategory save(ConfigurationCategory category) {
+        return configurationCategoryRepository.saveAndFlush(category);
+    }
+
+    @Override
+    public ConfigurationCategory update(ConfigurationCategory category) {
+        return configurationCategoryRepository.saveAndFlush(category);
+    }
+
+    @Override
     public List<ConfigurationItem> getItems() {
         final List<ConfigurationItem> results = new ArrayList<>();
-        repository.findAll().forEach(results::add);
+        repository.findAll().forEach(c -> {
+            if (!c.isPerUser()) {
+                results.add(c);
+            }
+        });
+        //results.removeIf(i -> i.getCategory().getName().equals("Large Language Models"));
         results.sort(Comparator.comparing(ConfigurationItem::getId));
         return results;
     }
@@ -58,6 +73,11 @@ public class ConfigurationManager
     @Override
     public List<ConfigurationItem> getCategoryItems(ConfigurationCategory category) {
         return repository.getByCategory(category.getId());
+    }
+
+    @Override
+    public List<ConfigurationItem> getPerUserItems() {
+        return repository.getPerUserItems();
     }
 
     @Override

@@ -15,8 +15,11 @@
  */
 package ro.cs.tao.eodata;
 
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlTransient;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.opengis.referencing.ReferenceIdentifier;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -25,14 +28,35 @@ import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
+ * The EOData class serves as an abstract representation of Earth Observation data and metadata.
+ * It provides a structure for spatial data, attributes, and related information, ensuring
+ * compatibility with serialization and identification functionalities.
+ *
+ * EOData is designed to support extensible models for Earth Observation data, allowing
+ * applications to manage, query, and process geospatial datasets efficiently.
+ *
+ * Main responsibilities of this class include:
+ * - Defining the spatial data (geometry) and its related attributes.
+ * - Managing Coordinate Reference Systems (CRS) and spatial representation.
+ * - Handling metadata and extended properties specific to various datasets.
+ * - Supporting data identification via unique string identifiers.
+ * - Enabling serialization for data persistence and retrieval.
+ *
+ * This class provides getter and setter methods for accessing and updating its state,
+ * along with utility methods for managing attributes and file references.
+ * Subclasses of EOData are expected to extend and specialize the behavior as needed.
+ *
+ * Inherits from:
+ * - StringIdentifiable: Provides unique string-based identification for objects.
+ * - Serializable: Ensures the object can be serialized for data storage or transfer.
+ *
  * @author Cosmin Cara
  */
 public abstract class EOData extends StringIdentifiable implements Serializable {
@@ -41,7 +65,7 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
     private DataFormat formatType;
     private Geometry geometry;
     private List<Attribute> attributes;
-    private CoordinateReferenceSystem crs;
+    private String crs;
     private URI location;
     private String entryPoint;
     private Visibility visibility;
@@ -139,17 +163,40 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
         }
     }
 
-    public String getCrs() {
-        try {
-            return new CRSAdapter().unmarshal(this.crs);
-        } catch (Exception e) {
-            return null;
+    public List<Attribute> filterAttributes(String name) {
+        List<Attribute> filtered = null;
+        if (this.attributes != null) {
+            filtered = new ArrayList<>();
+            for(Attribute attr : this.attributes) {
+                if(attr.getName().contains(name)) {
+                    filtered.add(attr);
+                }
+            }
         }
+        return filtered;
+    }
+
+    public List<Attribute> excludeAttributes(String name) {
+        List<Attribute> filtered = null;
+        if (this.attributes != null) {
+            filtered = new ArrayList<>();
+            for(Attribute attr : this.attributes) {
+                if(!attr.getName().contains(name)) {
+                    filtered.add(attr);
+                }
+            }
+        }
+        return filtered;
+    }
+
+    public String getCrs() {
+        return this.crs;
     }
     public void setCrs(String crsCode) {
         try {
-            this.crs = new CRSAdapter().marshal(crsCode);
-        } catch (Exception ignored) { }
+            new CRSAdapter().marshal(crsCode);
+            this.crs = crsCode;
+        } catch (Exception ignored) {}
     }
 
     public String getLocation() { return location != null ? location.toString() : null; }
@@ -170,7 +217,17 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
         attributes.put("id", safeValue(id));
         attributes.put("formatType", formatType != null ? formatType.name() : "n/a");
         attributes.put("geometry", safeValue(geometry));
-        attributes.put("crs", crs != null ? crs.getName().getCodeSpace() + ":" + crs.getName().getCode() : "n/a");
+        if (crs != null) {
+            try {
+                CoordinateReferenceSystem referenceSystem = new CRSAdapter().marshal(crs);
+                ReferenceIdentifier systemName = referenceSystem.getName();
+                attributes.put("crs", systemName.getCodeSpace() + ":" + systemName.getCode());
+            } catch (Exception e) {
+                Logger.getLogger(getClass().getName()).warning(e.getMessage());
+            }
+        } else {
+            attributes.put("crs", "n/a");
+        }
         if (this.attributes != null) {
             for (Attribute attribute : this.attributes) {
                 attributes.put(attribute.getName(), attribute.getValue());
@@ -195,3 +252,4 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
         return value != null ? value.toString() : "n/a";
     }
 }
+

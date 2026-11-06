@@ -1,21 +1,25 @@
 package ro.cs.tao.component.template.engine;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.utils.DateUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 
 import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * A template engine implementation for processing JSON templates. This engine
+ * validates and transforms JSON templates by injecting dynamic parameter values
+ * into placeholder variables.
+ */
 public class JsonEngine extends TemplateEngine {
     private final ObjectMapper mapper;
     private final Function<Object, String> numericToString = String::valueOf;
@@ -24,8 +28,9 @@ public class JsonEngine extends TemplateEngine {
     private final Function<Object, String> polygonToString = o -> ((Polygon2D) o).toWKT();
 
     public JsonEngine() {
-        this.mapper = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
-        this.mapper.registerModule(new JavaTimeModule());
+        this.mapper = new ObjectMapper().rebuild()
+                .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+                .build();
     }
 
     @Override
@@ -42,7 +47,7 @@ public class JsonEngine extends TemplateEngine {
     public void parse(String text) throws TemplateException {
         try {
             this.mapper.readTree(text);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new TemplateException(e);
         }
     }

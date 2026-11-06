@@ -21,6 +21,12 @@ import ro.cs.tao.component.LongIdentifiable;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * Represents credentials for a data source. This class stores information
+ * such as user ID, data source, user name, password, secret, configuration
+ * parameters, and timestamps for creation and modification.
+ * It extends the {@code LongIdentifiable} class to provide a long-type ID.
+ */
 public class DataSourceCredentials extends LongIdentifiable {
 
     private String userId;

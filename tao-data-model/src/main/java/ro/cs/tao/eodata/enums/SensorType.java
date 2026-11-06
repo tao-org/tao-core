@@ -15,12 +15,11 @@
  */
 package ro.cs.tao.eodata.enums;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
 import ro.cs.tao.serialization.SensorTypeDeserializer;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * @author Cosmin Cara
@@ -55,3 +54,4 @@ public enum SensorType implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

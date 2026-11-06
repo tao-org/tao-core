@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.ExecutionStatus;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for ExecutionStatus enum stored values
@@ -38,3 +37,4 @@ public class ExecutionStatusConverter implements AttributeConverter<ExecutionSta
         return dbData != null ? EnumUtils.getEnumConstantByValue(ExecutionStatus.class, dbData) : null;
     }
 }
+

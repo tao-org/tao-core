@@ -1,8 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.utils.JacksonUtil;
 
-import javax.persistence.AttributeConverter;
 import java.util.Properties;
 
 public class PropertiesConverter implements AttributeConverter<Properties, String> {

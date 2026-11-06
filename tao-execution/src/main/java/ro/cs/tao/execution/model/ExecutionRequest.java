@@ -3,12 +3,19 @@ package ro.cs.tao.execution.model;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a request to execute a specific workflow with configurable parameters
+ * and inputs. This class contains details about the workflow execution, including
+ * its ID, name, label, job type, environment, and additional input and parameter
+ * configurations.
+ */
 public class ExecutionRequest {
     private long workflowId;
     private String name;
     private String label;
     private String jobType;
     private String environment;
+    private boolean optimize;
     private Map<Long, String> inputs;
     private Map<String, Map<String, String>> parameters;
 
@@ -21,6 +28,7 @@ public class ExecutionRequest {
         this.label = other.label;
         this.jobType = other.jobType;
         this.environment = other.environment;
+        this.optimize = other.optimize;
         if (other.inputs != null) {
             this.inputs = new HashMap<>(other.inputs);
         }
@@ -50,6 +58,13 @@ public class ExecutionRequest {
     }
     public void setEnvironment(String environment) {
         this.environment = environment;
+    }
+
+    public boolean isOptimize() {
+        return optimize;
+    }
+    public void setOptimize(boolean optimize) {
+        this.optimize = optimize;
     }
 
     public Map<Long, String> getInputs() {

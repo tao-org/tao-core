@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.topology.NodeRole;
-
-import javax.persistence.AttributeConverter;
 
 public class NodeRoleConverter implements AttributeConverter<NodeRole, String> {
 
@@ -17,3 +16,4 @@ public class NodeRoleConverter implements AttributeConverter<NodeRole, String> {
         return value != null ? EnumUtils.getEnumConstantByValue(NodeRole.class, value) : null;
     }
 }
+

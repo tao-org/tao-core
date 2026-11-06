@@ -15,8 +15,8 @@
  */
 package ro.cs.tao.workflow;
 
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,3 +67,4 @@ public class WorkflowNodeGroupDescriptor
         this.nodes.removeIf(n -> n.getId().equals(node.getId()));
     }
 }
+

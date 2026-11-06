@@ -15,11 +15,11 @@
  */
 package ro.cs.tao.messaging;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.serialization.*;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.beans.Transient;
 import java.util.HashMap;
 import java.util.Map;
@@ -142,6 +142,15 @@ public class Message extends LongIdentifiable {
         }
     }
 
+    // Persistence-facing alias to keep ORM mapping bound to a String property.
+    public String getDataText() {
+        return getData();
+    }
+
+    public void setDataText(String data) {
+        setData(data);
+    }
+
     @Transient
     public Map<String, String> getRawData() {
         return this.data != null ? new HashMap<>(this.data) : new HashMap<>();
@@ -199,3 +208,4 @@ public class Message extends LongIdentifiable {
         }
     }
 }
+

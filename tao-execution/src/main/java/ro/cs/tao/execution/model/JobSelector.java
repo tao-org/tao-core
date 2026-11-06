@@ -9,7 +9,7 @@ import java.util.Queue;
  * @author Cosmin Cara
  */
 public class JobSelector<T> {
-    private final Queue<T> queue;
+    protected final Queue<T> queue;
 
     public JobSelector(Queue<T> queue) {
         this.queue = queue;
@@ -19,8 +19,8 @@ public class JobSelector<T> {
      * Returns the next element, or <code>null</code> if no element is queued.
      */
     public T chooseNext() {
-        return this.queue.poll();
+        synchronized (this.queue) {
+            return this.queue.poll();
+        }
     }
-
-    protected Queue<T> getQueue() { return this.queue; }
 }

@@ -34,6 +34,14 @@ public interface ParameterProvider {
     Map<String, Map<String, DataSourceParameter>> getSupportedParameters();
 
     /**
+     * Retrieves the parameters supported by a specific sensor.
+     *
+     * @param sensor the identifier of the sensor for which supported parameters are queried
+     * @return a map of parameter names to their corresponding {@link DataSourceParameter} descriptors
+     */
+    Map<String, DataSourceParameter> getSupportedParameters(String sensor);
+
+    /**
      * Returns the sensors supported by this data source
      */
     String[] getSupportedSensors();

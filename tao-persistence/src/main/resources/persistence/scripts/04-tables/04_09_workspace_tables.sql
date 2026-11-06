@@ -42,6 +42,7 @@ CREATE TABLE workspace.site
 	name varchar(250) NOT NULL,
 	description text NOT NULL,
 	footprint geography(POLYGON, 4326) NOT NULL,
+	administrative_area varchar NULL,
 	start_date timestamp NOT NULL,
 	end_date timestamp NOT NULL,
 	user_id varchar(50)
@@ -54,10 +55,10 @@ DROP SEQUENCE IF EXISTS workspace.site_id_seq CASCADE;
 DROP TABLE IF EXISTS workspace.repository_template;
 CREATE TABLE IF NOT EXISTS workspace.repository_template
 (
-    id character varying(40) COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    name character varying(250) COLLATE pg_catalog."default" NOT NULL,
-    description text COLLATE pg_catalog."default" NOT NULL,
-    url_prefix character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    id character varying(40) NOT NULL DEFAULT uuid_generate_v4(),
+    name character varying(250) NOT NULL,
+    description text NOT NULL,
+    url_prefix character varying(20) NOT NULL,
     repository_type_id integer NOT NULL,
     params json,
     created timestamp without time zone DEFAULT now(),

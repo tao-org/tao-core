@@ -15,16 +15,16 @@
  */
 package ro.cs.tao.serialization;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import ro.cs.tao.datasource.CollectionDescription;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.IndexedDataSourceParameter;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.cfg.EnumFeature;
 
 import java.util.Map;
 
@@ -39,15 +39,15 @@ public class JsonMapper {
     public static final TypeReference<Map<String, IndexedDataSourceParameter>> JSON_INDEXED_DATA_SOURCE_REFERENCE;
 
     static {
-        instance = new ObjectMapper()
+        instance = new ObjectMapper().rebuild()
                 //.findAndRegisterModules()
-                .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true)
+                .configure(EnumFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                .configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true)
-                .disable(JsonParser.Feature.AUTO_CLOSE_SOURCE)
-                .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
-                .registerModule(new JavaTimeModule());
+                .disable(StreamReadFeature.AUTO_CLOSE_SOURCE)
+                .disable(StreamWriteFeature.AUTO_CLOSE_TARGET)
+                .build();
 
         JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE = new TypeReference<Map<String, Map<String, DataSourceParameter>>>() {};
         JSON_SENSOR_TYPE_REFERENCE = new TypeReference<Map<String, CollectionDescription>>() { };

@@ -16,9 +16,10 @@
 package ro.cs.tao.component;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
-import javax.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
 import java.util.*;
 
 /**
@@ -30,6 +31,7 @@ import java.util.*;
  * @author Cosmin Cara
  */
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIgnoreProperties(value={ "nodeAffinity" }, allowGetters=true)
 public abstract class TaoComponent extends StringIdentifiable {
     protected String label;
     protected String version;
@@ -44,7 +46,7 @@ public abstract class TaoComponent extends StringIdentifiable {
     protected List<TargetDescriptor> targets;
     protected List<String> tags;
 
-    protected Map<String, StringIdentifiable> descriptorIndex = new HashMap<>();
+    protected Map<String, Object> descriptorIndex = new HashMap<>();
 
     @Override
     public String defaultId() { return "NewComponent"; }
@@ -263,7 +265,7 @@ public abstract class TaoComponent extends StringIdentifiable {
         return clone;
     }
 
-    public <T extends StringIdentifiable> T findDescriptor(String id) {
+    public <T> T findDescriptor(String id) {
         if (this.descriptorIndex == null || this.descriptorIndex.size() != indexExpectedCount()) {
             reinitIndex();
         }
@@ -289,3 +291,4 @@ public abstract class TaoComponent extends StringIdentifiable {
         this.targets.forEach(t -> this.descriptorIndex.putIfAbsent(t.getId(), t));
     }
 }
+

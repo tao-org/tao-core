@@ -7,6 +7,17 @@ import ro.cs.tao.topology.TopologyException;
 
 import java.util.*;
 
+/**
+ * The RepositoryFactory class is responsible for creating and managing repository objects
+ * of various repository types. It provides methods to create default repositories of specific
+ * types, either with predefined parameters or customized configurations.
+ *
+ * This class uses a singleton pattern to ensure a single instance throughout the application,
+ * facilitating central management of repository templates for different repository types.
+ *
+ * The factory supports repository types such as LOCAL, AWS, and SWIFT, and provides utility
+ * methods to generate repository instances based on the types and associated configurations.
+ */
 public class RepositoryFactory {
     private static final RepositoryFactory instance;
     private final Map<RepositoryType, Repository> templates;
@@ -36,10 +47,28 @@ public class RepositoryFactory {
         }
     }
 
+    /**
+     * Retrieves the default set of repository types available in the system.
+     *
+     * @return a set containing all default {@code RepositoryType} values configured in the {@code templates} field of the repository factory instance.
+     */
     public static Set<RepositoryType> getDefaultRepositoryTypes() {
         return new HashSet<>(instance.templates.keySet());
     }
 
+    /**
+     * Creates a default repository based on the provided type and user-specific parameters.
+     * This method initializes a new {@code Repository} instance using a pre-configured template
+     * of the specified {@code RepositoryType}. It sets user-specific properties, such as the
+     * workspace location or other parameters, based on the input details and configuration.
+     *
+     * @param type the type of the repository to be created; must not be null.
+     * @param userId the unique identifier of the user for whom the repository is being created; must not be null.
+     * @param dbParams a map of database parameters that may override or supplement the default configuration; may be null.
+     * @return the newly created {@code Repository} instance configured with the specified type and user-specific data.
+     * @throws IllegalArgumentException if the specified {@code RepositoryType} is not enabled or supported.
+     * @throws TopologyException if required configuration values for the specified type are missing.
+     */
     public static Repository createDefault(RepositoryType type, String userId, Map<String, String> dbParams) {
         final Repository workspace = instance.templates.get(type);
         if (workspace == null) {
@@ -61,15 +90,15 @@ public class RepositoryFactory {
                 String value;
                 for (String key : parameters.keySet()) {
                     if (type.rootKey().equals(key)) {
-                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(type.rootKey());
+                        value = dbParams.getOrDefault(key, cfgProvider.getValue(type.rootKey()));
                         if (value != null) {
                             value += "/" + userId;
                         }
                     } else {
-                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(key);
+                        value = dbParams.getOrDefault(key, cfgProvider.getValue(key));
                     }
                     if (value == null) {
-                        throw new TopologyException("Values for default workspace of type " + type.name() + " not configured");
+                         throw new TopologyException("Values for default workspace of type " + type.name() + " not configured");
                     }
                     parameters.replace(key, value);
                 }
@@ -86,6 +115,20 @@ public class RepositoryFactory {
         return workspace;
     }
 
+    /**
+     * Creates a default repository based on the provided type and user-specific parameters.
+     * This method initializes a new {@code Repository} instance using a pre-configured template
+     * of the specified {@code RepositoryType}. It sets user-specific properties, such as
+     * the workspace location or other parameters, based on the input details and configuration.
+     *
+     * @param type the type of the repository to be created; must not be null.
+     * @param userId the unique identifier of the user for whom the repository is being created; must not be null.
+     * @param userName the name of the user for whom the repository is being created; must not be null.
+     * @param dbParams a map of database parameters that may override or supplement the default configuration; may be null.
+     * @return the newly created {@code Repository} instance configured with the specified type and user-specific data.
+     * @throws IllegalArgumentException if the specified {@code RepositoryType} is not enabled or supported.
+     * @throws TopologyException if required configuration values for the specified type are missing.
+     */
     public static Repository createDefault(RepositoryType type, String userId, String userName, Map<String, String> dbParams) {
         final Repository workspace = instance.templates.get(type);
         if (workspace == null) {
@@ -133,6 +176,16 @@ public class RepositoryFactory {
         return workspace;
     }
 
+    /**
+     * Creates a {@code Repository} instance based on the provided {@code RepositoryTemplate}
+     * and associates it with a specific user. The method ensures that all necessary parameters
+     * for the repository type are configured using default values or user-specific settings.
+     *
+     * @param template the template used to create the repository; must not be null.
+     * @param userId the unique identifier of the user for whom the repository is being created; must not be null.
+     * @return a newly created {@code Repository} instance configured according to the specified template and user-specific settings.
+     * @throws TopologyException if required configuration values for the repository type are missing.
+     */
     public static Repository createFromTemplate(RepositoryTemplate template, String userId) {
         final Repository workspace = template.toRepository();
         workspace.setUserId(userId);

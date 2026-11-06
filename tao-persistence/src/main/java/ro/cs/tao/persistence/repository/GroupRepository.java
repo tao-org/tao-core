@@ -1,7 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.user.Group;
@@ -15,7 +15,7 @@ import ro.cs.tao.user.Group;
 @Repository
 @Qualifier(value = "groupRepository")
 @Transactional
-public interface GroupRepository extends PagingAndSortingRepository<Group, Integer> {
+public interface GroupRepository extends JpaRepository<Group, Integer> {
     /**
      * Find Group entity by its name
      * @param name - the group name
@@ -23,3 +23,4 @@ public interface GroupRepository extends PagingAndSortingRepository<Group, Integ
      */
     Group findByName(final String name);
 }
+

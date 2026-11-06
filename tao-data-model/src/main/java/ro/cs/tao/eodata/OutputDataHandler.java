@@ -54,6 +54,16 @@ public interface OutputDataHandler<T> {
      */
     List<T> handle(List<T> list) throws DataHandlingException;
 
+    List<T> handle(List<T> list, String userId) throws DataHandlingException;
+
+    default List<T> handle(List<T> list, boolean fromTerminalTask) throws DataHandlingException {
+        return fromTerminalTask ? handle(list) : list;
+    }
+
+    default List<T> handle(List<T> list, String userId, boolean fromTerminalTask) throws DataHandlingException {
+        return fromTerminalTask ? handle(list, userId) : list;
+    }
+
     /**
      * Performs the operation for which this handler is intended on the given item.
      *
@@ -64,6 +74,27 @@ public interface OutputDataHandler<T> {
     default T handle(T item) throws DataHandlingException {
         List<T> list = handle(new ArrayList<T>() {{ add(item); }});
         return list != null && list.size() == 1 ? list.get(0) : null;
+    }
+
+    default T handle(T item, String userId) throws DataHandlingException {
+        List<T> list = handle(new ArrayList<T>() {{ add(item); }},  userId);
+        return list != null && list.size() == 1 ? list.get(0) : null;
+    }
+
+    /**
+     * Performs the operation for which this handler is intended on the given item.
+     *
+     * @param item  The item to be handled
+     * @param fromTerminalTask Signals if this item is the last in a list
+     * @return  The updated item.
+     *
+     */
+    default T handle(T item, boolean fromTerminalTask) throws DataHandlingException {
+        return fromTerminalTask ? handle(item) : item;
+    }
+
+    default T handle(T item, String userId, boolean fromTerminalTask) throws DataHandlingException {
+        return fromTerminalTask ? handle(item, userId) : item;
     }
 
     /**

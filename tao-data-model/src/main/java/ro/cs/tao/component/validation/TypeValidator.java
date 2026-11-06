@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.component.validation;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.enums.ParameterType;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.reflect.Array;
 
 /**
@@ -73,3 +73,4 @@ public class TypeValidator extends Validator {
                 && (!type.equals(Double.TYPE) || !valueType.equals(Double.class))));
     }
 }
+

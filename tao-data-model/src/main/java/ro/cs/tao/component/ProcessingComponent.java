@@ -18,6 +18,9 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.component.enums.ComponentCategory;
 import ro.cs.tao.component.enums.Condition;
@@ -31,13 +34,11 @@ import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +46,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -74,6 +77,7 @@ public class ProcessingComponent extends TaoComponent {
     private boolean isTransient;
     private Boolean outputManaged;
 
+    private static final String paramRegex = "([\\$\\-]%s[ ]?\\b)|([\\$\\-]%s[ ]?\\b)";
 
     public ProcessingComponent() {
         super();
@@ -236,7 +240,6 @@ public class ProcessingComponent extends TaoComponent {
      */
     public void setTemplateType(TemplateType templateType) {
         this.templateType = templateType;
-        // TODO LBU: TO VERIFY!!!!!
         if (this.templateEngine != null && !this.templateEngine.getTemplateType().equals(templateType)) {
             this.templateEngine = EngineFactory.createInstance(templateType);
         }
@@ -387,9 +390,13 @@ public class ProcessingComponent extends TaoComponent {
         return newDescriptor;
     }
 
-    public String buildExecutionCommand(Map<String, Object> parameterValues, Map<String, String> variables) throws TemplateException {
+    public String buildExecutionCommand(Map<String, Object> parameterValues, Map<String, String> variables, String userId) throws TemplateException {
         TemplateEngine templateEngine = getTemplateEngine();
         Map<String, Object> clonedMap = new HashMap<>();
+        // if the component has a target descriptor of type DB_CONNECTION,
+        // then extract the host/port/user/password/database from the connection string and make them
+        // individual parameter values
+        handleDatabaseConnectionString(parameterValues);
         Map<String, TemplateParameterDescriptor> templateParameters =
                 this.parameters.stream().filter(p -> p instanceof TemplateParameterDescriptor)
                                .collect(Collectors.toMap(ParameterDescriptor::getName, p -> (TemplateParameterDescriptor) p));
@@ -434,9 +441,15 @@ public class ProcessingComponent extends TaoComponent {
                     }
                 } else {
                     try {
-                        if (paramValue instanceof String
-                                && (((String) paramValue).contains(SystemUtils.IS_OS_WINDOWS ? "\\" : "/"))) {
-                            clonedMap.put(paramName, FileUtilities.asUnixPath(FileUtilities.toPath((String) paramValue).toString(), true));
+                        if (paramValue instanceof String) {
+                            final String stringValue = (String) paramValue;
+                            if ((stringValue).contains(SystemUtils.IS_OS_WINDOWS ? "\\" : "/")) {
+                                clonedMap.put(paramName, FileUtilities.asUnixPath(FileUtilities.toPath(stringValue).toString(), true));
+                            }/* else if (stringValue.contains(" ") || stringValue.contains("(") || stringValue.contains(")")) {
+                                clonedMap.put(paramName, "\"" + stringValue + "\"");
+                            }*/ else {
+                                clonedMap.put(paramName, paramValue);
+                            }
                         } else {
                             clonedMap.put(paramName, paramValue);
                         }
@@ -447,13 +460,17 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {
-            if (!clonedMap.containsKey(parameterDescriptor.getName())) {
-                if (StringUtilities.isNullOrEmpty(parameterDescriptor.getDefaultValue())) {
+            final String name = parameterDescriptor.getName();
+            final String defaultValue = parameterDescriptor.getDefaultValue();
+            if (!clonedMap.containsKey(name)) {
+                if (!parameterDescriptor.isNotNull() || StringUtilities.isNullOrEmpty(defaultValue)) {
                     removeEmptyParameter(parameterDescriptor);
                 } else {
-                    clonedMap.put(parameterDescriptor.getName(), parameterDescriptor.getDefaultValue());
+                    clonedMap.put(name, defaultValue);
                 }
-            }
+            } /*else if (clonedMap.get(name) != null && clonedMap.get(name).equals(defaultValue)) {
+                removeEmptyParameter(parameterDescriptor);
+            } */
         }
         if (variables != null) {
             clonedMap.putAll(variables);
@@ -476,7 +493,7 @@ public class ProcessingComponent extends TaoComponent {
         switch (this.componentType) {
             case SCRIPT:
                 try {
-                    Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    Path scriptPath = SessionStore.getContext(userId).getWorkspace().resolve("scripts");
                     FileUtilities.createDirectories(scriptPath);
                     Path scriptFile = scriptPath.resolve(this.id + "-script");
                     Files.write(scriptFile, transformedTemplate.getBytes());
@@ -492,7 +509,7 @@ public class ProcessingComponent extends TaoComponent {
                 break;
             case AGGREGATE:
                 try {
-                    final Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    final Path scriptPath = SessionStore.getContext(userId).getWorkspace().resolve("scripts");
                     FileUtilities.createDirectories(scriptPath);
                     String scriptFileName = this.template.getName().replace(" ", "_") + "-" + System.currentTimeMillis();
                     final boolean velocityTemplate = this.templateType == TemplateType.VELOCITY;
@@ -518,7 +535,7 @@ public class ProcessingComponent extends TaoComponent {
                     }
                     for (TargetDescriptor targetDescriptor : this.targets) {
                         if (parameterValues != null && parameterValues.containsKey(targetDescriptor.getName())) {
-                            cmdBuilder.append("-").append(targetDescriptor.getName()).append("\n");
+                            cmdBuilder.append("-").append(targetDescriptor.getName()).append(velocityTemplate ? "\n" : "=");
                             cmdBuilder.append(parameterValues.get(targetDescriptor.getName())).append("\n");
                         }
                     }
@@ -592,6 +609,7 @@ public class ProcessingComponent extends TaoComponent {
         if (this.template != null) {
             String templateContents = this.template.getContents();
             int idx;
+            final String paramLabel = "$" + descriptor.getName();
             switch (this.templateType) {
                 case XSLT:
                 case JAVASCRIPT:
@@ -615,7 +633,7 @@ public class ProcessingComponent extends TaoComponent {
                     }
                     break;
                 case JSON:
-                    idx = templateContents.indexOf("$" + descriptor.getName());
+                    idx = templateContents.indexOf(paramLabel);
                     int sepIdx = templateContents.indexOf(",", idx);
                     int columnIdx = templateContents.lastIndexOf(":", idx);
                     int beforeIdx = templateContents.lastIndexOf("\"", columnIdx - 1);
@@ -627,14 +645,59 @@ public class ProcessingComponent extends TaoComponent {
                 default:
                     final String[] lines = templateContents.split("\n");
                     final StringBuilder builder = new StringBuilder();
+                    final Pattern pattern = Pattern.compile(String.format(paramRegex, descriptor.getName(), descriptor.getLabel()));
                     for (String line : lines) {
-                        if (!line.contains("$" + descriptor.getName()) && !line.contains(descriptor.getLabel())) {
+                        Matcher matcher = pattern.matcher(line) ;
+                        if (!matcher.find()) {
                             builder.append(line).append("\n");
+                        } else {
+                            if (StringUtilities.count("$", line) > 1) {
+                                builder.append(line.replace(paramLabel, descriptor.getDefaultValue())).append("\n");
+                            }
+                            // in a Velocity template there can be several params & values on the same line, therefore remove only the matching text
+                            line = line.replace(line.substring(matcher.regionStart(),matcher.regionEnd()), "");
+                            if (!StringUtilities.isNullOrEmpty(line)) {
+                                builder.append(line).append("\n");
+                            }
                         }
+                        /*if (!line.contains(paramLabel) && !line.contains(descriptor.getLabel()) && !line.contains(descriptor.getName())) {
+                            builder.append(line).append("\n");
+                        } else {
+                            if (StringUtilities.count("$", line) > 1) {
+                                builder.append(line.replace(paramLabel, descriptor.getDefaultValue())).append("\n");
+                            }
+                        }*/
                     }
                     this.template.setContents(builder.toString(), false);
                     break;
             }
         }
     }
+
+    private void handleDatabaseConnectionString(Map<String, Object> values) {
+        TargetDescriptor descriptor = this.targets.stream()
+                                                  .filter(t -> DataFormat.DB_CONNECTION.equals(t.getDataDescriptor().getFormatType()))
+                                                  .findFirst().orElse(null);
+        if (descriptor != null) {
+            String jdbcConnString = (String) values.get(descriptor.getName());
+            if (jdbcConnString != null) {
+                String[] parts = jdbcConnString.substring(jdbcConnString.indexOf("://" + 3),
+                                                          jdbcConnString.indexOf('?')).split("/");
+                values.put("database", parts[1]);
+                parts = parts[0].split("@");
+                String[] tokens = parts[0].split(":");
+                values.put("user", tokens[0]);
+                if (tokens.length == 2) {
+                    values.put("password", tokens[1]);
+                }
+                tokens = parts[1].split(":");
+                values.put("host", tokens[0]);
+                if (tokens.length == 2) {
+                    values.put("port", Integer.parseInt(tokens[1]));
+                }
+                values.remove(descriptor.getName());
+            }
+        }
+    }
 }
+

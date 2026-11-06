@@ -15,10 +15,12 @@
  */
 package ro.cs.tao.datasource;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import org.locationtech.jts.geom.Geometry;
 import ro.cs.tao.component.ParameterDependency;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.enums.DependencyType;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.param.CommonParameterNames;
@@ -28,9 +30,9 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.serialization.*;
+import ro.cs.tao.utils.AutoEvictableMemoryCache;
 import ro.cs.tao.utils.StringUtilities;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -50,6 +52,7 @@ public abstract class DataQuery extends StringIdentifiable {
     protected static final int DEFAULT_PAGE_SIZE = 50;
     protected static final String QUERY_RESULT_MESSAGE = "Query %s [%s-%s] (page #%d) returned %d results";
     protected static final Map<Class<? extends DataQuery>, ConverterFactory> converterFactory = new HashMap<>();
+    private static final AutoEvictableMemoryCache<String, List<EOProduct>> queryCache;
     /* Correspondence between system parameter names and remote parameter names */
     private Map<String, String> parameterNameMap;
     /* Set of mandatory parameter system names */
@@ -71,6 +74,11 @@ public abstract class DataQuery extends StringIdentifiable {
     protected Predicate<EOProduct> coverageFilter;
 
     protected Logger logger = Logger.getLogger(getClass().getName());
+
+    static {
+        //queryCache = new AutoEvictableCache<>(null, 86400, Path.of(SystemVariable.CACHE.value()).resolve("queryCache.json"));
+        queryCache = new AutoEvictableMemoryCache<>(null, 3600);
+    }
 
     protected DataQuery() { }
 
@@ -348,7 +356,73 @@ public abstract class DataQuery extends StringIdentifiable {
 
     protected abstract List<EOProduct> executeImpl();
 
+    /**
+     * Builds provider search URLs without executing the search or authenticating.
+     * Providers supporting standalone clients override this method. URLs must not contain credentials.
+     */
+    public List<String> exportSearchUrls() {
+        throw new UnsupportedOperationException("Search script export is not supported by " + source.getId());
+    }
+
     protected long getCountImpl() { return -1; }
+
+    /** Credential-free provider requests and runtime authentication/pagination instructions. */
+    public Map<String, Object> exportSearchPlan() {
+        List<Map<String, Object>> requests = new ArrayList<>();
+        for (String url : exportSearchUrls()) {
+            requests.add(new LinkedHashMap<>(Map.of("url", url, "method", "GET", "format", "auto")));
+        }
+        return new LinkedHashMap<>(Map.of("protocol", "http", "requests", requests));
+    }
+
+    protected Map<String, Object> exportHttpPlan(String url, String method, Object body,
+                                                String encoding, String format) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("url", url);
+        request.put("method", method);
+        if (body != null) {
+            request.put("body", body);
+        }
+        request.put("encoding", encoding);
+        request.put("format", format);
+        return new LinkedHashMap<>(Map.of("protocol", "http", "requests", new ArrayList<>(List.of(request))));
+    }
+
+    /** Uses the provider's existing converters and remote parameter names without network access. */
+    protected Map<String, Object> exportParameterValues() {
+        for (DataSourceParameter descriptor : this.dataSourceParameters.values()) {
+            if (!this.parameters.containsKey(descriptor.getName()) && descriptor.getDefaultValue() != null) {
+                addParameter(descriptor.getName(), descriptor.getDefaultValue());
+            }
+        }
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (QueryParameter<?> parameter : this.parameters.values()) {
+            if (parameter.getValue() == null && parameter.getMinValue() == null && parameter.getMaxValue() == null) {
+                if (!parameter.isOptional()) {
+                    throw new IllegalArgumentException("Required parameter missing: " + parameter.getName());
+                }
+                continue;
+            }
+            try {
+                values.put(getRemoteName(parameter.getName()), getParameterValue(parameter));
+            } catch (ConversionException e) {
+                throw new QueryException(e.getMessage());
+            }
+        }
+        return values;
+    }
+
+    protected String exportQueryString(Map<String, Object> values) {
+        List<String> pairs = new ArrayList<>();
+        values.forEach((name, value) -> {
+            Collection<?> items = value instanceof Collection ? (Collection<?>) value : List.of(value);
+            for (Object item : items) {
+                pairs.add(java.net.URLEncoder.encode(name, java.nio.charset.StandardCharsets.UTF_8) + "=" +
+                          java.net.URLEncoder.encode(String.valueOf(item), java.nio.charset.StandardCharsets.UTF_8));
+            }
+        });
+        return String.join("&", pairs);
+    }
 
     protected boolean supports(String systemName) {
         return this.parameterNameMap.containsKey(systemName);
@@ -508,6 +582,16 @@ public abstract class DataQuery extends StringIdentifiable {
         return errors;
     }
 
+    protected List<EOProduct> getFromCache(String query) {
+        return ConfigurationManager.getInstance().getBooleanValue("query.cache.enabled") ? queryCache.get(query) : null;
+    }
+
+    protected void addToCache(String query, List<EOProduct> products) {
+        if (ConfigurationManager.getInstance().getBooleanValue("query.cache.enabled")) {
+            queryCache.put(query, products);
+        }
+    }
+
     private void initialize(DataSource<?, ?> source, String sensorName) {
         this.source = source;
         this.sensorName = sensorName;
@@ -545,3 +629,4 @@ public abstract class DataQuery extends StringIdentifiable {
         }
     }
 }
+

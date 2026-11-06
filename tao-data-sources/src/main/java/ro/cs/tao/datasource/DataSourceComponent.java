@@ -15,6 +15,10 @@
  */
 package ro.cs.tao.datasource;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import org.apache.http.HttpStatus;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
@@ -35,10 +39,6 @@ import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
@@ -109,6 +109,7 @@ public class DataSourceComponent extends TaoComponent {
         this.id = sensorName + "-" + dataSourceName;
         this.logger = Logger.getLogger(DataSourceComponent.class.getName());
         SourceDescriptor sourceDescriptor = new SourceDescriptor();
+        sourceDescriptor.setId(UUID.randomUUID().toString());
         sourceDescriptor.setParentId(this.id);
         sourceDescriptor.setName(QUERY_PARAMETER);
         DataDescriptor srcData = new DataDescriptor();
@@ -118,6 +119,7 @@ public class DataSourceComponent extends TaoComponent {
         addSource(sourceDescriptor);
 
         sourceDescriptor = new SourceDescriptor();
+        sourceDescriptor.setId(UUID.randomUUID().toString());
         sourceDescriptor.setParentId(this.id);
         sourceDescriptor.setName(SYNC_PARAMETER);
         srcData = new DataDescriptor();
@@ -127,6 +129,7 @@ public class DataSourceComponent extends TaoComponent {
         addSource(sourceDescriptor);
 
         TargetDescriptor targetDescriptor = new TargetDescriptor();
+        targetDescriptor.setId(UUID.randomUUID().toString());
         targetDescriptor.setParentId(this.id);
         targetDescriptor.setName(RESULTS_PARAMETER);
         DataDescriptor destData = new DataDescriptor();
@@ -492,7 +495,9 @@ public class DataSourceComponent extends TaoComponent {
                         // The fetch mode is needed if the listener checks quota
                         product.addAttribute("fetch", this.fetchMode.name());
                         // The userId is needed in case of async executions
-                        product.addAttribute("principal", this.principal.getName());
+                        // TODO : see why principal is null and causing: [ERROR: null value in column "value" of relation "data_product_attributes" violates not-null constraint
+                        //  Detail: Failing row contains (PRODUCT_NAME, principal, null).]
+                        product.addAttribute("principal", this.principal != null ? this.principal.getName() : "TODO");
                         if (!this.productStatusListener.downloadStarted(product)) {
                             continue;
                         }
@@ -582,6 +587,19 @@ public class DataSourceComponent extends TaoComponent {
                 logger.warning(String.format("Fetching product '%s' ignored: %s",
                                              product.getName(), e.getMessage()));
                 errorMessage = e.getMessage();
+            } catch (QueryException e) {
+                if (e.shouldRetry()) {
+                    // sessions limit reached, wait 15 minutes and retry
+                    logger.warning(e.getMessage());
+                    idx--;
+                    try {
+                        Thread.sleep(15 * 60 * 1000);
+                    } catch (java.lang.InterruptedException ex) {
+                    }
+                    errorMessage = null;
+                } else if (!e.continueWithNext()) {
+                    throw e;
+                }
             } catch (Exception e) {
                 errorMessage = e.getMessage();
                 // maybe the token has just expired, retry one more time
@@ -647,3 +665,4 @@ public class DataSourceComponent extends TaoComponent {
         return false;
     }
 }
+

@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.component.validation;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import ro.cs.tao.component.ParameterDescriptor;
-
-import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * A validator ensures that the value given to a parameter respects some rules.
@@ -25,11 +24,12 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author Cosmin Cara
  */
 @XmlTransient
-public abstract class Validator {
+public abstract class Validator<T> {
     /**
      * Performs the validation of the given value.
      * @param parameter The parameter descriptor
      * @param value     The value to be validated.
      */
-    public abstract void validate(ParameterDescriptor parameter, Object value) throws ValidationException;
+    public abstract void validate(ParameterDescriptor parameter, T value) throws ValidationException;
 }
+

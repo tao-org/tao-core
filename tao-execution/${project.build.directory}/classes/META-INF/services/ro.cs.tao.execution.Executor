@@ -1,0 +1,4 @@
+ro.cs.tao.execution.drmaa.DRMAAExecutor
+ro.cs.tao.execution.local.QueryExecutor
+ro.cs.tao.execution.drmaa.ConditionExecutor
+##ro.cs.tao.execution.local.NullExecutor

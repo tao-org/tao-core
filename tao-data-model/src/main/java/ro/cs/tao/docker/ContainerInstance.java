@@ -1,8 +1,9 @@
 package ro.cs.tao.docker;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.StringIdentifiable;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Map;
 
 /**
  * Descriptor for a Docker container instance
@@ -12,9 +13,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "containerInstance")
 public class ContainerInstance extends StringIdentifiable {
     private String containerId;
+    private String host;
     private String name;
     private String userId;
     private Integer port;
+    private Map<String, String> properties;
 
     public String getContainerId() {
         return containerId;
@@ -22,6 +25,14 @@ public class ContainerInstance extends StringIdentifiable {
 
     public void setContainerId(String containerId) {
         this.containerId = containerId;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
     }
 
     public String getName() {
@@ -47,4 +58,13 @@ public class ContainerInstance extends StringIdentifiable {
     public void setPort(Integer port) {
         this.port = port;
     }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, String> properties) {
+        this.properties = properties;
+    }
 }
+

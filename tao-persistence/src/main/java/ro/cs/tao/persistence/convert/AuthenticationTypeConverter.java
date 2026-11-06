@@ -1,8 +1,7 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.component.enums.AuthenticationType;
-
-import javax.persistence.AttributeConverter;
 
 public class AuthenticationTypeConverter implements AttributeConverter<AuthenticationType, String> {
     @Override
@@ -15,3 +14,4 @@ public class AuthenticationTypeConverter implements AttributeConverter<Authentic
         return value != null ? AuthenticationType.valueOf(value) : null;
     }
 }
+

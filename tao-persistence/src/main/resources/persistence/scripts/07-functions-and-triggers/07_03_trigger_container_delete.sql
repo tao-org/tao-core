@@ -1,3 +1,5 @@
+-- DEPRECATED, NO LONGER USED
+
 -- trigger that updates the "container_id" column value to NULL in "tao.processing_component" table when a container is deleted
 
 -- the trigger function

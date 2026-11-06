@@ -19,9 +19,12 @@ package ro.cs.tao.component;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -57,6 +60,12 @@ public abstract class SystemVariable {
 
     private static final Set<SystemVariable> allVariables;
 
+    private static final String workspaceRootValue = ConfigurationManager.getInstance().getValue("workspace.location");
+
+    private static final Map<String, String> userWorkspaceMap = new HashMap<>();
+
+    private final String userId;
+
     static {
         allVariables = new HashSet<>();
         allVariables.add(ROOT);
@@ -66,6 +75,25 @@ public abstract class SystemVariable {
         allVariables.add(SHARED_FILES);
         allVariables.add(CACHE);
         allVariables.add(SHARE);
+    }
+
+    public static void setUserWorkspace(Map<String, String> map) {
+        userWorkspaceMap.putAll(map);
+    }
+
+    public static SystemVariable UserWorkspace(String userId) {
+        return new SystemVariable(userId) {
+            @Override
+            public String key() { return "$USER_WORKSPACE"; }
+
+            @Override
+            public String value() {
+                final String value = userWorkspaceMap.get(userId);
+                return value == null
+                        ? USER_WORKSPACE.value()
+                        : FileUtilities.asUnixPath(Paths.get(workspaceRootValue).resolve(value).toString());
+            }
+        };
     }
 
     /**
@@ -80,6 +108,14 @@ public abstract class SystemVariable {
     public static String get(String key) {
         SystemVariable var = allVariables.stream().filter(v -> v.key().equalsIgnoreCase(key)).findFirst().orElse(null);
         return var != null ? var.value() : null;
+    }
+
+    private SystemVariable() {
+        this.userId = null;
+    }
+
+    private SystemVariable(String userId) {
+        this.userId = userId;
     }
 
     /**
@@ -99,7 +135,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location")).toString();
+            return FileUtilities.asUnixPath(Paths.get(workspaceRootValue));
         }
     }
 
@@ -119,8 +155,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"))
-                        .resolve("public").toString();
+            return  FileUtilities.asUnixPath(Paths.get(workspaceRootValue).resolve("public"));
         }
     }
 
@@ -131,7 +166,8 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(USER_WORKSPACE.value()).resolve("files").toString();
+            return FileUtilities.asUnixPath(Paths.get(USER_WORKSPACE.value()).resolve("files"));
+
         }
     }
 
@@ -142,7 +178,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(SHARED_WORKSPACE.value()).resolve("files").toString();
+            return FileUtilities.asUnixPath(Paths.get(workspaceRootValue).resolve("public"));
         }
     }
 
@@ -153,8 +189,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"))
-                    .resolve("cache").toString();
+            return FileUtilities.asUnixPath(Paths.get(workspaceRootValue).resolve("cache"));
         }
     }
 

@@ -15,14 +15,16 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import ro.cs.tao.utils.JacksonUtil;
 
-import javax.persistence.AttributeConverter;
 import java.util.Map;
 
 /**
  * @author Oana H.
  */
+@Converter(autoApply = true)
 public class MapConverter implements AttributeConverter<Map<String, String>, String> {
 
     @Override

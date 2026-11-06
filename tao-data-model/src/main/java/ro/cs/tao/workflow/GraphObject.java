@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.workflow;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
 import ro.cs.tao.component.LongIdentifiable;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,3 +64,4 @@ public abstract class GraphObject extends LongIdentifiable {
         this.customValues.add(parameterValue);
     }
 }
+

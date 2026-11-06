@@ -1,9 +1,8 @@
 package ro.cs.tao.eodata.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 @XmlEnum(Integer.class)
 public enum ProductStatus implements TaoEnum<Integer> {
@@ -26,7 +25,7 @@ public enum ProductStatus implements TaoEnum<Integer> {
      * The product download failed.
      */
     @XmlEnumValue("4")
-    FAILED(4, "Downloaded"),
+    FAILED(4, "Download failed"),
     /**
      * The product is an output of an execution task.
      */
@@ -52,3 +51,4 @@ public enum ProductStatus implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+
