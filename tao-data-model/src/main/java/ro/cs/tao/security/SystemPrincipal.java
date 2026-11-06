@@ -15,10 +15,12 @@
  */
 package ro.cs.tao.security;
 
+import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.persistence.UserProvider;
 
 import javax.security.auth.Subject;
 import java.security.Principal;
+import java.util.UUID;
 
 /**
  * A simple implementation of the {@link Principal} interface, designating the "system" account (not related to any
@@ -32,17 +34,26 @@ public final class SystemPrincipal implements Principal {
 
     public static void refresh(UserProvider provider) {
         instance.id = provider.getId("SystemAccount");
+        instance.apiKey = provider.getUserApiKey(instance.id);
+        if (StringUtils.isEmpty(instance.apiKey)) {
+            instance.apiKey = UUID.randomUUID().toString();
+        }
     }
 
-    public static Principal instance() { return instance; }
+    public static SystemPrincipal instance() { return instance; }
 
     private String id;
+    private String apiKey;
 
     private SystemPrincipal() { }
 
     @Override
     public String getName() {
         return id;
+    }
+
+    public String getApiKey() {
+        return apiKey;
     }
 
     @Override

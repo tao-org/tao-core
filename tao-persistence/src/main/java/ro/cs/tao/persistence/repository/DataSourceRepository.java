@@ -17,7 +17,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -31,6 +31,7 @@ import ro.cs.tao.datasource.DataSourceComponent;
 @Repository
 @Qualifier(value = "dataSourceRepository")
 @Transactional
-public interface DataSourceRepository extends PagingAndSortingRepository<DataSourceComponent, String> {
+public interface DataSourceRepository extends JpaRepository<DataSourceComponent, String> {
 
 }
+

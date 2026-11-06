@@ -1,7 +1,5 @@
 package ro.cs.tao.orchestration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.ExecutionJob;
@@ -12,6 +10,8 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.utils.FileQueue;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.type.CollectionType;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -96,12 +96,14 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      * @param job   The job to be queued
      */
     @Override
-    public synchronized int put(ExecutionJob job) {
-        this.queue.offer(new Tuple<>(job.getId(), job.getUserId()));
-        logger.finest(String.format("Job [%s] for user '%s' was added to the queue with status %s",
-                                    job.getName(), job.getUserId(), job.getExecutionStatus().name()));
-        notEmpty = true;
-        return this.queue.size();
+    public int put(ExecutionJob job) {
+        synchronized (this.queue) {
+            this.queue.offer(new Tuple<>(job.getId(), job.getUserId()));
+            logger.finest(String.format("Job [%s] for user '%s' was added to the queue with status %s",
+                                        job.getName(), job.getUserId(), job.getExecutionStatus().name()));
+            notEmpty = true;
+            return this.queue.size();
+        }
     }
 
     /**
@@ -110,8 +112,10 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      * @param jobId  The job identifier
      */
     @Override
-    public synchronized boolean removeJob(long jobId) {
-        return this.queue.removeIf(p -> p.getKeyOne().equals(jobId));
+    public boolean removeJob(long jobId) {
+        synchronized (this.queue) {
+            return this.queue.removeIf(p -> p.getKeyOne().equals(jobId));
+        }
     }
 
     /**
@@ -122,7 +126,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public synchronized boolean removeJob(String userId, long jobId) {
-        return queue.removeIf(p -> p.getKeyOne().equals(jobId) && p.getKeyTwo().equals(userId));
+        synchronized (this.queue) {
+            return queue.removeIf(p -> p.getKeyOne().equals(jobId) && p.getKeyTwo().equals(userId));
+        }
     }
 
     /**
@@ -132,20 +138,22 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      * @param userId  The name of the user
      */
     @Override
-    public synchronized List<Long> removeUserJobs(String userId) {
-        List<Long> removedJobs = null;
-        final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
-        while (iterator.hasNext()) {
-            final Tuple<Long, String> next = iterator.next();
-            if (userId == null || next.getKeyTwo().equals(userId)) {
-                iterator.remove();
-                if (removedJobs == null) {
-                    removedJobs = new ArrayList<>();
+    public List<Long> removeUserJobs(String userId) {
+        synchronized (this.queue) {
+            List<Long> removedJobs = null;
+            final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
+            while (iterator.hasNext()) {
+                final Tuple<Long, String> next = iterator.next();
+                if (userId == null || next.getKeyTwo().equals(userId)) {
+                    iterator.remove();
+                    if (removedJobs == null) {
+                        removedJobs = new ArrayList<>();
+                    }
+                    removedJobs.add(next.getKeyOne());
                 }
-                removedJobs.add(next.getKeyOne());
             }
+            return removedJobs;
         }
-        return removedJobs;
     }
 
     /**
@@ -155,20 +163,22 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      * @param jobId The job identifier
      */
     @Override
-    public synchronized void moveJobToHead(long jobId) {
-        if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
-            final ArrayDeque<Tuple<Long, String>> newQueue = new ArrayDeque<>(this.queue.size());
-            while (!this.queue.isEmpty()) {
-                final Tuple<Long, String> pair = this.queue.poll();
-                if (pair.getKeyOne() != jobId) {
-                    newQueue.offer(pair);
-                } else {
-                    final Tuple<Long, String> previous = newQueue.removeLast();
-                    newQueue.offer(pair);
-                    newQueue.offer(previous);
+    public void moveJobToHead(long jobId) {
+        synchronized (this.queue) {
+            if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
+                final ArrayDeque<Tuple<Long, String>> newQueue = new ArrayDeque<>(this.queue.size());
+                while (!this.queue.isEmpty()) {
+                    final Tuple<Long, String> pair = this.queue.poll();
+                    if (pair.getKeyOne() != jobId) {
+                        newQueue.offer(pair);
+                    } else {
+                        final Tuple<Long, String> previous = newQueue.removeLast();
+                        newQueue.offer(pair);
+                        newQueue.offer(previous);
+                    }
                 }
+                this.queue.addAll(newQueue);
             }
-            this.queue.addAll(newQueue);
         }
     }
     /**
@@ -180,32 +190,34 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      * @param jobId The job identifier
      */
     @Override
-    public synchronized void moveJobToHead(String userId, long jobId) {
-        if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
-            final Stack<Tuple<Long, String>> stack = new Stack<>();
-            Tuple<Long, String> swapped = null;
-            final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
-            while (iterator.hasNext()) {
-                final Tuple<Long, String> pair = iterator.next();
-                if (!pair.getKeyTwo().equals(userId)) {
-                    stack.push(pair);
-                } else {
-                    if (pair.getKeyOne() != jobId) {
-                        if (swapped == null) {
-                            stack.push(pair);
-                        } else {
-                            stack.push(pair);
-                            stack.push(swapped);
-                            swapped = null;
-                        }
+    public void moveJobToHead(String userId, long jobId) {
+        synchronized (this.queue) {
+            if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
+                final Stack<Tuple<Long, String>> stack = new Stack<>();
+                Tuple<Long, String> swapped = null;
+                final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
+                while (iterator.hasNext()) {
+                    final Tuple<Long, String> pair = iterator.next();
+                    if (!pair.getKeyTwo().equals(userId)) {
+                        stack.push(pair);
                     } else {
-                        swapped = pair;
+                        if (pair.getKeyOne() != jobId) {
+                            if (swapped == null) {
+                                stack.push(pair);
+                            } else {
+                                stack.push(pair);
+                                stack.push(swapped);
+                                swapped = null;
+                            }
+                        } else {
+                            swapped = pair;
+                        }
                     }
+                    iterator.remove();
                 }
-                iterator.remove();
-            }
-            while (!stack.isEmpty()) {
-                this.queue.offer(stack.pop());
+                while (!stack.isEmpty()) {
+                    this.queue.offer(stack.pop());
+                }
             }
         }
     }
@@ -216,25 +228,27 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      * @param jobId The job identifier
      */
     @Override
-    public synchronized void moveJobToTail(long jobId) {
-        if (!this.queue.getLast().getKeyOne().equals(jobId)) {
-            final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
-            final Queue<Tuple<Long, String>> newQueue = new ArrayDeque<>();
-            Tuple<Long, String> swapped = null;
-            while (iterator.hasNext()) {
-                final Tuple<Long, String> pair = iterator.next();
-                if (!pair.getKeyOne().equals(jobId)) {
-                    newQueue.offer(pair);
-                    if (swapped != null) {
-                        newQueue.offer(swapped);
-                        swapped = null;
+    public void moveJobToTail(long jobId) {
+        synchronized (this.queue) {
+            if (!this.queue.getLast().getKeyOne().equals(jobId)) {
+                final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
+                final Queue<Tuple<Long, String>> newQueue = new ArrayDeque<>();
+                Tuple<Long, String> swapped = null;
+                while (iterator.hasNext()) {
+                    final Tuple<Long, String> pair = iterator.next();
+                    if (!pair.getKeyOne().equals(jobId)) {
+                        newQueue.offer(pair);
+                        if (swapped != null) {
+                            newQueue.offer(swapped);
+                            swapped = null;
+                        }
+                    } else {
+                        swapped = pair;
                     }
-                } else {
-                    swapped = pair;
+                    iterator.remove();
                 }
-                iterator.remove();
+                this.queue.addAll(newQueue);
             }
-            this.queue.addAll(newQueue);
         }
     }
     /**
@@ -246,28 +260,30 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      * @param jobId The job identifier
      */
     @Override
-    public synchronized void moveJobToTail(String userId, long jobId) {
-        if (!this.queue.getLast().getKeyOne().equals(jobId)) {
-            final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
-            final Stack<Tuple<Long, String>> stack = new Stack<>();
-            Tuple<Long, String> swapped = null;
-            while (iterator.hasNext()) {
-                final Tuple<Long, String> pair = iterator.next();
-                if (!pair.getKeyOne().equals(jobId)) {
-                    if (swapped == null) {
-                        stack.push(pair);
+    public void moveJobToTail(String userId, long jobId) {
+        synchronized (this.queue) {
+            if (!this.queue.getLast().getKeyOne().equals(jobId)) {
+                final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
+                final Stack<Tuple<Long, String>> stack = new Stack<>();
+                Tuple<Long, String> swapped = null;
+                while (iterator.hasNext()) {
+                    final Tuple<Long, String> pair = iterator.next();
+                    if (!pair.getKeyOne().equals(jobId)) {
+                        if (swapped == null) {
+                            stack.push(pair);
+                        } else {
+                            stack.push(swapped);
+                            stack.push(pair);
+                            swapped = null;
+                        }
                     } else {
-                        stack.push(swapped);
-                        stack.push(pair);
-                        swapped = null;
+                        swapped = pair;
                     }
-                } else {
-                    swapped = pair;
+                    iterator.remove();
                 }
-                iterator.remove();
-            }
-            while (!stack.isEmpty()) {
-                this.queue.offer(stack.pop());
+                while (!stack.isEmpty()) {
+                    this.queue.offer(stack.pop());
+                }
             }
         }
     }
@@ -278,7 +294,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public List<Long> getUserJobs(String userId) {
-        return this.queue.stream().filter(t -> t.getKeyTwo().equals(userId)).map(Tuple::getKeyOne).collect(Collectors.toList());
+        synchronized (this.queue) {
+            return this.queue.stream().filter(t -> t.getKeyTwo().equals(userId)).map(Tuple::getKeyOne).collect(Collectors.toList());
+        }
     }
 
     /**
@@ -286,11 +304,13 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public Map<String, List<Long>> getUserQueues() {
-        return this.queue.stream()
-                         .collect(Collectors.groupingBy(Tuple::getKeyTwo,
-                                                        Collectors.collectingAndThen(Collectors.toList(),
-                                                                                     list -> list.stream().map(Tuple::getKeyOne)
-                                                                                                 .collect(Collectors.toList()))));
+        synchronized (this.queue) {
+            return this.queue.stream()
+                             .collect(Collectors.groupingBy(Tuple::getKeyTwo,
+                                                            Collectors.collectingAndThen(Collectors.toList(),
+                                                                                         list -> list.stream().map(Tuple::getKeyOne)
+                                                                                                     .collect(Collectors.toList()))));
+        }
     }
 
     /**
@@ -298,7 +318,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public Queue<Tuple<Long, String>> getAllJobs() {
-        return new ArrayDeque<>(this.queue);
+        synchronized (this.queue) {
+            return new ArrayDeque<>(this.queue);
+        }
     }
 
     /**
@@ -392,6 +414,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public boolean hasMoreJobs(String userId) {
-        return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(userId));
+        synchronized (this.queue) {
+            return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(userId));
+        }
     }
 }

@@ -15,8 +15,8 @@
  */
 package ro.cs.tao.topology;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
 /**
@@ -55,3 +55,4 @@ public class NodeServiceStatus implements Serializable {
         this.status = status;
     }
 }
+

@@ -23,18 +23,57 @@ import ro.cs.tao.BaseException;
  * @author Cosmin Cara
  */
 public class QueryException extends BaseException {
+    private final boolean retryLater;
+    private final boolean continueWithNext;
+
     public QueryException() {
+        this.retryLater = false;
+        this.continueWithNext = false;
     }
 
     public QueryException(String message) {
+        this(message, false);
+    }
+
+    public QueryException(String message, boolean retryLater) {
         super(message);
+        this.retryLater = retryLater;
+        this.continueWithNext = false;
     }
 
     public QueryException(String message, Throwable cause) {
+        this(message, cause, false);
+    }
+
+    public QueryException(String message, Throwable cause, boolean retryLater) {
+        this(message, cause, retryLater, false);
+    }
+
+    public QueryException(String message, Throwable cause, boolean retryLater, boolean continueWithNext) {
         super(message, cause);
+        this.retryLater = retryLater;
+        this.continueWithNext = continueWithNext;
     }
 
     public QueryException(Throwable cause) {
+        this(cause, false);
+    }
+
+    public QueryException(Throwable cause, boolean retryLater) {
+        this(cause, retryLater, false);
+    }
+
+    public QueryException(Throwable cause, boolean retryLater, boolean continueWithNext) {
         super(cause);
+        this.retryLater = retryLater;
+        this.continueWithNext = continueWithNext;
+    }
+
+    public boolean shouldRetry() {
+        return retryLater;
+    }
+
+    public boolean continueWithNext() {
+        return continueWithNext;
     }
 }

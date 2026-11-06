@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.ComponentCategory;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for ProcessingComponentCategory enum stored values
@@ -37,3 +36,4 @@ public class ComponentCategoryConverter implements AttributeConverter<ComponentC
         return dbData != null ? EnumUtils.getEnumConstantByValue(ComponentCategory.class, dbData) : null;
     }
 }
+

@@ -4,6 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents a record fetched from Docker Hub containing metadata about a Docker image or resource.
+ * This class holds various properties such as the name, type, publisher, creation date,
+ * popularity statistics, and other attributes describing the Docker Hub resource.
+ * The class also provides getter and setter methods to access and manipulate these properties.
+ */
 public class DockerHubRecord {
     private String id;
     private String name;

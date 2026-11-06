@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.DataFormat;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for DataFormat enum stored values
@@ -38,3 +37,4 @@ public class DataFormatConverter implements AttributeConverter<DataFormat, Integ
         return dbData != null ? EnumUtils.getEnumConstantByValue(DataFormat.class, dbData) : null;
     }
 }
+

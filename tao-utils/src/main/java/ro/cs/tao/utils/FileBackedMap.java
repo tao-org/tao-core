@@ -1,7 +1,9 @@
 package ro.cs.tao.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.*;
+import tools.jackson.databind.module.SimpleModule;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,6 +28,7 @@ import java.util.Set;
 public class FileBackedMap<K, V>  implements Map<K, V> {
     private final Path file;
     private final Map<K, V> map;
+    private final ObjectWriter writer;
 
     /**
      * Constructs a new file-backed map.
@@ -47,6 +50,17 @@ public class FileBackedMap<K, V>  implements Map<K, V> {
             } else if (Files.notExists(this.file)){
                 Files.createFile(this.file);
             }
+            ObjectMapper mapper = new ObjectMapper();
+            final SimpleModule module = new SimpleModule();
+            module.addDeserializer(Tuple.class, new ValueDeserializer<Tuple>() {
+                @Override
+                public Tuple deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws JacksonException {
+                    JsonNode node = jsonParser.readValueAsTree();
+                    return new ObjectMapper().readValue(node.toString(), Tuple.class);
+                }
+            });
+            mapper = mapper.rebuild().addModule(module).build();
+            this.writer = mapper.writer();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -125,7 +139,7 @@ public class FileBackedMap<K, V>  implements Map<K, V> {
 
     private void flush() {
         try {
-            Files.write(this.file, new ObjectMapper().writer().writeValueAsBytes(this.map), StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(this.file, this.writer.writeValueAsBytes(this.map), StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }

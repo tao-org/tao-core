@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.workflow.enums.Status;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for workflow Status enum stored values
@@ -37,3 +36,4 @@ public class WorkflowGraphStatusConverter implements AttributeConverter<Status, 
         return dbData != null ? EnumUtils.getEnumConstantByValue(Status.class, dbData) : null;
     }
 }
+

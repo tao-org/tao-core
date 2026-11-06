@@ -16,10 +16,9 @@
 
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.docker.ContainerVisibility;
-
-import javax.persistence.AttributeConverter;
 
 public class ContainerVisibilityConverter implements AttributeConverter<ContainerVisibility, Integer> {
     @Override
@@ -32,3 +31,4 @@ public class ContainerVisibilityConverter implements AttributeConverter<Containe
         return value != null ? EnumUtils.getEnumConstantByValue(ContainerVisibility.class, value) : null;
     }
 }
+

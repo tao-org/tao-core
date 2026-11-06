@@ -35,6 +35,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Provides parameter information for interacting with OpenSearch data sources.
+ * This class fetches and organizes query parameters and sensors supported by a specific OpenSearch service.
+ * It implements the {@link ParameterProvider} interface for standardized access to data source capabilities.
+ *
+ * The class is abstract and requires subclasses to specify the parameter name corresponding to sensors
+ * through the {@link #sensorParameterName()} method.
+ */
 public abstract class OpenSearchParameterProvider implements ParameterProvider {
 
     protected String[] sensors;
@@ -61,6 +69,14 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
             initialize();
         }
         return this.parameters;
+    }
+
+    @Override
+    public Map<String, DataSourceParameter> getSupportedParameters(String sensor) {
+        if (this.searchService == null) {
+            initialize();
+        }
+        return this.parameters.get(sensor);
     }
 
     @Override

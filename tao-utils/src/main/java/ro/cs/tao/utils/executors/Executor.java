@@ -76,6 +76,8 @@ public abstract class Executor<T> implements Runnable {
     OutputConsumer outputConsumer;
     File workingDirectory;
     ActivityListener monitor;
+    Runnable onSuccessCallable;
+    Runnable onFailureCallable;
 
     private volatile int retCode = Integer.MAX_VALUE;
     private CountDownLatch counter;
@@ -120,6 +122,26 @@ public abstract class Executor<T> implements Runnable {
      */
     public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job) {
         return execute(outputConsumer, job, null);
+    }
+    /**
+     * Submits for execution the given command and returns the executor object either after it has completed it execution
+     * or if the timeout given by the wait time occured.
+     * This is a blocking call.
+     *
+     * @param outputConsumer    The counsumer of the process output
+     * @param job               The command (job) to be executed
+     * @param timeUnit          Time before timing out
+     * @param waitTime          Time units
+     * @return                  The Executor object that is responsible of execution
+     */
+    public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job, int waitTime, TimeUnit timeUnit) {
+        final Executor<?> executor = execute(outputConsumer, job, null);
+        try {
+            executor.getWaitObject().await(waitTime, timeUnit);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return executor;
     }
 
     public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job, ActivityListener monitor) {
@@ -495,6 +517,16 @@ public abstract class Executor<T> implements Runnable {
 
     public CountDownLatch getWaitObject() { return this.counter; }
 
+    public Executor<T> onSuccess(Runnable onSuccess) {
+        this.onSuccessCallable = onSuccess;
+        return this;
+    }
+
+    public Executor<T> onError(Runnable onError) {
+        this.onFailureCallable = onError;
+        return this;
+    }
+
     @Override
     public void run() {
         try {
@@ -506,6 +538,23 @@ public abstract class Executor<T> implements Runnable {
                 this.counter = new CountDownLatch(1);
             }
             retCode = execute(true);
+            if (this.onSuccessCallable != null) {
+                if (retCode == 0) {
+                    try {
+                        this.onSuccessCallable.run();
+                    } catch (Exception e) {
+                        logger.warning("On success callback threw an exception:" + e.getMessage());
+                    }
+                } else {
+                    if (this.onFailureCallable != null) {
+                        try {
+                            this.onFailureCallable.run();
+                        } catch (Exception ex) {
+                            logger.warning("On failure callback threw an exception:" + ex.getMessage());
+                        }
+                    }
+                }
+            }
         } catch (Exception e) {
             retCode = -255;
             logger.severe(e.getMessage());
@@ -516,6 +565,21 @@ public abstract class Executor<T> implements Runnable {
             requestedMemory.get(this.host).getAndAdd(-memoryRequirements.remove(this));
             isStopped = true;
         }
+    }
+
+    /**
+     * Executes a series of operations with the specified timeout and logging option.
+     *
+     * @param timeout the maximum time to wait, in the given time unit
+     * @param unit the unit of time for the timeout
+     * @param logMessages specifies whether to log messages during execution
+     * @return the return code indicating the result of the execution
+     * @throws Exception if an error occurs during execution
+     */
+    public int execute(long timeout, TimeUnit unit, boolean logMessages) throws Exception {
+        execute(logMessages);
+        getWaitObject().await(timeout, TimeUnit.SECONDS);
+        return getReturnCode();
     }
 
     /**

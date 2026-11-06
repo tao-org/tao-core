@@ -1,8 +1,7 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.component.NodeAffinity;
-
-import javax.persistence.AttributeConverter;
 
 public class NodeAffinityConverter implements AttributeConverter<NodeAffinity, String> {
 
@@ -16,3 +15,4 @@ public class NodeAffinityConverter implements AttributeConverter<NodeAffinity, S
         return value != null ? NodeAffinity.of(value) : null;
     }
 }
+

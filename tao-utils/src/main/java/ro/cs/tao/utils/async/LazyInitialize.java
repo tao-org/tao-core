@@ -3,6 +3,13 @@ package ro.cs.tao.utils.async;
 import java.util.function.Supplier;
 
 /**
+ * A utility class that provides a thread-safe lazy initialization mechanism.
+ * This class initializes a value using a provided {@link Supplier} when the value
+ * is first accessed via the {@link #get()} method and then caches the result
+ * for all subsequent accesses.
+ *
+ * @param <T> The type of the object to be lazily initialized
+ *
  * @author Cosmin Cara
  */
 public class LazyInitialize<T> implements Supplier<T> {

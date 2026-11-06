@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.serialization;
 
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import ro.cs.tao.eodata.Polygon2D;
-
-import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * Adapter for {@link Polygon2D} objects.
@@ -35,3 +34,4 @@ public class PolygonAdapter extends XmlAdapter<String, Polygon2D> {
         return v != null ? v.toWKT() : null;
     }
 }
+

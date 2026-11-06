@@ -1,12 +1,12 @@
 package ro.cs.tao.persistence.convert;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.subscription.FlavorSubscription;
 import ro.cs.tao.utils.logger.Logger;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
-import javax.persistence.AttributeConverter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +18,7 @@ public class FlavorConverter implements AttributeConverter<Map<String, FlavorSub
         if (map != null) {
             try {
                 dbValue = JsonMapper.instance().writerFor(template.getClass()).writeValueAsString(map);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
@@ -37,10 +37,12 @@ public class FlavorConverter implements AttributeConverter<Map<String, FlavorSub
                     FlavorSubscription flavorSubscription = mapper.convertValue(entry.getValue(), FlavorSubscription.class);
                     returnMap.put(entry.getKey(), flavorSubscription);
                 }
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 Logger.getLogger(getClass()).warning(e.getMessage());
             }
         }
         return returnMap;
     }
 }
+
+

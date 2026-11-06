@@ -16,6 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * Represents a software package containing a container descriptor, processing components,
+ * and a progress listener. This class provides functionality to serialize or deserialize the
+ * package metadata and associated contents to and from the file system.
+ */
 public class Package {
     private final String name;
     private Container containerDescriptor;

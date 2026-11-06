@@ -15,11 +15,18 @@
  */
 package ro.cs.tao.workflow;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
 /**
+ * Represents a parameter with a name and value.
+ * This class is designed to store parameter information as name-value pairs
+ * and includes support for XML serialization using JAXB annotations.
+ *
+ * Instances of this class are immutable once created to ensure thread safety
+ * and consistent behavior across different usage scenarios.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "parameter")
@@ -42,3 +49,4 @@ public class ParameterValue implements Serializable {
     public String getParameterValue() { return parameterValue; }
     public void setParameterValue(String parameterValue) { this.parameterValue = parameterValue; }
 }
+

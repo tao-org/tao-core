@@ -3,10 +3,9 @@
  */
 package ro.cs.tao.services.model.scheduling;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * The scheduling mode.
@@ -42,3 +41,4 @@ public enum SchedulingMode implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

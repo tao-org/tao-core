@@ -22,8 +22,13 @@ import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.utils.NetUtils;
 
+import java.lang.InterruptedException;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,6 +44,7 @@ public class DataSourceManager {
     private final Map<Map.Entry<String, String>, Map<String, DataSourceParameter>> registeredSources;
     private Map<String, Map<String, Map<String, Map<String, String>>>> filteredParameters;
     private final Map<String, DataSource<?, ?>> additionalDatasources;
+    private final Future<Void> initialized;
 
     static {
         instance = new DataSourceManager();
@@ -65,7 +71,17 @@ public class DataSourceManager {
         this.registeredSources = new HashMap<>();
         this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
         this.additionalDatasources = new HashMap<>();
-        initializeSources();
+        this.initialized = CompletableFuture.runAsync(() -> initializeSources());
+    }
+
+    private void waitUntilInitialized() {
+        while (!initialized.isDone()) {
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException e) {
+                Logger.getLogger(DataSourceManager.class.getName()).warning(e.getMessage());
+            }
+        }
     }
 
     private void initializeSources() {
@@ -87,7 +103,15 @@ public class DataSourceManager {
         });
     }
 
+    /**
+     * Registers a data source and associates its supported sensors and parameters with the manager.
+     * If a data source with the same ID is already registered, it is unregistered first.
+     * The data source is then added to the list of additional data sources if it is not already present in the registry.
+     *
+     * @param ds The data source to be registered. It contains the ID, supported sensors, and associated parameters.
+     */
     public void registerDataSource(DataSource<?, ?> ds) {
+        waitUntilInitialized();
         unregisterDataSource(ds.getId());
         final String[] sensors = ds.getSupportedSensors();
         final String dsName = ds.getId();
@@ -106,12 +130,32 @@ public class DataSourceManager {
         }
     }
 
+    /**
+     * Unregisters a data source from the manager by its name.
+     * This will remove the data source from both the registered sources and
+     * the additional data sources list if present.
+     *
+     * @param dsName The name of the data source to be unregistered.
+     */
     public void unregisterDataSource(String dsName) {
+        waitUntilInitialized();
         this.registeredSources.entrySet().removeIf(entry -> entry.getKey().getValue().equals(dsName));
         this.additionalDatasources.remove(dsName);
     }
 
+    /**
+     * Sets the filtered parameters for the data sources managed by the system.
+     * The filtered parameters define a mapping between data sources, their associated sensors,
+     * and the parameters to be filtered for each sensor.
+     *
+     * @param filter A mapping of data source entries to their corresponding filtered parameter structures.
+     *               The key is a Map.Entry where the entry's key represents the sensor and its value represents the data source name.
+     *               The value is a nested map where:
+     *               - The first key represents parameters associated with the sensor.
+     *               - The innermost map defines the mapping for parameter values.
+     */
     public void setFilteredParameters(Map<Map.Entry<String, String>, Map<String, Map<String, String>>> filter) {
+        waitUntilInitialized();
         // Map<Datasource, Map<Sensor, Map<Parameter, Map<ValueSetEntry, ValueSetFriendlyValue>>>>
         this.filteredParameters = new HashMap<>();
         for (Map.Entry<String, String> entry : filter.keySet()) {
@@ -127,6 +171,7 @@ public class DataSourceManager {
      * Returns all the registered (detected) data sources
      */
     public Set<DataSource<?, ?>> getRegisteredDataSources() {
+        waitUntilInitialized();
         final Set<DataSource<?, ?>> services = this.registry.getServices().stream().map(d -> (DataSource<?, ?>) d).collect(Collectors.toSet());
         for (DataSource<?, ?> dataSource : services) {
             if (this.filteredParameters != null && this.filteredParameters.containsKey(dataSource.getId())) {
@@ -142,6 +187,7 @@ public class DataSourceManager {
      * Returns the list of supported (detected) sensors (satellites)
      */
     public SortedSet<String> getSupportedSensors() {
+        waitUntilInitialized();
         return this.registeredSources.keySet().stream().map(Map.Entry::getKey).collect(Collectors.toCollection(TreeSet::new));
     }
 
@@ -152,6 +198,7 @@ public class DataSourceManager {
      * @param sensorName    The sensor name
      */
     public String getFirst(String sensorName) {
+        waitUntilInitialized();
         return this.registeredSources.keySet().stream()
                 .filter(e -> e.getKey().equals(sensorName)).findFirst()
                 .map(Map.Entry::getValue).orElse(null);
@@ -164,8 +211,10 @@ public class DataSourceManager {
      * @param sensorName    The sensor name
      */
     public List<String> getNames(String sensorName) {
+        waitUntilInitialized();
         return this.registeredSources.keySet().stream()
-                .filter(e -> e.getKey().equals(sensorName))
+                .filter(e -> e.getKey().equals(sensorName) ||
+                             e.getKey().equals(sensorName.replace(" ", "").replace("-", "")))
                 .map(Map.Entry::getValue).collect(Collectors.toList());
     }
 
@@ -176,6 +225,7 @@ public class DataSourceManager {
      * @param sensorName    The name of the sensor
      */
     public DataSource<?, ?> get(String sensorName) {
+        waitUntilInitialized();
         DataSource<?, ?> dataSource = null;
         String firstName = getFirst(sensorName);
         if (firstName != null) {
@@ -195,8 +245,11 @@ public class DataSourceManager {
      * @param dataSourceName     The data source class name
      */
     public DataSource<?, ?> get(String sensorName, String dataSourceName) {
+        waitUntilInitialized();
         DataSource<?, ?> dataSource = null;
-        if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
+        if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName)) ||
+            this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName.replace("-", "").replace(" ", ""),
+                                                                             sensorName))) {
             dataSource = getInternal(dataSourceName);
             if (dataSource == null) {
                 dataSource = this.additionalDatasources.get(dataSourceName);
@@ -215,6 +268,7 @@ public class DataSourceManager {
      * @param sensorName    The name of the sensor
      */
     public DataSource<?, ?> createInstance(String sensorName) {
+        waitUntilInitialized();
         DataSource<?, ?> dataSource = null;
         String firstName = getFirst(sensorName);
         if (firstName != null) {
@@ -238,6 +292,7 @@ public class DataSourceManager {
      * @param dataSourceName     The data source class name
      */
     public DataSource<?, ?> createInstance(String sensorName, String dataSourceName) {
+        waitUntilInitialized();
         DataSource<?, ?> dataSource = null;
         if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
             try {
@@ -267,6 +322,7 @@ public class DataSourceManager {
      * @param dataSourceName    The data source name
      */
     public Map<String, DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName) {
+        waitUntilInitialized();
         return this.registeredSources.get(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName));
     }
 
@@ -278,11 +334,13 @@ public class DataSourceManager {
      * @return      A data source instance if matched or <code>null</code> if not found.
      */
     public DataSource<?, ?> getMatchingDataSource(String url) {
+        waitUntilInitialized();
         boolean continueMatching=true;
         DataSource<?,?> match = null;
         while (continueMatching) {
             final String urlToMatch = url;
-            Stream<DataSource> matches = this.registry.getServices().stream().filter(d -> {
+            //Stream<DataSource> matches = this.registry.getServices().stream().filter(d -> {
+            Stream<DataSource<?,?>> matches = getRegisteredDataSources().stream().filter(d -> {
                 String hostURL = Utilities.getHostURL(d.getConnectionString());
                 if (hostURL != null && hostURL.endsWith(urlToMatch)) {
                     return true;
@@ -299,10 +357,17 @@ public class DataSourceManager {
             }
         }
         if (match != null) {
+            Constructor<? extends DataSource> ctor;
             try {
-                match = match.getClass().newInstance();
+                ctor = match.getClass().getConstructor();
+                match = ctor.newInstance();
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                try {
+                    ctor = match.getClass().getConstructor(String.class);
+                    match = ctor.newInstance(match.getId());
+                } catch (Exception e1) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         return match;

@@ -9,13 +9,19 @@ import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.logging.Logger;
 
+/**
+ * Represents a worker thread that continuously processes jobs from a {@link JobQueue}.
+ * This class implements the functionality to manage job execution in parallel environments,
+ * ensuring that queued jobs are executed up to a maximum concurrency limit.
+ * The worker can be paused or resumed dynamically and handles exceptions during job processing.
+ */
 public class JobQueueWorker extends Thread {
     private final JobQueue queue;
     private final Logger logger;
     private int maxJobs;
     private final Object monitor;
     private Orchestrator orchestrator;
-    private String lastUserId;
+    private volatile String lastUserId;
     private volatile boolean paused;
     private volatile boolean stopped;
 
@@ -47,10 +53,16 @@ public class JobQueueWorker extends Thread {
 
     public void pauseWork() {
         this.paused = true;
+        synchronized (this.monitor) {
+            this.monitor.notifyAll();
+        }
     }
 
     public void resumeWork() {
         this.paused = false;
+        synchronized (this.monitor) {
+            this.monitor.notifyAll();
+        }
     }
 
     public boolean isPaused() {
@@ -63,7 +75,7 @@ public class JobQueueWorker extends Thread {
             try {
                 if (this.paused) {
                     synchronized (this.monitor) {
-                        this.monitor.wait(10000);
+                        this.monitor.wait(3000);
                     }
                 } else {
                     int count;
@@ -71,7 +83,7 @@ public class JobQueueWorker extends Thread {
                         synchronized (this.monitor) {
                             logger.finest(String.format("Job queue has still %d active jobs (max. limit is %d)",
                                                         count, this.maxJobs));
-                            this.monitor.wait(10000);
+                            this.monitor.wait(3000);
                         }
                     } else {
                         final ExecutionJob job = this.queue.takeExcept(this.lastUserId != null ? this.lastUserId : null);

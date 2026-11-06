@@ -1,9 +1,8 @@
 package ro.cs.tao.security;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * Authentication type (mode) enumeration
@@ -39,3 +38,4 @@ public enum AuthenticationMode implements TaoEnum<Integer> {
         return this.value;
     }
 }
+

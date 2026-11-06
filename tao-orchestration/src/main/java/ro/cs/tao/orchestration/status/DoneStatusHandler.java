@@ -15,6 +15,19 @@ import ro.cs.tao.persistence.PersistenceException;
 
 import java.time.LocalDateTime;
 
+/**
+ * Handles the status transition of tasks to the "DONE" state and updates job states
+ * accordingly. This implementation ensures that jobs composed entirely of completed tasks
+ * are marked as "DONE" while jobs still in progress or with no failures transition
+ * to the "RUNNING" state.
+ *
+ * The handler also processes additional notifications for tasks being marked as "DONE."
+ * Example responsibilities include updating the execution status of tasks and jobs,
+ * logging relevant information, and sending notifications through the messaging system.
+ *
+ * Inherits functionality from the {@link TaskStatusHandler} abstract class, leveraging
+ * shared mechanisms for task management.
+ */
 public class DoneStatusHandler extends TaskStatusHandler {
     protected DoneStatusHandler(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
         super(jobProvider, taskProvider);

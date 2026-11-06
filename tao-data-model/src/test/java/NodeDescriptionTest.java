@@ -2,6 +2,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import ro.cs.tao.topology.*;
+import ro.cs.tao.utils.executors.MemoryUnit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
         flavor.setCpu(4);
         flavor.setMemory(4096);
         flavor.setDisk(500);
+        flavor.setMemoryUnit(MemoryUnit.MB);
         entity.setFlavor(flavor);
         entity.setActive(false);
         entity.setRole(NodeRole.WORKER);

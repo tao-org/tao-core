@@ -118,6 +118,11 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         return supportedParameters;
     }
 
+    @Override
+    public Map<String, DataSourceParameter> getSupportedParameters(String sensor) {
+        return supportedParameters != null ? supportedParameters.get(sensor) : null;
+    }
+
     /**
      * Returns the sensors supported by this data source
      */

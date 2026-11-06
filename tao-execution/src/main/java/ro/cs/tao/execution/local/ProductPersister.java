@@ -16,10 +16,7 @@
 
 package ro.cs.tao.execution.local;
 
-import ro.cs.tao.eodata.DataHandlingException;
-import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.OutputDataHandler;
-import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.*;
 import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.eodata.util.Conversions;
@@ -32,6 +29,7 @@ import java.awt.geom.Point2D;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -41,7 +39,9 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class ProductPersister implements OutputDataHandler<EOProduct> {
-        private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final EnumSet<ProductStatus> excludedStatuses = EnumSet.of(ProductStatus.QUERIED, ProductStatus.DOWNLOADING,
+                                                                       ProductStatus.DOWNLOADED, ProductStatus.FAILED);
 
     @Override
     public Class<EOProduct> isIntendedFor() { return EOProduct.class; }
@@ -51,6 +51,11 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
 
     @Override
     public List<EOProduct> handle(List<EOProduct> list) throws DataHandlingException {
+        return handle(list, SessionStore.currentContext().getPrincipal().getName());
+    }
+
+    @Override
+    public List<EOProduct> handle(List<EOProduct> list, String userId) throws DataHandlingException {
         String utmCode;
         for (EOProduct product : list) {
             try {
@@ -66,18 +71,26 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                     product.setGeometry(footprintUTM.toWKT());
                 }
                 product.setVisibility(Visibility.PRIVATE);
-                product.setProductStatus(ProductStatus.PRODUCED);
-                product.addReference(SessionStore.currentContext().getPrincipal().getName());
+                if (!excludedStatuses.contains(product.getProductStatus())) {
+                    product.setProductStatus(ProductStatus.PRODUCED);
+                }
+                product.addReference(userId);
+                List<Attribute> attributes = product.getAttributes();
+                if (attributes != null) {
+                    attributes.removeIf(attr -> attr.getValue() == null);
+                }
                 product = SpringContextBridge.services().getService(EOProductProvider.class).save(product);
                 final String location = product.getLocation();
-                Path productPath = FileUtilities.isURI(location) ? Path.of(URI.create(location)) : Path.of(location);
-                final String entryPoint = product.getEntryPoint();
-                if (entryPoint != null) {
-                    productPath = productPath.resolve(entryPoint);
+                if (!(location.startsWith("http") || location.startsWith("s3"))) {
+                    Path productPath = FileUtilities.isURI(location) ? Path.of(URI.create(location)) : Path.of(location);
+                    final String entryPoint = product.getEntryPoint();
+                    if (entryPoint != null) {
+                        productPath = productPath.resolve(entryPoint);
+                    }
+                    logger.fine("Computing product SHA-1 hash");
+                    Files.writeString(productPath.getParent().resolve(FileUtilities.getFilenameWithoutExtension(productPath) + ".sha"),
+                                      FileUtilities.computeHash(productPath, "SHA-1"));
                 }
-                logger.fine("Computing product SHA-1 hash");
-                Files.writeString(productPath.getParent().resolve(FileUtilities.getFilenameWithoutExtension(productPath) + ".sha"),
-                                  FileUtilities.computeHash(productPath, "SHA-1"));
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",
                                             product.getName(), e.getMessage()));

@@ -20,14 +20,25 @@ public interface ConfigurationProvider {
      * Returns the value of the requested property or null if not found
      */
     String getValue(String name);
+
+    String getUserValue(String userId, String name);
     /**
      * Returns the value of the requested property, or the given default value if not found
      */
     String getValue(String name, String defaultValue);
+
+    String getUserValue(String userId, String name, String defaultValue);
     /**
      * Returns the boolean value of the requested property
      */
     boolean getBooleanValue(String name);
+
+    boolean getUserBooleanValue(String userId, String name);
+
+    int getIntValue(String name);
+
+    int getUserIntValue(String userId, String name);
+
     /**
      * Returns the keys and their values of the properties that contain the given name filter.
      * @param filter The name filter (substring)
@@ -43,6 +54,8 @@ public interface ConfigurationProvider {
      * @param value The value
      */
     void setValue(String name, String value);
+
+    void setUserValue(String userId, String name, String value);
     /**
      * Adds the collection of properties to the already existing ones, overwriting the ones that exist in both collections
      * @param properties The new properties to be added
@@ -74,6 +87,12 @@ public interface ConfigurationProvider {
     }
 
     default void setPersistentConfigurationProvider(PersistentConfigurationProvider provider) {
+    }
+
+    default void setUserPersistentConfigurationProvider(UserPersistentConfigurationProvider provider) {
+    }
+
+    default void addConfigurationItemChangeListener(String[] itemKeys, ConfigurationItemChangeListener listener) {
 
     }
 }

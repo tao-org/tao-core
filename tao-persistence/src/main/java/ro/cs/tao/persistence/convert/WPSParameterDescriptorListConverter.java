@@ -15,21 +15,20 @@
  */
 package ro.cs.tao.persistence.convert;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ParameterExpansionRule;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.utils.StringUtilities;
+import tools.jackson.core.*;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ser.std.StdSerializer;
 
-import javax.persistence.AttributeConverter;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -54,7 +53,7 @@ public class WPSParameterDescriptorListConverter implements AttributeConverter<L
             return parameters != null && !parameters.isEmpty()
                     ? objectMapper().writerFor(parameters.getClass()).writeValueAsString(parameters)
                     : null;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e.getCause());
         }
     }
@@ -65,15 +64,14 @@ public class WPSParameterDescriptorListConverter implements AttributeConverter<L
             return StringUtilities.isNullOrEmpty(s) || "[]".equals(s)
                     ? null
                     : objectMapper().readerForListOf(ParameterDescriptor.class).readValue(s);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e.getCause());
         }
     }
 
     private ObjectMapper objectMapper() {
         final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModules(serializer, deserializer);
-        return mapper;
+        return mapper.rebuild().addModules(serializer, deserializer).build();
     }
 
     private static class Serializer extends StdSerializer<ParameterDescriptor> {
@@ -83,26 +81,26 @@ public class WPSParameterDescriptorListConverter implements AttributeConverter<L
         }
 
         @Override
-        public void serialize(ParameterDescriptor descriptor, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+        public void serialize(ParameterDescriptor descriptor, JsonGenerator jsonGenerator, SerializationContext serializerProvider) {
             jsonGenerator.writeStartObject();
-            jsonGenerator.writeStringField("id", descriptor.getId());
-            jsonGenerator.writeStringField("name", descriptor.getName());
-            jsonGenerator.writeStringField("type", descriptor.getType().name());
-            jsonGenerator.writeStringField("dataType", JavaType.fromClass(descriptor.getDataType()).friendlyName());
-            jsonGenerator.writeStringField("defaultValue", descriptor.getDefaultValue());
-            jsonGenerator.writeStringField("description", descriptor.getDescription());
-            jsonGenerator.writeStringField("label", descriptor.getLabel());
-            jsonGenerator.writeStringField("unit", descriptor.getUnit());
+            jsonGenerator.writeStringProperty("id", descriptor.getId());
+            jsonGenerator.writeStringProperty("name", descriptor.getName());
+            jsonGenerator.writeStringProperty("type", descriptor.getType().name());
+            jsonGenerator.writeStringProperty("dataType", JavaType.fromClass(descriptor.getDataType()).friendlyName());
+            jsonGenerator.writeStringProperty("defaultValue", descriptor.getDefaultValue());
+            jsonGenerator.writeStringProperty("description", descriptor.getDescription());
+            jsonGenerator.writeStringProperty("label", descriptor.getLabel());
+            jsonGenerator.writeStringProperty("unit", descriptor.getUnit());
             final String[] valueSet = descriptor.getValueSet();
             if (valueSet != null && valueSet.length > 0) {
-                jsonGenerator.writeFieldName("valueSet");
+                jsonGenerator.writeName("valueSet");
                 jsonGenerator.writeArray(valueSet, 0, valueSet.length);
             } else {
-                jsonGenerator.writeNullField("valueSet");
+                jsonGenerator.writeNullProperty("valueSet");
             }
-            jsonGenerator.writeStringField("format", descriptor.getFormat());
-            jsonGenerator.writeObjectField("expansionRule", descriptor.getExpansionRule());
-            jsonGenerator.writeBooleanField("notNull", descriptor.isNotNull());
+            jsonGenerator.writeStringProperty("format", descriptor.getFormat());
+            jsonGenerator.writePOJOProperty("expansionRule", descriptor.getExpansionRule());
+            jsonGenerator.writeBooleanProperty("notNull", descriptor.isNotNull());
             jsonGenerator.writeEndObject();
         }
     }
@@ -113,13 +111,13 @@ public class WPSParameterDescriptorListConverter implements AttributeConverter<L
         }
 
         @Override
-        public ParameterDescriptor deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
-            if (parser.getCurrentToken() != JsonToken.START_OBJECT) {
-                throw new IOException("Invalid start marker");
+        public ParameterDescriptor deserialize(JsonParser parser, DeserializationContext deserializationContext) {
+            if (parser.currentToken() != JsonToken.START_OBJECT) {
+                throw new RuntimeException("Invalid start marker");
             }
             ParameterDescriptor descriptor = new ParameterDescriptor();
             while (parser.nextToken() != JsonToken.END_OBJECT) {
-                final String fieldName = parser.getCurrentName();
+                final String fieldName = parser.currentName();
                 parser.nextToken();
                 switch (fieldName) {
                     case "id":
@@ -163,3 +161,4 @@ public class WPSParameterDescriptorListConverter implements AttributeConverter<L
         }
     }
 }
+

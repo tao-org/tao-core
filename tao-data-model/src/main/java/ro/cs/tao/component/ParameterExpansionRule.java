@@ -1,6 +1,6 @@
 package ro.cs.tao.component;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * A parameter expansion rule specifies how an array parameter should expand into command line.
@@ -45,3 +45,4 @@ public class ParameterExpansionRule {
      */
     public void setSeparator(String separator) { this.separator = separator; }
 }
+

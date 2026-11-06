@@ -1,11 +1,9 @@
 package ro.cs.tao.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Jackson-based utility to allows us to easily transform JSON Object(s) to and from String
@@ -19,7 +17,7 @@ public final class JacksonUtil
     /**
      * ObjectMapper instance
      */
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    public static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * Default constructor
@@ -42,12 +40,14 @@ public final class JacksonUtil
         try
         {
             // ignore null objects or empty collections
-            OBJECT_MAPPER.setSerializationInclusion(Include.NON_NULL);
-            OBJECT_MAPPER.setSerializationInclusion(Include.NON_EMPTY);
+            OBJECT_MAPPER = OBJECT_MAPPER.rebuild()
+                    .changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(Include.NON_NULL))
+                    .changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(Include.NON_EMPTY))
+                    .build();
 
             return OBJECT_MAPPER.readValue(string, clazz);
         }
-        catch (IOException e)
+        catch (JacksonException e)
         {
             e.printStackTrace();
             throw new IllegalArgumentException("The given string value: " + string + " cannot be transformed to Json object");
@@ -66,7 +66,7 @@ public final class JacksonUtil
         {
             return OBJECT_MAPPER.writeValueAsString(value);
         }
-        catch (JsonProcessingException e)
+        catch (JacksonException e)
         {
             e.printStackTrace();
             throw new IllegalArgumentException(
@@ -85,7 +85,7 @@ public final class JacksonUtil
         {
             return OBJECT_MAPPER.readTree(value);
         }
-        catch (IOException e)
+        catch (JacksonException e)
         {
             throw new IllegalArgumentException(e);
         }

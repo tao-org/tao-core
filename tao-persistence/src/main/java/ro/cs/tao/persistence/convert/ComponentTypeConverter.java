@@ -16,10 +16,9 @@
 
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.workflow.enums.ComponentType;
-
-import javax.persistence.AttributeConverter;
 
 public class ComponentTypeConverter implements AttributeConverter<ComponentType, Integer> {
     @Override
@@ -32,3 +31,4 @@ public class ComponentTypeConverter implements AttributeConverter<ComponentType,
         return EnumUtils.getEnumConstantByValue(ComponentType.class, integer);
     }
 }
+

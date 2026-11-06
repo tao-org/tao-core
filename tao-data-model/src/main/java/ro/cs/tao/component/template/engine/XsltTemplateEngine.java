@@ -39,6 +39,16 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class XsltTemplateEngine extends TemplateEngine {
+
+    static {
+        try {
+            // If Saxon is found on the classpath, set as default TransformerFactory
+            Class clazz = Class.forName("net.sf.saxon.TransformerFactoryImpl");
+            System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
+        } catch (Throwable ignored) {
+        }
+    }
+
     @Override
     public TemplateType getTemplateType() {
         return TemplateType.XSLT;

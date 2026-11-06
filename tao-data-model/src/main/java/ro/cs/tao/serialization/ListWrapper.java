@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.serialization;
 
-import javax.xml.bind.annotation.XmlAnyElement;
+import jakarta.xml.bind.annotation.XmlAnyElement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,3 +40,4 @@ public class ListWrapper<T> {
     }
 
 }
+

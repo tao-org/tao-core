@@ -1,12 +1,12 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.serialization.BaseSerializer;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
 
-import javax.persistence.AttributeConverter;
 import java.util.List;
 
 public class ProductListConverter implements AttributeConverter<List<EOProduct>, String> {

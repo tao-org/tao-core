@@ -18,6 +18,16 @@ package ro.cs.tao.topology;
 import ro.cs.tao.BaseException;
 
 /**
+ * Represents an exception that occurs in the context of handling topologies.
+ *
+ * This class provides constructors to create exceptions with a message,
+ * a cause, or both. It is primarily used to handle errors specific to
+ * topology management operations and extends the functionality of
+ * {@code BaseException} by inheriting its capability to hold
+ * additional key-value information about an exception.
+ *
+ * Use this exception to indicate a problem or failure in topology-related processes.
+ *
  * @author Cosmin Cara
  */
 public class TopologyException extends BaseException {

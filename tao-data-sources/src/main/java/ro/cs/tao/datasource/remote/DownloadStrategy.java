@@ -17,13 +17,15 @@ package ro.cs.tao.datasource.remote;
 
 import org.apache.http.Header;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
+import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.util.BaseProductHelper;
+import ro.cs.tao.eodata.util.ProductHelper;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.NetUtils;
+import ro.cs.tao.utils.Zipper;
 import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
@@ -52,7 +54,7 @@ import java.util.regex.Pattern;
  */
 public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     protected static final String NAME_SEPARATOR = "_";
-    protected static final int BUFFER_SIZE = MemoryUnit.MB.value().intValue();
+    protected static final int BUFFER_SIZE = (int) MemoryUnit.MB.value();
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
@@ -147,6 +149,13 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         this.cancelled = true;
     }
 
+    /**
+     * Sets the authentication details for the download strategy. This might be required
+     * for accessing protected resources or authenticating with the data source.
+     *
+     * @param authentication The authentication object that contains the required credentials or tokens
+     *                        to be used for authentication.
+     */
     public void setAuthentication(T authentication) {
 
     }
@@ -158,6 +167,15 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         return localArchiveRoot;
     }
 
+    /**
+     * Sets the root path of the local archive directory. The local archive root is used
+     * for storing products in a repository structure. Additionally, this method configures
+     * the {@link ProductPathBuilder} implementation for building product paths based on the
+     * provided local archive root and optional properties. If a custom path builder class
+     * is specified in the properties, it attempts to instantiate and use that class.
+     *
+     * @param localArchiveRoot The root directory path of the local archive.
+     */
     public void setLocalArchiveRoot(String localArchiveRoot) {
         this.localArchiveRoot = localArchiveRoot;
         String format = this.props != null ? this.props.getProperty(ProductPathBuilder.LOCAL_ARCHIVE_PATH_FORMAT, "yyyy/MM/dd") : "yyyy/MM/dd";
@@ -176,6 +194,13 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
     }
 
+    /**
+     * Generates a URL string from the location of the given EOProduct descriptor.
+     * If the location of the descriptor is invalid or undefined, the method returns null.
+     *
+     * @param descriptor the EOProduct instance containing the location information
+     * @return the URL string representation of the product's location, or null if the location is invalid
+     */
     public String getProductUrl(EOProduct descriptor){
         URI location = null;
         try {
@@ -254,6 +279,8 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
                     file = fetchImpl(product);
                     if (file == null) {
                         logger.warning("Product download aborted");
+                    } else if (Boolean.parseBoolean(this.props.getProperty("auto.uncompress", "true"))) {
+                        file = extract(product, file, computeTarget(file));
                     }
                     break;
             }
@@ -262,6 +289,8 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
                 file = fetchImpl(product);
                 if (file == null) {
                     logger.warning("Product download aborted");
+                } else if (Boolean.parseBoolean(this.props.getProperty("auto.uncompress", "true"))) {
+                    file = extract(product, file, computeTarget(file));
                 }
             }
         } catch (IOException e) {
@@ -277,6 +306,51 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     public abstract DownloadStrategy<T> clone();
 
     protected abstract Path fetchImpl(EOProduct product) throws IOException;
+
+    protected Path computeTarget(Path archivePath) {
+        return archivePath.getFileName().toString().endsWith(".tar.gz") ?
+                Paths.get(archivePath.toString().replace(".tar.gz", "")) :
+                Paths.get(archivePath.toString().replace(".zip", ""));
+    }
+
+    protected Path extract(EOProduct product, Path archivePath, Path targetPath) throws IOException {
+        String satelliteName = product.getSatelliteName().replace("-", "");
+        final String name = FileUtilities.getFilenameWithoutExtension(archivePath)
+                + (satelliteName.equals("Sentinel1") || satelliteName.equals("Sentinel2")
+                    ? ".SAFE"
+                    : satelliteName.equals("Sentinel3")
+                        ? ".SEN3"
+                        : "");
+        logger.fine(String.format("Begin decompressing %s into %s", name, targetPath));
+        Path result;
+        if (archivePath.toString().endsWith(".tar.gz")) {
+            result = Zipper.decompressTarGz(archivePath, targetPath, true);
+            Files.move(result, result.getParent().resolve(name));
+            result = result.getParent().resolve(name);
+        } else if (archivePath.toString().endsWith(".zip")){
+            Path unzipResult = Zipper.decompressZipMT(archivePath, targetPath, false, true);
+            result = unzipResult.getParent().resolve(name);
+            // we may have in the archive another dir than the expected one (ex. without .SAFE)
+            if (!unzipResult.equals(result)) {
+            	// delete the old folder, if exists, before renaming
+                FileUtilities.deleteTree(result);
+                FileUtilities.rename(unzipResult, name);
+            }
+        } else {
+            result = targetPath;
+        }
+        logger.fine(String.format("Decompression of %s completed",archivePath.getFileName()));
+        try {
+            product.setLocation(result.toUri().toString());
+            ProductHelper helper = ProductHelperFactory.getHelper(product.getName());
+            if (helper != null) {
+                product.setEntryPoint(helper.getMetadataFileName());
+            }
+        } catch (Exception e) {
+            logger.severe(e.getMessage());
+        }
+        return result;
+    }
 
     protected abstract String getMetadataUrl(EOProduct descriptor);
 

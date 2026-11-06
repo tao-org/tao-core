@@ -15,11 +15,11 @@
  */
 package ro.cs.tao.execution.model;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.utils.logger.Logger;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -178,3 +178,4 @@ public class ExecutionGroup extends ExecutionTask {
         return false;
     }
 }
+

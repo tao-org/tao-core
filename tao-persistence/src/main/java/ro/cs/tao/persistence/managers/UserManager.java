@@ -154,6 +154,17 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
+    public List<User> list(Set<String> ids, UserStatus userStatus) {
+        final List<User> users = repository.getUsers(ids, userStatus.value());
+        if (SystemPrincipal.instance().getName() == null) {
+            SystemPrincipal.refresh(this);
+        }
+        final String userId = SystemPrincipal.instance().getName();
+        users.removeIf(u -> userId.equals(u.getId()));
+        return users;
+    }
+
+    @Override
     public Map<String, String[]> listUnicityInfo() {
         Map<String, String[]> results = new HashMap<>();
         repository.findAll().forEach(user -> results.put(user.getUsername(), new String[] {user.getEmail(), user.getAlternativeEmail()}));
@@ -188,6 +199,15 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     public List<UserPreference> listPreferences(String userId) {
         final User user = repository.findById(userId).orElse(null);
         return user != null ? user.getPreferences() : null;
+    }
+
+    @Override
+    public UserPreference getPreference(String userId, String key) {
+        List<UserPreference> preferences = listPreferences(userId);
+        return preferences != null
+                ? preferences.stream().filter(p -> p.getKey().equals(key))
+                             .findFirst().orElse(null)
+                : null;
     }
 
     @Override
@@ -261,13 +281,10 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
         // update phone
         original.setPhone(updated.getPhone());
 
-        // password reset key
-        if (StringUtilities.isNullOrEmpty(original.getPasswordResetKey()) ||
-            !original.getPasswordResetKey().equalsIgnoreCase(updated.getPasswordResetKey())) {
-            original.setPasswordResetKey(updated.getPasswordResetKey());
-        }
-
         if (fromAdmin) {
+            // These fields are never copied from a self-service profile request.
+            original.setPasswordResetKey(updated.getPasswordResetKey());
+            original.setWorkspaceId(updated.getWorkspaceId());
             // check quota
             if (original.getInputQuota() != updated.getInputQuota()) {
                 original.setInputQuota(updated.getInputQuota());
@@ -317,9 +334,9 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
         if (!Objects.equals(user.getStatus().value(), UserStatus.PENDING.value())) {
             throw new PersistenceException("Cannot activate user: " + userId);
         }
-        // activate user
-        user.setStatus(UserStatus.ACTIVE);
-        repository.save(user);
+        if (repository.activatePending(userId, UserStatus.PENDING, UserStatus.ACTIVE) != 1) {
+            throw new PersistenceException("Activation link has already been used");
+        }
     }
 
     @Override
@@ -557,7 +574,8 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
         Map<String, String> dbParams = null;
         for (RepositoryType type : repoTypes) {
             try {
-                repo = repositoryJPARepository.getByUserAndName(user.getId(), type.name());
+                final String ownerId = user.getWorkspaceId() != null ? user.getWorkspaceId() : user.getId();
+                repo = repositoryJPARepository.getByUserAndName(ownerId, type.name());
                 if (repo == null) {
                     if (preferences != null && !preferences.isEmpty()) {
                         dbParams = preferences.stream()
@@ -567,8 +585,8 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
                     }
                     final boolean useUserName = cfgProvider.getBooleanValue("aws.use.username.as.root");
                     Repository repository = useUserName
-                                            ? RepositoryFactory.createDefault(type, user.getId(), user.getUsername(), dbParams)
-                                            : RepositoryFactory.createDefault(type, user.getId(), dbParams);
+                                            ? RepositoryFactory.createDefault(type, ownerId, user.getUsername(), dbParams)
+                                            : RepositoryFactory.createDefault(type, ownerId, dbParams);
                     repository.setPersistentStorage(type.name().equalsIgnoreCase(cfgProvider.getValue("workspaces.default.persistent", "local")));
                     repositoryJPARepository.save(repository);
                     if (rootFunctor != null) {
@@ -608,6 +626,26 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     @Override
     public String getId(String userName) {
         return repository.getId(userName);
+    }
+
+    @Override
+    public String getUserApiKey(String userId) {
+        return repository.getApiKey(userId);
+    }
+
+    @Override
+    public void updateUserApiKey(String userId, String apiKey, LocalDateTime expiration) {
+        repository.updateApiKey(userId, apiKey, expiration);
+    }
+
+    @Override
+    public User getByApiKey(String apiKey) {
+        return repository.findByApiKey(apiKey);
+    }
+
+    @Override
+    public void deleteExpiredApiKeys() {
+        repository.deleteApiKeysOlderThan(LocalDateTime.now());
     }
 
     //endregion

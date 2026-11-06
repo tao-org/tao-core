@@ -21,7 +21,25 @@ import ro.cs.tao.component.StringIdentifiable;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@JsonIgnoreProperties( { "password", "created", "modified" })
+/**
+ * Represents a user entity in the system with various attributes and metadata
+ * for user management and authentication purposes. This class extends
+ * {@code StringIdentifiable}.
+ *
+ * This class is annotated with {@code @JsonIgnoreProperties} to ignore
+ * certain fields during JSON serialization and deserialization.
+ *
+ * Attributes of the user include:
+ * - Personal information such as username, first name, and last name.
+ * - Contact details like email, alternative email, and phone number.
+ * - System metadata such as last login date, organization, quotas, and status.
+ * - Security-related fields like password, password reset key, and user type.
+ * - Associated groups and user preferences.
+ *
+ * The {@code password}, {@code created}, and {@code modified} fields are marked
+ * to be ignored in JSON processing to ensure security and reduce redundancy.
+ */
+@JsonIgnoreProperties( { "password", "passwordResetKey", "apiKey", "created", "modified" })
 public class User extends StringIdentifiable {
 
     private String username;
@@ -44,7 +62,11 @@ public class User extends StringIdentifiable {
     private UserType userType;
     // key used for 1st time password set for TAO internal users, or for future password resets requested by TAO internal users
     private String passwordResetKey;
-
+    // key used for API calls on behalf of the user
+    private String apiKey;
+    private LocalDateTime apiKeyExpiration;
+    // the workspace shared with other account
+    private String workspaceId;
     private LocalDateTime created;
     private LocalDateTime expiresOn;
     private LocalDateTime modified;
@@ -170,6 +192,30 @@ public class User extends StringIdentifiable {
 
     public void setPasswordResetKey(String passwordResetKey) {
         this.passwordResetKey = passwordResetKey;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public LocalDateTime getApiKeyExpiration() {
+        return apiKeyExpiration;
+    }
+
+    public void setApiKeyExpiration(LocalDateTime apiKeyExpiration) {
+        this.apiKeyExpiration = apiKeyExpiration;
+    }
+
+    public String getWorkspaceId() {
+        return workspaceId;
+    }
+
+    public void setWorkspaceId(String workspaceId) {
+        this.workspaceId = workspaceId;
     }
 
     public LocalDateTime getCreated() {

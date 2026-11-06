@@ -1,7 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.topology.ServiceDescription;
@@ -15,7 +15,7 @@ import ro.cs.tao.topology.ServiceDescription;
 @Repository
 @Qualifier(value = "serviceRepository")
 @Transactional
-public interface ServiceRepository extends PagingAndSortingRepository<ServiceDescription, Integer> {
+public interface ServiceRepository extends JpaRepository<ServiceDescription, Integer> {
 
     /**
      * Find ServiceDescription entity by its name and version (unique)
@@ -25,3 +25,4 @@ public interface ServiceRepository extends PagingAndSortingRepository<ServiceDes
      */
     ServiceDescription findByNameAndVersion(String name, String version);
 }
+

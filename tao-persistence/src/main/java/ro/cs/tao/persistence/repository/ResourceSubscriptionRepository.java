@@ -1,8 +1,8 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "resourceSubscriptionRepository")
 @Transactional
-public interface ResourceSubscriptionRepository extends PagingAndSortingRepository<ResourceSubscription, Long> {
+public interface ResourceSubscriptionRepository extends JpaRepository<ResourceSubscription, Long> {
 
     @Query(value = "SELECT * FROM subscription.resource_subscription WHERE user_id = :userId AND ended IS NULL", nativeQuery = true)
     ResourceSubscription getUserOpenSubscription(@Param("userId") String userId);
@@ -41,3 +41,4 @@ public interface ResourceSubscriptionRepository extends PagingAndSortingReposito
     @Override
     default void deleteAll() { }
 }
+

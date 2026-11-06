@@ -1,8 +1,10 @@
 package ro.cs.tao.persistence.repository;
 
+import jakarta.persistence.QueryHint;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +21,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "containerRepository")
 @Transactional
-public interface ContainerRepository extends PagingAndSortingRepository<Container, String> {
+public interface ContainerRepository extends JpaRepository<Container, String> {
 
     /**
      * Find Container entity by its name
@@ -41,12 +43,16 @@ public interface ContainerRepository extends PagingAndSortingRepository<Containe
      * @param visibilityId  The visibility identifier (see {@code ro.cs.tao.docker.ContainerVisibility})
      */
     @Query(value = "SELECT * FROM component.container WHERE type_id = :typeId AND visibility_id = :visibilityId", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true"), @QueryHint(name = "org.hibernate.cacheable", value = "true") })
     List<Container> findByTypeAndVisibility(@Param("typeId") int typeId, @Param("visibilityId") int visibilityId);
 
     @Query(value = "SELECT * FROM component.container WHERE owner_id IN (SELECT id FROM usr.user WHERE username = 'SystemAccount' or id = :userId) " +
             "AND visibility_id IN (2, 3)", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true"), @QueryHint(name = "org.hibernate.cacheable", value = "true") })
     List<Container> listContainersVisibleToUser(@Param("userId") String userId);
 
     @Query(value = "SELECT * FROM component.container WHERE owner_id = :userId AND visibility_id IN (2, 3)", nativeQuery = true)
     List<Container> listUserContainers(@Param("userId") String userId);
 }
+
+

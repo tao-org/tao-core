@@ -15,16 +15,14 @@
  */
 package ro.cs.tao.workflow;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.*;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.workflow.enums.Status;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +50,7 @@ public class WorkflowDescriptor
     private boolean temporary;
     private List<String> tags;
 
-    @XmlElement(name = "userName")
+    @XmlElement(name = "userId")
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
@@ -77,15 +75,23 @@ public class WorkflowDescriptor
     public void setCreatedFromWorkflowId(Long createdFromWorkflowId) { this.createdFromWorkflowId = createdFromWorkflowId; }
 
     @XmlTransient
+    @JsonGetter("xCoord")
     public float getxCoord() { return xCoord; }
+    @JsonSetter("xCoord")
+    @JsonAlias("xcoord")
     public void setxCoord(float xCoord) { this.xCoord = xCoord; }
 
     @XmlTransient
+    @JsonGetter("yCoord")
     public float getyCoord() { return yCoord; }
+    @JsonSetter("yCoord")
+    @JsonAlias("ycoord")
     public void setyCoord(float yCoord) { this.yCoord = yCoord; }
 
     @XmlTransient
+    @JsonGetter("zoom")
     public float getZoom() { return zoom; }
+    @JsonSetter("zoom")
     public void setZoom(float zoom) { this.zoom = zoom; }
 
     @XmlElement(name = "temporary")
@@ -106,6 +112,14 @@ public class WorkflowDescriptor
     @Transient
     public List<WorkflowNodeDescriptor> getOrderedNodes() {
         return orderNodes(this.nodes, null);
+    }
+
+    public List<WorkflowNodeDescriptor> orderNodesByLevel() {
+        return orderNodesByLevel(this.nodes);
+    }
+
+    public WorkflowNodeDescriptor getNodeById(Long id) {
+        return this.nodes.stream().filter(n -> n.getId().equals(id)).findFirst().orElse(null);
     }
 
     // addNode and removeNode are needed for bidirectional relationship
@@ -152,3 +166,4 @@ public class WorkflowDescriptor
         }
     }
 }
+

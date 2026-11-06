@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.user.UserType;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for UserStatus enum stored values
@@ -37,3 +36,4 @@ public class UserTypeConverter implements AttributeConverter<UserType, Integer> 
         return dbData != null ? EnumUtils.getEnumConstantByValue(UserType.class, dbData) : null;
     }
 }
+

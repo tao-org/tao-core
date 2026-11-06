@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.user;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * User (activation) status enumeration
@@ -57,3 +56,4 @@ public enum UserStatus implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

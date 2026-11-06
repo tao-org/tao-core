@@ -15,12 +15,12 @@
  */
 package ro.cs.tao.datasource;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
@@ -230,3 +230,4 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
         return filteredParameters;
     }
 }
+

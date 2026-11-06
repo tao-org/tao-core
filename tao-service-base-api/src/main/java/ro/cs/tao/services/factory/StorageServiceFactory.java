@@ -2,15 +2,19 @@ package ro.cs.tao.services.factory;
 
 import ro.cs.tao.persistence.AuxiliaryDataProvider;
 import ro.cs.tao.persistence.EOProductProvider;
+import ro.cs.tao.persistence.RepositoryProvider;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.interfaces.StorageService;
 import ro.cs.tao.services.model.ItemAction;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workspaces.Repository;
 import ro.cs.tao.workspaces.RepositoryType;
 
 import java.lang.ref.WeakReference;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -22,6 +26,7 @@ public class StorageServiceFactory {
     private static EOProductProvider productProvider;
     private static VectorDataProvider vectorDataProvider;
     private static AuxiliaryDataProvider auxiliaryDataProvider;
+    private static RepositoryProvider repositoryProvider;
 
     private final static Map<Repository, WeakReference<StorageService>> cachedServices = Collections.synchronizedMap(new HashMap<>());
     private final static Map<RepositoryType, List<ItemAction>> cachedActions = new HashMap<>();
@@ -36,6 +41,10 @@ public class StorageServiceFactory {
 
     public static void setAuxiliaryDataProvider(AuxiliaryDataProvider auxiliaryDataProvider) {
         StorageServiceFactory.auxiliaryDataProvider = auxiliaryDataProvider;
+    }
+
+    public static void setRepositoryProvider(RepositoryProvider repositoryProvider) {
+        StorageServiceFactory.repositoryProvider = repositoryProvider;
     }
 
     /**
@@ -117,5 +126,59 @@ public class StorageServiceFactory {
         return service;
     }
 
+    /**
+     * Retrieves an instance of {@code StorageService} associated with the specified repository type.
+     * If no compatible instance is available, an {@code IllegalArgumentException} is thrown.
+     *
+     * @param repositoryType the type of repository for which the storage service instance is requested
+     * @return an instance of {@code StorageService} compatible with the given repository type
+     * @throws IllegalArgumentException if no matching storage service is found or none are available
+     */
+    public static final StorageService getInstance(RepositoryType repositoryType) {
+        final ServiceRegistry<StorageService> registry = ServiceRegistryManager.getInstance().getServiceRegistry(StorageService.class);
+        final Set<StorageService> services = registry.getServices();
+        if (services == null) {
+            throw new IllegalArgumentException("No remote file repository is available");
+        }
+        StorageService service = services.stream().filter(s -> s.isIntendedFor(repositoryType)).findFirst().orElse(null);
+        if (service == null) {
+            throw new IllegalArgumentException("No remote file repository for the given protocol is available");
+        }
+        try {
+            service = service.getClass().newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return service;
+    }
 
+    /**
+     * Retrieves an instance of {@code StorageService} based on the provided user ID and URL.
+     * If the user ID or the URL is null or empty, an {@code IllegalArgumentException} is thrown.
+     * If no repository is found for the given user ID and URL, a {@code NoSuchElementException} is thrown.
+     *
+     * @param userId the unique identifier of the user for which the storage service is requested
+     * @param url the URL used to identify the repository associated with the user ID
+     * @return an instance of {@code StorageService} linked to the specified repository
+     * @throws IllegalArgumentException if the user ID or URL is null or empty
+     * @throws NoSuchElementException if no repository matches the provided user ID and URL
+     */
+    public static final StorageService getInstance(String userId, String url) {
+        if (StringUtilities.isNullOrEmpty(userId) || StringUtilities.isNullOrEmpty(url)) {
+            throw new IllegalArgumentException("userId or root is null or empty");
+        }
+        final List<Repository> repositories = repositoryProvider.getByUser(userId);
+        if (repositories != null && !repositories.isEmpty()) {
+            final Repository repository;
+            if (!FileUtilities.isPath(url) && !Paths.get(url).isAbsolute()) {
+                repository = repositories.stream().filter(r -> r.getType() == RepositoryType.LOCAL).findFirst().orElse(null);
+            } else {
+                repository = repositories.stream().filter(r -> url.startsWith(r.root())).findFirst().orElse(null);
+            }
+            if (repository != null) {
+                return getInstance(repository);
+            }
+        }
+        throw new NoSuchElementException("No repository found for userId=" + userId + " and url=" + url);
+    }
 }

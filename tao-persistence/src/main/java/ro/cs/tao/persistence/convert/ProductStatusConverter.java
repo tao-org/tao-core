@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.ProductStatus;
-
-import javax.persistence.AttributeConverter;
 
 public class ProductStatusConverter implements AttributeConverter<ProductStatus, Integer> {
 
@@ -17,3 +16,4 @@ public class ProductStatusConverter implements AttributeConverter<ProductStatus,
         return integer != null ? EnumUtils.getEnumConstantByValue(ProductStatus.class, integer) : null;
     }
 }
+

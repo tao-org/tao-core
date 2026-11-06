@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.datasource.remote.FetchMode;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * @author Cosmin Cara
@@ -34,3 +33,4 @@ public class FetchModeConverter implements AttributeConverter<FetchMode, Integer
         return dbData != null ? EnumUtils.getEnumConstantByValue(FetchMode.class, dbData) : null;
     }
 }
+

@@ -29,6 +29,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Utility class for managing and manipulating system processes. This class provides methods to tokenize command strings,
+ * retrieve process identifiers (PID), and control processes such as suspending, resuming, or terminating them.
+ *
  * @author Cosmin Cara
  */
 public final class ProcessHelper {
@@ -38,10 +41,23 @@ public final class ProcessHelper {
     private static final String LINUX_SUSPEND = "kill -STOP %s";
     private static final String LINUX_RESUME = "kill -CONT %s";
 
+    /**
+     * Tokenizes the input command string into a list of command segments.
+     * The method parses the input string into tokens based on specific delimiters such as quotes and semicolons.
+     *
+     * @param commandString the input command string that needs to be tokenized
+     * @return a list of strings representing the individual tokens extracted from the command string
+     */
     public static List<String> tokenizeCommands(String commandString) {
         return tokenize(commandString, "'", (Object[]) null);
     }
 
+    /**
+     * Tokenizes the input command string into a list of command segments, allowing optional replacements.
+     * The method processes the provided command string, applies optional formatting with the given arguments,
+     * and splits it into meaningful tokens using specific delimiters.
+     *
+     * @param commandString the*/
     public static List<String> tokenizeCommands(String commandString, Object...args) {
         return tokenize(commandString, "'", args);
     }
@@ -51,7 +67,7 @@ public final class ProcessHelper {
         String regex = quoteChar + "([^']*)" + quoteChar + "|(;)|([^;\\s]+)";
         final List<String> tokens = new ArrayList<>();
         String cmd = replacements != null && replacements.length > 0 ? String.format(commandString, replacements) : commandString;
-        Matcher m = Pattern.compile(regex).matcher(String.format(cmd, replacements));
+        Matcher m = Pattern.compile(regex).matcher(cmd);
         while (m.find()) {
             if (m.group(1) != null) {
                 tokens.add(quoteChar + m.group(1) + quoteChar);

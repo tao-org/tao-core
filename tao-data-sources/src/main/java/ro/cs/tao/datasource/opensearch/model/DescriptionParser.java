@@ -31,6 +31,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The DescriptionParser class is responsible for parsing OpenSearch Description Documents
+ * and converting them into instances of {@code OpenSearchService}.
+ * This parser utilizes the SAX parsing mechanism to process the input XML content.
+ */
 public class DescriptionParser {
 
     public OpenSearchService parse(String content) throws ParseException {
@@ -136,7 +141,8 @@ public class DescriptionParser {
                         this.currentEndpoint.addParameter(this.currentParameter.getSystemName(),
                                                           new DataSourceParameter(this.currentParameter.getSystemName(),
                                                                                   this.currentParameter.getRemoteName(),
-                                                                                  this.currentParamClass, null, false));
+                                                                                  this.currentParamClass != null ? this.currentParamClass : String.class,
+                                                                                  this.currentParameter.getRemoteName(), false));
                         this.currentParamClass = null;
                     }
                     break;

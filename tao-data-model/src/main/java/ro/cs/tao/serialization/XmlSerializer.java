@@ -15,15 +15,22 @@
  */
 package ro.cs.tao.serialization;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.cfg.EnumFeature;
+import tools.jackson.dataformat.xml.XmlMapper;
+import tools.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 
 /**
+ * Serializer implementation for XML serialization and deserialization.
+ * This class extends the {@code BaseSerializer} abstract class and provides
+ * functionality specific to XML data format. It uses the Jackson XML module
+ * to handle serialization and deserialization of objects to and from XML strings.
+ *
+ * @param <T> The type of objects to be serialized and deserialized.
+ *
  * @author Cosmin Cara
  */
 class XmlSerializer<T> extends BaseSerializer<T> {
@@ -34,16 +41,15 @@ class XmlSerializer<T> extends BaseSerializer<T> {
 
     @Override
     protected ObjectMapper createMapper() {
-        ObjectMapper mapper = new XmlMapper();
-        final JacksonXmlModule jacksonXmlModule = new JacksonXmlModule();
-        jacksonXmlModule.setDefaultUseWrapper(false);
-        mapper.registerModules(new JaxbAnnotationModule(), jacksonXmlModule, new JavaTimeModule());
+        XmlMapper.Builder builder = XmlMapper.builder()
+                .defaultUseWrapper(false)
+                .addModule(new JakartaXmlBindAnnotationModule());
         if (this.formatOutput) {
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            builder.enable(SerializationFeature.INDENT_OUTPUT);
         }
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
-        mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-        return mapper;
+        builder.disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS);
+        builder.enable(EnumFeature.WRITE_ENUMS_USING_TO_STRING);
+        builder.enable(EnumFeature.READ_ENUMS_USING_TO_STRING);
+        return builder.build();
     }
 }

@@ -22,19 +22,21 @@ public class BalancedJobSelector extends JobSelector<Tuple<Long, String>> {
 
     @Override
     public Tuple<Long, String> chooseNext() {
-        final Queue<Tuple<Long, String>> queue = getQueue();
-        if (queue.isEmpty()) {
-            return null;
-        }
-        final Map<String, Integer> counts = new HashMap<>();
-        final Map<String, Tuple<Long, String>> firstOccurrences = new HashMap<>();
-        for (Tuple<Long, String> current : queue) {
-            counts.compute(current.getKeyTwo(), (key, value) -> value != null ? value + 1 : 1);
-            if (!firstOccurrences.containsKey(current.getKeyTwo())) {
-                firstOccurrences.put(current.getKeyTwo(), current);
+        synchronized (this.queue) {
+            if (this.queue.isEmpty()) {
+                return null;
             }
+            final Map<String, Integer> counts = new HashMap<>();
+            final Map<String, Tuple<Long, String>> firstOccurrences = new HashMap<>();
+            for (Tuple<Long, String> current : queue) {
+                counts.compute(current.getKeyTwo(), (key, value) -> value != null ? value + 1 : 1);
+                if (!firstOccurrences.containsKey(current.getKeyTwo())) {
+                    firstOccurrences.put(current.getKeyTwo(), current);
+                }
+            }
+            final Map.Entry<String, Integer> maxEntry = counts.entrySet().stream().max(Comparator.comparingInt(Map.Entry::getValue)).get();
+            this.queue.remove(maxEntry);
+            return firstOccurrences.get(maxEntry.getKey());
         }
-        final Map.Entry<String, Integer> maxEntry = counts.entrySet().stream().max(Comparator.comparingInt(Map.Entry::getValue)).get();
-        return firstOccurrences.get(maxEntry.getKey());
     }
 }

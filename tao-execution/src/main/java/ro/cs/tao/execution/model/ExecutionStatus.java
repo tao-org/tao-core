@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.execution.model;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * Enumeration for the possible statuses of an execution (either for a task or for a job).
@@ -83,3 +82,4 @@ public enum ExecutionStatus implements TaoEnum<Integer> {
     public Integer value() { return this.value; }
 
 }
+

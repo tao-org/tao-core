@@ -71,25 +71,19 @@
                 <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
             </basic>
 
-            <many-to-many name="sources" fetch="LAZY">
-                <join-table name="component.processing_component_sources">
-                    <join-column name="processing_component_id" referenced-column-name="id"/>
-                    <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
-                </join-table>
+            <one-to-many name="sources" target-entity="ro.cs.tao.component.SourceDescriptor" fetch="LAZY">
+                <join-column name="parent_id" referenced-column-name="id"/>
                 <cascade>
                     <cascade-all/>
                 </cascade>
-            </many-to-many>
+            </one-to-many>
 
-            <many-to-many name="targets" fetch="LAZY">
-                <join-table name="component.processing_component_targets">
-                    <join-column name="processing_component_id" referenced-column-name="id"/>
-                    <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
-                </join-table>
+            <one-to-many name="targets" target-entity="ro.cs.tao.component.TargetDescriptor" fetch="LAZY">
+                <join-column name="parent_id" referenced-column-name="id"/>
                 <cascade>
                     <cascade-all/>
                 </cascade>
-            </many-to-many>
+            </one-to-many>
         </attributes>
     </mapped-superclass>
 
@@ -110,7 +104,7 @@
     </mapped-superclass>
 
     <entity class="ro.cs.tao.configuration.ConfigurationCategory" access="PROPERTY">
-        <table name="config.category"/>
+        <table schema="config" name="category"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="smallint NOT NULL"/>
@@ -125,11 +119,8 @@
     </entity>
 
     <entity class="ro.cs.tao.configuration.ConfigurationItem" access="PROPERTY">
-        <table name="config.config"/>
+        <table schema="config" name="config"/>
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="varchar(250) NOT NULL"/>
-            </id>
             <basic name="value">
                 <column name="value" nullable="true" column-definition="varchar"/>
             </basic>
@@ -140,11 +131,20 @@
                 <column name="type" nullable="false" column-definition="varchar(10) NOT NULL"/>
             </basic>
             <basic name="label">
-                <column name="label" nullable="true" column-definition="varchar NOT NULL"/>
+                <column name="label" nullable="false" column-definition="varchar NOT NULL"/>
             </basic>
             <basic name="values">
                 <column name="values" nullable="true" column-definition="json"/>
                 <convert converter="ro.cs.tao.persistence.convert.ValuesConverter"/>
+            </basic>
+            <basic name="dependsOnItemId">
+                <column name="depends_on_item_id" nullable="true" column-definition="varchar(512)"/>
+            </basic>
+            <basic name="dependsOnItemValue">
+                <column name="depends_on_item_value" nullable="true" column-definition="varchar"/>
+            </basic>
+            <basic name="perUser">
+                <column name="per_user" nullable="false" column-definition="boolean"/>
             </basic>
             <basic name="lastUpdated">
                 <column name="last_updated" nullable="false" column-definition="timestamp with time zone NOT NULL DEFAULT now()"/>
@@ -156,8 +156,53 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.configuration.UserConfigurationItem" access="PROPERTY">
+        <table schema="config" name="user_config"/>
+        <id-class class="ro.cs.tao.configuration.UserConfigurationItemId"/>
+        <attributes>
+            <id name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
+            </id>
+            <id name="key">
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </id>
+            <basic name="value">
+                <column name="value" nullable="true" column-definition="varchar"/>
+            </basic>
+            <basic name="friendlyName">
+                <column name="friendly_name" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="type">
+                <column name="type" nullable="false" column-definition="varchar(10) NOT NULL"/>
+            </basic>
+            <basic name="label">
+                <column name="label" nullable="true" column-definition="varchar"/>
+            </basic>
+            <basic name="values">
+                <column name="values" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.ValuesConverter"/>
+            </basic>
+            <basic name="dependsOnItemId">
+                <column name="depends_on_item_id" nullable="true" column-definition="varchar(512)"/>
+            </basic>
+            <basic name="dependsOnItemValue">
+                <column name="depends_on_item_value" nullable="true" column-definition="varchar"/>
+            </basic>
+            <basic name="lastUpdated">
+                <column name="last_updated" nullable="false" column-definition="timestamp with time zone NOT NULL DEFAULT now()"/>
+            </basic>
+            <many-to-one name="category" fetch="EAGER" target-entity="ro.cs.tao.configuration.ConfigurationCategory">
+                <join-column name="category_id" referenced-column-name="id"/>
+            </many-to-one>
+            <transient name="id"/>
+            <transient name="item"/>
+            <transient name="typedValue"/>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.topology.NodeFlavor" access="PROPERTY">
-        <table name="topology.node_flavor"/>
+        <table schema="topology" name="node_flavor"/>
+        <convert converter="ro.cs.tao.persistence.convert.MemoryUnitConverter" attribute-name="memoryUnit"/>
         <attributes>
             <basic name="cpu">
                 <column name="cpu" nullable="false" column-definition="integer NOT NULL"/>
@@ -174,13 +219,16 @@
             <basic name="rxtxFactor">
                 <column name="rxtx" nullable="false" column-definition="real NOT NULL"/>
             </basic>
+            <basic name="memoryUnit">
+                <column name="unit_id" nullable="false" column-definition="smallint NOT NULL"/>
+            </basic>
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
-        <table name="topology.node"/>
+        <table schema="topology" name="node"/>
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.NodeDescriptionListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.NodeRoleConverter" attribute-name="role"/>
         <attributes>
@@ -225,7 +273,7 @@
                 <join-column name="flavor_id" nullable="false"/>
             </many-to-one>
             <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="LAZY">
-                <collection-table name="topology.node_service" >
+                <collection-table schema="topology" name="node_service" >
                     <join-column name="host_name" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
@@ -233,8 +281,25 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.topology.AdminKey" access="PROPERTY">
+        <table schema="topology" name="user_keys"/>
+        <id-class class="ro.cs.tao.topology.AdminKeyId"/>
+        <attributes>
+            <id name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </id>
+            <id name="nodeId">
+                <column name="node_id" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </id>
+            <basic name="sshKey">
+                <column name="ssh_key" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <transient name="id"/>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.topology.VolatileInstance" access="PROPERTY">
-        <table name="topology.volatile_instance"/>
+        <table schema="topology" name="volatile_instance"/>
         <attributes>
             <basic name="nodeId">
                 <column name="node_id" nullable="false" column-definition="varchar NOT NULL"/>
@@ -262,7 +327,7 @@
     </entity>
 
     <entity class="ro.cs.tao.topology.ServiceDescription" access="PROPERTY">
-        <table name="topology.service"/>
+        <table schema="topology" name="service"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="integer NOT NULL"/>
@@ -281,7 +346,10 @@
     </entity>
 
     <entity class="ro.cs.tao.docker.Container" access="PROPERTY">
-        <table name="component.container"/>
+        <table schema="component" name="container"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.ContainerListener"/>
+        </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.ContainerTypeConverter" attribute-name="type" />
         <convert converter="ro.cs.tao.persistence.convert.ContainerVisibilityConverter" attribute-name="visibility" />
         <attributes>
@@ -317,13 +385,13 @@
             </basic>
 
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
-                <collection-table name="component.container_applications" >
+                <collection-table schema="component" name="container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
 
             <element-collection name="format">
-                <collection-table name="component.container_formats">
+                <collection-table schema="component" name="container_formats">
                     <join-column name="container_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
@@ -331,10 +399,14 @@
     </entity>
 
     <entity class="ro.cs.tao.docker.ContainerInstance" access="PROPERTY">
-        <table name="component.container_instance"/>
+        <table schema="component" name="container_instance"/>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="properties"/>
         <attributes>
             <basic name="containerId">
                 <column name="container_id" nullable="false" column-definition="varchar(1024) NOT NULL"/>
+            </basic>
+            <basic name="host">
+                <column name="host" nullable="true" column-definition="varchar(250)"/>
             </basic>
             <basic name="name">
                 <column name="name" nullable="true" column-definition="varchar(50)"/>
@@ -345,11 +417,15 @@
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
             </basic>
+            <basic name="properties">
+                <column name="properties" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
+            </basic>
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.component.WebServiceAuthentication" access="PROPERTY">
-        <table name="component.wps_authentication"/>
+        <table schema="component" name="wps_authentication"/>
         <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="type" />
         <attributes>
             <basic name="type">
@@ -371,10 +447,10 @@
     </entity>
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
-        <table name="component.processing_component"/>
+        <table schema="component" name="processing_component"/>
 
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.ProcessingComponentListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
         </entity-listeners>
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
@@ -419,15 +495,15 @@
             <basic name="owner">
                 <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
             </basic>
-            <basic name="isTransient">
-                <column name="transient" nullable="false" column-definition="varchar NULL DEFAULT false"/>
+            <basic name="transient">
+                <column name="transient" nullable="false" column-definition="boolean NULL DEFAULT false"/>
             </basic>
             <basic name="outputManaged">
                 <column name="output_managed" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">
-                <join-table name="component.component_parameters">
+                <join-table schema="component" name="component_parameters">
                     <join-column name="processing_component_id" referenced-column-name="id"/>
                     <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
                 </join-table>
@@ -437,7 +513,7 @@
             </many-to-many>
 
             <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="EAGER">
-                <collection-table name="component.component_variables">
+                <collection-table schema="component" name="component_variables">
                     <join-column name="processing_component_id" referenced-column-name="id" updatable="true" />
                 </collection-table>
             </element-collection>
@@ -448,22 +524,35 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.DryRunMetrics" access="PROPERTY">
+        <table schema="component" name="component_dry_run_metrics"/>
+
+        <attributes>
+            <basic name="duration">
+                <column name="duration" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="cpuUsageMetrics">
+                <column name="cpu_usage" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
+            </basic>
+            <basic name="memoryUsageMetrics">
+                <column name="memory_usage" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
+            </basic>
+            <one-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
+                <join-column name="processing_component_id" referenced-column-name="id" />
+                <cascade>
+                    <cascade-refresh/>
+                </cascade>
+            </one-to-one>
+
+            <transient name="executionNodeFlavor" />
+
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.component.GroupComponent" access="PROPERTY">
-        <table name="component.group_component"/>
-
-        <association-override name="sources">
-            <join-table name="component.group_component_sources">
-                <join-column name="group_component_id" referenced-column-name="id"/>
-                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
-            </join-table>
-        </association-override>
-
-        <association-override name="targets">
-            <join-table name="component.group_component_targets">
-                <join-column name="group_component_id" referenced-column-name="id"/>
-                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
-            </join-table>
-        </association-override>
+        <table schema="component" name="group_component"/>
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
 
@@ -483,21 +572,21 @@
     </entity>
 
     <entity class="ro.cs.tao.datasource.DataSourceComponentGroup" access="PROPERTY">
-        <table name="component.data_source_component_group"/>
+        <table schema="component" name="data_source_component_group"/>
 
-        <association-override name="sources">
-            <join-table name="component.data_source_component_group_sources">
+        <!--<association-override name="sources">
+            <join-table schema="component" name="data_source_component_group_sources">
                 <join-column name="data_source_component_group_id" referenced-column-name="id"/>
                 <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
             </join-table>
         </association-override>
 
         <association-override name="targets">
-            <join-table name="component.data_source_component_group_targets">
+            <join-table schema="component" name="data_source_component_group_targets">
                 <join-column name="data_source_component_group_id" referenced-column-name="id"/>
                 <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
             </join-table>
-        </association-override>
+        </association-override>-->
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
 
@@ -506,7 +595,7 @@
                 <column name="user_id" nullable="false" column-definition="character varying not null"/>
             </basic>
             <many-to-many name="dataSourceComponents" fetch="EAGER">
-                <join-table name="component.data_source_component_group_components">
+                <join-table schema="component" name="data_source_component_group_components">
                     <join-column name="data_source_component_group_id" referenced-column-name="id"/>
                     <inverse-join-column name="data_source_component_id" referenced-column-name="id"/>
                 </join-table>
@@ -516,7 +605,7 @@
             </many-to-many>
 
             <many-to-many name="dataSourceQueries" fetch="LAZY">
-                <join-table name="component.data_source_component_group_queries">
+                <join-table schema="component" name="data_source_component_group_queries">
                     <join-column name="data_source_component_group_id" referenced-column-name="id"/>
                     <inverse-join-column name="query_id" referenced-column-name="id"/>
                 </join-table>
@@ -528,7 +617,7 @@
     </entity>
 
     <entity class="ro.cs.tao.component.ParameterDescriptor" access="PROPERTY">
-        <table name="component.processing_parameter"/>
+        <table schema="component" name="processing_parameter"/>
         <!-- set inheritance to single table, since TemplateParameterDescriptor inherits from ParameterDescriptor -->
         <inheritance strategy="SINGLE_TABLE"/>
 
@@ -538,6 +627,7 @@
         <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter" attribute-name="type" />
         <convert converter="ro.cs.tao.persistence.convert.DataTypeConverter" attribute-name="dataType" />
         <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
+        <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSetLabel" />
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
@@ -563,6 +653,9 @@
             <basic name="valueSet">
                 <column name="value_set" nullable="true" column-definition="text NULL"/>
             </basic>
+            <basic name="valueSetLabels">
+                <column name="value_set_labels" nullable="true" column-definition="text NULL"/>
+            </basic>
             <basic name="format">
                 <column name="format" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
@@ -577,7 +670,7 @@
             </one-to-one>
 
             <element-collection name="dependencies" target-class="ro.cs.tao.component.ParameterDependency" access="PROPERTY" fetch="LAZY">
-                <collection-table name="component.processing_parameter_dependencies">
+                <collection-table schema="component" name="processing_parameter_dependencies">
                     <join-column name="parameter_id" referenced-column-name="id"/>
                 </collection-table>
             </element-collection>
@@ -590,14 +683,14 @@
     <entity class="ro.cs.tao.component.TemplateParameterDescriptor" access="PROPERTY">
         <!-- no need to specify the table here, since TemplateParameterDescriptor inherits ParameterDescriptor;
              TemplateParameterDescriptor is a subclass of a SINGLE_TABLE hierarchy -->
-        <!--<table name="tao.processing_parameter"/>-->
+        <!--<table schema="tao" name="processing_parameter"/>-->
 
         <!-- any other value than 937389016 (set by JPA for the base class); e.g 2 - see tao.parameter_type identifier for TemplateParameter -->
         <discriminator-value>2</discriminator-value>
 
         <attributes>
             <many-to-many name="parameters" fetch="EAGER">
-                <join-table name="component.template_parameter_parameters">
+                <join-table schema="component" name="template_parameter_parameters">
                     <join-column name="template_parameter_id" referenced-column-name="id"/>
                     <inverse-join-column name="regular_parameter_id" referenced-column-name="id"/>
                 </join-table>
@@ -614,21 +707,11 @@
     </entity>
 
     <entity class="ro.cs.tao.datasource.DataSourceComponent" access="PROPERTY">
-        <table name="component.data_source_component"/>
+        <table schema="component" name="data_source_component"/>
 
-        <association-override name="sources">
-            <join-table name="component.data_source_component_sources">
-                <join-column name="data_source_component_id" referenced-column-name="id"/>
-                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
-            </join-table>
-        </association-override>
-
-        <association-override name="targets">
-            <join-table name="component.data_source_component_targets">
-                <join-column name="data_source_component_id" referenced-column-name="id"/>
-                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
-            </join-table>
-        </association-override>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
+        </entity-listeners>
 
         <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
         <!--<convert converter="ro.cs.tao.persistence.convert.ParameterListConverter" attribute-name="overriddenParameters" />-->
@@ -659,17 +742,59 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.datasource.DataSourceCredentials" access="PROPERTY">
-        <table name="execution.user_data_source_connection"/>
+    <entity class="ro.cs.tao.component.ConditionComponent" access="PROPERTY">
+        <table schema="component" name="condition_component"/>
+
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.DataSourceCredentialsListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.TaoComponentUpdateListener"/>
+        </entity-listeners>
+
+        <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.ComponentCategoryConverter" attribute-name="category" />
+
+        <attributes>
+            <basic name="templateType">
+                <column name="template_type_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="category">
+                <column name="category_id" nullable="true" column-definition="integer NULL DEFAULT 5"/>
+            </basic>
+            <basic name="templateContents">
+                <column name="template_contents" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="owner">
+                <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+
+            <many-to-many name="parameterDescriptors" fetch="EAGER">
+                <join-table schema="component" name="condition_component_parameters">
+                    <join-column name="component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
+            <transient name="template" />
+            <transient name="templateEngine" />
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.datasource.DataSourceCredentials" access="PROPERTY">
+        <table schema="execution" name="user_data_source_connection"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="params" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
-                <generated-value strategy="IDENTITY" generator="credentials_identifier"/>
-            </id>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
             </basic>
@@ -687,6 +812,7 @@
             </basic>
             <basic name="params">
                 <column name="params" nullable="true" column-definition="varchar(512)"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
@@ -698,13 +824,10 @@
     </entity>
 
     <entity class="ro.cs.tao.datasource.DataSourceConfiguration" access="PROPERTY">
-        <table name="component.data_source_configuration"/>
+        <table schema="component" name="data_source_configuration"/>
         <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
-            </id>
             <basic name="fetchMode">
                 <column name="fetch_mode" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
@@ -713,22 +836,25 @@
             </basic>
             <basic name="parameters">
                 <column name="parameters" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
             </basic>
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.execution.model.ExecutionTask" access="PROPERTY">
-        <table name="execution.task"/>
+        <table schema="execution" name="task"/>
         <!-- set inheritance to single table, since ExecutionGroup           inherits from ExecutionTask,
                                                     ProcessingExecutionTask  inherits from ExecutionTask,
                                                     DataSourceExecutionTask  inherits from ExecutionTask
                                                     WPSExecutionTask         inherits from ExecutionTask-->
         <inheritance strategy="SINGLE_TABLE"/>
 
-        <!-- define discriminator in root class, avoid default DTYPE -->
+        <!-- define discriminator in collectionDescription class, avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="instanceTemporaryOutput" />
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="instanceTargetOutput" />
         <attributes>
             <basic name="resourceId">
                 <column name="resource_id" nullable="true" column-definition="character varying(512) NULL"/>
@@ -768,9 +894,11 @@
             </basic>
             <basic name="instanceTemporaryOutput">
                 <column name="temp_target" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
             </basic>
             <basic name="instanceTargetOutput">
                 <column name="actual_target" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
             </basic>
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
@@ -791,7 +919,7 @@
             </many-to-one>
 
             <element-collection name="inputParameterValues" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="EAGER">
-                <collection-table name="execution.task_input">
+                <collection-table schema="execution" name="task_input">
                     <join-column name="task_id" referenced-column-name="id" />
                     <unique-constraint>
                         <column-name>task_id</column-name>
@@ -801,7 +929,7 @@
             </element-collection>
 
             <element-collection name="outputParameterValues" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="LAZY">
-                <collection-table name="execution.task_output">
+                <collection-table schema="execution" name="task_output">
                     <join-column name="task_id" referenced-column-name="id" />
                     <unique-constraint>
                         <column-name>task_id</column-name>
@@ -812,7 +940,7 @@
 
             <transient name="stateHandler" />
             <transient name="context" />
-
+            <transient name="running" />
         </attributes>
     </entity>
 
@@ -832,13 +960,6 @@
     <entity class="ro.cs.tao.execution.model.ScriptTask" access="PROPERTY">
 
         <discriminator-value>12</discriminator-value>
-
-        <attributes>
-            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
-                <join-column name="component_id" nullable="false"/>
-            </many-to-one>
-            <transient name="externalCommonParameters"/>
-        </attributes>
     </entity>
 
     <entity class="ro.cs.tao.execution.model.DataSourceExecutionTask" access="PROPERTY">
@@ -859,7 +980,7 @@
 
         <attributes>
             <many-to-many name="tasks" fetch="LAZY"> <!-- target-entity="ro.cs.tao.execution.model.ProcessingExecutionTask">-->
-                <join-table name="execution.task_group">
+                <join-table schema="execution" name="task_group">
                     <join-column name="group_id" referenced-column-name="id"/>
                     <inverse-join-column name="task_id" referenced-column-name="id"/>
                 </join-table>
@@ -870,8 +991,20 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.execution.model.ConditionExecutionTask" access="PROPERTY">
+
+        <discriminator-value>15</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ConditionComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+            <transient name="rules"/>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
-        <table name="execution.job"/>
+        <table schema="execution" name="job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callbackDescriptor"/>
         <convert converter="ro.cs.tao.persistence.convert.JsonTaskDependenciesConverter" attribute-name="taskDependencies"/>
@@ -885,6 +1018,7 @@
             </basic>
             <basic name="environment">
                 <column name="env" nullable="true" column-definition="smallint default 1"/>
+                <convert converter="ro.cs.tao.persistence.convert.JobEnvironmentConverter"/>
             </basic>
             <basic name="appId">
                 <column name="app_id" nullable="true" column-definition="varchar(50) not null" />
@@ -918,23 +1052,21 @@
             </basic>
             <basic name="callbackDescriptor">
                 <column name="callback" nullable="true" column-definition="json NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter"/>
             </basic>
             <basic name="taskDependencies">
                 <column name="task_dependencies" nullable="true" column-definition="json NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.JsonTaskDependenciesConverter"/>
             </basic>
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.messaging.Message" access="PROPERTY">
-        <table name="common.notification"/>
+        <table schema="common" name="notification"/>
         <inheritance strategy="SINGLE_TABLE"/>
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="IDENTITY" />
-            </id>
             <basic name="timestamp">
                 <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
@@ -947,9 +1079,10 @@
             <basic name="read">
                 <column name="read" nullable="true" column-definition="boolean NULL"/>
             </basic>
-            <basic name="data">
+            <basic name="dataText">
                 <column name="data" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
+            <transient name="data"/>
             <transient name="message"/>
             <transient name="payload"/>
             <transient name="persistent"/>
@@ -974,20 +1107,14 @@
 
     <entity class="ro.cs.tao.messaging.progress.TransferStart" access="PROPERTY">
         <discriminator-value>4</discriminator-value>
-        <attributes>
-            <transient name="taskName"/>
-        </attributes>
     </entity>
 
     <entity class="ro.cs.tao.messaging.progress.TransferEnd" access="PROPERTY">
         <discriminator-value>5</discriminator-value>
-        <attributes>
-            <transient name="taskName"/>
-        </attributes>
     </entity>
 
     <entity class="ro.cs.tao.workflow.WorkflowDescriptor" access="PROPERTY">
-        <table name="workflow.graph"/>
+        <table schema="workflow" name="graph"/>
         <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.StringListConverter" attribute-name="tags"/>
@@ -1040,7 +1167,7 @@
 
 
     <entity class="ro.cs.tao.workflow.WorkflowNodeDescriptor" access="PROPERTY">
-        <table name="workflow.graph_node"/>
+        <table schema="workflow" name="graph_node"/>
         <!-- set inheritance to single table, since WorkflowNodeGroupDescriptor inherits from WorkflowNodeDescriptor -->
         <inheritance strategy="SINGLE_TABLE"/>
         <!-- avoid default DTYPE -->
@@ -1086,7 +1213,7 @@
             </many-to-one>
 
             <element-collection name="incomingLinks" target-class="ro.cs.tao.component.ComponentLink" access="PROPERTY" fetch="LAZY">
-                <collection-table name="workflow.component_link">
+                <collection-table schema="workflow" name="component_link">
                     <join-column name="target_graph_node_id" referenced-column-name="id"/>
                 </collection-table>
             </element-collection>
@@ -1103,7 +1230,7 @@
 
         <attributes>
             <many-to-many name="nodes" fetch="EAGER">
-                <join-table name="workflow.graph_node_group_nodes">
+                <join-table schema="workflow" name="graph_node_group_nodes">
                     <join-column name="graph_node_group_id" referenced-column-name="id"/>
                     <inverse-join-column name="graph_node_id" referenced-column-name="id"/>
                 </join-table>
@@ -1118,66 +1245,88 @@
     </entity>
 
     <entity class="ro.cs.tao.component.SourceDescriptor" access="PROPERTY">
-        <table name="component.source_descriptor"/>
-        <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
+        <table schema="component" name="source_descriptor"/>
         <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL" unique="true"/>
+            </id>
             <basic name="parentId">
                 <column name="parent_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="varchar"/>
+            </basic>
             <basic name="cardinality">
                 <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter"/>
             </basic>
             <basic name="referencedSourceDescriptorId">
                 <column name="ref_source_descriptor_id" nullable="true" column-definition="varchar"/>
             </basic>
 
             <embedded name="dataDescriptor" />
+            <transient name="formatType"/>
+            <transient name="formatName"/>
+            <transient name="geometry"/>
+            <transient name="crs"/>
+            <transient name="sensorType"/>
+            <transient name="dimension"/>
+            <transient name="location"/>
 
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.component.TargetDescriptor" access="PROPERTY">
-        <table name="component.target_descriptor"/>
-        <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
+        <table schema="component" name="target_descriptor"/>
         <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL" unique="true"/>
+            </id>
             <basic name="parentId">
                 <column name="parent_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="varchar"/>
+            </basic>
             <basic name="cardinality">
                 <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" />
             </basic>
             <basic name="referencedTargetDescriptorId">
                 <column name="ref_target_descriptor_id" nullable="true" column-definition="varchar"/>
             </basic>
 
             <embedded name="dataDescriptor" />
+            <transient name="formatType"/>
+            <transient name="formatName"/>
+            <transient name="geometry"/>
+            <transient name="crs"/>
+            <transient name="sensorType"/>
+            <transient name="dimension"/>
+            <transient name="location"/>
 
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.datasource.beans.Query" access="PROPERTY">
-        <table name="workflow.query"/>
+        <table schema="workflow" name="query"/>
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.QueryListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="values"/>
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="IDENTITY" generator="query_identifier"/>
-            </id>
             <basic name="label">
                 <column name="label" nullable="true" column-definition="text"/>
             </basic>
@@ -1219,6 +1368,7 @@
             </basic>
             <basic name="values">
                 <column name="values" nullable="true" column-definition="json NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp NULL default now()"/>
@@ -1232,16 +1382,13 @@
     </entity>
 
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
-        <table name="usr.user"/>
+        <table schema="usr" name="`user`"/>
         <entity-listeners>
-            <entity-listener class="ro.cs.tao.persistence.audit.UserListener"/>
+            <entity-listener class="ro.cs.tao.persistence.audit.EncryptDecryptListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
         <convert converter="ro.cs.tao.persistence.convert.UserTypeConverter" attribute-name="userType" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="varchar NOT NULL DEFAULT(generate_uuid_v4())"/>
-            </id>
             <basic name="username">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
@@ -1297,14 +1444,23 @@
                 <column name="user_type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="passwordResetKey">
-                <column name="password_reset_key" nullable="true" column-definition="character varying(255) NULL"/>
+                <column name="password_reset_key" nullable="true" column-definition="character varying(255)"/>
+            </basic>
+            <basic name="apiKey">
+                <column name="api_key" nullable="true" column-definition="character varying(50)"/>
+            </basic>
+            <basic name="apiKeyExpiration">
+                <column name="api_key_expiration" nullable="true" column-definition="timestamp"/>
+            </basic>
+            <basic name="workspaceId">
+                <column name="workspace_id" nullable="true" column-definition="character varying(50)"/>
             </basic>
             <basic name="expiresOn">
-                <column name="expiration_date" nullable="true" column-definition="timestamp NULL"/>
+                <column name="expiration_date" nullable="true" column-definition="timestamp"/>
             </basic>
 
             <many-to-many name="groups" fetch="LAZY">
-                <join-table name="usr.user_group">
+                <join-table schema="usr" name="user_group">
                     <join-column name="user_id" referenced-column-name="id"/>
                     <inverse-join-column name="group_id" referenced-column-name="id"/>
                 </join-table>
@@ -1314,7 +1470,7 @@
             </many-to-many>
 
             <element-collection name="preferences" target-class="ro.cs.tao.user.UserPreference" access="PROPERTY" fetch="EAGER">
-                <collection-table name="usr.user_prefs">
+                <collection-table schema="usr" name="user_prefs">
                     <join-column name="user_id" referenced-column-name="id" updatable="true" />
                 </collection-table>
             </element-collection>
@@ -1323,14 +1479,9 @@
     </entity>
 
     <entity class="ro.cs.tao.Tag" access="PROPERTY">
-        <table name="common.tag"/>
+        <table schema="common" name="tag"/>
         <convert converter="ro.cs.tao.persistence.convert.TagTypeConverter" attribute-name="tagType"/>
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="IDENTITY" generator="group_identifier"/>
-                <!--<sequence-generator name="group_identifier" sequence-name="common.tag_id_seq" allocation-size="1" />-->
-            </id>
             <basic name="tagType">
                 <column name="tag_type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
@@ -1341,7 +1492,7 @@
     </entity>
 
     <entity class="ro.cs.tao.user.Group" access="PROPERTY">
-        <table name="usr.grp"/>
+        <table schema="usr" name="grp"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
@@ -1360,7 +1511,7 @@
     </entity>
 
     <entity class="ro.cs.tao.component.ParameterExpansionRule" access="PROPERTY">
-        <table name="component.processing_parameter_expansion"/>
+        <table schema="component" name="processing_parameter_expansion"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false"/>
@@ -1375,13 +1526,10 @@
     </entity>
 
     <entity class="ro.cs.tao.workspaces.Repository" access="PROPERTY">
-        <table name="workspace.repository"/>
+        <table schema="workspace" name="repository"/>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
         <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
-            </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
             </basic>
@@ -1408,6 +1556,7 @@
             </basic>
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
             </basic>
             <basic name="persistentStorage">
                 <column name="persistent_storage" nullable="true" column-definition="boolean DEFAULT false"/>
@@ -1422,13 +1571,10 @@
     </entity>
 
     <entity class="ro.cs.tao.workspaces.RepositoryTemplate" access="PROPERTY">
-        <table name="workspace.repository_template"/>
+        <table schema="workspace" name="repository_template"/>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
         <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
-            </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
             </basic>
@@ -1443,6 +1589,7 @@
             </basic>
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.MapConverter"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp DEFAULT now()"/>
@@ -1450,18 +1597,59 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.user.LogEvent" access="PROPERTY">
-        <table name="common.audit"/>
+    <entity class="ro.cs.tao.userdb.QueryTemplate" access="PROPERTY">
+        <table schema="userdb" name="templates"/>
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" />
+            <id name="name">
+                <column name="name" nullable="false" column-definition="varchar(100) NOT NULL"/>
             </id>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="sql">
+                <column name="sql" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <transient name="id"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.userdb.SavedQuery" access="PROPERTY">
+        <table schema="userdb" name="saved_queries"/>
+        <id-class class="ro.cs.tao.userdb.SavedQueryId"/>
+        <attributes>
+            <id name="name">
+                <column name="name" nullable="false" column-definition="varchar(100) NOT NULL"/>
+            </id>
+            <id name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </id>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="varchar(250)"/>
+            </basic>
+            <basic name="sql">
+                <column name="sql" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
+            </basic>
+            <basic name="lastUpdated">
+                <column name="last_updated" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
+            </basic>
+            <transient name="id"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.user.LogEvent" access="PROPERTY">
+        <table schema="common" name="audit"/>
+        <attributes>
             <basic name="timestamp">
                 <column name="timestamp" nullable="true" column-definition="timestamp without time zone"/>
             </basic>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="sessionId">
+                <column name="session_id" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
             <basic name="event">
                 <column name="event" nullable="true" column-definition="character varying NOT NULL"/>
@@ -1470,7 +1658,7 @@
     </entity>
 
     <entity class="ro.cs.tao.execution.model.ResourceUsage" access="PROPERTY">
-        <table name="execution.resource_usage"/>
+        <table schema="execution" name="resource_usage"/>
         <attributes>
             <basic name="taskId">
                 <column name="task_id" nullable="false" column-definition="bigint NOT NULL"/>
@@ -1494,7 +1682,7 @@
     </entity>
 
     <entity class="ro.cs.tao.execution.model.ResourceUsageReport" access="PROPERTY">
-        <table name="execution.resource_usage_report"/>
+        <table schema="execution" name="resource_usage_report"/>
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
@@ -1506,7 +1694,7 @@
     </entity>
 
     <entity class="ro.cs.tao.subscription.WorkflowSubscription" access="PROPERTY">
-        <table name="subscription.workflow"/>
+        <table schema="subscription" name="workflow"/>
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
@@ -1521,7 +1709,7 @@
     </entity>
 
     <entity class="ro.cs.tao.subscription.DataSubscription" access="PROPERTY">
-        <table name="subscription.dataset"/>
+        <table schema="subscription" name="dataset"/>
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
@@ -1548,7 +1736,7 @@
     </entity>
 
     <entity class="ro.cs.tao.subscription.ResourceSubscription" access="PROPERTY">
-        <table name="subscription.resource_subscription"/>
+        <table schema="subscription" name="resource_subscription"/>
         <convert converter="ro.cs.tao.persistence.convert.SubscriptionTypeConverter" attribute-name="type"/>
         <convert converter="ro.cs.tao.persistence.convert.FlavorConverter" attribute-name="flavors"/>
         <attributes>
@@ -1557,9 +1745,11 @@
             </basic>
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="smallint NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.SubscriptionTypeConverter"/>
             </basic>
             <basic name="flavors">
                 <column name="flavors" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.FlavorConverter"/>
             </basic>
             <basic name="objectStorageGB">
                 <column name="object_storage_GB" nullable="true" column-definition="smallint"/>
@@ -1577,7 +1767,7 @@
     </entity>
 
     <entity class="ro.cs.tao.subscription.ExternalResourceSubscription" access="PROPERTY">
-        <table name="subscription.external_resource_subscription"/>        
+        <table schema="subscription" name="external_resource_subscription"/>        
         <convert converter="ro.cs.tao.persistence.convert.ExternalFlavorConverter" attribute-name="flavors"/>
         <attributes>
             <basic name="name">
@@ -1585,13 +1775,14 @@
             </basic>
             <basic name="flavors">
                 <column name="flavors" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.ExternalFlavorConverter"/>
             </basic>
             <basic name="objectStorageGB">
                 <column name="object_storage_GB" nullable="true" column-definition="smallint"/>
             </basic>
             
             <many-to-many name="users" fetch="EAGER">
-                <join-table name="subscription.external_subscription_users">
+                <join-table schema="subscription" name="external_subscription_users">
                     <join-column name="subscription_id" referenced-column-name="id"/>
                     <inverse-join-column name="user_id" referenced-column-name="id"/>
                 </join-table>
@@ -1733,30 +1924,52 @@
         </attributes>
     </embeddable>
 
-    <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" />
-    <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
-    <converter class="ro.cs.tao.persistence.convert.ProcessingComponentTypeConverter" />
-    <converter class="ro.cs.tao.persistence.convert.ExecutionStatusConverter" />
-    <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter" />
-    <converter class="ro.cs.tao.persistence.convert.DataTypeConverter" />
-    <converter class="ro.cs.tao.persistence.convert.StringArrayToStringConverter" />
-    <converter class="ro.cs.tao.persistence.convert.ServiceStatusConverter" />
-    <converter class="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" />
-    <converter class="ro.cs.tao.persistence.convert.VisibilityConverter" />
-    <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
-    <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.MapConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.ConditionConverter" />
-    <converter class="ro.cs.tao.persistence.convert.StringListConverter" />
-    <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
-    <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
-    <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" />
-    <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" />
-    <converter class="ro.cs.tao.persistence.convert.RepositoryTypeConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.ComponentCategoryConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.UserTypeConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.NodeAffinityConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ProcessingComponentTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ExecutionStatusConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.DataTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.StringArrayToStringConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ServiceStatusConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.VisibilityConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.MapConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.UserStatusConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.RepositoryTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ContainerVisibilityConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.ComponentCategoryConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.UserTypeConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.NodeAffinityConverter" auto-apply="true" />
+    <converter class="ro.cs.tao.persistence.convert.MemoryUnitConverter" auto-apply="true" />
+    <entity class="ro.cs.tao.agent.Conversation" access="PROPERTY">
+        <table schema="agent" name="conversation"/>
+        <attributes>
+            <basic name="userId"><column name="user_id" nullable="false"/></basic>
+            <basic name="provider"><column name="provider" nullable="false"/></basic>
+            <basic name="name"><column name="name"/></basic>
+            <basic name="summary"><column name="summary"/></basic>
+            <basic name="created"><column name="created"/></basic>
+            <basic name="lastUpdated"><column name="last_updated"/></basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.agent.ConversationMessage" access="PROPERTY">
+        <table schema="agent" name="messages"/>
+        <attributes>
+            <basic name="conversationId"><column name="conversation_id" nullable="false"/></basic>
+            <basic name="role"><column name="role" nullable="false"/></basic>
+            <basic name="content"><column name="content" nullable="false"/></basic>
+            <basic name="archived"><column name="archived" nullable="false"/></basic>
+            <basic name="created"><column name="created"/></basic>
+            <basic name="lastUpdated"><column name="last_updated"/></basic>
+        </attributes>
+    </entity>
 </entity-mappings>

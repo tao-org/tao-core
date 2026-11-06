@@ -16,6 +16,12 @@
 package ro.cs.tao.execution.monitor;
 
 /**
+ * Snapshot is a representation of both memory and runtime metrics.
+ * It provides access to details regarding JVM memory usage and runtime information,
+ * such as thread details and processor availability.
+ *
+ * The class serves as a container combining {@link Memory} and {@link java.lang.Runtime} data.
+ *
  * @author Cosmin Cara
  */
 public class Snapshot {

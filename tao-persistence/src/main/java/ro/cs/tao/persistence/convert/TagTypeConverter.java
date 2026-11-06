@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.TagType;
-
-import javax.persistence.AttributeConverter;
 
 public class TagTypeConverter implements AttributeConverter<TagType, Integer> {
 
@@ -17,3 +16,4 @@ public class TagTypeConverter implements AttributeConverter<TagType, Integer> {
         return dbData != null ? EnumUtils.getEnumConstantByValue(TagType.class, dbData) : null;
     }
 }
+

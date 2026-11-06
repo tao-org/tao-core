@@ -1,5 +1,6 @@
 package ro.cs.tao.component.ogc;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
@@ -8,12 +9,19 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.docker.Container;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Represents a WMTS (Web Map Tile Service) component, inheriting from the base class TaoComponent.
+ * This class is used to configure and manage a WMTS service, providing various properties and methods
+ * to control its behavior and metadata.
+ *
+ * Instances of this class include information about the remote service,
+ * configuration parameters, visibility settings, and ownership details.
+ */
 @XmlRootElement(name = "wmstComponent")
 public class WMTSComponent extends TaoComponent {
     private String remoteAddress;
@@ -145,3 +153,4 @@ public class WMTSComponent extends TaoComponent {
         return cloned;
     }
 }
+

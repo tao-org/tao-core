@@ -20,10 +20,7 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
@@ -43,78 +40,138 @@ public class ExecutionsManager {
         ServiceRegistry<Executor> registry = ServiceRegistryManager.getInstance().getServiceRegistry(Executor.class);
         services = registry.getServices();
         services.forEach(Executor::initialize);
-        postExecuteTaskActions = new HashMap<>();
+        postExecuteTaskActions = Collections.synchronizedMap(new HashMap<>());
     }
 
+    /**
+     * Retrieves the singleton instance of the ExecutionsManager class.
+     *
+     * @return the singleton instance of ExecutionsManager
+     */
     public static ExecutionsManager getInstance() {
         return instance;
     }
 
+    /**
+     * Executes the specified {@link ExecutionTask} using a determined {@link Executor}.
+     *
+     * @param task the execution task to be processed
+     */
     public void execute(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.execute(task);
     }
 
+    /**
+     * Stops the execution of the specified {@link ExecutionTask}.
+     *
+     * @param task the execution task to be stopped
+     */
     public void stop(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.stop(task);
     }
 
+    /**
+     * Suspends the execution of the specified {@link ExecutionTask}.
+     *
+     * @param task the execution task to be suspended
+     */
     public void suspend(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.suspend(task);
     }
 
+    /**
+     * Resumes the execution of the specified {@link ExecutionTask}.
+     *
+     * @param task the execution task to be resumed
+     */
     public void resume(ExecutionTask task) {
         Executor executor = getExecutor(task);
         executor.resume(task);
     }
 
+    public void done(ExecutionTask task) {
+        if (task.getExecutionStatus() == ExecutionStatus.DONE) {
+            task.setExecutionStatus(ExecutionStatus.PENDING_FINALISATION);
+            Executor executor = getExecutor(task);
+            executor.markTaskFinished(task, ExecutionStatus.DONE);
+        }
+    }
+
+    /**
+     * Retrieves the set of currently registered executors.
+     *
+     * @return a set of {@link Executor} objects representing the registered executors
+     */
     public Set<Executor> getRegisteredExecutors() { return this.services; }
 
+    /**
+     * Retrieves the output of a job that is identified by the specified ID.
+     *
+     * @param id the unique identifier of the job whose output is to be retrieved
+     * @return the output of the job as a String
+     */
     public String getJobOutput(long id) {
         return DRMAAExecutor.getInstance().getJobOutput(String.valueOf(id));
     }
 
+    /**
+     * Registers a post-execution action to be performed after the specified {@link ExecutionTask} completes execution.
+     *
+     * @param task   the execution task for which the post-execution action is registered
+     * @param action a {@link Callable} representing the post-execution action to be performed
+     */
     public void registerPostExecuteAction(ExecutionTask task, Callable<Void> action) {
         postExecuteTaskActions.put(task.getId(), action);
     }
 
+    /**
+     * Executes the post-execution action associated with the specified {@link ExecutionTask}, if one is registered.
+     * Once the action is executed, it is removed from the internal storage.
+     * If an error occurs during the execution of the action, it is logged as a warning.
+     *
+     * @param task the execution task whose associated post-execution action is to be executed
+     */
     public void doPostExecuteAction(ExecutionTask task) {
         Callable<Void> action = postExecuteTaskActions.get(task.getId());
         if (action != null) {
             try {
                 action.call();
-                postExecuteTaskActions.remove(task.getId());
             } catch (Throwable e) {
                 Logger.getLogger(ExecutionsManager.class.getName()).warning(e.getMessage());
+            } finally {
+                postExecuteTaskActions.remove(task.getId());
             }
         }
     }
 
     private Executor getExecutor(ExecutionTask task) {
         Optional<Executor> optional;
-        if (task instanceof ProcessingExecutionTask) {
+        if (task instanceof ProcessingExecutionTask t) {
             optional = services.stream()
-                    .filter(x -> x.supports(((ProcessingExecutionTask) task).getComponent()))
-                    .findFirst();
-        } else if (task instanceof WPSExecutionTask) {
-            optional = services.stream()
-                    .filter(x -> x.supports(((WPSExecutionTask) task).getComponent()))
-                    .findFirst();
-        } else if (task instanceof WMSExecutionTask) {
-            optional = services.stream()
-                               .filter(x -> x.supports(((WMSExecutionTask) task).getComponent()))
+                               .filter(x -> x.supports(t.getComponent()))
                                .findFirst();
-        } else {
+        } else if (task instanceof WPSExecutionTask t) {
             optional = services.stream()
-                    .filter(x -> x.supports(((DataSourceExecutionTask) task).getComponent()))
+                               .filter(x -> x.supports(t.getComponent()))
+                               .findFirst();
+        } else if (task instanceof WMSExecutionTask t) {
+            optional = services.stream()
+                               .filter(x -> x.supports(t.getComponent()))
+                               .findFirst();
+        } else if (task instanceof ConditionExecutionTask t) {
+            optional = services.stream()
+                               .filter(x -> x.supports(t.getComponent()))
+                               .findFirst();
+        } else if (task instanceof DataSourceExecutionTask t) {
+            optional = services.stream()
+                    .filter(x -> x.supports(t.getComponent()))
                     .findFirst();
-        }
-        if(optional.isPresent()) {
-            return optional.get();
         } else {
-            throw new ExecutionException("The component does not have an associated executor!");
+            optional = Optional.empty();
         }
+        return optional.orElseThrow(() -> new ExecutionException("The component does not have an associated executor!"));
     }
 }

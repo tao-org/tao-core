@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.PixelType;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for PixelType enum stored values
@@ -37,3 +36,4 @@ public class PixelTypeConverter implements AttributeConverter<PixelType, Integer
         return dbData != null ? EnumUtils.getEnumConstantByValue(PixelType.class, dbData) : null;
     }
 }
+

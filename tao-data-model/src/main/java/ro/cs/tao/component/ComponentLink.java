@@ -15,9 +15,9 @@
  */
 package ro.cs.tao.component;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.constraints.ConstraintException;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Objects;
 
 /**
@@ -113,3 +113,4 @@ public class ComponentLink {
         return Objects.hash(output, input, sourceNodeId);
     }
 }
+

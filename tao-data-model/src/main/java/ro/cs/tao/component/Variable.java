@@ -15,11 +15,17 @@
  */
 package ro.cs.tao.component;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Objects;
 
 /**
+ * Represents a variable with a key-value pair.
+ * This class can be used to store and retrieve information as key-value pairs
+ * and includes methods for setting, getting, and cloning the variable instance.
+ * Additionally, it provides default values and overrides equality and hashcode
+ * functionalities to ensure proper comparison and hashing.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "variable")
@@ -78,3 +84,4 @@ public class Variable implements Serializable{
         return Objects.hash(getKey(), getValue());
     }
 }
+

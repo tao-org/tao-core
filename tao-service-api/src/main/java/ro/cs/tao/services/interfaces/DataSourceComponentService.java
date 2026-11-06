@@ -16,6 +16,7 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.Sort;
 import ro.cs.tao.Tag;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceConfiguration;
@@ -39,6 +40,16 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * Retrieves all the system (i.e., not belonging to a user) data source components.
      */
     List<DataSourceComponent> getSystemDataSourceComponents();
+
+    /**
+     * Retrieves one page of system data source components.
+     */
+    List<DataSourceComponent> getSystemDataSourceComponents(int pageNumber, int pageSize, Sort sort);
+
+    /**
+     * Counts system data source components.
+     */
+    long countSystemDataSourceComponents();
 
     /**
      * Retrieves the data source components that don't have the given identifiers.
@@ -69,12 +80,32 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
                                            String label, Principal principal) throws PersistenceException;
 
     /**
+     * Creates a data source component based on a repository query with the specified properties.
+     *
+     * @param label             A human-readable label for the query.
+     * @param srcRepositoryId   The identifier of the source repository.
+     * @param srcPath           The path within the source repository.
+     * @param dstRepositoryId   The identifier of the destination repository.
+     * @param dstPath           The path within the destination repository.
+     * @param itemsCount        The maximum number of items to be processed in each execution.
+     * @param fileNamePattern   The pattern for matching the file names to be processed.
+     * @return                  A {@code DataSourceComponent} representing the created repository query.
+     * @throws PersistenceException If there is an error during the creation of the repository query.
+     */
+    DataSourceComponent createRepositoryQuery(String label,
+                                              String srcRepositoryId, String srcPath,
+                                              String dstRepositoryId, String dstPath,
+                                              int itemsCount, String fileNamePattern) throws PersistenceException;
+
+    /**
      * Creates a user data source component that wraps the given list of products (a product set)
      * @param productNames      The list of names of products
      * @param label             The label of the custom data source component
      * @param principal         The principal to create the component for
      */
     DataSourceComponent createForLocations(List<String> productNames, String label, Principal principal) throws PersistenceException;
+
+    DataSourceComponent createForLocations(List<String> productNames, String repositoryId, String label, Principal principal) throws PersistenceException;
 
     /**
      * Retrieves all the tags associated to data source components.
@@ -130,5 +161,11 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * @throws PersistenceException
      */
     DataSourceComponent updateProductSet(ProductSetInfo productSet) throws PersistenceException;
+
+    List<DataSourceComponent> getRepositoryQueries(String userId) throws PersistenceException;
+
+    List<String> getQueryPathsForRepository(String repositoryId) throws PersistenceException;
+
+    void deleteQueryForRepository(String repositoryId, String path) throws PersistenceException;
 
 }

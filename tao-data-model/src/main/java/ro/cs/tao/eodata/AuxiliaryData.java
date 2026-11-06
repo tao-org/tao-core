@@ -16,16 +16,32 @@
 
 package ro.cs.tao.eodata;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import ro.cs.tao.component.StringIdentifiable;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents auxiliary data with associated metadata such as location, description,
+ * user information, and timestamps.
+ *
+ * This class is designed to store supplemental data that can be identified using
+ * a string-based ID inherited from the {@link StringIdentifiable} class.
+ *
+ * The following properties are exposed:
+ * - Location: Represents the geographical or logical location associated with the data.
+ * - Description: Provides additional context or metadata about the data.
+ * - User ID: Identifies the user associated with the data.
+ * - Created: Tracks when the data was initially created.
+ * - Modified: Tracks when the data was last updated.
+ *
+ * JAXB annotations are used for XML serialization and deserialization.
+ */
 @XmlRootElement(name = "auxData")
 public class AuxiliaryData extends StringIdentifiable {
     private String location;
@@ -62,3 +78,4 @@ public class AuxiliaryData extends StringIdentifiable {
         return attributes;
     }
 }
+

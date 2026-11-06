@@ -65,12 +65,6 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
                                         currentTask.getWorkflowNodeId()));
             return null;
         }
-        /*WorkflowDescriptor workflow = workflowNode.getWorkflow();
-        final List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
-        return job.orderedTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
-                                                       t instanceof DataSourceExecutionTask)
-                                          .map(t -> (DataSourceExecutionTask) t)
-                                          .findFirst().orElse(null);*/
         return job.orderedTasks().stream()
                   .filter(t -> t instanceof DataSourceExecutionTask)
                   .map(t -> (DataSourceExecutionTask) t)
@@ -114,9 +108,6 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
                     break;
             }
         }
-        if (next != null) {
-            next.forEach(t -> t.setContext(currentTask.getContext()));
-        }
         return next;
     }
 
@@ -132,13 +123,26 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         final List<ExecutionTask> candidates = new ArrayList<>();
         final Map<String, List<String>> taskDependencies = job.getTaskDependencies();
         if (taskDependencies != null) {
+            final Map<Long, ExecutionTask> taskMap = job.getTasks().stream()
+                                                        .collect(Collectors.toMap(ExecutionTask::getId, Function.identity()));
+            final long taskId = task.getId();
             taskDependencies.forEach((key, value) -> {
                 if (value.contains(String.valueOf(task.getId()))) {
-                    if (value.stream()
-                             .map(v -> job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(v))).findFirst().get())
-                             .allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE &&
-                                     t.getOutputParameterValues() != null)) {
-                        candidates.add(job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(key))).findFirst().get());
+                    Long depId;
+                    ExecutionTask depTask;
+                    boolean allMet = true;
+                    for (String strId : value) {
+                        depId = Long.parseLong(strId);
+                        depTask = taskMap.get(depId);
+                        if (depTask == null ||
+                            depTask.getExecutionStatus() != ExecutionStatus.DONE ||
+                            depTask.getOutputParameterValues() == null) {
+                            allMet = false;
+                            break;
+                        }
+                    }
+                    if (allMet) {
+                        candidates.add(taskMap.get(Long.parseLong(key)));
                     }
                 }
             });

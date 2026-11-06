@@ -7,14 +7,12 @@ import java.util.Vector;
  *
  * @author Adrian Drăghici
  */
-public class TranslateOptions {
+public class TranslateOptions extends GDALOptions {
 
     /**
      * The name of JNI GDAL TranslateOptions class
      */
-    private static final String CLASS_NAME = "org.gdal.gdal.TranslateOptions";
-
-    private Object jniTranslateOptionsInstance;
+    static final String CLASS_NAME = "org.gdal.gdal.TranslateOptions";
 
     /**
      * Creates new instance for this driver
@@ -22,18 +20,18 @@ public class TranslateOptions {
      * @param jniTranslateOptionsInstance the JNI GDAL TranslateOptions class instance
      */
     public TranslateOptions(Object jniTranslateOptionsInstance) {
-        this.jniTranslateOptionsInstance = jniTranslateOptionsInstance;
+        super(jniTranslateOptionsInstance);
     }
 
     /**
      * Creates new GDAL TranslateOptions class instance
      */
     public TranslateOptions(Vector options) {
-        this.jniTranslateOptionsInstance = GDALReflection.fetchGDALLibraryClassInstance(CLASS_NAME, new Class[]{Vector.class}, new Object[]{options});
+        super(options);
     }
 
-    public Object getJniTranslateOptionsInstance() {
-        return jniTranslateOptionsInstance;
+    @Override
+    protected String className() {
+        return CLASS_NAME;
     }
-
 }

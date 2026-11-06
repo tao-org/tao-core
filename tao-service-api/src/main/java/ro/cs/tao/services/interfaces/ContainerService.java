@@ -16,10 +16,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.docker.Application;
-import ro.cs.tao.docker.Container;
-import ro.cs.tao.docker.ContainerType;
-import ro.cs.tao.docker.ContainerVisibility;
+import ro.cs.tao.docker.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -97,4 +94,7 @@ public interface ContainerService extends CRUDService<Container, String> {
      */
     String importContainer(Path taoPackage) throws IOException;
 
+    List<ContainerInstance> getUserInstances(String userId);
+
+    ContainerInstance getUserInstance(String userId, String containerName);
 }

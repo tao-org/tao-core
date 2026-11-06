@@ -1,10 +1,13 @@
 package ro.cs.tao.execution.monitor;
 
+import com.sun.management.OperatingSystemMXBean;
 import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.topology.NodeRole;
 import ro.cs.tao.utils.executors.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,6 +15,16 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * The LinuxRuntimeInspector class is responsible for retrieving runtime information
+ * from a Linux-based node. It interacts with either remote or local nodes using
+ * specific authentication methods to execute system commands and parse their outputs.
+ * The class provides CPU usage, memory availability, and disk usage details, among
+ * other runtime metrics.
+ *
+ * This class implements the NodeRuntimeInspector interface and relies on various
+ * helper classes and components such as Executor and RuntimeInfo to perform its tasks.
+ */
 class LinuxRuntimeInspector implements NodeRuntimeInspector {
 
     final String node;
@@ -20,6 +33,8 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
     final boolean isRemote;
     final AuthenticationType authenticationType;
     final Logger logger;
+    final File root;
+    final OperatingSystemMXBean mxBean;
 
     LinuxRuntimeInspector(String host, String user, String password, boolean remote) {
         this(host, AuthenticationType.PASSWORD, user, password, remote);
@@ -31,6 +46,8 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
         this.authenticationType = authenticationType;
         this.password = authenticationToken;
         this.isRemote = remote;
+        this.root = new File(SystemVariable.ROOT.value());
+        this.mxBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         this.logger = Logger.getLogger(getClass().getName());
     }
 
@@ -73,42 +90,44 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
 
     @Override
     public RuntimeInfo getInfo() throws Exception {
-        RuntimeInfoEx runtimeInfo = new RuntimeInfoEx();
-        Executor<?> executor = null;
-        try {
-            List<String> args = new ArrayList<>();
-            Collections.addAll(args, "uptime && cat /proc/meminfo && df -k --total".split(" "));
-            executor = buildExecutor(args);
-            final OSRuntimeInfo.Consumer consumer = new OSRuntimeInfo.Consumer();
-            executor.setOutputConsumer(consumer);
-            final int code = executor.execute(false);
-            if (code == 0) {
-                List<String> messages = consumer.getMessages();
-                final String mountPointOne = SystemVariable.ROOT.value().substring(0, SystemVariable.ROOT.value().lastIndexOf("/"));
-                final String mountPointTwo = mountPointOne.substring(0, mountPointOne.lastIndexOf("/"));
-                for (String message : messages) {
-                    if (!message.isEmpty()) {
-                        if (message.startsWith("MemTotal")) {
-                            message = message.replace("MemTotal:", "").trim();
-                            String value = message.substring(0, message.indexOf(" kB"));
-                            runtimeInfo.setTotalMemory(Long.parseLong(value) / MemoryUnit.KB.value());
-                        } else if (message.startsWith("MemAvailable")) {
-                            message = message.replace("MemAvailable:", "").trim();
-                            String value = message.substring(0, message.indexOf(" kB"));
-                            runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KB.value());
-                            runtimeInfo.setMemoryUnit(MemoryUnit.KB);
-                        } else if (message.startsWith("/dev/mapper/centos-home") ||
-                                message.contains(mountPointOne) || message.contains(mountPointTwo)) {
-                            List<String> values = Arrays.stream(message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ")).filter(v -> !v.isEmpty()).collect(Collectors.toList());
-                            runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values.get(0)) / MemoryUnit.MB.value());
-                            runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values.get(1)) / MemoryUnit.MB.value());
-                            runtimeInfo.setDiskUnit(MemoryUnit.MB);
-                        } else if (message.contains("load average")) {
-                            int idx = message.indexOf("load average");
-                            String value = message.substring(idx + 14, message.indexOf(",", idx));
-                            runtimeInfo.setCpuTotal(Double.parseDouble(value));
-                        }
-                        //if (runtimeInfo instanceof RuntimeInfoEx) {
+        RuntimeInfoEx runtimeInfo;
+        if (this.isRemote) {
+            runtimeInfo = new RuntimeInfoEx();
+            Executor<?> executor = null;
+            try {
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, "uptime && cat /proc/meminfo && df -k --total".split(" "));
+                executor = buildExecutor(args);
+                final Consumer consumer = new Consumer();
+                executor.setOutputConsumer(consumer);
+                final int code = executor.execute(false);
+                if (code == 0) {
+                    List<String> messages = consumer.getMessages();
+                    final String mountPointOne = SystemVariable.ROOT.value().substring(0, SystemVariable.ROOT.value().lastIndexOf("/"));
+                    final String mountPointTwo = mountPointOne.substring(0, mountPointOne.lastIndexOf("/"));
+                    for (String message : messages) {
+                        if (!message.isEmpty()) {
+                            if (message.startsWith("MemTotal")) {
+                                message = message.replace("MemTotal:", "").trim();
+                                String value = message.substring(0, message.indexOf(" kB"));
+                                runtimeInfo.setTotalMemory(Long.parseLong(value) / MemoryUnit.KB.value());
+                            } else if (message.startsWith("MemAvailable")) {
+                                message = message.replace("MemAvailable:", "").trim();
+                                String value = message.substring(0, message.indexOf(" kB"));
+                                runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KB.value());
+                                runtimeInfo.setMemoryUnit(MemoryUnit.KB);
+                            } else if (message.startsWith("/dev/mapper/centos-home") ||
+                                       message.contains(mountPointOne) || message.contains(mountPointTwo)) {
+                                List<String> values = Arrays.stream(message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ")).filter(v -> !v.isEmpty()).collect(Collectors.toList());
+                                runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values.get(0)) / MemoryUnit.MB.value());
+                                runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values.get(1)) / MemoryUnit.MB.value());
+                                runtimeInfo.setDiskUnit(MemoryUnit.MB);
+                            } else if (message.contains("load average")) {
+                                int idx = message.indexOf("load average");
+                                String value = message.substring(idx + 14, message.indexOf(",", idx));
+                                runtimeInfo.setCpuTotal(Double.parseDouble(value));
+                            }
+                            //if (runtimeInfo instanceof RuntimeInfoEx) {
                             //RuntimeInfoEx rex = (RuntimeInfoEx) runtimeInfo;
                             if (message.startsWith("Buffers")) {
                                 message = message.replace("Buffers:", "").trim();
@@ -130,20 +149,23 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
                                 runtimeInfo.setSwapFree(Long.parseLong(value) / MemoryUnit.KB.value());
                                 //break;
                             }
-                        //}
+                            //}
+                        }
                     }
+                } else {
+                    logger.warning(String.format("Could not retrieve node information. Request returned code %d. Output:\n%s",
+                                                 code, String.join("\n", consumer.getMessages())));
                 }
-            } else {
-                logger.warning(String.format("Could not retrieve node information. Request returned code %d. Output:\n%s",
-                                             code, String.join("\n", consumer.getMessages())));
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+                throw new IOException(ex);
+            } finally {
+                if (executor != null) {
+                    ((SSHExecutor) executor).close();
+                }
             }
-        } catch (Exception ex) {
-            logger.severe(ex.getMessage());
-            throw new IOException(ex);
-        } finally {
-            if (this.isRemote && executor != null) {
-                ((SSHExecutor) executor).close();
-            }
+        } else {
+            runtimeInfo = (RuntimeInfoEx) getSnapshot();
         }
         return runtimeInfo;
     }
@@ -151,26 +173,30 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
     @Override
     public double getProcessorUsage() throws IOException {
         double cpu = 0.0;
-        try {
-            List<String> args = new ArrayList<>();
-            Collections.addAll(args, "uptime".split(" "));
-            Executor<?> executor = buildExecutor(args);
-            OSRuntimeInfo.Consumer consumer = new OSRuntimeInfo.Consumer();
-            executor.setOutputConsumer(consumer);
-            if (executor.execute(false) == 0) {
-                List<String> messages = consumer.getMessages();
-                for (String message : messages) {
-                    if (!message.isEmpty()) {
-                        int idx = message.indexOf("load average");
-                        String value = message.substring(idx + 14, message.indexOf(",", idx));
-                        cpu = Double.parseDouble(value);
-                        break;
+        if (this.isRemote) {
+            try {
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, "uptime".split(" "));
+                Executor<?> executor = buildExecutor(args);
+                Consumer consumer = new Consumer();
+                executor.setOutputConsumer(consumer);
+                if (executor.execute(false) == 0) {
+                    List<String> messages = consumer.getMessages();
+                    for (String message : messages) {
+                        if (!message.isEmpty()) {
+                            int idx = message.indexOf("load average");
+                            String value = message.substring(idx + 14, message.indexOf(",", idx));
+                            cpu = Double.parseDouble(value);
+                            break;
+                        }
                     }
                 }
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
-        } catch (Exception ex) {
-            logger.severe(ex.getMessage());
-            throw new IOException(ex);
+        } else {
+            cpu = this.mxBean.getCpuLoad();
         }
         return cpu;
     }
@@ -178,26 +204,30 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
     @Override
     public long getTotalMemoryMB() throws IOException{
         long mem = 0;
-        try {
-            List<String> args = new ArrayList<>();
-            Collections.addAll(args, "cat /proc/meminfo".split(" "));
-            Executor<?> executor = buildExecutor(args);
-            OSRuntimeInfo.Consumer consumer = new OSRuntimeInfo.Consumer();
-            executor.setOutputConsumer(consumer);
-            if (executor.execute(false) == 0) {
-                List<String> messages = consumer.getMessages();
-                for (String message : messages) {
-                    if (message.startsWith("MemTotal")) {
-                        message = message.replace("MemTotal:", "").trim();
-                        String value = message.substring(0, message.indexOf(" kB"));
-                        mem = Long.parseLong(value) / MemoryUnit.KB.value();
-                        break;
+        if (this.isRemote) {
+            try {
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, "cat /proc/meminfo".split(" "));
+                Executor<?> executor = buildExecutor(args);
+                Consumer consumer = new Consumer();
+                executor.setOutputConsumer(consumer);
+                if (executor.execute(false) == 0) {
+                    List<String> messages = consumer.getMessages();
+                    for (String message : messages) {
+                        if (message.startsWith("MemTotal")) {
+                            message = message.replace("MemTotal:", "").trim();
+                            String value = message.substring(0, message.indexOf(" kB"));
+                            mem = Long.parseLong(value) / MemoryUnit.KB.value();
+                            break;
+                        }
                     }
                 }
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
-        } catch (Exception ex) {
-            logger.severe(ex.getMessage());
-            throw new IOException(ex);
+        } else {
+            mem = this.mxBean.getTotalMemorySize() / MemoryUnit.MB.value();
         }
         return mem;
     }
@@ -205,26 +235,30 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
     @Override
     public long getAvailableMemoryMB() throws IOException {
         long mem = 0;
-        try {
-            List<String> args = new ArrayList<>();
-            Collections.addAll(args, "cat /proc/meminfo".split(" "));
-            Executor<?> executor = buildExecutor(args);
-            OSRuntimeInfo.Consumer consumer = new OSRuntimeInfo.Consumer();
-            executor.setOutputConsumer(consumer);
-            if (executor.execute(false) == 0) {
-                List<String> messages = consumer.getMessages();
-                for (String message : messages) {
-                    if (message.startsWith("MemAvailable")) {
-                        message = message.replace("MemAvailable:", "").trim();
-                        String value = message.substring(0, message.indexOf(" kB"));
-                        mem = Long.parseLong(value) / MemoryUnit.KB.value();
-                        break;
+        if (this.isRemote) {
+            try {
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, "cat /proc/meminfo".split(" "));
+                Executor<?> executor = buildExecutor(args);
+                Consumer consumer = new Consumer();
+                executor.setOutputConsumer(consumer);
+                if (executor.execute(false) == 0) {
+                    List<String> messages = consumer.getMessages();
+                    for (String message : messages) {
+                        if (message.startsWith("MemAvailable")) {
+                            message = message.replace("MemAvailable:", "").trim();
+                            String value = message.substring(0, message.indexOf(" kB"));
+                            mem = Long.parseLong(value) / MemoryUnit.KB.value();
+                            break;
+                        }
                     }
                 }
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
-        } catch (Exception ex) {
-            logger.severe(ex.getMessage());
-            throw new IOException(ex);
+        } else {
+            mem = this.mxBean.getFreeMemorySize() / MemoryUnit.MB.value();
         }
         return mem;
     }
@@ -232,24 +266,28 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
     @Override
     public long getTotalDiskGB() throws IOException {
         long mem = 0;
-        try {
-            List<String> args = new ArrayList<>();
-            Collections.addAll(args, "df -k --total".split(" "));
-            Executor<?> executor = buildExecutor(args);
-            OSRuntimeInfo.Consumer consumer = new OSRuntimeInfo.Consumer();
-            executor.setOutputConsumer(consumer);
-            if (executor.execute(false) == 0) {
-                List<String> messages = consumer.getMessages();
-                for (String message : messages) {
-                    if (message.startsWith("/dev/sd")) {
-                        String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
-                        mem += Long.parseLong(values[0]) / MemoryUnit.MB.value();
+        if (this.isRemote) {
+            try {
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, "df -k --total".split(" "));
+                Executor<?> executor = buildExecutor(args);
+                Consumer consumer = new Consumer();
+                executor.setOutputConsumer(consumer);
+                if (executor.execute(false) == 0) {
+                    List<String> messages = consumer.getMessages();
+                    for (String message : messages) {
+                        if (message.startsWith("/dev/sd")) {
+                            String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
+                            mem += Long.parseLong(values[0]) / MemoryUnit.MB.value();
+                        }
                     }
                 }
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
-        } catch (Exception ex) {
-            logger.severe(ex.getMessage());
-            throw new IOException(ex);
+        } else {
+            mem = this.root.getTotalSpace() / MemoryUnit.GB.value();
         }
         return mem;
     }
@@ -257,25 +295,38 @@ class LinuxRuntimeInspector implements NodeRuntimeInspector {
     @Override
     public long getUsedDiskGB() throws IOException {
         long mem = 0;
-        try {
-            List<String> args = new ArrayList<>();
-            Collections.addAll(args, "df -k --total".split(" "));
-            Executor<?> executor = buildExecutor(args);
-            OSRuntimeInfo.Consumer consumer = new OSRuntimeInfo.Consumer();
-            executor.setOutputConsumer(consumer);
-            if (executor.execute(false) == 0) {
-                List<String> messages = consumer.getMessages();
-                for (String message : messages) {
-                    if (message.startsWith("/dev/sd")) {
-                        String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
-                        mem += Long.parseLong(values[1]) / MemoryUnit.MB.value();
+        if (this.isRemote) {
+            try {
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, "df -k --total".split(" "));
+                Executor<?> executor = buildExecutor(args);
+                Consumer consumer = new Consumer();
+                executor.setOutputConsumer(consumer);
+                if (executor.execute(false) == 0) {
+                    List<String> messages = consumer.getMessages();
+                    for (String message : messages) {
+                        if (message.startsWith("/dev/sd")) {
+                            String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
+                            mem += Long.parseLong(values[1]) / MemoryUnit.MB.value();
+                        }
                     }
                 }
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
-        } catch (Exception ex) {
-            logger.severe(ex.getMessage());
-            throw new IOException(ex);
+        } else {
+            mem = (this.root.getTotalSpace() - this.root.getUsableSpace()) / MemoryUnit.GB.value();
         }
         return mem;
+    }
+
+    private static class Consumer implements OutputConsumer {
+        private final List<String> messages = new ArrayList<>();
+        @Override
+        public void consume(String message) {
+            messages.add(message.replace("\r", ""));
+        }
+        List<String> getMessages() { return this.messages; }
     }
 }

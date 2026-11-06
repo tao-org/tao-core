@@ -16,11 +16,17 @@
 
 package ro.cs.tao.workflow.enums;
 
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 import ro.cs.tao.TaoEnum;
 
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
-
+/**
+ * Enumeration representing different types of components used in a workflow system.
+ * Each type is associated with an integer value and a descriptive text.
+ *
+ * This enumeration implements the {@code TaoEnum<Integer>} interface to provide
+ * additional properties and behaviors like obtaining a friendly name and its value.
+ */
 @XmlEnum(Integer.class)
 public enum ComponentType implements TaoEnum<Integer> {
     /**
@@ -47,7 +53,16 @@ public enum ComponentType implements TaoEnum<Integer> {
      * Designates a WPS component
      */
     @XmlEnumValue("5")
-    WPS_COMPONENT(5, "WPS Component");
+    WPS_COMPONENT(5, "WPS Component"),
+    /**
+     * Designates a condition component
+     */
+    @XmlEnumValue("6")
+    CONDITION(6, "Condition"),
+    /**
+     * Designates an OGC Process component
+     */
+    OGC_PROCESS(7, "OGC Process");
 
     private final int value;
     private final String description;
@@ -63,3 +78,4 @@ public enum ComponentType implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

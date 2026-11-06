@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.drmaa.Environment;
-
-import javax.persistence.AttributeConverter;
 
 public class JobEnvironmentConverter implements AttributeConverter<Environment, Integer> {
     @Override
@@ -16,3 +15,4 @@ public class JobEnvironmentConverter implements AttributeConverter<Environment, 
         return dbData != null ? EnumUtils.getEnumConstantByValue(Environment.class, dbData) : null;
     }
 }
+

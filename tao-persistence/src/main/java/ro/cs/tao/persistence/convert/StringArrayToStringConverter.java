@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 import java.util.Arrays;
 
 /**
@@ -35,3 +35,4 @@ public class StringArrayToStringConverter implements AttributeConverter<String[]
         return (dbData == null || dbData.equals("[]")) ? new String[0] : dbData.replace("[", "").replace("]", "").split(", ");
     }
 }
+

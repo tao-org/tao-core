@@ -15,12 +15,12 @@
  */
 package ro.cs.tao.eodata;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.eodata.enums.Visibility;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -28,12 +28,30 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 /**
+ * Represents an Earth Observation (EO) Product that extends the basic EO data structure
+ * to include various metadata specific to satellite products. The class is designed
+ * to handle information about the product's acquisition, processing, format, and other
+ * related attributes.
+ *
+ * The EOProduct class supports serialization, making it suitable for remote calls or
+ * persistent storage. It also provides mechanisms to manage references to the product
+ * and to map its properties into a key-value attribute map.
+ *
+ * Key features:
+ * - Handles metadata such as sensor type, acquisition date, processing date, and pixel type.
+ * - Provides methods for setting and retrieving product-specific attributes, such as
+ *   dimensions (width, height), product type, satellite name, and approximate size.
+ * - Supports quick look image locations and reference management for tracking associations.
+ * - Overrides equals and hashCode to compare EOProduct instances based on a uniquely
+ *   identifying name and ID.
+ * - Generates an attribute map representation for product properties.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "eoData")
@@ -132,7 +150,7 @@ public class EOProduct extends EOData implements Serializable {
 
     public void addReference(String userName) {
         if (this.refs == null) {
-            this.refs = new HashSet<>();
+            this.refs = new LinkedHashSet<>();
         }
         this.refs.add(userName);
     }
@@ -174,3 +192,4 @@ public class EOProduct extends EOData implements Serializable {
         return attributes;
     }
 }
+

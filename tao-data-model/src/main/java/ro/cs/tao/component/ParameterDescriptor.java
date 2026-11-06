@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.DependencyType;
@@ -27,9 +28,11 @@ import ro.cs.tao.component.validation.*;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.utils.StringUtilities;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Complete descriptor of a component parameter.
@@ -48,6 +51,7 @@ public class ParameterDescriptor extends StringIdentifiable {
     private String label;
     private String unit;
     private String[] valueSet;
+    private String[] valueSetLabels;
     private String format;
     private boolean notNull;
     private Validator customValidator;
@@ -67,6 +71,7 @@ public class ParameterDescriptor extends StringIdentifiable {
                                @JsonProperty("label") String label,
                                @JsonProperty("unit") String unit,
                                @JsonProperty("valueSet") String[] valueSet,
+                               @JsonProperty("valueSetLabels") String[] valueSetLabels,
                                @JsonProperty("format") String format,
                                @JsonProperty("expansionRule") ParameterExpansionRule rule,
                                @JsonProperty("notNull") boolean notNull) {
@@ -78,14 +83,15 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.description = description;
         this.label = label;
         this.valueSet = valueSet;
+        this.valueSetLabels = valueSetLabels;
         this.format = format;
         this.expansionRule = rule;
         this.notNull = notNull;
     }
 
     public ParameterDescriptor(String id, String name, ParameterType type, Class<?> dataType, String defaultValue,
-                               String description, String label, String unit, String[] valueSet, String format,
-                               boolean notNull, ParameterExpansionRule expansionRule) {
+                               String description, String label, String unit, String[] valueSet, String[] valueSetLabels,
+                               String format, boolean notNull, ParameterExpansionRule expansionRule) {
         super(id);
         this.name = name;
         this.type = type;
@@ -168,6 +174,14 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public void setValueSet(String[] valueSet) {
         this.valueSet = valueSet;
+    }
+
+    public String[] getValueSetLabels() {
+        return valueSetLabels;
+    }
+
+    public void setValueSetLabels(String[] valueSetLabels) {
+        this.valueSetLabels = valueSetLabels;
     }
 
     /**
@@ -256,7 +270,7 @@ public class ParameterDescriptor extends StringIdentifiable {
         for (int i = 0; i < length; i++) {
             if (i > 0 && !joinValues) {
                 builder.append("-")
-                       .append(StringUtilities.isGUID(this.id) ? this.label : this.id)
+                       .append(StringUtilities.isGUID(this.id) ? this.name : this.id)
                        .append(this.expansionRule.getSeparator());
             }
             builder.append(Array.get(values, i)).append(separator);
@@ -272,11 +286,6 @@ public class ParameterDescriptor extends StringIdentifiable {
         if (!super.equals(o)) return false;
         ParameterDescriptor that = (ParameterDescriptor) o;
         return name.equals(that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), name);
     }
 
     public JavaType javaType() { return this.dataType; }
@@ -305,3 +314,4 @@ public class ParameterDescriptor extends StringIdentifiable {
         return this.validator;
     }
 }
+

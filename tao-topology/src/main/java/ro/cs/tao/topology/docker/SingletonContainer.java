@@ -35,6 +35,10 @@ public interface SingletonContainer {
         return null;
     }
 
+    default String start(String user) throws IOException {
+        return null;
+    }
+
     default String start(String user, String token) throws IOException {
         return null;
     }

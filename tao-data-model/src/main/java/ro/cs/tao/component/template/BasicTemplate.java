@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.component.template;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.template.engine.TemplateEngine;
-
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Basic (in-memory) implementation for a TAO component template.
@@ -118,3 +117,4 @@ public class BasicTemplate extends Template {
         // delegate to persistence layer
     }
 }
+

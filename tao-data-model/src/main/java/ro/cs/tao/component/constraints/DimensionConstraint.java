@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.component.constraints;
 
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
 
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
@@ -37,3 +37,4 @@ public class DimensionConstraint extends IOConstraint {
                         .allMatch(a -> args[0].getDimension().equals(a.getDimension()));
     }
 }
+

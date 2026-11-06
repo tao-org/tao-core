@@ -17,8 +17,8 @@ package ro.cs.tao.component.enums;
 
 import ro.cs.tao.TaoEnum;
 
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlEnumValue;
+import jakarta.xml.bind.annotation.XmlEnum;
+import jakarta.xml.bind.annotation.XmlEnumValue;
 
 /**
  * Possible types of parameters
@@ -52,3 +52,4 @@ public enum ParameterType implements TaoEnum<Integer> {
     @Override
     public Integer value() { return this.value; }
 }
+

@@ -15,13 +15,13 @@
  */
 package ro.cs.tao.component.constraints;
 
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
 
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
@@ -47,3 +47,4 @@ public class CRSConstraint extends IOConstraint {
                         });
     }
 }
+

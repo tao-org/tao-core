@@ -15,11 +15,11 @@
  */
 package ro.cs.tao.persistence.convert;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.component.ParameterDescriptor;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
-import javax.persistence.AttributeConverter;
 import java.util.List;
 
 /**
@@ -31,7 +31,7 @@ public class ParameterDescriptorListConverter implements AttributeConverter<List
     public String convertToDatabaseColumn(List<ParameterDescriptor> parameters) {
         try {
             return new ObjectMapper().writerFor(parameters.getClass()).writeValueAsString(parameters);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e.getCause());
         }
     }
@@ -40,8 +40,10 @@ public class ParameterDescriptorListConverter implements AttributeConverter<List
     public List<ParameterDescriptor> convertToEntityAttribute(String s) {
         try {
             return new ObjectMapper().readerForListOf(ParameterDescriptor.class).readValue(s);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e.getCause());
         }
     }
 }
+
+

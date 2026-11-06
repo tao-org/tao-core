@@ -16,10 +16,9 @@
 
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
-
-import javax.persistence.AttributeConverter;
 
 public class TransitionBehaviorConverter implements AttributeConverter<TransitionBehavior, Integer> {
     @Override
@@ -32,3 +31,4 @@ public class TransitionBehaviorConverter implements AttributeConverter<Transitio
         return dbData != null ? EnumUtils.getEnumConstantByValue(TransitionBehavior.class, dbData) : null;
     }
 }
+

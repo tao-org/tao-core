@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.datasource.param.JavaType;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for <code>Class&lt;?&gt;</code> stored values
@@ -36,3 +35,4 @@ public class DataTypeConverter implements AttributeConverter<Class<?>, String> {
         return dbData != null ? EnumUtils.getEnumConstantByFriendlyName(JavaType.class, dbData).value() : null;
     }
 }
+

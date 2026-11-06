@@ -1,8 +1,10 @@
 package ro.cs.tao.persistence.repository;
 
+import jakarta.persistence.QueryHint;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +15,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "containerRepository")
 @Transactional
-public interface TagRepository extends PagingAndSortingRepository<Tag, Long> {
+public interface TagRepository extends JpaRepository<Tag, Long> {
 
     /**
      * Find Tag entity by its name
@@ -23,5 +25,8 @@ public interface TagRepository extends PagingAndSortingRepository<Tag, Long> {
 
     @Query(value = "SELECT id, tag_type_id, tag FROM common.tag WHERE tag_type_id = :typeId ORDER BY tag",
             nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
     List<Tag> getTags(@Param("typeId")int tagTypeId);
 }
+
+

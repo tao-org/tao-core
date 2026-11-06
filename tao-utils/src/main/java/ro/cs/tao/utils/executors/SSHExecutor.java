@@ -62,7 +62,13 @@ public class SSHExecutor extends Executor<Channel> {
     
     /** The docker identifier if the docker command is executed asynchronously. */
     private String dockerAsyncID;
-    
+
+    /** The channel used to follow the output file of an asynchronous call. */
+    private volatile ChannelExec followChannel;
+
+    /** True if following the output file of an asynchronous call was explicitly stopped. */
+    private volatile boolean followStopped;
+
     /** Regex pattern to extract the screen ID after the screen session is disconnected. */
     private static final Pattern SCREEN_ID_PATTERN = Pattern.compile("^\\[.+\\s(\\d+\\.\\S+\\.\\S+)\\]$");
 
@@ -104,9 +110,18 @@ public class SSHExecutor extends Executor<Channel> {
         this.mode = mode;
         this.port = port;
         this.asyncExecution = asyncExecution;
-        this.asyncFileName = String.format(ASYNC_FILE_NAME_FORMAT, taskName);
+        this.asyncFileName = asyncOutputFile(taskName);
     }
-    
+
+    /**
+     * Returns the remote path of the file in which the output of an asynchronous call is saved.
+     *
+     * @param taskName the name given to the asynchronous call
+     */
+    public static String asyncOutputFile(String taskName) {
+        return String.format(ASYNC_FILE_NAME_FORMAT, taskName);
+    }
+
     public void setKeepAlive(boolean value) {
         this.keepAlive = value;
         if (this.keepAlive) {
@@ -513,7 +528,7 @@ public class SSHExecutor extends Executor<Channel> {
         // Check if the asynchronous session was started.
         if (this.asyncCallFinished == null) {
         	return true;
-        } else if (this.asyncCallFinished) {
+        } else if (this.asyncCallFinished || this.asyncScreenID == null) {
         	return false;
         }
         final Session session = getSession();
@@ -775,6 +790,69 @@ public class SSHExecutor extends Executor<Channel> {
         }
 
         return channel.getExitStatus();
+    }
+
+    /**
+     * Follows the output file of an asynchronous call, without attaching to its screen session.
+     * Each output line is passed to the output consumer.
+     * The method blocks until the execution result marker is read, {@link #stopFollowing()} is called
+     * or the remote channel is closed.
+     *
+     * @param taskName the name given to the asynchronous call
+     * @return the return code of the followed process, or Integer.MIN_VALUE if it was not available
+     * @throws Exception if the connection failed
+     */
+    public int followAsyncOutput(String taskName) throws Exception {
+        int result = Integer.MIN_VALUE;
+        this.followStopped = false;
+        final Session session = getSession();
+        final ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
+        this.followChannel = channel;
+        try {
+            // The pseudo-terminal ensures that 'tail' is terminated when the channel is closed.
+            // '-F' waits for the file to be created and keeps following it if it is re-created.
+            final String command = "tail -n +1 -F " + asyncOutputFile(taskName) + " 2>/dev/null";
+            final InputStream inputStream = configureAndConnectChannel(channel, command, false, true);
+            final BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while (!this.followStopped && (line = outReader.readLine()) != null) {
+                if (!"".equals(line.trim())) {
+                    final Matcher matcher = EXECUTION_RESULT_PATTERN.matcher(line.trim());
+                    if (matcher.matches()) {
+                        // the line contains the result code, hence the process has ended
+                        result = Integer.parseInt(matcher.group(1));
+                        break;
+                    }
+                    if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {
+                        this.outputConsumer.consume(line);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // closing the channel from stopFollowing() closes the stream while being read
+            if (!this.followStopped) {
+                throw e;
+            }
+        } finally {
+            this.followChannel = null;
+            channel.disconnect();
+            if (!keepAlive) {
+                session.disconnect();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Stops following the output file of an asynchronous call (see {@link #followAsyncOutput(String)}).
+     * The asynchronous call itself is not affected.
+     */
+    public void stopFollowing() {
+        this.followStopped = true;
+        final ChannelExec channel = this.followChannel;
+        if (channel != null) {
+            channel.disconnect();
+        }
     }
 
     /**

@@ -1,8 +1,8 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +20,10 @@ import java.util.Set;
 @Repository
 @Qualifier(value = "vectorDataRepository")
 @Transactional
-public interface VectorDataRepository extends PagingAndSortingRepository<VectorData, String> {
+public interface VectorDataRepository extends JpaRepository<VectorData, String> {
 
     @Query(value = "SELECT * FROM product.vector_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
             nativeQuery = true)
     List<VectorData> getProductsByLocation(@Param("locations") Set<String> locations);
 }
+

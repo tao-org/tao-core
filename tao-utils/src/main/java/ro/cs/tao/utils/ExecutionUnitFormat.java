@@ -20,7 +20,9 @@ public enum ExecutionUnitFormat {
     /**
      * Execution unit should be converted to an Argo workflow
      */
-    ARGO(".yaml");
+    ARGO(".yaml"),
+    /** Execution unit should be converted to a Python 3 script. */
+    PYTHON(".py");
 
     private final String extension;
 

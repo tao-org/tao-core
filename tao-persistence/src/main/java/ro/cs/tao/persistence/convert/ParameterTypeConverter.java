@@ -18,7 +18,7 @@ package ro.cs.tao.persistence.convert;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.ParameterType;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 
 /**
  * Converter for ParameterType enum stored values
@@ -37,3 +37,4 @@ public class ParameterTypeConverter implements AttributeConverter<ParameterType,
         return dbData != null ? EnumUtils.getEnumConstantByValue(ParameterType.class, dbData) : null;
     }
 }
+

@@ -1,6 +1,6 @@
 package ro.cs.tao.persistence.convert;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,3 +16,4 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
         return dbData != null ? Arrays.asList(dbData.split(",")) : null;
     }
 }
+

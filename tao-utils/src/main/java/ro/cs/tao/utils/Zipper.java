@@ -21,9 +21,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
@@ -43,6 +41,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class Zipper {
 
+    private static final String TAR_MAGIC = "ustar";
     private static final Logger logger = Logger.getLogger(Zipper.class.getName());
 
     public static void main(String[] args) throws IOException {
@@ -51,6 +50,16 @@ public class Zipper {
         decompressZip(source, target, false);
     }
 
+    /**
+     * Compresses the contents of a folder into a zip archive.
+     *
+     * @param sourceFolder   The path of the folder to compress.
+     * @param archiveName    The name of the resulting zip archive (without extension).
+     * @param deleteFolder   If true, deletes the original folder after compression.
+     * @param listener       An optional {@link ProgressListener} to receive progress updates
+     *                       and status of the compression process.
+     * @throws IOException   If an I/O error occurs during compression.
+     */
     public static void compress(Path sourceFolder, String archiveName, boolean deleteFolder, ProgressListener listener) throws IOException {
         Path zipFile = sourceFolder.getParent().resolve(archiveName + ".zip");
         Files.deleteIfExists(zipFile);
@@ -78,7 +87,7 @@ public class Zipper {
                         ZipEntry entry = new ZipEntry(sp);
                         outputStream.putNextEntry(entry);
                         if (!Files.isDirectory(path)) {
-                            byte[] buffer = new byte[MemoryUnit.MB.value().intValue()];
+                            byte[] buffer = new byte[(int) MemoryUnit.MB.value()];
                             try (InputStream stream = Files.newInputStream(path)) {
                                 int r;
                                 while ((r = stream.read(buffer)) != -1) {
@@ -105,6 +114,17 @@ public class Zipper {
         }
     }
 
+    /**
+     * Decompresses a ZIP file into a specified target directory. Optionally deletes
+     * the ZIP file after decompression.
+     *
+     * @param source               The path to the ZIP file to decompress. Must not be null and should end with ".zip".
+     * @param target               The path to the target directory where the decompressed files will be extracted.
+     * @param deleteAfterDecompress If true, deletes the source ZIP file after successful decompression.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a ZIP file.
+     * @throws IOException If an I/O error occurs during the decompression process.
+     */
     public static Path decompressZip(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
@@ -142,13 +162,23 @@ public class Zipper {
         return target;
     }
 
+    /**
+     * Decompresses a specified ZIP file into a target directory and reports progress using an optional listener.
+     *
+     * @param source   The path to the ZIP file to decompress. Must not be null and should end with ".zip".
+     * @param target   The path to the target directory where the decompressed files will be extracted.
+     * @param listener An optional {@link ProgressListener} for receiving progress updates during the decompression process.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a ZIP file.
+     * @throws IOException If an I/O error occurs during the decompression process.
+     */
     public static Path decompressZip(Path source, Path target, ProgressListener listener) throws IOException {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
         }
         try {
             FileUtilities.createDirectories(target);
-            byte[] buffer = new byte[MemoryUnit.MB.value().intValue()];
+            byte[] buffer = new byte[(int) MemoryUnit.MB.value()];
             double totalRead = 0;
             long total = Files.size(source);
             int iterations = 0;
@@ -158,26 +188,30 @@ public class Zipper {
             try (InputStream is = Files.newInputStream(source);
                  ZipInputStream zis = new ZipInputStream(is)) {
                 ZipEntry entry = zis.getNextEntry();
-                while (entry != null) {
-                    Path newFile = target.resolve(entry.getName());
-                    if (entry.isDirectory()) {
-                        FileUtilities.createDirectories(newFile);
-                    } else {
-                        FileUtilities.createDirectories(newFile.getParent());
-                        try (OutputStream outputStream = Files.newOutputStream(newFile)) {
-                            int read;
-                            while ((read = zis.read(buffer)) > 0) {
-                                outputStream.write(buffer, 0, read);
-                                totalRead += (double) read * ((double) entry.getCompressedSize() / entry.getSize());
-                                if (listener != null && iterations++ % 128 == 0) { // report progress at each 128MB read
-                                    listener.notifyProgress(totalRead / total);
+                if (entry == null && isTar(source)) {
+                    decompressTar(source, target);
+                } else {
+                    while (entry != null) {
+                        Path newFile = target.resolve(entry.getName());
+                        if (entry.isDirectory()) {
+                            FileUtilities.createDirectories(newFile);
+                        } else {
+                            FileUtilities.createDirectories(newFile.getParent());
+                            try (OutputStream outputStream = Files.newOutputStream(newFile)) {
+                                int read;
+                                while ((read = zis.read(buffer)) > 0) {
+                                    outputStream.write(buffer, 0, read);
+                                    totalRead += (double) read * ((double) entry.getCompressedSize() / entry.getSize());
+                                    if (listener != null && iterations++ % 128 == 0) { // report progress at each 128MB read
+                                        listener.notifyProgress(totalRead / total);
+                                    }
                                 }
                             }
                         }
+                        entry = zis.getNextEntry();
                     }
-                    entry = zis.getNextEntry();
+                    zis.closeEntry();
                 }
-                zis.closeEntry();
             }
         } catch (IOException e) {
             logger.warning(ExceptionUtils.getStackTrace(logger, e));
@@ -190,6 +224,19 @@ public class Zipper {
         return target;
     }
 
+    /**
+     * Decompresses a ZIP file into a specified target directory using a multi-threaded approach.
+     * Optionally creates a folder named after the ZIP file at the target location and
+     * deletes the source ZIP file after successful decompression.
+     *
+     * @param source               The path to the ZIP file to decompress. Must not be null and should end with ".zip".
+     * @param target               The path to the target directory where the decompressed files will be extracted.
+     * @param createFolderFromName If true, creates a folder named after the ZIP file at the target location
+     *                             and extracts the files into it. If false, extracts files directly into the target directory.
+     * @param deleteAfterDecompress If true, deletes the source ZIP file after successful decompression.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a ZIP file.
+     */
     public static Path decompressZipMT(Path source, Path target, boolean createFolderFromName, boolean deleteAfterDecompress) {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
@@ -241,6 +288,45 @@ public class Zipper {
         return target;
     }
 
+    public static Path decompressTar(Path source, Path target) throws IOException {
+        if (source == null) {
+            return null;
+        }
+        try (InputStream is = Files.newInputStream(source);
+             TarArchiveInputStream tarStream = new TarArchiveInputStream(is)) {
+            TarArchiveEntry entry;
+            while ((entry = tarStream.getNextTarEntry()) != null) {
+                final Path currentPath = target.resolve(entry.getName());
+                if (entry.isDirectory()) {
+                    FileUtilities.createDirectories(currentPath);
+                } else {
+                    int count;
+                    final byte[] buffer = new byte[65536];
+                    FileUtilities.createDirectories(currentPath.getParent());
+                    try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
+                        while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
+                            outputStream.write(buffer, 0, count);
+                        }
+                    }
+                }
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Decompresses a tar.gz (or tar) file into a specified target directory. Optionally deletes
+     * the source file after successful decompression.
+     *
+     * @param source               The path to the tar.gz (or tar) file to decompress. Must not be null and should end with ".tar.gz".
+     *                             If the source is not valid, the method returns null.
+     * @param target               The path to the target directory where the decompressed files will be extracted.
+     *                             The directory is created if it does not already exist.
+     * @param deleteAfterDecompress If true, deletes the source file after successful decompression.
+     * @return The path to the target directory where the files were decompressed. Returns null if the source path
+     *         is invalid or not a tar.gz file.
+     * @throws IOException If an I/O error occurs during the decompression process.
+     */
     public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
         if (source == null || !source.toString().endsWith(".tar.gz")) {
             return null;
@@ -267,25 +353,7 @@ public class Zipper {
                 }
             } catch (IOException e) {
                 if (e.getMessage().equals("Input is not in the .gz format")) {
-                    try (InputStream is = Files.newInputStream(source);
-                         TarArchiveInputStream tarStream = new TarArchiveInputStream(is)) {
-                        TarArchiveEntry entry;
-                        while ((entry = tarStream.getNextTarEntry()) != null) {
-                            final Path currentPath = target.resolve(entry.getName());
-                            if (entry.isDirectory()) {
-                                FileUtilities.createDirectories(currentPath);
-                            } else {
-                                int count;
-                                final byte[] buffer = new byte[65536];
-                                FileUtilities.createDirectories(currentPath.getParent());
-                                try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
-                                    while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
-                                        outputStream.write(buffer, 0, count);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    decompressTar(source, target);
                 }
             }
             if (deleteAfterDecompress) {
@@ -296,6 +364,26 @@ public class Zipper {
             throw ex;
         }
         return target;
+    }
+
+    public static boolean isTar(Path file) throws IOException {
+        if (file == null || !Files.exists(file) || Files.isDirectory(file)) {
+            return false;
+        }
+        final StringBuilder buffer = new StringBuilder();
+        try (InputStream is = Files.newInputStream(file);
+             Reader reader = new BufferedReader(new InputStreamReader(is))) {
+                 reader.skip(256);
+                 int read;
+                 for (int i = 0; i < 4; i++) {
+                     if ((read = reader.read()) != -1) {
+                         buffer.append((char) read);
+                     } else {
+                         break;
+                     }
+                 }
+                 return TAR_MAGIC.equals(buffer.toString());
+        }
     }
 
     private static boolean delete(Path path) {

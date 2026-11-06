@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.topology.ServiceStatus;
-
-import javax.persistence.AttributeConverter;
 
 /**
  * Converter for TemplateType enum stored values
@@ -37,3 +36,4 @@ public class ServiceStatusConverter implements AttributeConverter<ServiceStatus,
         return dbData != null ? EnumUtils.getEnumConstantByValue(ServiceStatus.class, dbData) : null;
     }
 }
+

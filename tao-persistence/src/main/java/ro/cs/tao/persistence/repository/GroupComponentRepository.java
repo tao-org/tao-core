@@ -1,7 +1,6 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.GroupComponent;
@@ -15,7 +14,7 @@ import ro.cs.tao.component.GroupComponent;
 @Repository
 @Qualifier(value = "groupComponentRepository")
 @Transactional
-public interface GroupComponentRepository extends PagingAndSortingRepository<GroupComponent, String> {
+public interface GroupComponentRepository extends TaggableEntityRepository<GroupComponent, String> {
 
     /**
      * Find ProcessingComponent entity by its label
@@ -24,3 +23,4 @@ public interface GroupComponentRepository extends PagingAndSortingRepository<Gro
      */
     GroupComponent findByLabel(String label);
 }
+

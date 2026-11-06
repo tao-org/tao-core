@@ -1,5 +1,6 @@
 package ro.cs.tao.component.ogc;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
@@ -8,12 +9,34 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.docker.Container;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * The WMSComponent class represents a component with specific properties and behavior
+ * in the context of a Workflow Management System (WMS). This class is an extension of
+ * the TaoComponent and includes additional attributes such as remoteAddress,
+ * capabilityName, parameters, visibility, active status, owner, and service.
+ *
+ * The class also provides functionality to validate parameter values against the
+ * parameter descriptors and cloning capability to create a copy of the current object
+ * with appropriate adjustments.
+ *
+ * Features:
+ * - Management of a remote address and capability name.
+ * - Association of a list of parameter descriptors for configuration or validation.
+ * - Tracking of the component's visibility state and active status.
+ * - Managing ownership information and related service container.
+ * - Validation of parameter values to ensure they comply with the defined descriptors.
+ * - Capability to clone the component, including deep copying of nested collections
+ *   like parameters, sources, targets, and tags.
+ *
+ * This class is expected to be used in applications dealing with processing components
+ * in a workflow context, where metadata and runtime behavior of the component need
+ * to be managed and validated.
+ */
 @XmlRootElement(name = "wmsComponent")
 public class WMSComponent extends TaoComponent {
     private String remoteAddress;
@@ -145,3 +168,4 @@ public class WMSComponent extends TaoComponent {
         return cloned;
     }
 }
+

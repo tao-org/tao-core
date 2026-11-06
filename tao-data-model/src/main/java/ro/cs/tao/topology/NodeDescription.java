@@ -15,11 +15,11 @@
  */
 package ro.cs.tao.topology;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import ro.cs.tao.component.StringIdentifiable;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -133,3 +133,4 @@ public class NodeDescription extends StringIdentifiable {
         }
     }
 }
+

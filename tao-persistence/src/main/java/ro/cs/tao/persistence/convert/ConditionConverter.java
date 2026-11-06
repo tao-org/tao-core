@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
+import jakarta.persistence.AttributeConverter;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
-
-import javax.persistence.AttributeConverter;
 
 public class ConditionConverter implements AttributeConverter<Condition, Integer> {
     @Override
@@ -16,3 +15,4 @@ public class ConditionConverter implements AttributeConverter<Condition, Integer
         return integer != null ? EnumUtils.getEnumConstantByValue(Condition.class, integer) : null;
     }
 }
+

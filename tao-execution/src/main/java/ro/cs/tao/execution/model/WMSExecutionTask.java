@@ -16,6 +16,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a task for the execution of a Web Map Service (WMS) request. This class defines
+ * methods to configure input and output parameters, build execution commands,
+ * and output paths for the associated WMS component.
+ */
 public class WMSExecutionTask extends ExecutionTask {
 
     private WMSComponent component;
@@ -98,6 +103,7 @@ public class WMSExecutionTask extends ExecutionTask {
     }
 
     public String buildOutputPath() {
+        String descriptorName = null;
         if (this.instanceTargetOutput == null) {
             String location = null;
             for (TargetDescriptor descriptor : this.component.getTargets()) {
@@ -106,6 +112,7 @@ public class WMSExecutionTask extends ExecutionTask {
                 if (variable != null) {
                     location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
                     if (location != null) {
+                        descriptorName = descriptor.getName();
                         break;
                     }
                 }
@@ -132,9 +139,9 @@ public class WMSExecutionTask extends ExecutionTask {
                         throw new RuntimeException(e);
                     }
                 }
-                this.instanceTargetOutput = FileUtilities.asUnixPath(path.resolve(fileName), true);
+                setInstanceTargetOutput(descriptorName, FileUtilities.asUnixPath(path.resolve(fileName)));
             }
         }
-        return this.instanceTargetOutput;
+        return getInstanceTargetOutput(descriptorName);
     }
 }

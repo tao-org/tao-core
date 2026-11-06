@@ -15,13 +15,17 @@
  */
 package ro.cs.tao.serialization;
 
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import ro.cs.tao.datasource.param.JavaType;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.time.LocalDateTime;
 
 /**
- * @author Cosmin Cara
+ * A generic XML adapter that converts objects of a specified class to and from their
+ * string representations during the marshalling and unmarshalling processes.
+ * This class extends the `XmlAdapter` for customizing XML conversion.
+ *
+ * @author  Cosmin Cara
  */
 public class GenericAdapter extends XmlAdapter<Object, String> {
     private Class clazz;
@@ -68,3 +72,4 @@ public class GenericAdapter extends XmlAdapter<Object, String> {
         }
     }
 }
+

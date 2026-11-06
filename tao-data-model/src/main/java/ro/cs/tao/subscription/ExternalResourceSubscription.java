@@ -1,14 +1,20 @@
 package ro.cs.tao.subscription;
 
+import jakarta.xml.bind.annotation.XmlElementWrapper;
 import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.user.User;
 
-import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents an external resource subscription with specific properties such as
+ * name, associated flavors, object storage size, and users. This class is used
+ * to manage and encapsulate information regarding external resources subscribed
+ * by an entity.
+ */
 public class ExternalResourceSubscription extends LongIdentifiable {
     private String name;
     private Map<String, ExternalFlavorSubscription> flavors;
@@ -78,3 +84,4 @@ public class ExternalResourceSubscription extends LongIdentifiable {
     }
 
 }
+

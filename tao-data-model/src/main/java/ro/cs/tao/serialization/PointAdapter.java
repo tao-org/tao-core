@@ -15,9 +15,8 @@
  */
 package ro.cs.tao.serialization;
 
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.locationtech.jts.geom.Coordinate;
-
-import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * @author Cosmin Cara
@@ -57,3 +56,4 @@ public class PointAdapter extends XmlAdapter<Coordinate, String> {
         return result;
     }
 }
+

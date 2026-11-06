@@ -1,3 +1,5 @@
+-- DEPRECATED, NO LONGER USED
+
 CREATE OR REPLACE FUNCTION usr.login(IN usr text, IN pwd text) RETURNS varchar AS
 $func$
     SELECT id FROM usr.user WHERE username = USR and password = crypt(pwd, usr);
