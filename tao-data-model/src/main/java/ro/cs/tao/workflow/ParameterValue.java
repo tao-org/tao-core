@@ -20,6 +20,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
 /**
+ * Represents a parameter with a name and value.
+ * This class is designed to store parameter information as name-value pairs
+ * and includes support for XML serialization using JAXB annotations.
+ *
+ * Instances of this class are immutable once created to ensure thread safety
+ * and consistent behavior across different usage scenarios.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "parameter")

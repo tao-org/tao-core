@@ -4,6 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+/**
+ * Represents a response fetched from Docker Hub, typically obtained from an API call.
+ * This class contains metadata about the paginated response, including:
+ * - The size of each page in the results.
+ * - Links to the next and previous pages of the result set.
+ * - The current page number.
+ * - The total count of records available.
+ * Additionally, it includes a list of DockerHubRecord objects representing the individual summaries
+ * or items in the response.
+ */
 public class DockerHubResponse {
     private int pageSize;
     private String next;

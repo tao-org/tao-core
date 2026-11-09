@@ -1,9 +1,18 @@
 package ro.cs.tao.datasource;
 
 import ro.cs.tao.component.LongIdentifiable;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 
+/**
+ * Represents a descriptor for an indexed data source containing metadata
+ * such as the name of the data source, associated sensor, time range,
+ * and additional configuration parameters.
+ *
+ * This class extends {@code LongIdentifiable} to uniquely identify the
+ * descriptor using a long-based identifier.
+ */
 public class IndexedDataSourceDescriptor extends LongIdentifiable {
     private String dataSourceName;
     private String sensorName;

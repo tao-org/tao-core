@@ -15,6 +15,17 @@
  */
 package ro.cs.tao.user;
 
+/**
+ * Represents a user preference consisting of a key-value pair.
+ *
+ * This class is designed to store individual preferences or configurations
+ * associated with a user. Each preference has a unique key that identifies
+ * it and a corresponding value that holds the preference's data.
+ *
+ * Key Features:
+ * - Allows storing, retrieving, and updating the key and value of a preference.
+ * - Can be utilized as part of a larger preferences system to manage user-specific configurations.
+ */
 public class UserPreference {
     private String key;
     private String value;

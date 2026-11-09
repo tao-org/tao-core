@@ -52,7 +52,7 @@ public class WorkflowDescriptor
     private boolean temporary;
     private List<String> tags;
 
-    @XmlElement(name = "userName")
+    @XmlElement(name = "userId")
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
@@ -106,6 +106,14 @@ public class WorkflowDescriptor
     @Transient
     public List<WorkflowNodeDescriptor> getOrderedNodes() {
         return orderNodes(this.nodes, null);
+    }
+
+    public List<WorkflowNodeDescriptor> orderNodesByLevel() {
+        return orderNodesByLevel(this.nodes);
+    }
+
+    public WorkflowNodeDescriptor getNodeById(Long id) {
+        return this.nodes.stream().filter(n -> n.getId().equals(id)).findFirst().orElse(null);
     }
 
     // addNode and removeNode are needed for bidirectional relationship

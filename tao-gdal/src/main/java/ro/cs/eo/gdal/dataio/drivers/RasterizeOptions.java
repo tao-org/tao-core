@@ -7,14 +7,12 @@ import java.util.Vector;
  *
  * @author Adrian Drăghici
  */
-public class RasterizeOptions {
+public class RasterizeOptions extends GDALOptions {
 
     /**
      * The name of JNI GDAL BuildVRTOptions class
      */
     static final String CLASS_NAME = "org.gdal.gdal.RasterizeOptions";
-
-    private final Object jniRasterizeOptionsInstance;
 
     /**
      * Creates new instance for this driver
@@ -22,18 +20,18 @@ public class RasterizeOptions {
      * @param jniBuildVRTOptionsInstance the JNI GDAL BuildVRTOptions class instance
      */
     public RasterizeOptions(Object jniBuildVRTOptionsInstance) {
-        this.jniRasterizeOptionsInstance = jniBuildVRTOptionsInstance;
+        super(jniBuildVRTOptionsInstance);
     }
 
     /**
      * Creates new GDAL BuildVRTOptions class instance
      */
     public RasterizeOptions(Vector options) {
-        this.jniRasterizeOptionsInstance = GDALReflection.fetchGDALLibraryClassInstance(CLASS_NAME, new Class[]{Vector.class}, new Object[]{options});
+        super(options);
     }
 
-    public Object getJniRasterizeOptionsInstance() {
-        return jniRasterizeOptionsInstance;
+    @Override
+    protected String className() {
+        return CLASS_NAME;
     }
-
 }

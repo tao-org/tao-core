@@ -14,6 +14,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * The WPSComponent class represents a configurable processing component
+ * with capabilities for remote service integration and parameterized behavior.
+ * It extends the base functionality provided by {@code TaoComponent}.
+ *
+ * Features of this class include:
+ * - Management of service parameters through descriptors.
+ * - Ability to validate parameter values against predefined descriptors.
+ * - Configuration of visibility, ownership, and active state.
+ * - Cloning functionality to create deep copies of the component and its properties.
+ *
+ * Properties:
+ * - {@code remoteAddress}: The address of the remote service this component interacts with.
+ * - {@code capabilityName}: The capability name for identifying functionality provided by the component.
+ * - {@code parameters}: A list of parameter descriptors defining input/output parameters for the component.
+ * - {@code visibility}: Defines the visibility of the component in processing workflows.
+ * - {@code active}: Specifies whether the component is active or not.
+ * - {@code owner}: Identifies the owner or creator of the component.
+ * - {@code service}: Specifies a service container associated with this component.
+ *
+ * This class provides methods for managing and validating its configuration:
+ * - {@code validate(Map<String, Object> parameterValues)}:
+ *   Validates the provided parameter values against the associated parameter descriptors.
+ * - {@code clone()}: Creates a deep copy of the WPSComponent instance, including its configuration, descriptors, and connections.
+ *
+ * Exceptions:
+ * - {@code ValidationException}: Thrown during validation if parameter values do not conform to their descriptors.
+ */
 @XmlRootElement(name = "wpsComponent")
 public class WPSComponent extends TaoComponent {
     private String remoteAddress;

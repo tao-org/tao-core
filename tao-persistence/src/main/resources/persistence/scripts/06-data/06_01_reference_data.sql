@@ -8,7 +8,7 @@ INSERT INTO component.processing_component_type (id, type) VALUES
 
 -- Processing components category
 INSERT INTO component.component_category (id, category) VALUES
-(1, 'RASTER'), (2, 'VECTOR'), (3, 'OPTICAL'), (4, 'RADAR'), (5, 'MISC');
+(1, 'RASTER'), (2, 'VECTOR'), (3, 'OPTICAL'), (4, 'RADAR'), (5, 'MISC'), (6, 'CONDITION');
 
 -- Tag type
 INSERT INTO common.tag_type (id, description) VALUES
@@ -20,7 +20,7 @@ INSERT INTO component.condition (id, description) VALUES
 
 -- Container type
 INSERT INTO component.container_type (id, description) VALUES
-(1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC'), (5, 'WMS');
+(1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC'), (5, 'WMS'), (6, 'WMTS'), (7, 'OGC_PROCESS');
 
 -- Container visibility
 INSERT INTO component.container_visibility (id, description) VALUES
@@ -28,7 +28,7 @@ INSERT INTO component.container_visibility (id, description) VALUES
 
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
-('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON');
+('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON'),('ANY');
 
 -- Data types
 INSERT INTO product.data_type (type) VALUES
@@ -81,7 +81,7 @@ INSERT INTO component.template_type (type) VALUES
 
 -- Component type
 INSERT INTO workflow.component_type (id, description) VALUES
-(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP');
+(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP'), (5, 'WPS_COMPONENT'), (6, 'CONDITION'), (7, 'OGC_COMPONENT');
 
 -- Behavior
 INSERT INTO workflow.node_behavior (id, description) VALUES
@@ -118,10 +118,18 @@ VALUES
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='admin'), 1);
 INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='SystemAccount'), 1);
 
+-- Memory units
+INSERT INTO topology.memory_unit (id, short_description) VALUES
+(1, 'B'),
+(2, 'KB'),
+(3, 'MB'),
+(4, 'GB'),
+(5, 'TB');
+
 -- Node flavor
-INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx) VALUES
-('master', 8, 32, 1024, 32, 1.0),
-('k8s', 8, 32, 1024, 32, 1.0);
+INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx, unit_id) VALUES
+('master', 8, 32, 1024, 32, 1.0, 4),
+('k8s', 8, 32, 1024, 32, 1.0, 4);
 
 -- localhost execution node
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)
@@ -133,12 +141,14 @@ VALUES ('k8s-master', '', '', 'k8s', 'K8s Node', 'k8s');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, synonyms, regex, description) VALUES
-(1, 'Sentinel2', 'S2MSI1C,S2MSI2A,L1C,L2A' , '(S2[A-B])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
-(2, 'Sentinel1', 'GRD,SLC', '(S1[A-B])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
+(1, 'Sentinel2', 'S2MSI1C,S2MSI2A,L1C,L2A' , '(S2[A-D])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
+(2, 'Sentinel1', 'GRD,SLC', '(S1[A-D])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
 (3, 'Landsat8', 'L1T,L1GT,L1TP,L2SP', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming'),
 (4, 'GeoTIFF', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.(tif|TIF|tiff|TIFF+)', 'Generic GeoTIFF product'),
 (5, 'Generic', null, '((?:[A-Za-z0-9_]*?(?=\d{8}))((\d{4})(\d{2})(\d{2}))?(?:[A-Za-z0-9_]*))\.([A-Za-z.]+)', 'Generic product'),
-(6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming');
+(6, 'Sentinel5P', 'TROPOMI', '(S5P)_(NRTI|OFFL|RPRO)_(L1B_RA_BD1|L1B_RA_BD2|L1B_RA_BD3|L1B_RA_BD4|L1B_RA_BD5|L1B_RA_BD6|L1B_RA_BD7|L1B_RA_BD8|L1B_IR_UVN|L1B_IR_SIR|L2__AER_AI|L2__AER_LH|L2__CH4___|L2__CLOUD_|L2__CO____|L2__HCHO__|L2__NO2___|L2__NP_BD3|L2__NP_BD6|L2__NP_BD7|L2__O3____|L2__O3_TCL|L2__O3__PR|L2__SO2___|AUX_CTMANA|AUX_CTMFCT)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{5})_(\d{2})_(\d{6})_(\d{8})T(\d{6})', 'Sentinel-5P product naming'),
+(7, 'Enmap', 'ENMAP', '(ENMAP01)-____(L[1-2][A-C])-DT(\d{9,10})_(\d{8})T(\d{6})Z_(\d{3})_V(\d{6})_(\d{8}T\d{6})Z', 'ENMAP product naming'),
+(8, 'Sentinel3', 'OL_1_EFR___,OL_1_ERR___,OL_2_LFR___,OL_2_LRR___,OL_2_WFR___,OL_2_WRR___,SL_1_RBT___,SL_2_AOD___,SL_2_FRP___,SL_2_LST___,SL_2_WST___,SR_1_SRA___,SR_1_SRA_A_,SR_1_SRA_BS,SR_2_LAN___,SR_2_LAN_HY,SR_2_LAN_LI,SR_2_LAN_SI,SR_2_WAT___,SY_2_AOD___,SY_2_SYN___,SY_2_V10___,SY_2_VG1___,SY_2_VGP___','(S3[A-D])_(OL|SR|SL|ST|SY|DO|MW|GN|AX)_([012_])_(EFR\w{3}|CR0\w{3}|CR1\w{3}|ERR\w{3}|RAC\w{3}|SPC\w{3}|INS\w{3}|WFR\w{3}|WRR\w{3}|LFR\w{3}|LRR\w{3}|ATP\w{3}|AER\w{3}|LAP\w{3}|LVI\w{3}|SLT\w{3}|RBT\w{3}|WCT\w{3}|WST\w{3}|LST\w{3}|MISR__|SYN\w{3}|VGP\w{3}|VG1\w{3}|V10\w{3}|LAN\w{3}|WAT\w{3}|SRA\w{3}|CAL\w{3}|FRP\w{3})_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{8}T\d{6})_(((\d{4})_(\d{3})_(\d{3})_(\d{4}|____))|(\w{17}))_(\w{3})_([DFOR])_(NR|ST|NT)_(\d{3})(?:.SEN3)?','Sentinel3 product naming');
 
 INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
 (1, 'MISSION', 1, 'Mission identifier'),
@@ -206,6 +216,33 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (6, 'PDATE', 11, 'Processing date'),
 (6, 'PTIME', 12, 'Processing time');
 
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(7, 'MISSION', 1, 'Mission identifier'),
+(7, 'LEVEL', 2, 'Processing level'),
+(7, 'DTAKE', 3, 'Datatake identifier'),
+(7, 'ADATE', 4, 'Acquisition date'),
+(7, 'ATIME', 5, 'Acquisition time'),
+(7, 'TILE', 6, 'Tile identifier'),
+(7, 'VERSION', 7, 'Product version'),
+(7, 'PDATE', 8, 'Processing date');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(8, 'MISSION', 1, 'Mission identifier'),
+(8, 'DATASOURCE', 2, 'Data source / consumer'),
+(8, 'LEVEL', 3, 'Processing level'),
+(8, 'DATATYPE', 4, 'Data type identifier'),
+(8, 'DATESTART', 5, 'Data start date'),
+(8, 'TIMESTART', 6, 'Data start time'),
+(8, 'DATESTOP', 7, 'Data stop date'),
+(8, 'TIMESTOP', 8, 'Data stop time'),
+(8, 'PDATE', 9, 'Processing date'),
+(8, 'STIME', 10, 'Sensing time duration'),
+(8, 'SCYCLE', 11, 'Cycle number at the start sensing time'),
+(8, 'ORBIT', 12, 'Relative orbit'),
+(8, 'FRAME', 13, 'Frame start time'),
+(8, 'TILEID', 14, 'Tile identifier'),
+(8, 'CENTRE', 15, 'Product generating centre');
+
 -- Repository types
 INSERT INTO workspace.repository_type (id, name, params) VALUES
 (1, 'Local repository', '{"root":true}'),
@@ -259,6 +296,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (1, 'quicklook.extension', '.png', 'Extension for product quicklooks', 'string', 'Quicklook extension', null, now()),
 (1, 'extract.statistics', 'true', 'Include raster statistics in produced metadata', 'bool', 'Extract statistics', null, now()),
 (1, 'api.token', '13cd8418-0b76-4346-b89b-2f5d7f5a5959', 'API token for development purposes', 'string', 'API token', null, now()),
+(1, 'api.token.expiration', '60', 'API token expiration (in days)', 'int', 'API token expiraiton (days)', null, now()),
 (1, 'serialize.downloads', 'true', 'Perform downloads sequentially', 'bool', 'Sequential downloads', null, now()),
 (1, 'replace.local.symlinks', 'true', 'Replace symlinks to products with actual products', 'bool', 'Replace symlinks when processing', null, now()),
 (2, 'topology.node.poll.interval', '15', 'Time (in seconds) between node polling requests', 'int', 'Node polling interval (s)', null, now()),
@@ -271,12 +309,17 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (2, 'topology.node.create.wait', '60', 'Time in seconds to wait for a node to be alive', 'int', 'Node startup wait time (s)', null, now()),
 (2, 'topology.node.connection.retries', '-1', 'How many times to retry the connection with a node (-1 for each time)', 'int', 'Node connection retries', null, now()),
 (2, 'topology.dedicated.user.nodes', 'true', 'Use dedicated nodes for users', 'bool', 'Use dedicated nodes for users', null, now()),
+(2, 'topology.use.master.for.execution', 'false', 'Use Master node in executions', 'bool', 'Use Master node in executions', null, now()),
+(2, 'topology.default.user.block.storage', '10', 'User local storage (GB)', 'int', 'User local storage (GB)', null, now()),
+(2, 'topology.default.user.s3.storage', '50', 'User object storage (GB)', 'int', 'User object storage (GB)', null, now()),
+(2, 'topology.default.user.memory', '16384', 'User processing memory (MB)', 'int', 'User processing memory (MB)', null, now()),
+(2, 'topology.default.user.cpu', '4', 'User processing CPUs', 'int', 'User processing CPUs', null, now()),
 (3, 'tao.docker.images', '/mnt/tao/docker', 'Location for extracting container files for new Docker plugins', 'string', 'Dockerfiles location', null, now()),
 (3, 'tao.docker.registry', 'sen2agri-prod:5000', 'Docker registry', 'string', 'Docker registry', null, now()),
 (3, 'tao.docker.base.port', '8888', 'Start port for standalone user containers', 'int', 'Start port for standalone containers', null, now()),
 (3, 'master.docker.mappings', '{ "workspace.mount": "/mnt/tao/workspaces:/mnt/tao", "temp.mount": "/home/taouser/workdir:/mnt/workdir", "cfg.mount": "/mnt/tao/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on the master node', 'string', 'Master node volume map', null, now()),
 (3, 'node.docker.mappings', '{ "workspace.mount": "/mnt/tao:/mnt/tao", "temp.mount": "/home/tao/workdir:/mnt/workdir", "cfg.mount": "/mnt/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on worker nodes', 'string', 'Worker node volume map', null, now()),
-(3, 'docker.volume.map.style', 'docker', 'Docker host volume map style', 'string', 'Docker host volume map style', null, now()),
+(3, 'docker.volume.map.style', 'docker', 'Docker host volume map style', 'string', 'Docker host volume map style', '{"allowed_values":[{"value":"docker","display":"Docker"},{"value":"rancher","display":"Rancher"}]}', now()),
 (3, 'enable.tunnel.filters', 'false', 'Enable tunneling for accessing private containers', 'bool', 'Enable tunnel filters', null, now()),
 (4, 'tao.drmaa.polling.interval', '10', 'Time (in seconds) between inspections of the DRMAA system', 'int', 'DRMAA polling interval (s)', null, now()),
 (4, 'tao.force.memory.requirements', 'true', 'Enforce memory constraints for applications', 'bool', 'Enforce memory constraints', null, now()),
@@ -287,6 +330,11 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (4, 'tao.remove.invalid.products', 'false', 'Delete local products with invalid location', 'bool', 'Delete invalid products', null, now()),
 (4, 'optimize.workflows', 'false', 'Try to combine nodes from the same container', 'bool', 'Optimize workflows', null, now()),
 (4, 'tao.remote.subscriptions.synchronize.rate', '1', 'Interval (in hours) to synchronize external subscriptions', 'int', 'Remote subscription synchronize rate', null, now()),
+(4, 'execution.environment', 'Default', 'Default execution environment', 'string', 'Execution environment', '{"allowed_values":[{"value":"Default","display":"SSH"},{"value":"Kubernetes","display":"Kubernetes"}]}', now()),
+(4, 'other.workflows.visibility', 'public', 'Workflow visibility mode', 'string', 'Workflow visibility mode', '{"allowed_values":[{"value":"public","display":"Public"},{"value":"subscription","display":"Subscription"}]}', now()),
+(4, 'execution.reserved.memory', '4096', 'Worker node reserved memory (MB)', 'int', 'Worker node reserved memory (MB)', null, now()),
+(4, 'execution.use.parent.job.folder', 'false', 'Use parent job folder for executions', 'bool', 'Use parent job folder', null, now()),
+(4, 'execution.task.separate.folders', 'true', 'Distinct folders for tasks', 'bool', 'Distinct folders for tasks', null, now()),
 (5, 'mail.smtp.auth', 'true', 'Enable SMTP authentication', 'bool', 'Enable SMTP authentication', null, now()),
 (5, 'mail.smtp.starttls.enable', 'true', 'SMTP uses TLS', 'bool', 'SMTP uses TLS', null, now()),
 (5, 'mail.smtp.host', 'smtp.gmail.com', 'SMTP server', 'string', 'SMTP server', null, now()),
@@ -320,6 +368,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (7, 'aws.secret.key', null, 'AWS secret key', 'string', 'Secret key', null, now()),
 (7, 'aws.bucket', null, 'AWS S3 bucket', 'string', 'S3 bucket', null, now()),
 (7, 'aws.use.username.as.root', 'false', 'Use user name as bucket root', 'bool', 'Use user name as bucket root', null, now()),
+(8, 'query.cache.enabled', 'false', 'Cache query results for 1 day', 'bool', 'Cache query results for 1 day', null, now()),
 (8, 'datasource.filter.category', null, 'Category filter', 'string', 'Category filter', null, now()),
 (8, 'datasource.filter.collection', null, 'Collection filter', 'string', 'Collection filter', null, now()),
 (8, 'datasource.filter.provider', null, 'Provider filter', 'string', 'Provider filter', null, now()),

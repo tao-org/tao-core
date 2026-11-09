@@ -10,6 +10,10 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
+/**
+ * Represents a repository that holds configuration and metadata for a workspace.
+ * A repository can have different types, parameters, and properties that define its behavior and structure.
+ */
 public class Repository extends StringIdentifiable {
     private String name;
     private String description;
@@ -243,7 +247,17 @@ public class Repository extends StringIdentifiable {
         if (StringUtilities.isNullOrEmpty(otherPath) || (refPath.charAt(0) != '/' && otherPath.charAt(0) == '/')) {
             return "";
         }
-        final String commonPath = FileUtilities.findCommonPath(refPath.charAt(0) == '/' ? refPath.substring(1) : refPath, otherPath);
+        final String firstPath;
+        if (refPath.charAt(0) == '/') {
+            if (otherPath.charAt(0) == '/') {
+                firstPath = refPath;
+            } else {
+                firstPath = refPath.substring(1);
+            }
+        } else {
+            firstPath = refPath;
+        }
+        final String commonPath = FileUtilities.findCommonPath(firstPath, otherPath);
         return commonPath != null ? otherPath.replace(commonPath + "/", "") : otherPath;
     }
 

@@ -1,7 +1,11 @@
 package ro.cs.tao.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,6 +30,7 @@ import java.util.Set;
 public class FileBackedMap<K, V>  implements Map<K, V> {
     private final Path file;
     private final Map<K, V> map;
+    private final ObjectWriter writer;
 
     /**
      * Constructs a new file-backed map.
@@ -47,6 +52,22 @@ public class FileBackedMap<K, V>  implements Map<K, V> {
             } else if (Files.notExists(this.file)){
                 Files.createFile(this.file);
             }
+            final ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            final SimpleModule module = new SimpleModule();
+            module.addDeserializer(Tuple.class, new JsonDeserializer<Tuple>() {
+                @Override
+                public Tuple deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+                    JsonNode node = jsonParser.readValueAsTree();
+                    try (JsonParser parser = mapper.createParser(node.toString())) {
+                        final ObjectCodec codec = parser.getCodec();
+                        JsonNode innerNode = parser.readValueAsTree();
+                        return codec.treeToValue(innerNode, Tuple.class);
+                    }
+                }
+            });
+            mapper.registerModule(module);
+            this.writer = mapper.writer();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -125,7 +146,7 @@ public class FileBackedMap<K, V>  implements Map<K, V> {
 
     private void flush() {
         try {
-            Files.write(this.file, new ObjectMapper().writer().writeValueAsBytes(this.map), StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(this.file, this.writer.writeValueAsBytes(this.map), StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }

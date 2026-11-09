@@ -1,5 +1,13 @@
 package ro.cs.tao.subscription;
 
+/**
+ * Represents a user plan configuration.
+ * This class holds details such as the user's plan type, allocated CPU units,
+ * RAM size, disk space, and flavor type.
+ *
+ * It provides getter and setter methods to access and modify the attributes
+ * of the user plan.
+ */
 public class UserPlan {
     private String userPlan;
     private int cpu;

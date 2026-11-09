@@ -15,6 +15,14 @@
  */
 package ro.cs.tao.user;
 
+/**
+ * Represents a group entity with associated properties such as an identifier,
+ * a name, and quotas for input and processing activities.
+ *
+ * This class serves as a data structure for managing group-related information,
+ * including quotas for various operations. It provides getter and setter methods
+ * for its fields to allow controlled access and modification.
+ */
 public class Group {
 
     private Integer id;

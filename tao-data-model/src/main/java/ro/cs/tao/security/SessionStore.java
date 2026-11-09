@@ -16,6 +16,11 @@
 
 package ro.cs.tao.security;
 
+import ro.cs.tao.user.UserPreference;
+
+import java.security.Principal;
+import java.util.List;
+
 /**
  * Bridge class for retrieving session contexts.
  *
@@ -39,5 +44,19 @@ public final class SessionStore {
             context = SystemSessionContext.instance();
         }
         return context;
+    }
+
+    public static SessionContext getContext(String userId) {
+        return new SessionContext() {
+            @Override
+            public Principal setPrincipal(Principal principal) {
+                return new UserPrincipal(userId);
+            }
+
+            @Override
+            protected List<UserPreference> setPreferences() {
+                return List.of();
+            }
+        };
     }
 }

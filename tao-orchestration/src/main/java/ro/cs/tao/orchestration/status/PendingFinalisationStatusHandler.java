@@ -7,6 +7,17 @@ import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.PersistenceException;
 
+/**
+ * Handles tasks in the PENDING_FINALISATION state and transitions the associated job to
+ * the RUNNING state, if specific conditions are met. This handler operates under the assumption
+ * that the handling of tasks in this state indicates the preparation for or continuation of execution.
+ *
+ * It ensures that if the associated job is not already in a RUNNING state and none of its ordered tasks
+ * are in a FAILED state, the job's execution status is transitioned to RUNNING and persisted.
+ *
+ * This handler is registered for the PENDING_FINALISATION status via the {@code TaskStatusHandler}
+ * registry mechanism.
+ */
 public class PendingFinalisationStatusHandler extends TaskStatusHandler {
     protected PendingFinalisationStatusHandler(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
         super(jobProvider, taskProvider);

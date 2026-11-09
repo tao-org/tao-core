@@ -25,11 +25,11 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author Cosmin Cara
  */
 @XmlTransient
-public abstract class Validator {
+public abstract class Validator<T> {
     /**
      * Performs the validation of the given value.
      * @param parameter The parameter descriptor
      * @param value     The value to be validated.
      */
-    public abstract void validate(ParameterDescriptor parameter, Object value) throws ValidationException;
+    public abstract void validate(ParameterDescriptor parameter, T value) throws ValidationException;
 }

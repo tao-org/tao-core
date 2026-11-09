@@ -5,6 +5,13 @@ import ro.cs.tao.eodata.EOData;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * An abstract class that defines a filter operation for a collection of objects of type T,
+ * where T extends a base class EOData. This class provides a structured approach for filtering
+ * data based on specific criteria defined in subclasses.
+ *
+ * @param <T> the type of objects this filter processes, which must extend EOData
+ */
 public abstract class DataFilter<T extends EOData> {
     private final String friendlyName;
 

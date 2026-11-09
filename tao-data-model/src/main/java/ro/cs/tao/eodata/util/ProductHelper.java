@@ -58,4 +58,6 @@ public interface ProductHelper {
     String[] getTokens(Pattern pattern, String input, Map<Integer, String> replacements);
 
     int order();
+
+    Pattern[] getNamePatterns();
 }

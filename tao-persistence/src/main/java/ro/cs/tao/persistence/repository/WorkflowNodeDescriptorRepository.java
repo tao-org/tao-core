@@ -3,10 +3,10 @@ package ro.cs.tao.persistence.repository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
@@ -22,7 +22,7 @@ import java.util.Set;
 @Repository
 @Qualifier(value = "workflowNodeDescriptorRepository")
 @Transactional
-public interface WorkflowNodeDescriptorRepository extends PagingAndSortingRepository<WorkflowNodeDescriptor, Long> {
+public interface WorkflowNodeDescriptorRepository extends OptimisedPagingAndSortingRepository<WorkflowNodeDescriptor, Long> {
 
     @Query(value = "SELECT * from workflow.graph_node where id in (:ids) order by node_level", nativeQuery = true)
     List<WorkflowNodeDescriptor> getWorkflowsById(@Param("ids") Set<Long> ids);
@@ -42,4 +42,9 @@ public interface WorkflowNodeDescriptorRepository extends PagingAndSortingReposi
     @Query(value = "UPDATE workflow.graph_node SET xcoord = :x, ycoord = :y WHERE id = :id", nativeQuery = true)
     @Modifying
     void updatePosition(@Param("id") long id, @Param("x") float x, @Param("y") float y);
+
+    @Query(value = "SELECT * FROM workflow.component_link WHERE source_graph_node_id = :sourceNodeId AND target_descriptor_id = :targetDescriptorId " +
+                   "AND target_graph_node_id = :targetNodeId AND source_descriptor_id = :sourceDescriptorId", nativeQuery = true)
+    ComponentLink getLink(@Param("sourceNodeId") long sourceNodeId, @Param("targetDescriptorId") String targetDescriptorId,
+                          @Param("targetNodeId") long targetNodeId, @Param("sourceDescriptorId") String sourceDescriptorId);
 }

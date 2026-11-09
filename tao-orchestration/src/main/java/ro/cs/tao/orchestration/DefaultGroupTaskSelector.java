@@ -40,7 +40,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
 
     private Function<Long, WorkflowNodeDescriptor> workflowProvider;
     private TriFunction<Long, Long, Integer, ExecutionTask> taskByNodeProvider;
-    private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
+    private final Logger logger = Logger.getLogger(DefaultGroupTaskSelector.class.getName());
 
     public DefaultGroupTaskSelector() { }
 
@@ -137,9 +137,6 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                 default:
                     break;
             }
-        }
-        if (next != null) {
-            next.forEach(t -> t.setContext(currentTask.getContext()));
         }
         return next;
     }
