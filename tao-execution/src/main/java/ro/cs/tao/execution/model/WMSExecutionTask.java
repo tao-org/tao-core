@@ -104,33 +104,34 @@ public class WMSExecutionTask extends ExecutionTask {
 
     public String buildOutputPath() {
         String descriptorName = null;
-        if (this.instanceTargetOutput == null) {
-            String location = null;
-            for (TargetDescriptor descriptor : this.component.getTargets()) {
-                Variable variable = outputParameterValues.stream()
-                                                         .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
-                if (variable != null) {
-                    location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
-                    if (location != null) {
-                        descriptorName = descriptor.getName();
-                        break;
-                    }
+        String location = null;
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            Variable variable = outputParameterValues.stream()
+                                                     .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    descriptorName = descriptor.getName();
+                    break;
                 }
             }
+        }
+        String instanceTargetOutput = getInstanceTargetOutput(descriptorName);
+        if (instanceTargetOutput == null) {
             if (location != null) {
                 Path path = Paths.get(location);
                 final Path jobPath = Paths.get(getJob().getJobOutputPath());
                 if (!path.isAbsolute()) {
                     Path relPath = jobPath.getName(jobPath.getNameCount() - 2).resolve(jobPath.getFileName());
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                                .resolve(relPath).resolve(path); //context.getNetSpace().resolve(path);
+                            .resolve(relPath).resolve(path); //context.getNetSpace().resolve(path);
                 }
                 String fileName = path.getFileName().toString();
                 String folderName = String.format(nameTemplate,
-                                                  this.getJob().getId(),
-                                                  this.getId(),
-                                                  this.internalState == null ? "" : this.internalState + "-",
-                                                  FileUtilities.getFilenameWithoutExtension(fileName));
+                        this.getJob().getId(),
+                        this.getId(),
+                        this.internalState == null ? "" : this.internalState + "-",
+                        FileUtilities.getFilenameWithoutExtension(fileName));
                 path = jobPath.resolve(folderName);
                 if (!Files.exists(path)) {
                     try {

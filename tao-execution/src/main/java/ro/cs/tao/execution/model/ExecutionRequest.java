@@ -16,7 +16,7 @@ public class ExecutionRequest {
     private String jobType;
     private String environment;
     private boolean optimize;
-    private Map<Long, String> inputs;
+    private Map<Long, Map<String, String>> inputs;
     private Map<String, Map<String, String>> parameters;
 
     public ExecutionRequest() {
@@ -67,10 +67,10 @@ public class ExecutionRequest {
         this.optimize = optimize;
     }
 
-    public Map<Long, String> getInputs() {
+    public Map<Long, Map<String, String>> getInputs() {
         return inputs;
     }
-    public void setInputs(Map<Long, String> inputs) {
+    public void setInputs(Map<Long, Map<String, String>> inputs) {
         this.inputs = inputs;
     }
 

@@ -38,7 +38,11 @@ public class DateTimeConverter extends DefaultConverter<LocalDateTime> {
         try {
             return value != null ? DateUtils.parseDateTime(value) : null;
         } catch (DateTimeParseException e) {
-            throw new ConversionException(e.getMessage());
+            try {
+                return DateUtils.parseDate(value).atStartOfDay();
+            } catch (DateTimeParseException e1) {
+                throw new ConversionException(e.getMessage());
+            }
         }
     }
 

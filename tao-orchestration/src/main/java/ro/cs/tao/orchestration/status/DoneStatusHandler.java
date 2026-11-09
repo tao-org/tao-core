@@ -1,10 +1,7 @@
 package ro.cs.tao.orchestration.status;
 
 import org.apache.commons.lang3.StringUtils;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -45,7 +42,7 @@ public class DoneStatusHandler extends TaskStatusHandler {
             job.setExecutionStatus(ExecutionStatus.RUNNING);
             jobProvider.update(job);
         }
-        if (task instanceof ProcessingExecutionTask) {
+        if (task instanceof ProcessingExecutionTask || task instanceof ExecutionGroup) {
             final String strMsg = "Task " + TaskUtilities.getTaskDescriptiveName(task) +
                     (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "") +
                     " changed to " + ExecutionStatus.DONE.friendlyName();

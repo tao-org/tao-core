@@ -7,6 +7,7 @@ import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.FileUtilities;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -70,13 +71,15 @@ public class ExecutionConfiguration {
                                     .equals("docker");
         return new DockerVolumeMap(map.entrySet().stream()
                                       .collect(Collectors.toMap(Map.Entry::getKey,
-                                            e -> {
-                                                final String[] values = e.getValue().split(":");
-                                                return (isDockerVolumeStyle
-                                                        ? FileUtilities.asUnixPath(Paths.get(values[0]), false)
-                                                        : Paths.get(values[0]).toAbsolutePath())
-                                                        + ":" + values[1];
-                                            })));
+                                            e -> Arrays.stream(e.getValue().split("\\|"))
+                                                        .map(m -> {
+                                                            final String[] values = m.split(":", 2);
+                                                            return (isDockerVolumeStyle
+                                                                    ? FileUtilities.asUnixPath(Paths.get(values[0]), false)
+                                                                    : Paths.get(values[0]).toAbsolutePath())
+                                                                    + ":" + values[1];
+                                                        }).collect(Collectors.joining("|"))
+                                            )));
     }
 
     /**
@@ -104,13 +107,15 @@ public class ExecutionConfiguration {
 
         return new DockerVolumeMap(map.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
-                        e -> {
-                            final String[] values = e.getValue().split(":");
-                            return (insideDocker
-                                    ? FileUtilities.asUnixPath(Paths.get(values[0]), insideDocker)
-                                    : Paths.get(values[0]).toAbsolutePath())
-                                    + ":" + values[1];
-                        })));
+                        e -> Arrays.stream(e.getValue().split("\\|"))
+                                    .map(m -> {
+                                        final String[] values = m.split(":", 2);
+                                        return (insideDocker
+                                                ? FileUtilities.asUnixPath(Paths.get(values[0]), insideDocker)
+                                                : Paths.get(values[0]).toAbsolutePath())
+                                                + ":" + values[1];
+                                    }).collect(Collectors.joining("|"))
+                        )));
     }
 
     /**

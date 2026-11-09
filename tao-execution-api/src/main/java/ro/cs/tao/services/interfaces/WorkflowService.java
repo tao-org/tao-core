@@ -236,7 +236,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      *                          for which to create nodes and links
      * @return          The temporary workflow
      */
-    WorkflowDescriptor createTemporaryWorkflow(long fromWorkflowId, String name, Map<Long, String> linksToAdd) throws PersistenceException;
+    WorkflowDescriptor createTemporaryWorkflow(long fromWorkflowId, String name, Map<Long, Map<String, String>> linksToAdd) throws PersistenceException;
 
     void deleteTemporaryWorkflow(long workflowId) throws PersistenceException;
     /**

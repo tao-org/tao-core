@@ -18,7 +18,9 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.ProductHelperFactory;
+import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.drmaa.Environment;
@@ -68,6 +70,10 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.TopologyManager;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.*;
+import ro.cs.tao.utils.executors.ExecutionUnit;
+import ro.cs.tao.utils.executors.Executor;
+import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.OutputAccumulator;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -76,6 +82,7 @@ import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -145,6 +152,7 @@ public class Orchestrator extends Notifiable {
     private final ExecutionJobProvider jobProvider;
     private final ExecutionTaskProvider taskProvider;
     private final ProcessingComponentProvider processingComponentProvider;
+    private final DataSourceComponentProvider dataSourceComponentProvider;
     private final GroupComponentProvider groupComponentProvider;
     private final NamingRuleProvider namingRuleProvider;
     private final UserProvider userProvider;
@@ -172,6 +180,7 @@ public class Orchestrator extends Notifiable {
         this.workflowProvider = bridgedServices.getService(WorkflowProvider.class);
         this.workflowNodeProvider = bridgedServices.getService(WorkflowNodeProvider.class);
         this.processingComponentProvider = bridgedServices.getService(ProcessingComponentProvider.class);
+        this.dataSourceComponentProvider = bridgedServices.getService(DataSourceComponentProvider.class);
         this.groupComponentProvider = bridgedServices.getService(GroupComponentProvider.class);
         this.namingRuleProvider = bridgedServices.getService(NamingRuleProvider.class);
         this.userProvider = bridgedServices.getService(UserProvider.class);
@@ -1795,6 +1804,13 @@ public class Orchestrator extends Notifiable {
                                 if (originalId != null) {
                                     task.setWorkflowNodeId(originalId);
                                     taskProvider.update(task);
+                                }
+                                // delete virtual product sets
+                                if(task instanceof DataSourceExecutionTask dataTask){
+                                    DataSourceComponent dataSourceComponent = dataTask.getComponent();
+                                    if(dataSourceComponent.getSensorName().contains("virtual")){
+                                        dataSourceComponentProvider.delete(dataSourceComponent);
+                                    }
                                 }
                             }
                             jb.setWorkflowId(originalWorkflowId);

@@ -110,4 +110,9 @@ public class Crypto {
         }
         return null;
     }
+
+    public static void main(String[] args) {
+        String password = Crypto.encrypt(new String("cosmin123#"), "cudroiu");
+        System.out.println(password);
+    }
 }

@@ -104,7 +104,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Query(value = "with deps as (select id as jid, json_object_keys(task_dependencies) as parentId from execution.job where id = :jobId) " +
             "select count(t.id) from execution.task t where cast(t.id as text) in (" +
             "select json_array_elements_text(json_extract_path(j.task_dependencies, cast(d.parentId as text))) from execution.job j join deps d on j.id = d.jid where cast(d.parentId as integer) = :taskId) " +
-            "and not (t.execution_status_id = 4 or (t.execution_status_id = 5 and exists(select id from workflow.graph_node where id = t.graph_node_id and behavior_id = 2)))",
+            "and not (t.execution_status_id = 4 or t.execution_status_id = 7 or (t.execution_status_id = 5 and exists(select id from workflow.graph_node where id = t.graph_node_id and behavior_id = 2)))",
             nativeQuery = true)
     int getRunningParents(@Param("jobId") long jobId, @Param("taskId") long taskId);
 
