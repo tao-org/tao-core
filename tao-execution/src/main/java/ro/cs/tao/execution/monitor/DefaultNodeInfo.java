@@ -1,5 +1,9 @@
 package ro.cs.tao.execution.monitor;
 
+/**
+ * Represents the information associated with a node, including its name prefix, description,
+ * user credentials, and SSH key.
+ */
 public class DefaultNodeInfo {
     private final String namePrefix;
     private final String description;

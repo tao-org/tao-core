@@ -12,6 +12,16 @@ import org.opengis.referencing.crs.ProjectedCRS;
 
 import java.util.*;
 
+/**
+ * The Projection class provides methods for managing and retrieving coordinate reference system (CRS) projections.
+ * This includes mapping EPSG codes to Well-Known Text (WKT) representations of projections and vice versa.
+ * Projection instances are managed as a singleton to ensure centralized access to mapping data.
+ *
+ * The class provides functionality to:
+ * - Retrieve WKT descriptions for a given EPSG code.
+ * - Retrieve EPSG codes for a given WKT description.
+ * - Retrieve a complete mapping of supported EPSG codes and their corresponding WKT descriptions.
+ */
 public class Projection {
     private static final Projection instance;
     private final Map<String, String> projectionsByCode;
@@ -21,14 +31,33 @@ public class Projection {
         instance = new Projection();
     }
 
+    /**
+     * Retrieves the description associated with the given code.
+     *
+     * @param code the code used to lookup the description
+     * @return the description corresponding to the provided code, or null if no description is found
+     */
     public static String getDescription(String code) {
         return instance.projectionsByCode.get(code);
     }
 
+    /**
+     * Retrieves the code associated with the given description.
+     *
+     * @param description the description used to lookup the associated code
+     * @return the code corresponding to the provided description, or null if no code is found
+     */
     public static String getCode(String description) {
         return instance.projectionsByWKT.get(description);
     }
 
+    /**
+     * Retrieves a map containing the supported projection codes as keys and their corresponding
+     * descriptions as values.
+     *
+     * @return a map where the keys are projection codes (as Strings) and the values are their
+     *         associated descriptions (as Strings).
+     */
     public static Map<String, String> getSupported() {
         return instance.projectionsByCode;
     }

@@ -14,6 +14,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * WindowsMonitor is a platform-specific implementation of {@link ProcessActivityMonitor}
+ * designed to monitor disk read and write activities of a given process on a Windows
+ * operating system.
+ *
+ * This class uses Windows-specific commands and mechanisms, such as WMIC, to retrieve
+ * disk activity statistics for the monitored process. It collects the total bytes read
+ * and written by the process and updates the activity records periodically based on the
+ * configured sampling interval.
+ */
 class WindowsMonitor extends ProcessActivityMonitor {
 
     WindowsMonitor(Process process, long sampleInterval) {

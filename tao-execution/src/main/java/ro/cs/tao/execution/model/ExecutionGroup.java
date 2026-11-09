@@ -56,10 +56,17 @@ public class ExecutionGroup extends ExecutionTask {
             // We may have a parallelism > 1, case in which there should be more than one initial task in the group
             List<ExecutionTask> firstTasks = this.tasks.stream().filter(t -> t.getLevel() == this.getLevel() + 1).collect(Collectors.toList());
             for (ExecutionTask task : firstTasks) {
+                List<Variable> updatedTaskVars = task.getInputParameterValues().stream().map(var -> {
+                    this.inputParameterValues.stream()
+                            .filter(updateVar -> updateVar.getKey().equals(var.getKey()))
+                            .findFirst()
+                            .ifPresent(updateObj -> var.setValue(updateObj.getValue()));
+                    return var;
+                }).collect(Collectors.toCollection(ArrayList::new));
                 if (this.stateHandler != null) {
-                    task.setInputParameterValues(this.stateHandler.advanceToNextState(this.inputParameterValues));
+                    task.setInputParameterValues(this.stateHandler.advanceToNextState(updatedTaskVars));
                 } else {
-                    task.setInputParameterValues(this.inputParameterValues);
+                    task.setInputParameterValues(updatedTaskVars);
                 }
             }
         }

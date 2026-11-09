@@ -16,6 +16,7 @@
 
 package ro.cs.tao.execution.local;
 
+import reactor.jarjar.jsr166e.extra.AtomicDouble;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
@@ -31,11 +32,11 @@ import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.sorting.*;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
-import ro.cs.tao.execution.model.DataSourceExecutionTask;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.execution.util.TaskUtilities;
+import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.quota.QuotaException;
@@ -47,6 +48,7 @@ import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.ComponentType;
@@ -83,20 +85,52 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
 
+    /**
+     * Sets the product provider for managing and retrieving EOProduct-related data.
+     *
+     * @param provider the instance of EOProductProvider to be used as the product provider
+     */
     public static void setProductProvider(EOProductProvider provider) {
         productProvider = provider;
     }
 
+    /**
+     * Sets the workflow provider responsible for managing and retrieving workflow-related data.
+     *
+     * @param provider the instance of WorkflowProvider to be set as the workflow provider
+     */
     public static void setWorkflowProvider(WorkflowProvider provider) { workflowProvider = provider; }
 
+    /**
+     * Sets the data source configuration provider responsible for managing and
+     * retrieving DataSourceConfiguration-related data.
+     *
+     * @param provider the instance of DataSourceConfigurationProvider to be used
+     *                 as the configuration provider
+     */
     public static void setDataSourceConfigurationProvider(DataSourceConfigurationProvider provider) { configurationProvider = provider; }
 
+    /**
+     * Sets the task provider responsible for managing and retrieving execution task-related data.
+     *
+     * @param provider the instance of ExecutionTaskProvider to be used as the task provider
+     */
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
+    /**
+     * Sets the job provider responsible for managing and retrieving execution job-related data.
+     *
+     * @param provider the instance of ExecutionJobProvider to be used as the job provider
+     */
     public static void setJobProvider(ExecutionJobProvider provider) {
         jobProvider = provider;
     }
 
+    /**
+     * Sets the component provider responsible for managing and retrieving data source component-related data.
+     *
+     * @param provider the instance of DataSourceComponentProvider to be used as the component provider
+     */
     public static void setComponentProvider(DataSourceComponentProvider provider) { componentProvider = provider; }
 
     public QueryExecutor() {
@@ -151,6 +185,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 if (primaryQuery == null) {
                     throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
                 }
+                task.setCommand(variable.getValue());
                 final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
                 final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
                 final List<EOProduct> results = future.get();
@@ -179,7 +214,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     if (variable != null && variable.getValue() != null) {
                         // The current resultset must be synchronized with the one received in this parameter
                         // Synchronization means filtering by dates of the previous resultset
-                        WorkflowNodeDescriptor node = workflow.getNodes().stream().filter(n -> n.getId().equals(task.getWorkflowNodeId())).findFirst().get();
+                        WorkflowNodeDescriptor node = null;
+                        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+                        for (WorkflowNodeDescriptor n : nodes) {
+                            if (n.getId().equals(task.getWorkflowNodeId())) {
+                                node = n;
+                                break;
+                            }
+                        }
                         String[] filter = null;
                         Set<ComponentLink> links = node.getIncomingLinks();
                         if (links != null) {
@@ -263,16 +305,18 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         }
                     }
                     if (tuples != null) {
-                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                     serializeGroups(tuples));
+                        message = serializeGroups(tuples);
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(), message);
                     } else {
-                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                     serializeResults(products));
+                        message = serializeResults(products);
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(), message);
                     }
+                    task.setLog(message);
                     status = ExecutionStatus.DONE;
                 } else {
                     message = "Query returned no results";
                     logger.warning(message);
+                    task.setLog(message);
                     status = ExecutionStatus.CANCELLED;
                 }
             } else {
@@ -290,17 +334,30 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     // First try to replace any symlinks with actual data to avoid S3 read issues (if configured)
                     final StringBuilder builder = new StringBuilder();
                     final StringBuilder srcBuilder = new StringBuilder();
-                    final boolean shouldReplace = ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
+                    final List<String> errList = new ArrayList<>();
+                    final boolean shouldReplace = job.getJobType() == JobType.EXECUTION
+                                                  && ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
                     final double total = list.length;
-                    double counter = 0;
+                    final AtomicDouble counter = new AtomicDouble(0);
                     for (String item : list) {
                         try {
                             Path path = FileUtilities.toPath(item);
+                            if (!Files.exists(path)) {
+                                errList.add(item);
+                                continue;
+                            }
                             if (shouldReplace && Files.isSymbolicLink(path)) {
                                 sendMessage(task, "Product " + path.getFileName() + " is being copied locally.");
-                                counter += 1.0;
-                                sendProgressMessage(task, counter / total);
-                                builder.append(FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true));
+                                final ExecutionTask fTask = task;
+                                final String linkTarget = FileUtilities.asUnixPath(FileUtilities.replaceLink(path, new ProgressListener() {
+                                    @Override
+                                    public void notifyProgress(double progressValue) {
+                                        sendProgressMessage(fTask, (counter.get() + progressValue) / total * 100.0);
+                                    }
+                                }), true);
+                                builder.append(linkTarget);
+                                TaskUtilities.addLinkReplacement(task.getJob().getId(), path, linkTarget);
+                                counter.addAndGet(1);
                             } else {
                                 builder.append(FileUtilities.asUnixPath(path, true));
                             }
@@ -309,6 +366,10 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         } catch (IOException e) {
                             logger.warning(e.getMessage());
                         }
+                    }
+                    if (!errList.isEmpty()) {
+                        throw new QueryException(String.format("The product set contains one or more items that do not exist on the local repository [%s]",
+                                                               String.join(",", errList)));
                     }
                     if (builder.length() > 0) {
                         builder.setLength(builder.length() - 1);
@@ -330,12 +391,15 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 if (StringUtilities.isNullOrEmpty(strList)) {
                     throw new QueryException("Empty product set");
                 }
-                task.setInstanceTargetOutput(strList);
+                task.setInstanceTargetOutput(outPort, strList);
+                task.setLog(strList);
                 status = ExecutionStatus.DONE;
             }
+            task = (DataSourceExecutionTask) taskProvider.update(task);
             markTaskFinished(task, status, message);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());
+            task.setLog(ex.getMessage());
             markTaskFinished(task, ExecutionStatus.FAILED, ex.getMessage());
         }
     }
@@ -430,6 +494,18 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         return json;
     }
 
+    /**
+     * Filters a list of EOProducts based on comparison with another list and optional filters.
+     * This method performs the following operations:
+     * - Compares the acquisition dates of the products in the given list with the other list.
+     * - Groups products by acquisition date.
+     * - Applies filtering to retain specific products based on the provided filters or defaults to a "middle product" filter.
+     *
+     * @param products the list of EOProducts to be filtered
+     * @param otherProductsList a serialized string representation of another product list
+     *                          used as a reference for filtering
+     * @param filters an array of strings defining additional filter criteria for products
+     */
     private void filterByOtherList(List<EOProduct> products, String otherProductsList, String[] filters) {
         final List<String> names = deserializeResults(otherProductsList);
         final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));
@@ -560,7 +636,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             productProvider.save(product);
             // roll back the user's quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
-            logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
+            String message = String.format("Product %s not downloaded. Reason: %s", product.getName(), reason);
+            logger.warning(message);
+            Messaging.send(principal, DataSourceTopic.WARNING.getCategory(), message);
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         } catch (Exception e) {

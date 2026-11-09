@@ -2,6 +2,22 @@ package ro.cs.tao.configuration;
 
 import java.util.List;
 
+/**
+ * Represents a set of values comprising bounds and allowed values.
+ * This class is commonly used to define constraints or permitted options
+ * for configuration items or other data entities.
+ *
+ * Fields:
+ * - bounds: Encapsulates minimum and maximum constraints for a range of values.
+ * - allowed_values: Represents a list of permissible discrete values.
+ *
+ * Nested Classes:
+ * - Bounds: Defines a range with minimum and maximum values.
+ * - AllowedValue: Represents a discrete value with an associated display label.
+ *
+ * This class provides getter and setter methods to access and modify the ranges
+ * and list of allowed values.
+ */
 public class Values {
     private Bounds bounds;
     private List<AllowedValue> allowed_values;

@@ -27,6 +27,7 @@ import java.util.List;
 public class ExecutionJobSummary {
     private long id;
     private String workflowName;
+    private long workflowId;
     private String jobName;
     private LocalDateTime jobStart;
     private LocalDateTime jobEnd;
@@ -48,6 +49,14 @@ public class ExecutionJobSummary {
 
     public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
+    }
+
+    public long getWorkflowId() {
+        return workflowId;
+    }
+
+    public void setWorkflowId(long workflowId) {
+        this.workflowId = workflowId;
     }
 
     public LocalDateTime getJobStart() {

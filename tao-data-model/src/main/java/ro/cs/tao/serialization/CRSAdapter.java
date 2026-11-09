@@ -23,7 +23,19 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.util.Optional;
 
 /**
- * @author Cosmin Cara
+ * Adapter for converting between {@link CoordinateReferenceSystem} objects
+ * and their string representations. This adapter is used in XML serialization
+ * and deserialization processes.
+ *
+ * The {@code unmarshal} method converts a {@link CoordinateReferenceSystem} object
+ * into its string representation using the first identifier of the CRS, if available.
+ * The {@code marshal} method creates a {@link CoordinateReferenceSystem} instance
+ * from a given string by decoding the CRS identifier.
+ *
+ * Note that this class relies on the `CRS.decode` method to interpret the string and
+ * convert it back into a {@link CoordinateReferenceSystem} object.
+ *
+ * @author  Cosmin Cara
  */
 public class CRSAdapter extends XmlAdapter<CoordinateReferenceSystem, String> {
 

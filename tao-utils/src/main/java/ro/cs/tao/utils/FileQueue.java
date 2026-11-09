@@ -5,6 +5,12 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 
+/**
+ * FileQueue is a file-backed implementation of the Queue interface that persists its elements on disk.
+ * It extends FileBackedCollection to provide the functionality of a queue with on-disk persistence.
+ *
+ * @param <E> The type of elements stored in this queue
+ */
 public class FileQueue<E> extends FileBackedCollection<E, Queue<E>> implements Queue<E> {
 
     public FileQueue(Path file, Class<E> elementClass) {

@@ -16,10 +16,28 @@
 package ro.cs.tao.serialization;
 
 /**
+ * Factory class responsible for creating serializer instances for a given class
+ * and media type (e.g., JSON, XML). The serializers handle the conversion
+ * between objects and their string representation based on the specified media type.
+ *
  * @author Cosmin Cara
  */
 public class SerializerFactory {
 
+    /**
+     * Creates a new instance of a {@link BaseSerializer} for the specified class
+     * and media type. The serializer will handle the conversion between objects
+     * of type {@code T} and their string representation based on the provided
+     * media type (e.g., JSON or XML).
+     *
+     * @param <T>       The type of the object that the serializer is designed for.
+     * @param clazz     The {@link Class} of the object to be serialized/deserialized.
+     * @param mediaType The {@link MediaType} (e.g., JSON or XML) that dictates the format
+     *                  of the serialization/deserialization.
+     * @return A {@link BaseSerializer} capable of handling objects of type {@code T}
+     *         based on the specified media type.
+     * @throws SerializationException If an error occurs during the creation of the serializer.
+     */
     public static <T> BaseSerializer<T> create(Class<T> clazz, MediaType mediaType) throws SerializationException {
         switch (mediaType) {
             case JSON:

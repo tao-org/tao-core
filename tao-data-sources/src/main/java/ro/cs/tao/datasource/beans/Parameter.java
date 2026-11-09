@@ -35,6 +35,7 @@ import java.util.List;
 public class Parameter {
     private String name;
     private String type;
+    private String paramType;
     private String value;
     private String[] valueSet;
     private boolean required;
@@ -68,6 +69,15 @@ public class Parameter {
         this.required = required;
     }
 
+    public Parameter(String name, String paramType, String type, String value, String[] valueSet, boolean required) {
+        this.name = name;
+        this.paramType = paramType;
+        this.type = type;
+        this.value = value;
+        this.valueSet = valueSet;
+        this.required = required;
+    }
+
     @XmlElement(name = "name")
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -75,6 +85,15 @@ public class Parameter {
     @XmlElement(name = "type")
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    @XmlElement(name = "paramType")
+    public String getParamType() {
+        return paramType;
+    }
+
+    public void setParamType(String paramType) {
+        this.paramType = paramType;
+    }
 
     @XmlElement(name = "value")
     public String getValue() { return value; }

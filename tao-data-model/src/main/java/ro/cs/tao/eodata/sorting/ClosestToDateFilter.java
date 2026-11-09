@@ -8,6 +8,24 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * A filter that selects the EOProduct from a list that is closest to a specified
+ * date and time. This class extends the functionality of the generic
+ * {@code DataFilter<EOProduct>} class and provides filtering logic based on
+ * proximity to a given {@link LocalDateTime}.
+ *
+ * The {@code ClosestToDateFilter} operates by calculating the absolute difference
+ * (in seconds) between the specified date-time and the acquisition date of each
+ * EOProduct in the list. The product associated with the smallest difference
+ * is selected.
+ *
+ * Key features:
+ * - Supports filtering of EOProduct objects based on proximity to a specific
+ *   date-time.
+ * - Provides methods to get or set the target {@link LocalDateTime} used for filtering.
+ * - Implements the abstract methods from the {@code DataFilter} base class to
+ *   define custom filtering behavior and a friendly name for the filter.
+ */
 public class ClosestToDateFilter extends DataFilter<EOProduct> {
 
     private LocalDateTime dateTime;

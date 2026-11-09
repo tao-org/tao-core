@@ -18,6 +18,10 @@ package ro.cs.tao.execution.monitor;
 import ro.cs.tao.utils.executors.MemoryUnit;
 
 /**
+ * Represents memory usage statistics, providing values for the heap and non-heap memory areas
+ * of the JVM, split into different metrics such as committed, initial, maximum, and used memory.
+ * Memory data is reported in units defined by the {@link MemoryUnit}.
+ *
  * @author Cosmin Cara
  */
 public class Memory {

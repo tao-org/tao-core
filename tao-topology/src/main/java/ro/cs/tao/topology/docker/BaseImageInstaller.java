@@ -54,6 +54,28 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * BaseImageInstaller is an abstract class that implements the DockerImageInstaller interface.
+ * It provides the base functionality for building, installing, and managing Docker images
+ * along with their associated metadata and components.
+ *
+ * This class handles finding Docker executables, managing Docker image paths,
+ * creating necessary directories, extracting resources from packaged files,
+ * and interacting with the DockerManager service for registration and management of images and containers.
+ * It also integrates with other services like TagProvider, ContainerProvider, and
+ * ProcessingComponentProvider for supporting container and component metadata operations.
+ *
+ * Key operations include:
+ * - Checking and setting up the Docker environment for image management.
+ * - Loading additional properties and configurations for Docker containers.
+ * - Registering Docker images in the local registry or remote Docker hub.
+ * - Reading container and component descriptors from files.
+ * - Generating and encoding Docker image logos.
+ * - Managing the lifecycle of Docker containers within the application system.
+ *
+ * The implementation ensures container registration in the system's database and supports
+ * handling container properties and additional resources related to image configurations.
+ */
 public abstract class BaseImageInstaller implements DockerImageInstaller {
     //protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
     protected static final Path dockerPath;
@@ -129,6 +151,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         final String dockerHubName = additionalProperties.getProperty("docker.hub.name");
                         if (!StringUtilities.isNullOrEmpty(dockerHubName)) {
                             container = DockerManager.pullImage(dockerHubName);
+                            if (container != null) {
+                                container.setName(getContainerName());
+                            }
+                            DockerManager.pushImageToRegistry(container);
                         }
                     } else {
                         dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
@@ -143,9 +169,11 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
                                 "Until registration completes, the corresponding components will not be available.", getContainerName()));
                         for (String resource : additionalResources()) {
-                            //Files.write(dockerfilePath.getParent().resolve(Paths.get(resource).getFileName()), readResource(resource));
-                            Files.write(dockerfilePath.getParent().resolve(Paths.get(resource)),
-                                        readResource(resource));
+                            if(resource.contains("/")){ // classpath resource paths must always use forward slashes (/)
+                                // Ensure the parent directories exist
+                                Files.createDirectories(dockerfilePath.getParent().resolve(Paths.get(resource).getParent()));
+                            }
+                            Files.write(dockerfilePath.getParent().resolve(Paths.get(resource)), readResource(resource));
                         }
                         DockerManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
                         this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));
@@ -178,6 +206,14 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return dbContainer;
     }
 
+    /**
+     * Retrieves additional properties from a properties file associated with the container.
+     * The properties file is expected to be located at a specific path under the docker images directory,
+     * derived from the container name. If the file exists, it loads the properties into the `additionalProperties` object.
+     * If the file is not found or an error occurs during reading, a warning is logged.
+     *
+     * @return the loaded {@link Properties} object containing the additional properties for the container
+     */
     protected Properties getAdditionalProperties() {
         Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
         if (Files.exists(dockerfilePath)) {
@@ -190,6 +226,16 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return additionalProperties;
     }
 
+    /**
+     * Reads and parses a container descriptor from a resource file.
+     * The file is expected to be located under the resource path,
+     * and its content should represent a container descriptor in JSON format.
+     * Once loaded, the container type is explicitly set to {@code ContainerType.DOCKER}.
+     *
+     * @param fileName the name of the resource file containing the container descriptor
+     * @return the container object populated with the data from the descriptor file
+     * @throws IOException if an I/O error occurs while reading the resource file
+     */
     protected Container readContainerDescriptor(String fileName) throws IOException {
         Container container;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
@@ -200,8 +246,19 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return container;
     }
 
+    /**
+     * Reads and parses an array of component descriptors from a specified JSON resource file.
+     *
+     * @param fileName the name of the resource file containing component descriptors in JSON format
+     * @return an array of {@link ProcessingComponent} objects populated with the data from the JSON file
+     * @throws IOException if an I/O error occurs while reading the resource file
+     */
     protected ProcessingComponent[] readComponentDescriptors(String fileName) throws IOException {
         ProcessingComponent[] components;
+        if(fileName == null || fileName.isEmpty()) {
+            logger.info("No resource file found containing component descriptors in JSON format");
+            return new ProcessingComponent[]{};
+        }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
             final String str = reader.lines().collect(Collectors.joining(""));
             final ObjectMapper mapper = new ObjectMapper();
@@ -228,6 +285,15 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return components;
     }
 
+    /**
+     * Reads the logo file for the container and converts its content to a Base64-encoded string.
+     * If the specified file name is null or empty, or if the file cannot be found, this method returns null.
+     *
+     * @param fileName the name of the resource file containing the container logo
+     * @return a Base64-encoded string representation of the logo content, or null if the file
+     *         does not exist or the file name is invalid
+     * @throws IOException if an I/O error occurs while reading the file
+     */
     protected String readContainerLogo(String fileName) throws IOException {
         if (!StringUtilities.isNullOrEmpty(fileName)) {
             try (InputStream in = getClass().getResourceAsStream(fileName)) {
@@ -245,6 +311,17 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return null;
     }
 
+    /**
+     * Reads the content of a resource file and returns it as a byte array.
+     * If the specified resource cannot be found, this method returns null.
+     *
+     * @param name the name or path of the resource file to be read.
+     *             In case of a path, classpath resource paths must always use forward slashes (/),
+     *             not the system-specific file separator (which can be \ on Windows or / on Unix-like systems)
+     * @return a byte array containing the content of the resource,
+     *         or null if the resource could not be found
+     * @throws IOException if an I/O error occurs while reading the resource
+     */
     protected byte[] readResource(String name) throws IOException {
         try (InputStream in = getClass().getResourceAsStream(name)) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -259,8 +336,24 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         }
     }
 
+    /**
+     * Provides an array of additional resource paths relevant for processing or installation.
+     * This method can be overridden by subclasses to include specific resource files as required.
+     *
+     * @return an array of strings representing paths to additional resources, or an empty array
+     *         if no additional resources are defined
+     */
     protected String[] additionalResources() { return new String[0]; }
 
+    /**
+     * Searches for an executable in the system's PATH environment variable and returns the full path to it
+     * if found.
+     *
+     * @param executableName the name of the executable to search for
+     * @return the {@link Path} object representing the full path to the executable if found, or {@code null}
+     *         if the executable is not found in the system's PATH
+     * @throws RuntimeException if the system PATH environment variable cannot be read
+     */
     protected static Path findInPath(String executableName) {
         String systemPath = System.getenv("Path");
         if (systemPath == null) {
@@ -282,6 +375,15 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return currentPath;
     }
 
+    /**
+     * Retrieves an existing tag matching the specified text from the current list of component tags.
+     * If no matching tag exists, a new tag of type {@code TagType.COMPONENT} is created, saved using the tag provider,
+     * and added to the list of component tags.
+     *
+     * @param tagText the text of the tag to retrieve or create
+     * @return the existing or newly created {@link Tag} corresponding to the specified text
+     * @throws PersistenceException if an error occurs while saving the new tag
+     */
     protected Tag getOrCreateTag(String tagText) throws PersistenceException {
         Tag tag = this.componentTags.stream().filter(t -> t.getText().equalsIgnoreCase(tagText)).findFirst().orElse(null);
         if (tag == null) {
@@ -291,6 +393,17 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return tag;
     }
 
+    /**
+     * Initializes a container by reading its descriptor, updating its properties,
+     * configuring the associated applications, and processing its components.
+     * This method also handles saving the container and its components.
+     *
+     * @param container the initial container instance containing basic properties
+     *                  to be updated and populated
+     * @param path the application path to be set in the container configuration
+     * @return the fully initialized {@link Container} object, or {@code null} if
+     *         an error occurred during initialization
+     */
     protected Container initializeContainer(Container container, String path) {
         Container readContainer;
         try {
@@ -318,6 +431,9 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     component.setContainerId(readContainer.getId());
                     component.setLabel(component.getId());
                     component.setComponentType(ProcessingComponentType.EXECUTABLE);
+                    if (component.getNodeAffinity() == null) {
+                        component.setNodeAffinity(NodeAffinity.Any);
+                    }
                     containerApplications.stream().filter(a -> a.getName().equals(component.getId()) ||
                                                                a.getName().equals(component.getLabel())).findFirst()
                                          .ifPresent(application -> component.setFileLocation(application.getPath()));
@@ -386,21 +502,64 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return readContainer;
     }
 
+    /**
+     * Configures the provided application by setting its name and path properties.
+     * The application's existing path is retrieved and reassigned to prevent unintended modifications.
+     *
+     * @param app the {@link Application} instance to be configured
+     */
     protected void configureApplication(Application app) {
         String appPath = app.getPath();
         app.setName(app.getName());
         app.setPath(appPath);
     }
 
+    /**
+     * Provides a description of the image installer or its purpose.
+     * The description returned by this method is expected to give insight
+     * into the characteristics or functionality of the specific implementation.
+     *
+     * @return a string containing the description of the image installer
+     */
     protected abstract String getDescription();
 
+    /**
+     * Retrieves the path to a specific location within a container.
+     * The exact path and its purpose are determined by the implementation in subclasses.
+     *
+     * @return a string representing the path in the container
+     */
     protected abstract String getPathInContainer();
 
+    /**
+     * Retrieves the path within the system associated with the image installer.
+     * The exact path is determined by the implementation in the subclasses.
+     *
+     * @return a string representing the path in the system
+     */
     protected abstract String getPathInSystem();
 
+    /**
+     * Retrieves the file name of the container descriptor associated with the image installer.
+     * The specific file name is determined by the implementation in subclasses.
+     *
+     * @return a string representing the file name of the container descriptor
+     */
     protected abstract String getContainerDescriptorFileName();
 
+    /**
+     * Retrieves the file name of the component descriptor associated with the image installer.
+     * The specific file name is determined by the implementation in subclasses.
+     *
+     * @return a string representing the file name of the component descriptor
+     */
     protected abstract String getComponentDescriptorFileName();
 
+    /**
+     * Retrieves the file name of the logo associated with the image installer.
+     * The specific file name is determined by the implementation in subclasses.
+     *
+     * @return a string representing the file name of the logo
+     */
     protected abstract String getLogoFileName();
 }

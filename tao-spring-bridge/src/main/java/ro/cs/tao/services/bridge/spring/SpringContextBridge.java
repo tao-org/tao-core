@@ -20,6 +20,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 /**
  *
  * Register this SpringContextBridge as a Spring Component.
@@ -57,6 +59,15 @@ public class SpringContextBridge implements SpringContextBridgedServices, Applic
             return applicationContext.getBean(SpringContextBridgedServices.class);
         }
         throw new SpringBridgeException("Application context not initialized!");
+    }
+
+    /**
+     * Method that returns all beans from the Spring application context of type T
+     *
+     * @return Map of format "<String,T>" where T is the type of the beans requested as parameter.
+     */
+    public <T> Map<String, T> getBeansOfTypes(Class<T> clazz) {
+        return applicationContext.getBeansOfType(clazz);
     }
 
     @Override

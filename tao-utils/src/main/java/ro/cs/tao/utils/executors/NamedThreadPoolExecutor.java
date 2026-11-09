@@ -20,6 +20,15 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+/**
+ * A custom ThreadPoolExecutor implementation that provides a way to name threads, set a timeout
+ * for task execution, and monitor running tasks. Additionally, it employs a custom rejected task handler
+ * for logging purposes.
+ *
+ * The {@code NamedThreadPoolExecutor} allows threads within the executor to have identifiable names
+ * to improve debugging and traceability. It also introduces a timeout mechanism for submitted tasks,
+ * which enforces execution constraints.
+ */
 public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     private static final String THREAD_NAME = "%s-%d";
     private String poolName;

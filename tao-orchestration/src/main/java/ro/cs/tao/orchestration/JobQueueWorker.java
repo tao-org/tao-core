@@ -9,6 +9,12 @@ import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.logging.Logger;
 
+/**
+ * Represents a worker thread that continuously processes jobs from a {@link JobQueue}.
+ * This class implements the functionality to manage job execution in parallel environments,
+ * ensuring that queued jobs are executed up to a maximum concurrency limit.
+ * The worker can be paused or resumed dynamically and handles exceptions during job processing.
+ */
 public class JobQueueWorker extends Thread {
     private final JobQueue queue;
     private final Logger logger;

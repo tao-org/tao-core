@@ -18,6 +18,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.Sort;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.component.ProcessingComponentInfo;
@@ -72,6 +73,25 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
     List<ProcessingComponentInfo> getUserScriptComponents(String userId);
 
     /**
+     * Finds processing components that are similar to the provided text and belong to the specified user.
+     *
+     * @param text  The text to compare for similarity.
+     * @param userId The unique identifier of the user whose components will be searched.
+     * @return A list of processing components that match the similarity criteria.
+     */
+    List<ProcessingComponentInfo> findBySimilarity(String text, String userId);
+
+    /**
+     * Finds and retrieves a list of labels based on their similarity to the provided text
+     * and belonging to the specified user.
+     *
+     * @param text  The text to compare for similarity.
+     * @param userId The unique identifier of the user whose labels will be searched.
+     * @return A list of labels that match the similarity criteria.
+     */
+    List<String> findLabelsBySimilarity(String text, String userId);
+
+    /**
      * Retrieves all the tags associated to components
      */
     List<Tag> getComponentTags();
@@ -104,4 +124,38 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      * @param component The component to be exported
      */
     String exportComponent(ProcessingComponent component) throws SerializationException;
+
+    /**
+     * Transforms the specified processing component into a source descriptor.
+     *
+     * @param parameterId      The unique identifier of the parameter to be transformed into a source descriptor.
+     * @param parentComponent  The parent processing component to which the transformation applies.
+     */
+    void transformIntoSource(String parameterId, ProcessingComponent parentComponent);
+
+    /**
+     * Transforms the specified parameter into a target descriptor within the context of the provided parent processing component.
+     *
+     * @param parameterId      The unique identifier of the parameter to be transformed into a target descriptor.
+     * @param parentComponent  The parent processing component to which the transformation is applied.
+     */
+    void transformIntoTarget(String parameterId, ProcessingComponent parentComponent);
+
+    /**
+     * Transforms the specified source or target descriptor into a parameter within the context
+     * of the provided parent processing component.
+     *
+     * @param sourceOrTargetDescriptorId The unique identifier of the descriptor (either source or target)
+     *                                   to be transformed into a parameter.
+     * @param parentComponent            The parent processing component to which the transformation applies.
+     */
+    void transformIntoParameter(String sourceOrTargetDescriptorId, ProcessingComponent parentComponent);
+
+    /**
+     * Retrieves a TaoComponent instance based on its unique identifier.
+     *
+     * @param id the unique identifier of the component to be retrieved.
+     * @return the TaoComponent instance corresponding to the provided identifier, or null if no matching component is found.
+     */
+    TaoComponent getComponent(String id);
 }

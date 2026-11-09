@@ -20,6 +20,13 @@ import ro.cs.tao.utils.executors.MemoryUnit;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents information about runtime system resources, including CPU usage,
+ * memory usage, and disk usage. Provides methods to retrieve and set
+ * information such as total CPU usage, available and total memory, and
+ * used and total disk space. The runtime data is timestamped to indicate
+ * when the information was captured.
+ */
 public class RuntimeInfo {
     // processor
     private double cpuTotal;

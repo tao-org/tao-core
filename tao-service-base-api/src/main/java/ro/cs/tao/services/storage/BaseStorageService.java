@@ -21,14 +21,20 @@ import java.util.Map;
  * @param <T>   The type of objects that can be used to upload items to this storage
  * @param <U>   The type of objects that can be used to download items from this storage
  */
-public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
+public abstract class BaseStorageService<T> implements StorageService<T> {
     protected ProgressListener progressListener;
     private Repository repository;
     private Map<String, ItemAction> actions;
+    private boolean cancelRequested;
 
     @Override
     public void associate(Repository repository) {
         this.repository = repository;
+    }
+
+    @Override
+    public void cancelCurrentOperation() {
+        this.cancelRequested = true;
     }
 
     @Override
@@ -41,9 +47,14 @@ public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
         if (this.actions == null) {
             this.actions = new LinkedHashMap<>();
         }
+        if (this.repository == null) {
+            throw new IllegalArgumentException("A repository must be first associated with this storage service");
+        }
         if (!this.actions.containsKey(action.name())) {
-            action.associateWith(this);
-            this.actions.put(action.name(), action);
+            if (action.canBeUsedWith(this.repository)) {
+                action.associateWith(this);
+                this.actions.put(action.name(), action);
+            }
         }
     }
 
@@ -61,6 +72,14 @@ public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
         final String path = repository.resolve(item.getRelativePath());
         action.setActionUser(repository.getUserId());
         action.doAction(Paths.get(path));
+    }
+
+    protected boolean cancelRequested() {
+        return this.cancelRequested;
+    }
+
+    protected void resetCancelFlag() {
+        this.cancelRequested = false;
     }
 
     protected InputStream wrapStream(InputStream inputStream) {

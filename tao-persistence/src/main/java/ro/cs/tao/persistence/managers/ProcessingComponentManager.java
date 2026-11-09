@@ -18,21 +18,21 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ParameterExpansionRule;
-import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.config.DatabaseConfiguration;
+import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
 import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 import ro.cs.tao.utils.StringUtilities;
 
+import javax.sql.DataSource;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
@@ -41,7 +41,13 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
                                         implements ProcessingComponentProvider {
 
     @Autowired
+    private DataSource dataSource;
+
+    @Autowired
     private ParameterExpansionRuleRepository expansionRuleRepository;
+
+    @Autowired
+    private ParameterDescriptorRepository parameterDescriptorRepository;
 
     @Override
     public ProcessingComponent get(String id, String containerId) {
@@ -77,6 +83,11 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     }
 
     @Override
+    public void updateModified(ProcessingComponent component) throws PersistenceException {
+        this.repository.updateModified(component, component.getId());
+    }
+
+    @Override
     public boolean hasCopyComponent(String containerId) {
         return getByLabel("Copy", containerId) != null;
     }
@@ -97,6 +108,20 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     }
 
     @Override
+    public List<ProcessingComponent> findBySimilarity(String text, String userId) {
+        return DatabaseConfiguration.supportsExtendedSQL()
+                ? repository.findBySimilarity(text, userId)
+                : List.of();
+    }
+
+    @Override
+    public List<String> findLabelsBySimilarity(String text, String userId) {
+        return DatabaseConfiguration.supportsExtendedSQL()
+                ? repository.findLabelsBySimilarity(text, userId)
+                : List.of();
+    }
+
+    @Override
     public ProcessingComponent save(ProcessingComponent entity) throws PersistenceException {
         Set<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
         Map<ParameterDescriptor, ParameterExpansionRule> map = new HashMap<>();
@@ -106,14 +131,18 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
                     d.setId(UUID.randomUUID().toString());
                 }
                 ParameterExpansionRule expansionRule = d.getExpansionRule();
-                if (expansionRule != null && !d.getId().equals(expansionRule.getId())) {
-                    expansionRule.setId(d.getId());
+                if (expansionRule != null) {
+                    if (!d.getId().equals(expansionRule.getId())) {
+                        expansionRule.setId(d.getId());
+                    } // in case their ID is identical (UUID set identical in JSON descriptor), save them like that
                     map.put(d, expansionRule);
                     d.setExpansionRule(null);
                 }
             });
+            for(ParameterDescriptor descriptor : descriptors){
+                parameterDescriptorRepository.save(descriptor);
+            }
         }
-        //super.save(entity);
         if (!checkEntity(entity, false)) {
             throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
                                                          entity.getClass().getSimpleName()));
@@ -122,6 +151,16 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             final ProcessingComponent existing = repository.getByIdAndContainer(entity.getId(), entity.getContainerId());
             if (existing != null) {
                 throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
+            }
+        }
+        if (entity.getNodeAffinity() == null) {
+            entity.setNodeAffinity(NodeAffinity.Any);
+        }
+        final List<SourceDescriptor> sources = entity.getSources();
+        for (SourceDescriptor descriptor : sources) {
+            final String formatName = descriptor.getDataDescriptor().getFormatName();
+            if (!StringUtilities.isNullOrEmpty(formatName) && descriptor.getConstraints().contains("Specific sensor")) {
+                descriptor.addConstraint("Specific sensor", formatName);
             }
         }
         repository.save(entity);
@@ -143,24 +182,37 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             throw new PersistenceException(String.format("Invalid parameters provided for updating entity of type %s!",
                                                          entity.getClass().getSimpleName()));
         }
-        final Set<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
-        if (descriptors != null) {
-            for (ParameterDescriptor descriptor : descriptors) {
-                if (StringUtilities.isNullOrEmpty(descriptor.getId())) {
-                    descriptor.setId(UUID.randomUUID().toString());
-                }
-            }
+        final Optional<ProcessingComponent> existing = repository.findById(entity.getId());
+        if (existing.isEmpty()) {
+            throw new PersistenceException(String.format("There is no entity with the given identifier %s",
+                    entity.getId()));
         }
-        Map<ParameterDescriptor, ParameterExpansionRule> rules = descriptors.stream()
-                                                                            .filter(p -> p.getExpansionRule() != null)
-                                                                            .collect(Collectors.toMap(Function.identity(),
-                                                                                                 ParameterDescriptor::getExpansionRule));
-        for (Map.Entry<ParameterDescriptor, ParameterExpansionRule> entry : rules.entrySet()) {
-            ParameterExpansionRule rule = entry.getValue();
-            rule.setId(entry.getKey().getId());
-            expansionRuleRepository.save(rule);
+        ProcessingComponent entityExisting = existing.get();
+        Set<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
+        Map<ParameterDescriptor, ParameterExpansionRule> map = new HashMap<>();
+        if (descriptors != null) {
+            descriptors.forEach(d -> {
+                if (StringUtilities.isNullOrEmpty(d.getId())) {
+                    d.setId(UUID.randomUUID().toString());
+                }
+                ParameterExpansionRule expansionRule = d.getExpansionRule();
+                if (expansionRule != null && !d.getId().equals(expansionRule.getId())) {
+                    expansionRule.setId(d.getId());
+                    map.put(d, expansionRule);
+                    d.setExpansionRule(null);
+                }
+            });
         }
         repository.save(entity);
+        if (!map.isEmpty()) {
+            expansionRuleRepository.saveAll(map.values());
+            descriptors.forEach(d -> {
+                if (map.containsKey(d)) {
+                    d.setExpansionRule(map.get(d));
+                }
+            });
+            map.clear();
+        }
         return entity;
     }
 
@@ -169,6 +221,18 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
         return checkComponent(entity) && entity.getFileLocation() != null &&
                 entity.getTemplateType() != null && entity.getVisibility() != null &&
                 entity.getParameterDescriptors().stream().allMatch(this::checkParameterDescriptor);
+    }
+
+    /**
+     * Method to be used instead of the trigger that updates the "modified" column value in "tao.processing_component" table when a component is updated
+     * @param processingComponentId - processing component ID
+     * @return the number of rows affected
+     */
+    @Override
+    public int updateModifiedDate(String processingComponentId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        String sql = " UPDATE component.processing_component SET modified = now() WHERE component.processing_component.id = ?";
+        return jdbcTemplate.update(sql, processingComponentId);
     }
 
 }

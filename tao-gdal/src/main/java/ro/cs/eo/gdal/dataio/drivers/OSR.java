@@ -26,6 +26,7 @@ public class OSR extends GDALBase {
      * Creates new instance for this driver
      */
     private OSR() {
+        super(null);
         try {
             setPROJSearchPathHandle = createStaticHandle(osrClass, "SetPROJSearchPath", void.class, String.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {

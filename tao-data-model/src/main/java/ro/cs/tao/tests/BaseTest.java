@@ -8,6 +8,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+/**
+ * The BaseTest class serves as an abstract foundation for test classes, providing utility methods
+ * to manage test properties and retrieve configuration values. It includes methods for setup and
+ * dynamic retrieval of property values with optional prefix matching. Classes extending BaseTest
+ * should use these facilities to standardize property handling across tests.
+ */
 public abstract class BaseTest {
     private Properties properties;
     private String prefix;

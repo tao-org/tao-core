@@ -27,6 +27,14 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * The OSRuntimeInfo class represents a blueprint for monitoring operating system metrics at runtime.
+ * It is an abstract class and serves as a base for specific implementations for various operating systems.
+ * This class provides methods to retrieve system-level details such as processor usage, memory, and disk space
+ * and allows obtaining runtime snapshots of the system state.
+ *
+ * @param <R> The type of the object used to represent detailed runtime information.
+ */
 public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
 
     final String node;
@@ -47,13 +55,63 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         this.logger = Logger.getLogger(getClass().getName());
     }
 
+    /**
+     * Retrieves the current CPU usage percentage.
+     *
+     * @return the percentage of processor usage as a double value.
+     * @throws IOException if an I/O error occurs during the retrieval of processor usage.
+     */
     public abstract double getProcessorUsage() throws IOException;
+
+    /**
+     * Retrieves the total memory available on the system in megabytes.
+     *
+     * @return the total memory in megabytes as a long value.
+     * @throws IOException if an I/O error occurs during the retrieval process.
+     */
     public abstract long getTotalMemoryMB() throws IOException;
+
+    /**
+     * Retrieves the currently available memory on the system in megabytes.
+     *
+     * @return the available memory in megabytes as a long value
+     * @throws IOException if an I/O error occurs during the retrieval of available memory
+     */
     public abstract long getAvailableMemoryMB() throws IOException;
+
+    /**
+     * Retrieves the total disk space available on the system in gigabytes.
+     *
+     * @return the total disk space in gigabytes as a long value
+     * @throws IOException if an I/O error occurs during the retrieval of disk space
+     */
     public abstract long getTotalDiskGB() throws IOException;
+
+    /**
+     * Retrieves the currently used disk space on the system in gigabytes.
+     *
+     * @return the used disk space in gigabytes as a long value
+     * @throws IOException if an I/O error occurs during the retrieval of disk space
+     */
     public abstract long getUsedDiskGB() throws IOException;
+
+    /**
+     * Retrieves information encapsulated in the implementation-specific object of type {@code R}.
+     * The exact nature of the information depends on the context provided by the implementing class.
+     *
+     * @return an object of type {@code R} containing the desired information
+     * @throws Exception if an error occurs during the information retrieval process
+     */
     public abstract R getInfo() throws Exception;
 
+    /**
+     * Creates and returns a snapshot of the current runtime system information.
+     * The snapshot includes CPU usage, total memory, available memory,
+     * total disk space, used disk space, and associated memory and disk units.
+     *
+     * @return an instance of type R that contains the runtime system information
+     * @throws Exception if an error occurs during the instantiation or retrieval of system information
+     */
     public R getSnapshot() throws Exception {
         R runtimeInfo = this.runtimeClass.getConstructor().newInstance();
         runtimeInfo.setCpuTotal(getProcessorUsage());
@@ -66,6 +124,15 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         return runtimeInfo;
     }
 
+    /**
+     * The Windows class is an implementation of {@link OSRuntimeInfo} specifically
+     * designed for gathering system and hardware runtime information on Windows-based
+     * operating systems. It retrieves details such as CPU usage, memory availability,
+     * and disk usage by executing WMIC commands and parsing their output.
+     *
+     * @param <R> A type parameter extending {@link RuntimeInfo} that represents the
+     *            structure holding runtime data for the Windows operating system.
+     */
     private static class Windows<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
         Windows(String host, String user, String password, boolean remote, AuthenticationType authType, Class<R> clazz) {
@@ -276,6 +343,14 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         }
     }
 
+    /**
+     * Represents a Linux-based operating system runtime information retriever.
+     * Provides functionality for retrieving system metrics such as CPU usage,
+     * memory, and disk information from a Linux-based system, either locally
+     * or remotely using SSH.
+     *
+     * @param <R> a subclass of RuntimeInfo representing the runtime information structure
+     */
     public static class Linux<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
         public Linux(String host, String user, String password, boolean remote, Class<R> clazz) {

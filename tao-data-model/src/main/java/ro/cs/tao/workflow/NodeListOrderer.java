@@ -110,6 +110,24 @@ public interface NodeListOrderer {
     }
 
     /**
+     * Returns an ordered list of nodes based on them level.
+     *
+     * @param nodes The nodes to be ordered.
+     */
+    default List<WorkflowNodeDescriptor> orderNodesByLevel(List<WorkflowNodeDescriptor> nodes) {
+        if (nodes != null) {
+            List<WorkflowNodeDescriptor> newList = new ArrayList<>();
+            List<Integer> levels = nodes.stream().map(WorkflowNodeDescriptor::getLevel).distinct().sorted().toList();
+            for (Integer level : levels) {
+                newList.addAll(findSameLevelNodes(nodes, level));
+            }
+            nodes.clear();
+            nodes.addAll(newList);
+        }
+        return nodes;
+    }
+
+    /**
      * Returns the children of the given node, among the collection of nodes given as input.
      * If the node has no children, an empty list is returned.
      *
@@ -160,5 +178,46 @@ public interface NodeListOrderer {
             }
         }
         return ancestors;
+    }
+
+    /**
+     * Returns the first level parent of the given node, among the collection of nodes given as input.
+     * If the node has no parents, an empty list is returned.
+     *
+     * @param masterList    The collection of nodes to be searched.
+     * @param node          The node whose parents must be returned.
+     */
+    default List<WorkflowNodeDescriptor> findParents(final List<WorkflowNodeDescriptor> masterList,
+                                                     final WorkflowNodeDescriptor node) {
+        if (masterList == null || masterList.isEmpty() || node == null) {
+            return null;
+        }
+        final List<WorkflowNodeDescriptor> ancestors = new ArrayList<>();
+        final Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>();
+        final Set<ComponentLink> componentLinks = node.getIncomingLinks();
+        if (componentLinks != null && !componentLinks.isEmpty()) {
+            for (ComponentLink link : componentLinks) {
+                final WorkflowNodeDescriptor previous = masterList.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().orElse(null);
+                if (previous != null) {
+                    queue.add(previous);
+                    ancestors.add(previous);
+                }
+            }
+        }
+        return ancestors;
+    }
+
+    /**
+     * Returns the nodes of the given collection, with the specified level.
+     *
+     * @param masterList The collection of nodes to be searched.
+     * @param level      The node level
+     */
+    default List<WorkflowNodeDescriptor> findSameLevelNodes(final List<WorkflowNodeDescriptor> masterList,
+                                                            final int level) {
+        if (masterList == null || masterList.isEmpty()) {
+            return null;
+        }
+        return masterList.stream().filter(n -> n.getLevel() == level).distinct().toList();
     }
 }

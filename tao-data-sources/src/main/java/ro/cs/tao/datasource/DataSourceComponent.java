@@ -492,7 +492,9 @@ public class DataSourceComponent extends TaoComponent {
                         // The fetch mode is needed if the listener checks quota
                         product.addAttribute("fetch", this.fetchMode.name());
                         // The userId is needed in case of async executions
-                        product.addAttribute("principal", this.principal.getName());
+                        if (this.principal != null) {
+                            product.addAttribute("principal", this.principal.getName());
+                        }
                         if (!this.productStatusListener.downloadStarted(product)) {
                             continue;
                         }
@@ -582,6 +584,19 @@ public class DataSourceComponent extends TaoComponent {
                 logger.warning(String.format("Fetching product '%s' ignored: %s",
                                              product.getName(), e.getMessage()));
                 errorMessage = e.getMessage();
+            } catch (QueryException e) {
+                if (e.shouldRetry()) {
+                    // sessions limit reached, wait 15 minutes and retry
+                    logger.warning(e.getMessage());
+                    idx--;
+                    try {
+                        Thread.sleep(15 * 60 * 1000);
+                    } catch (java.lang.InterruptedException ex) {
+                    }
+                    errorMessage = null;
+                } else if (!e.continueWithNext()) {
+                    throw e;
+                }
             } catch (Exception e) {
                 errorMessage = e.getMessage();
                 // maybe the token has just expired, retry one more time

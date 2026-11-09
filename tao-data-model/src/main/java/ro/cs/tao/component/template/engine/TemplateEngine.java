@@ -68,4 +68,14 @@ public abstract class TemplateEngine {
      */
     public abstract String transform(Template template, Map<String, Object> parameters) throws TemplateException;
 
+    /**
+     * Evaluates the given expression and returns the result.
+     * Specializations of this class should override this method to provide the actual evaluation.
+     * @param expression    The expression to evaluate. The expression must follow the script syntax of the engine.
+     * @return      The result of the evaluation. The type of the result depends on the engine.
+     * @throws TemplateException
+     */
+    public Object evaluate(String expression) throws TemplateException {
+        throw new TemplateException("Evaluation is not supported by this template engine");
+    }
 }

@@ -154,6 +154,17 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
+    public List<User> list(Set<String> ids, UserStatus userStatus) {
+        final List<User> users = repository.getUsers(ids, userStatus.value());
+        if (SystemPrincipal.instance().getName() == null) {
+            SystemPrincipal.refresh(this);
+        }
+        final String userId = SystemPrincipal.instance().getName();
+        users.removeIf(u -> userId.equals(u.getId()));
+        return users;
+    }
+
+    @Override
     public Map<String, String[]> listUnicityInfo() {
         Map<String, String[]> results = new HashMap<>();
         repository.findAll().forEach(user -> results.put(user.getUsername(), new String[] {user.getEmail(), user.getAlternativeEmail()}));
@@ -608,6 +619,26 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     @Override
     public String getId(String userName) {
         return repository.getId(userName);
+    }
+
+    @Override
+    public String getUserApiKey(String userId) {
+        return repository.getApiKey(userId);
+    }
+
+    @Override
+    public void updateUserApiKey(String userId, String apiKey, LocalDateTime expiration) {
+        repository.updateApiKey(userId, apiKey, expiration);
+    }
+
+    @Override
+    public User getByApiKey(String apiKey) {
+        return repository.findByApiKey(apiKey);
+    }
+
+    @Override
+    public void deleteExpiredApiKeys() {
+        repository.deleteApiKeysOlderThan(LocalDateTime.now());
     }
 
     //endregion

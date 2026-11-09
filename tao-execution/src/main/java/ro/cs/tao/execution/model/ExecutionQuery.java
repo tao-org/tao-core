@@ -18,6 +18,10 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.datasource.beans.Query;
 
+/**
+ * Represents a query associated with an execution job.
+ * This class provides methods to retrieve and update the attributes of the query and its related execution job.
+ */
 public class ExecutionQuery {
     private long id;
     private ExecutionJob job;

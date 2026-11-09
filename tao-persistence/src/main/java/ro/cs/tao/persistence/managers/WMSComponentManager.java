@@ -32,6 +32,11 @@ public class WMSComponentManager extends TaoComponentManager<WMSComponent, WMSCo
     }
 
     @Override
+    public void updateModified(WMSComponent component) throws PersistenceException {
+        this.repository.updateModified(component, component.getId());
+    }
+
+    @Override
     protected boolean checkEntity(WMSComponent entity) {
         return checkComponent(entity);
     }

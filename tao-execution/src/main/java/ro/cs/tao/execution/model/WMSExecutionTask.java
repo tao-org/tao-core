@@ -16,6 +16,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a task for the execution of a Web Map Service (WMS) request. This class defines
+ * methods to configure input and output parameters, build execution commands,
+ * and output paths for the associated WMS component.
+ */
 public class WMSExecutionTask extends ExecutionTask {
 
     private WMSComponent component;
@@ -98,32 +103,35 @@ public class WMSExecutionTask extends ExecutionTask {
     }
 
     public String buildOutputPath() {
-        if (this.instanceTargetOutput == null) {
-            String location = null;
-            for (TargetDescriptor descriptor : this.component.getTargets()) {
-                Variable variable = outputParameterValues.stream()
-                                                         .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
-                if (variable != null) {
-                    location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
-                    if (location != null) {
-                        break;
-                    }
+        String descriptorName = null;
+        String location = null;
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            Variable variable = outputParameterValues.stream()
+                                                     .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    descriptorName = descriptor.getName();
+                    break;
                 }
             }
+        }
+        String instanceTargetOutput = getInstanceTargetOutput(descriptorName);
+        if (instanceTargetOutput == null) {
             if (location != null) {
                 Path path = Paths.get(location);
                 final Path jobPath = Paths.get(getJob().getJobOutputPath());
                 if (!path.isAbsolute()) {
                     Path relPath = jobPath.getName(jobPath.getNameCount() - 2).resolve(jobPath.getFileName());
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                                .resolve(relPath).resolve(path); //context.getNetSpace().resolve(path);
+                            .resolve(relPath).resolve(path); //context.getNetSpace().resolve(path);
                 }
                 String fileName = path.getFileName().toString();
                 String folderName = String.format(nameTemplate,
-                                                  this.getJob().getId(),
-                                                  this.getId(),
-                                                  this.internalState == null ? "" : this.internalState + "-",
-                                                  FileUtilities.getFilenameWithoutExtension(fileName));
+                        this.getJob().getId(),
+                        this.getId(),
+                        this.internalState == null ? "" : this.internalState + "-",
+                        FileUtilities.getFilenameWithoutExtension(fileName));
                 path = jobPath.resolve(folderName);
                 if (!Files.exists(path)) {
                     try {
@@ -132,9 +140,9 @@ public class WMSExecutionTask extends ExecutionTask {
                         throw new RuntimeException(e);
                     }
                 }
-                this.instanceTargetOutput = FileUtilities.asUnixPath(path.resolve(fileName), true);
+                setInstanceTargetOutput(descriptorName, FileUtilities.asUnixPath(path.resolve(fileName), true));
             }
         }
-        return this.instanceTargetOutput;
+        return getInstanceTargetOutput(descriptorName);
     }
 }

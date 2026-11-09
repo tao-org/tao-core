@@ -1,5 +1,6 @@
 package ro.cs.tao.utils;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,7 +25,23 @@ public class AutoEvictableCache<T, U> {
      * @param retentionInSeconds    The retention period in seconds
      */
     public AutoEvictableCache(Function<T, U> functor, long retentionInSeconds) {
-        this.cache = Collections.synchronizedMap(new LinkedHashMap<>());
+        this(functor, retentionInSeconds, null);
+    }
+
+    /**
+     * Constructs an instance of AutoEvictableCache with a specified caching function, retention duration, and map implementation.
+     * Automatically removes entries from the cache after the specified retention period.
+     *
+     * @param functor The function that generates values based on the provided keys.
+     * @param retentionInSeconds The retention period, in seconds, after which entries will be evicted from the cache.
+     * @param cacheFile If not null, the cache will be persisted to the specified file.
+     */
+    public AutoEvictableCache(Function<T, U> functor, long retentionInSeconds, Path cacheFile) {
+        if (cacheFile != null) {
+            this.cache = Collections.synchronizedMap(new FileBackedMap<>(cacheFile));
+        } else {
+            this.cache = Collections.synchronizedMap(new LinkedHashMap<>());
+        }
         this.functor = functor;
         long retention = retentionInSeconds * 1000;
         final Timer timer = new Timer();
@@ -36,17 +53,18 @@ public class AutoEvictableCache<T, U> {
             }
         }, retention, retention);
     }
+
     /**
      * Returns the value associated with the key (if any) and updates the accessed timestamp.
      * @param key   The key to lookup
      */
     public U get(T key) {
         Tuple<U, Long> tuple = this.cache.get(key);
-        U value;
+        U value = null;
         if (tuple != null) {
             value = tuple.getKeyOne();
             this.cache.replace(key, new Tuple<>(value, System.currentTimeMillis()));
-        } else {
+        } else if (functor != null) {
             value = functor.apply(key);
             this.cache.put(key, new Tuple<>(value, System.currentTimeMillis()));
         }

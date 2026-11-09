@@ -6,7 +6,17 @@ import java.lang.invoke.MethodType;
 
 public abstract class GDALBase {
 
-    protected MethodHandle createStaticHandle(Class<?> implClass, String method, Class<?> returnType, Class<?>... argTypes) throws NoSuchMethodException, IllegalAccessException {
+    protected final Object jniInstance;
+
+    public GDALBase(final Object jniInstance) {
+        this.jniInstance = jniInstance;
+    }
+
+    public Object getJniInstance() {
+        return jniInstance;
+    }
+
+    protected static MethodHandle createStaticHandle(Class<?> implClass, String method, Class<?> returnType, Class<?>... argTypes) throws NoSuchMethodException, IllegalAccessException {
         final MethodHandles.Lookup lookup = MethodHandles.lookup();
         final MethodType methodType = MethodType.methodType(returnType, argTypes);
         return lookup.findStatic(implClass, method, methodType).asSpreader(Object[].class, argTypes.length);

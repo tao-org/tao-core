@@ -16,6 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * Utility class to assist with Docker-related functionalities such as checking the availability
+ * of Docker, retrieving Docker version, and saving/loading Docker images.
+ * The class uses system path configuration to verify if Docker is installed
+ * and interacts with Docker through command executions.
+ */
 public class DockerHelper {
 
     private static final boolean isDockerFound;
@@ -41,8 +47,20 @@ public class DockerHelper {
         isDockerFound = canUseDocker;
         Logger.getLogger(DockerHelper.class.getName()).fine("Docker was " + (!isDockerFound ? "not " : "") + "found on system path");
     }
+
+    /**
+     * Checks whether Docker is found on the system.
+     *
+     * @return {@code true} if Docker is found, {@code false} otherwise.
+     */
     public static boolean isDockerFound() { return isDockerFound; }
 
+    /**
+     * Retrieves the Docker API version if Docker is found on the system and accessible.
+     *
+     * @return the Docker API version as a String, or {@code null} if Docker is not found
+     *         or an error occurs during execution.
+     */
     public static String getDockerVersion() {
         String version = null;
         if (isDockerFound) {
@@ -72,6 +90,13 @@ public class DockerHelper {
         return version;
     }
 
+    /**
+     * Saves a Docker image to a specified file path.
+     *
+     * @param imageName the name of the Docker image to save
+     * @param file the file path where the image will be saved
+     * @throws IOException if an I/O error occurs during execution or if the Docker process fails
+     */
     public static void saveImage(String imageName, Path file) throws IOException {
         if (isDockerFound) {
             List<String> arguments = new ArrayList<>();
@@ -94,6 +119,13 @@ public class DockerHelper {
         }
     }
 
+    /**
+     * Loads a Docker image from the specified file. This method uses the Docker CLI
+     * to execute the `docker load` command and input the given image file.
+     *
+     * @param imageFile the path to the Docker image file to be loaded
+     * @throws IOException if an I/O error occurs or if the Docker process fails
+     */
     public static void loadImage(Path imageFile) throws IOException {
         if (isDockerFound) {
             List<String> arguments = new ArrayList<>();

@@ -1,5 +1,15 @@
 -------------------------------------------------------------------------------
--- topology.node_flavor
+-- table: topology.memory_unit
+DROP TABLE IF EXISTS topology.memory_unit CASCADE;
+CREATE TABLE topology.memory_unit
+(
+	id smallint NOT NULL,
+	short_description varchar(3) NOT NULL
+);
+ALTER TABLE topology.memory_unit ADD CONSTRAINT PK_memory_unit PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: topology.node_flavor
 DROP TABLE IF EXISTS topology.node_flavor CASCADE;
 CREATE TABLE topology.node_flavor
 (
@@ -8,9 +18,12 @@ CREATE TABLE topology.node_flavor
 	memory integer NOT NULL,
 	disk integer NOT NULL,
 	swap integer NOT NULL,
-	rxtx real NOT NULL
+	rxtx real NOT NULL,
+	unit_id smallint NOT NULL
 );
 ALTER TABLE topology.node_flavor ADD CONSTRAINT PK_node_flavor PRIMARY KEY (id);
+ALTER TABLE topology.node_flavor ADD CONSTRAINT FK_node_flavor_memory_unit
+    FOREIGN KEY (unit_id) REFERENCES topology.memory_unit (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: topology.execution_node
@@ -41,7 +54,7 @@ ALTER TABLE topology.node ADD CONSTRAINT FK_execution_node_flavor
     FOREIGN KEY (flavor_id) REFERENCES topology.node_flavor (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
--- topology.service_status
+-- table: topology.service_status
 DROP TABLE IF EXISTS topology.service_status CASCADE;
 CREATE TABLE topology.service_status
 (
@@ -90,12 +103,13 @@ ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_servi
 
 -------------------------------------------------------------------------------
 -- table: topology.volatile_instance
-DROP TABLE IF EXISTS topology.volatile_instance;
+DROP TABLE IF EXISTS topology.volatile_instance CASCADE;
 CREATE TABLE topology.volatile_instance
 (
     id bigint NOT NULL,
     node_id character varying NOT NULL,
     user_id character varying NOT NULL,
+    flavor_id character varying NOT NULL,
     created timestamp without time zone NOT NULL,
     destroyed timestamp without time zone,
     average_cpu_load real,
