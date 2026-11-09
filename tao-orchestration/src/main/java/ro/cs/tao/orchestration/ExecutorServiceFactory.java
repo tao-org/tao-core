@@ -18,14 +18,39 @@ package ro.cs.tao.orchestration;
 
 import java.util.concurrent.ExecutorService;
 
+/**
+ * Factory class for creating instances of {@link ExecutorService} with a configurable delegate provider.
+ *
+ * This class allows the customization of {@link ExecutorService} creation through a delegate provider supplied
+ * by the user. If no delegate provider is set, a default implementation is used, which creates a fixed thread
+ * pool ExecutorService.
+ */
 public class ExecutorServiceFactory {
     private static ExecutorServiceDelegateProvider delegateProvider;
     private static final ExecutorServiceDelegateProvider defaultProvider = new ExecutorServiceDelegateProvider() { };
 
+    /**
+     * Sets the delegate provider used for creating instances of {@link ExecutorService}.
+     * The delegate provider allows customization of the {@link ExecutorService} creation process.
+     * If no delegate provider is set, a default implementation will be used.
+     *
+     * @param delegateProvider an implementation of {@link ExecutorServiceDelegateProvider} to be used
+     *                         for creating {@link ExecutorService} instances. If null, the previously
+     *                         set delegate provider will be cleared.
+     */
     public static void setDelegateProvider(ExecutorServiceDelegateProvider delegateProvider) {
         ExecutorServiceFactory.delegateProvider = delegateProvider;
     }
 
+    /**
+     * Creates an {@link ExecutorService} with the specified number of threads.
+     *
+     * The creation is delegated to a configurable delegate provider if set. If no delegate provider
+     * is configured, a default implementation is used, which creates a fixed thread pool ExecutorService.
+     *
+     * @param threads the number of threads to allocate in the created ExecutorService.
+     * @return an instance of {@link ExecutorService} configured with the specified number of threads.
+     */
     public static ExecutorService createExecutor(int threads) {
         return delegateProvider != null ?
                 delegateProvider.createExecutor(threads) : defaultProvider.createExecutor(threads);

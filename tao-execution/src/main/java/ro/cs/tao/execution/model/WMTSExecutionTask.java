@@ -16,6 +16,18 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The WMTSExecutionTask class represents a specific type of execution task in the system,
+ * which is associated with a WMTS (Web Map Tile Service) component. This class extends
+ * the base functionality provided by the ExecutionTask superclass, adding specific features
+ * for handling WMTS component-related parameters and execution logic.
+ *
+ * Responsibilities of this class include:
+ * - Managing input and output parameters for the associated WMTS component.
+ * - Validating parameter IDs against the component's descriptors (parameters, sources, and targets).
+ * - Constructing the output path for the task's generated results.
+ * - Supporting extension and customization for execution-specific behaviors.
+ */
 public class WMTSExecutionTask extends ExecutionTask {
 
     private WMTSComponent component;
@@ -98,18 +110,21 @@ public class WMTSExecutionTask extends ExecutionTask {
     }
 
     public String buildOutputPath() {
-        if (this.instanceTargetOutput == null) {
-            String location = null;
-            for (TargetDescriptor descriptor : this.component.getTargets()) {
-                Variable variable = outputParameterValues.stream()
-                                                         .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
-                if (variable != null) {
-                    location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
-                    if (location != null) {
-                        break;
-                    }
+        String descriptorName = null;
+        String location = null;
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            Variable variable = outputParameterValues.stream()
+                                                     .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    descriptorName = descriptor.getName();
+                    break;
                 }
             }
+        }
+        String instanceTargetOutput = getInstanceTargetOutput(descriptorName);
+        if (instanceTargetOutput == null) {
             if (location != null) {
                 Path path = Paths.get(location);
                 final Path jobPath = Paths.get(getJob().getJobOutputPath());
@@ -132,9 +147,9 @@ public class WMTSExecutionTask extends ExecutionTask {
                         throw new RuntimeException(e);
                     }
                 }
-                this.instanceTargetOutput = FileUtilities.asUnixPath(path.resolve(fileName), true);
+                setInstanceTargetOutput(descriptorName, FileUtilities.asUnixPath(path.resolve(fileName), true));
             }
         }
-        return this.instanceTargetOutput;
+        return getInstanceTargetOutput(descriptorName);
     }
 }

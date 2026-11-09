@@ -116,18 +116,40 @@ public class TopologyManager {
         registerListener(new DefaultNodeOperationListener());
     }
 
+    /**
+     * Provides the singleton instance of the TopologyManager.
+     *
+     * @return the singleton instance of TopologyManager
+     */
     public static TopologyManager getInstance() {
         return instance;
     }
 
+    /**
+     * Sets the master node information for the topology.
+     *
+     * @param master the NodeDescription object representing the master node
+     */
     public static void setMasterNode(NodeDescription master) {
         masterNodeInfo = master;
     }
 
+    /**
+     * Checks if an external node provider is available.
+     *
+     * @return true if an external node provider exists, false otherwise
+     */
     public boolean isExternalProviderAvailable() {
         return this.externalNodeProvider != null;
     }
 
+    /**
+     * Sets the local node provider responsible for managing nodes in the topology.
+     * Initializes the master node description if it has not already been set, updates the master node
+     * information, and configures the master node in the Docker manager.
+     *
+     * @param provider the {@code NodeProvider} instance to be set as the local node provider
+     */
     public void setLocalNodeProvider(NodeProvider provider) {
         this.localNodeProvider = provider;
         // Set the auto-determined master node info
@@ -139,18 +161,47 @@ public class TopologyManager {
         DockerManager.setMasterNode(masterNodeInfo);
     }
 
+    /**
+     * Sets the volatile instance provider responsible for managing volatile instances
+     * in the topology. The volatile instance provider is used to handle operations
+     * such as retrieval and deletion of volatile instances.
+     *
+     * @param provider the {@code VolatileInstanceProvider} instance to be set as the volatile instance provider
+     */
     public void setVolatileInstanceProvider(VolatileInstanceProvider provider) {
         this.volatileInstanceProvider = provider;
     }
 
+    /**
+     * Registers a {@link NodeOperationListener} to receive notifications about
+     * node or tool installation operations within the topology.
+     *
+     * @param listener the {@code NodeOperationListener} instance to be registered
+     */
     public void registerListener(NodeOperationListener listener) {
         this.listeners.add(listener);
     }
 
+    /**
+     * Unregisters a {@link NodeOperationListener} to stop receiving notifications
+     * about node or tool installation operations within the topology.
+     *
+     * @param listener the {@code NodeOperationListener} instance to be unregistered
+     */
     public void unregisterListener(NodeOperationListener listener) {
         this.listeners.remove(listener);
     }
 
+    /**
+     * Retrieves the list of node flavors available for the topology. This includes
+     * flavors from the local provider and, if available, flavors from the external
+     * provider. If no flavors are found in the local provider, the external provider
+     * flavors will be added as a fallback.
+     *
+     * @return a list of {@code NodeFlavor} objects representing the available node flavors,
+     *         combining local and external provider data when necessary. If neither
+     *         provider has any flavors, returns an empty list.
+     */
     public List<NodeFlavor> listNodeFlavors() {
         List<NodeFlavor> flavors = this.localNodeProvider.listFlavors();
         if (flavors == null) {
@@ -162,14 +213,38 @@ public class TopologyManager {
         return flavors;
     }
 
+    /**
+     * Retrieves the details of a node based on the specified host name.
+     *
+     * @param hostName the name of the host for which the node details need to be retrieved
+     * @return the {@code NodeDescription} object containing details of the node associated with the given host name
+     */
     public NodeDescription getNode(String hostName) { return this.localNodeProvider.getNode(hostName); }
 
+    /**
+     * Retrieves the list of nodes managed by the local node provider.
+     * The returned list contains active nodes registered in the topology.
+     *
+     * @return a list of {@code NodeDescription} objects representing the active nodes managed by the local node provider
+     */
     public List<NodeDescription> listNodes() {
         /*return this.externalNodeProvider != null ?
                 this.externalNodeProvider.listNodes() : this.localNodeProvider.listNodes();*/
         return this.localNodeProvider.listNodes();
     }
 
+    /**
+     * Adds a new node to the topology, initializes its configuration, and optionally installs
+     * required tools based on the node's description. The method interacts with external and
+     * local providers, installs services, and notifies relevant listeners about the operation.
+     * It also manages processes like creating working directories and handling volatile nodes.
+     *
+     * @param info the {@code NodeDescription} object containing information about the node to be added,
+     *             such as its ID, flavor, and owner details
+     * @return the updated {@code NodeDescription} object after being processed and added
+     *         to the topology
+     * @throws TopologyException if there is an error while adding the node to the topology
+     */
     public NodeDescription addNode(NodeDescription info) throws TopologyException {
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         if (this.externalNodeProvider != null) {
@@ -177,6 +252,7 @@ public class TopologyManager {
             if (Boolean.TRUE.equals(info.getVolatile())) {
                 VolatileInstance vi = new VolatileInstance();
                 vi.setNodeId(info.getId());
+                vi.setFlavorId(info.getFlavor().getId());
                 vi.setUserId(info.getOwner());
                 vi.setCreated(LocalDateTime.now());
                 try {
@@ -240,6 +316,14 @@ public class TopologyManager {
         return info;
     }
 
+    /**
+     * Installs services on a specified node using the available topology tool installers.
+     * It iterates through a list of installers and attempts to install the specified service on the node.
+     * Results of the installation, including success or failure, are logged and communicated via messaging.
+     *
+     * @param node the {@code NodeDescription} representing the node where the service will be installed
+     * @param service the {@code ServiceDescription} representing the service to be installed on the specified node
+     */
     public void installServices(NodeDescription node, ServiceDescription service) {
         BinaryTask<NodeDescription, ServiceInstallStatus> task;
         for (TopologyToolInstaller installer: installers) {
@@ -269,6 +353,14 @@ public class TopologyManager {
         }
     }
 
+    /**
+     * Removes a node from the topology based on the specified host name.
+     * This method identifies the node through the local or external providers,
+     * notifies listeners about the removal, and handles cleanup of related resources.
+     *
+     * @param hostName the name of the host whose node is to be removed from the topology
+     * @throws TopologyException if the node with the specified host name does not exist
+     */
     public void removeNode(String hostName) {
         final NodeDescription node = getNode(hostName);
         if (node == null) {
@@ -304,6 +396,15 @@ public class TopologyManager {
         Messaging.send(SystemPrincipal.instance(), Topic.TOPOLOGY.value(), message);
     }
 
+    /**
+     * Updates the details of a specified node in the topology.
+     * It processes the node description through available topology tool installers
+     * and updates the node using external and local providers if applicable.
+     *
+     * @param nodeInfo the {@code NodeDescription} object containing the details of the
+     *                 node to be updated. This includes information such as ID,
+     *                 configurations, and other properties to be modified.
+     */
     public void updateNode(NodeDescription nodeInfo) {
         //checkMount(nodeInfo);
         // execute all the installers
@@ -316,61 +417,78 @@ public class TopologyManager {
         this.localNodeProvider.update(nodeInfo);
     }
 
+    /**
+     * Retrieves the information about the master node in the topology.
+     *
+     * @return the {@code NodeDescription} object representing the master node
+     */
     public NodeDescription getMasterNodeInfo() {
         return masterNodeInfo;
     }
 
+    /**
+     * Configures the master node information for all the topology tool installers associated
+     * with this instance of the TopologyManager. This method iterates through the list of
+     * registered installers and updates their master node descriptions using the master
+     * node information stored in the current instance.
+     */
     public void setMasterNodeInfo() {
         for (TopologyToolInstaller installer: this.installers) {
             installer.setMasterNodeDescription(masterNodeInfo);
         }
     }
 
+    /**
+     * Retrieves the list of Docker image installers available through the service registry.
+     * These installers are used to manage Docker images and their installation process.
+     *
+     * @return a list of {@code DockerImageInstaller} instances representing the available installers.
+     *         If no installers are found in the service registry, returns an empty list.
+     */
     public List<DockerImageInstaller> getInstallers() {
         ServiceRegistry<DockerImageInstaller> serviceRegistry =
                 ServiceRegistryManager.getInstance().getServiceRegistry(DockerImageInstaller.class);
         return new ArrayList<>(serviceRegistry.getServices());
     }
 
+    /**
+     * Retrieves a list of all standalone containers available in the current topology.
+     * Standalone containers correspond to Docker plugins registered as {@code SingletonContainer}
+     * in the service registry.
+     *
+     * @return a list of {@code SingletonContainer} instances representing standalone containers.
+     *         If no containers are found, an empty list is returned.
+     */
     public List<SingletonContainer> getStandaloneContainers() {
         ServiceRegistry<SingletonContainer> serviceRegistry =
                 ServiceRegistryManager.getInstance().getServiceRegistry(SingletonContainer.class);
         return new ArrayList<>(serviceRegistry.getServices());
     }
 
+    /**
+     * Notifies all registered {@link NodeOperationListener} instances about the completion
+     * of an operation related to a specific node and its service installation status.
+     *
+     * @param node the {@code NodeDescription} representing the node for which the operation was completed
+     * @param installStatus the {@code ServiceInstallStatus} indicating the result of the service installation
+     *                       on the specified node
+     */
     public void notifyListeners(NodeDescription node, ServiceInstallStatus installStatus) {
         for (NodeOperationListener listener : this.listeners) {
             listener.onCompleted(node, installStatus);
         }
     }
 
-    /*public ServiceInstallStatus checkMount(NodeDescription node) {
-        ServiceInstallStatus status = new ServiceInstallStatus();
-        status.setServiceName("Mount");
-        String mount = ConfigurationManager.getInstance().getValue("node.mount.folder", "/mnt/tao");
-        String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
-        final List<String> commands = ProcessHelper.tokenizeCommands(createMountTemplate, mount, masterNodeInfo.getId(),
-                                                                     share, masterNodeInfo.getUserName(), masterNodeInfo.getUserPass());
-        ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
-                                              node.getId(),
-                                              node.getUserName(),
-                                              node.getUserPass(),
-                                              commands, true, SSHMode.EXEC);
-        sharedAccumulator.reset();
-        Executor<?> executor = Executor.execute(sharedAccumulator, job);
-        logger.fine("Executing " + String.join(" ", commands));
-        waitFor(executor, 5, TimeUnit.SECONDS);
-        if (executor.getReturnCode() == 0) {
-            status.setStatus(ServiceStatus.INSTALLED);
-        } else {
-            status.setStatus(ServiceStatus.ERROR);
-            status.setReason(sharedAccumulator.getOutput());
-            logger.warning("Command failed: " + status.getReason());
-        }
-        sharedAccumulator.reset();
-        return status;
-    }*/
-
+    /**
+     * Checks the master share configuration and attempts to ensure it is set up correctly.
+     * Depending on the operating system, it may execute commands to create a local share
+     * or verify the share status. If an issue occurs during setup, details are logged,
+     * and the status is updated accordingly.
+     *
+     * @return a {@code ServiceInstallStatus} object representing the status of the master share setup.
+     *         The status includes the name of the service, whether it is installed or encountered an error,
+     *         and a reason if an error occurred.
+     */
     public ServiceInstallStatus checkMasterShare() {
         ServiceInstallStatus status = new ServiceInstallStatus();
         status.setServiceName("Local Share");
@@ -405,6 +523,15 @@ public class TopologyManager {
         return status;
     }
 
+    /**
+     * Creates a working directory on the specified node using the provided device information.
+     * Executes the necessary commands to set up the directory via SSH.
+     *
+     * @param node the {@link NodeDescription} object containing the details of the node where the working directory is to be created
+     * @param device the device identifier for use in the directory creation commands
+     * @return a {@link ServiceInstallStatus} object representing the status of the operation,
+     *         including whether the operation was successful or encountered an error
+     */
     public ServiceInstallStatus createWorkingDir(NodeDescription node, String device) {
         ServiceInstallStatus status = new ServiceInstallStatus();
         status.setServiceName("Worker workdir");

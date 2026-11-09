@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.DataSourceComponentRepository;
 import ro.cs.tao.utils.StringUtilities;
 
@@ -76,6 +77,11 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
     @Override
     public DataSourceComponent getQueryDataSourceComponent(long queryId) {
         return this.repository.getQueryDataSourceComponent(queryId);
+    }
+
+    @Override
+    public void updateModified(DataSourceComponent component) throws PersistenceException {
+        this.repository.updateModified(component, component.getId());
     }
 
     @Override

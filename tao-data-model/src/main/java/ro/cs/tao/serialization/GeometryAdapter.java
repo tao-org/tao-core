@@ -24,7 +24,27 @@ import org.locationtech.jts.io.WKTReader;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * @author Cosmin Cara
+ * Adapter for converting between {@link Geometry} objects and their string representations.
+ * This adapter is used in XML serialization and deserialization processes.
+ *
+ * The {@code unmarshal} method converts a {@link Geometry} object into its string
+ * representation. It utilizes the {@code toText()} method of the {@link Geometry} class
+ * for this operation.
+ *
+ * The {@code marshal} methods create {@link Geometry} instances from string representations.
+ * The string may represent either a WKB (Well-Known Binary, in hexadecimal format) or
+ * a WKT (Well-Known Text) representation of the geometry. The methods attempt to distinguish
+ * between the two formats based on the content of the string and parse them accordingly.
+ *
+ * If the string can be parsed as a WKB, the {@link WKBReader} is used. Otherwise, the
+ * {@link WKTReader} is used to interpret the string as a WKT representation. Additionally,
+ * the overloaded {@code marshal} method includes support for specifying the SRID (Spatial
+ * Reference System Identifier) during the creation of the geometry object.
+ *
+ * Note: Exception handling is used to manage cases where the input string cannot be
+ * successfully parsed into a valid {@link Geometry} object or is null/empty.
+ *
+ * @author  Cosmin Cara
  */
 public class GeometryAdapter extends XmlAdapter<Geometry, String> {
 

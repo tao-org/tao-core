@@ -1,10 +1,7 @@
 package ro.cs.tao.orchestration.status;
 
 import org.apache.commons.lang3.StringUtils;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -15,6 +12,19 @@ import ro.cs.tao.persistence.PersistenceException;
 
 import java.time.LocalDateTime;
 
+/**
+ * Handles the status transition of tasks to the "DONE" state and updates job states
+ * accordingly. This implementation ensures that jobs composed entirely of completed tasks
+ * are marked as "DONE" while jobs still in progress or with no failures transition
+ * to the "RUNNING" state.
+ *
+ * The handler also processes additional notifications for tasks being marked as "DONE."
+ * Example responsibilities include updating the execution status of tasks and jobs,
+ * logging relevant information, and sending notifications through the messaging system.
+ *
+ * Inherits functionality from the {@link TaskStatusHandler} abstract class, leveraging
+ * shared mechanisms for task management.
+ */
 public class DoneStatusHandler extends TaskStatusHandler {
     protected DoneStatusHandler(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
         super(jobProvider, taskProvider);
@@ -32,7 +42,7 @@ public class DoneStatusHandler extends TaskStatusHandler {
             job.setExecutionStatus(ExecutionStatus.RUNNING);
             jobProvider.update(job);
         }
-        if (task instanceof ProcessingExecutionTask) {
+        if (task instanceof ProcessingExecutionTask || task instanceof ExecutionGroup) {
             final String strMsg = "Task " + TaskUtilities.getTaskDescriptiveName(task) +
                     (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "") +
                     " changed to " + ExecutionStatus.DONE.friendlyName();

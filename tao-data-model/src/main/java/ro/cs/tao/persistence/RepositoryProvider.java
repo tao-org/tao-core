@@ -4,6 +4,14 @@ import ro.cs.tao.workspaces.Repository;
 
 import java.util.List;
 
+/**
+ * Provides an abstraction for managing repository entities specific to users.
+ * This interface extends {@link EntityProvider} with additional methods tailored
+ * for operations involving user-specific repositories, including retrieval, system
+ * repository handling, and marking repositories as persistent.
+ * The implementation ensures proper linking between user operations and their
+ * repositories in the application.
+ */
 public interface RepositoryProvider extends EntityProvider<Repository, String> {
 
     /**

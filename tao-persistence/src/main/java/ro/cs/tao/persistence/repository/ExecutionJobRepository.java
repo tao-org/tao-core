@@ -2,6 +2,7 @@ package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -10,6 +11,7 @@ import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 
+import javax.persistence.QueryHint;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +27,12 @@ import java.util.Set;
 public interface ExecutionJobRepository extends PagingAndSortingRepository<ExecutionJob, Long> {
 
     List<ExecutionJob> findByWorkflowId(long workflowId);
+
+    List<ExecutionJob> findByWorkflowIdAndUserId(long workflowId, String userId);
+
+    @Query(value = "SELECT * FROM execution.job WHERE workflow_id = :workflowId AND user_id = :userId " +
+                   "AND execution_status_id NOT IN (2, 7) ORDER BY start_time DESC, end_time DESC", nativeQuery = true)
+    List<ExecutionJob> getNotRunningJobs(@Param("workflowId") long workflowId, @Param("userId") String userId);
 
     /**
      * Returns all the entities having the given status
@@ -53,14 +61,16 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
     @Query(value = "SELECT CONCAT(CAST(t.job_id as text), '-', CAST(t.id as text)) FROM execution.task_output tk " +
             "JOIN execution.task t ON t.id = tk.task_id " +
             "JOIN execution.job e ON e.id = t.job_id " +
-            "WHERE e.workflow_id = :workflowId " +
+            "WHERE e.workflow_id = :workflowId AND e.user_id = :userId " +
             "ORDER BY t.job_id, t.id", nativeQuery = true)
-    List<String> getWorkflowJobsOutputs(@Param("workflowId") Long workflowId);
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
+    List<String> getWorkflowJobsOutputs(@Param("workflowId") Long workflowId, @Param("userId") String userId);
 
     @Query(value = "SELECT CONCAT(CAST(t.job_id as text), '-', CAST(t.id as text)) FROM execution.task_output tk " +
             "JOIN execution.task t ON t.id = tk.task_id " +
             "WHERE t.job_id = :jobId " +
             "ORDER BY t.id", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
     List<String> getJobOutputs(@Param("jobId") Long jobId);
     
     @Query(value = "SELECT COUNT(id) FROM execution.job WHERE batch_id = :batchId AND execution_status_id in (:statuses)", nativeQuery = true)

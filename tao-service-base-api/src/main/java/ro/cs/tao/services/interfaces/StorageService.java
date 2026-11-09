@@ -22,16 +22,17 @@ import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.model.FileObject;
 import ro.cs.tao.services.model.ItemAction;
 import ro.cs.tao.utils.Crypto;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
+import ro.cs.tao.workspaces.RepositoryType;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -39,7 +40,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author Cosmin Cara
  */
-public interface StorageService<T, U> extends TAOService {
+public interface StorageService<T> extends TAOService {
 
     String FOLDER_PLACEHOLDER = ".s3keep";
     String CONTENTS_ATTRIBUTE = "contents";
@@ -53,15 +54,41 @@ public interface StorageService<T, U> extends TAOService {
     boolean isIntendedFor(String protocol);
 
     /**
+     * Determines whether a given repository type matches the intended purpose.
+     *
+     * @param repositoryType the type of the repository to evaluate
+     * @return true if the repository type is intended for the specified purpose, false otherwise
+     */
+    boolean isIntendedFor(RepositoryType repositoryType);
+
+    /**
      * Associates a repository configuration to this service instance
      * @param repository    The repository
      */
     default void associate(Repository repository) { }
 
+    /**
+     * Sets the product provider to be used.
+     *
+     * @param productProvider the instance of EOProductProvider to set as the product provider
+     */
     default void setProductProvider(EOProductProvider productProvider) { }
 
+    /**
+     * Sets the vector data provider responsible for supplying vector data.
+     * This method allows integration with a custom data provider that
+     * handles the retrieval and management of vector data for this component.
+     *
+     * @param vectorDataProvider the VectorDataProvider instance to be used
+     *                           for managing vector data
+     */
     default void setVectorDataProvider(VectorDataProvider vectorDataProvider) { }
 
+    /**
+     * Sets the auxiliary data provider to supply additional data required by this component.
+     *
+     * @param auxiliaryDataProvider the provider responsible for supplying auxiliary data
+     */
     default void setAuxiliaryDataProvider(AuxiliaryDataProvider auxiliaryDataProvider) { }
 
     /**
@@ -96,12 +123,26 @@ public interface StorageService<T, U> extends TAOService {
      * Stores a file in the given folder, in the user workspace
      *
      * @param stream            The input stream of the file object
-     * @param length            The file length. If unknown, pass a value less than 0
      * @param relativeFolder    The folder path, relative to the workspace of the calling user
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storeFile(InputStream stream, long length, String relativeFolder, String description) throws Exception;
+    default String storeFile(InputStream stream, String relativeFolder, String description) throws Exception {
+        return storeFile(stream, 0, relativeFolder, description);
+    }
+
+    /**
+     * Stores a file from the given input stream to the specified relative folder with an associated description.
+     *
+     * @param stream         the input stream containing the file data to be stored
+     * @param length         the length of the file in bytes
+     * @param relativeFolder the relative folder path where the file should be stored
+     * @param description    a description associated with the file being stored
+     * @throws Exception     if an error occurs during file storage
+     */
+    default String storeFile(InputStream stream, long length, String relativeFolder, String description) throws Exception {
+        return null;
+    }
 
     /**
      * Checks if the given relative path exists in the workspace
@@ -127,6 +168,13 @@ public interface StorageService<T, U> extends TAOService {
      */
     void move(String source, String destination) throws IOException;
 
+    /**
+     * Renames a file or directory from the specified source path to the target path.
+     *
+     * @param source the current name or path of the file or directory to be renamed
+     * @param target the new desired name or path for the file or directory
+     * @throws IOException if an I/O error occurs during the renaming process
+     */
     default void rename(String source, String target) throws IOException {
 
     }
@@ -149,6 +197,17 @@ public interface StorageService<T, U> extends TAOService {
      */
     List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth) throws IOException;
 
+    /**
+     * Lists files from the specified path based on the provided parameters.
+     *
+     * @param fromPath       the starting directory path from which files will be listed
+     * @param exclusions     a set of file or directory names to be excluded from the results
+     * @param lastItem       the last processed item, used for pagination or continuation of listing
+     * @param depth          the maximum depth of directories to traverse
+     * @param excludedPaths  a set of specific paths to be excluded from traversal
+     * @return a list of FileObject representing the files found based on the given criteria
+     * @throws IOException if an I/O error occurs while accessing the file system
+     */
     default List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth, Set<Path> excludedPaths) throws IOException {
         return listFiles(fromPath, exclusions, lastItem, depth);
     }
@@ -161,6 +220,48 @@ public interface StorageService<T, U> extends TAOService {
      * @throws IOException if the content cannot be retrieved
      */
     List<FileObject> listTree(String fromPath) throws IOException;
+
+    /**
+     * Retrieves a list of file objects based on the selected path, starting at the storage root.
+     * If the selected path is empty or null, an empty list will be returned.
+     * If the root path is selected, it retrieves the root folder and its children.
+     * Otherwise, it navigates the storage tree, marking the relevant nodes as selected
+     * and returns the sub-tree starting at the specified path.
+     *
+     * @param selectedPath The path to navigate within the storage for retrieving files.
+     *                     This path must be relative to the root of the storage.
+     * @return A list of {@code FileObject} representing the file structure for the given selection path.
+     *         If the specified path is invalid or empty, the list will be empty.
+     * @throws IOException If any errors occur while retrieving the file structure.
+     */
+    default List<FileObject> getForSelection(String selectedPath) throws IOException {
+        if (StringUtilities.isNullOrEmpty(selectedPath)) {
+            return List.of();
+        }
+        if (selectedPath.equals("/")) {
+            return listFiles("/", null, null, 1);
+        } else {
+            String[] tokens = (selectedPath.startsWith("/") ? selectedPath.substring(1) : selectedPath).split("/");
+            final List<FileObject> result = new ArrayList<>();
+            result.addAll(listFiles("/", null, null, 1));
+            FileObject parent = result.stream().filter(f -> f.getRelativePath().equals(tokens[0])).findFirst().get();
+            parent.setSelected(true);
+            final StringBuilder path = new StringBuilder();
+            path.append(tokens[0]);
+            for (int i = 1; i < tokens.length; i++) {
+                List<FileObject> children = listFiles(parent.getRelativePath(), null, null, 1);
+                if (i < tokens.length - 1) {
+                    children.removeIf(f -> !f.isFolder());
+                }
+                parent.setChildren(children);
+                path.append("/").append(tokens[i]);
+                parent.setSelected(children.isEmpty());
+                parent = children.stream().filter(f -> f.getRelativePath().equals(path.toString())).findFirst().get();
+                parent.setSelected(true);
+            }
+            return result;
+        }
+    }
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
@@ -186,7 +287,7 @@ public interface StorageService<T, U> extends TAOService {
      *
      * @throws IOException
      */
-    U download(String path) throws IOException;
+    InputStream download(String path) throws IOException;
 
     /**
      * Packs the children of an object into the given zip stream.
@@ -207,7 +308,7 @@ public interface StorageService<T, U> extends TAOService {
      *
      * @throws IOException
      */
-    default String readAsText(U resource, int lines, int skipLines) throws IOException {
+    default <S extends InputStream> String readAsText(S stream, int lines, int skipLines) throws IOException {
         return null;
     }
 
@@ -261,5 +362,80 @@ public interface StorageService<T, U> extends TAOService {
      */
     default String computeHash(String path) throws IOException, NoSuchAlgorithmException {
         return Crypto.hash(new ArrayList<>() {{ add(path); }});
+    }
+
+    /**
+     * Transfers a file from a remote storage service to the current storage service.
+     *
+     * @param other      the remote storage service from which the file will be downloaded
+     * @param thisPath   the local path in the current storage service where the file will be stored
+     * @param remotePath the path in the remote storage service from which the file will be downloaded
+     * @throws Exception if an error occurs during the file transfer process
+     */
+    default void transferFrom(StorageService other, String thisPath, String remotePath) throws Exception {
+        storeFile(other.download(remotePath), thisPath, remotePath);
+    }
+
+    /**
+     * Retrieves a map representing user storage, where the keys are user identifiers
+     * and the values are associated storage amounts in bytes.
+     *
+     * @return a map containing user identifiers as keys and their corresponding storage amounts as values in bytes.
+     */
+    default Map<String, Long> getUserStorage() {
+        return new HashMap<>();
+    }
+
+    /**
+     * Cancels the current long-running operation in progress (eg. a list of a remote folder containing many
+     * items. The default implementation does nothing, it is up to implementors to overwrite this behavior.
+     */
+    default void cancelCurrentOperation() {
+
+    }
+
+    /**
+     * Lists the most recently modified files from the specified directory path, limited by the specified count.
+     *
+     * @param fromPath the directory path from which to list files
+     * @param limit the maximum number of files to return
+     * @return a list of the most recently modified files, sorted by modification date in descending order
+     * @throws IOException if an I/O error occurs while accessing the directory or files
+     */
+    default List<FileObject> listLastFiles(String fromPath, int limit) throws IOException {
+        final List<FileObject> files = listFiles(fromPath, null, null, 1);
+        return files.stream().sorted(new FileObjectDescending()).limit(limit).collect(Collectors.toList());
+    }
+
+    class FileObjectDescending implements Comparator<FileObject> {
+        @Override
+        public int compare(FileObject o1, FileObject o2) {
+            return o1.getLastModified() != null && o2.getLastModified() != null
+                    ? o2.getLastModified().compareTo(o1.getLastModified())
+                    : o2.getDisplayName().compareTo(o1.getDisplayName());
+        }
+    }
+
+    class FileObjectAscending implements Comparator<FileObject> {
+        @Override
+        public int compare(FileObject o1, FileObject o2) {
+            return o1.getLastModified() != null && o2.getLastModified() != null
+                    ? o1.getLastModified().compareTo(o2.getLastModified())
+                    : o1.getDisplayName().compareTo(o2.getDisplayName());
+        }
+    }
+
+    class PathDescending implements Comparator<Path> {
+        @Override
+        public int compare(Path o1, Path o2) {
+            return o2.compareTo(o1);
+        }
+    }
+
+    class PathAscending implements Comparator<Path> {
+        @Override
+        public int compare(Path o1, Path o2) {
+            return o1.compareTo(o2);
+        }
     }
 }

@@ -24,6 +24,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 /**
+ * Serializer implementation for XML serialization and deserialization.
+ * This class extends the {@code BaseSerializer} abstract class and provides
+ * functionality specific to XML data format. It uses the Jackson XML module
+ * to handle serialization and deserialization of objects to and from XML strings.
+ *
+ * @param <T> The type of objects to be serialized and deserialized.
+ *
  * @author Cosmin Cara
  */
 class XmlSerializer<T> extends BaseSerializer<T> {

@@ -3,6 +3,8 @@
  */
 package ro.cs.tao.quota;
 
+import ro.cs.tao.workspaces.RepositoryType;
+
 import java.security.Principal;
 
 /**
@@ -56,5 +58,10 @@ public class NullQuotaManager implements QuotaManager {
 	@Override
 	public void updateUserCPU(Principal principal) throws QuotaException {
 		// Nothing to do
+	}
+
+	@Override
+	public StorageReport getStorageReport(RepositoryType repositoryType) throws QuotaException {
+		return new StorageReport();
 	}
 }

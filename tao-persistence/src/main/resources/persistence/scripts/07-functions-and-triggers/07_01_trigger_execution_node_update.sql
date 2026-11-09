@@ -1,3 +1,5 @@
+-- DEPRECATED, NO LONGER USED
+
 -- trigger that updates the "modified" column value in "tao.execution_node" table when a node is updated
 
 -- the trigger function

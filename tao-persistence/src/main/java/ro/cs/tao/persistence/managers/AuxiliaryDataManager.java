@@ -8,6 +8,7 @@ import ro.cs.tao.eodata.AuxiliaryData;
 import ro.cs.tao.persistence.AuxiliaryDataProvider;
 import ro.cs.tao.persistence.repository.AuxDataRepository;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +25,9 @@ public class AuxiliaryDataManager extends EntityManager<AuxiliaryData, String, A
 
     @Override
     public List<AuxiliaryData> list(String userId, String... locations) {
+        if(locations.length == 0 ){
+           return new ArrayList<AuxiliaryData>();
+        }
         return repository.getAuxiliaryDataByLocation(userId, new HashSet<>(Arrays.asList(locations)));
     }
 
@@ -43,7 +47,6 @@ public class AuxiliaryDataManager extends EntityManager<AuxiliaryData, String, A
     @Override
     protected boolean checkEntity(AuxiliaryData auxiliaryData) {
         return auxiliaryData != null && auxiliaryData.getLocation() != null && !auxiliaryData.getLocation().isEmpty() &&
-                auxiliaryData.getDescription() != null && !auxiliaryData.getDescription().isEmpty() &&
                 auxiliaryData.getUserId() != null && !auxiliaryData.getUserId().isEmpty();
     }
 }

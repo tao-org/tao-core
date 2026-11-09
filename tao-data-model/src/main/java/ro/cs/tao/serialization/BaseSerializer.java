@@ -17,25 +17,42 @@ package ro.cs.tao.serialization;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.cfg.ConfigFeature;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
+import ro.cs.tao.utils.Tuple;
 
+import java.io.InputStream;
 import java.util.*;
 
 /**
+ * Abstract base class for implementing custom serializers. The class provides
+ * core methods and functionality for serializing and deserializing objects of
+ * type {@code T} to and from a string-based format, such as JSON or XML.
+ * Subclasses must implement the {@link #createMapper()} method to provide
+ * an instance of {@link ObjectMapper} specialized for their specific format.
+ *
+ * @param <T> The type of the objects to be serialized and deserialized.
+ *
  * @author  Cosmin Cara
  */
 public abstract class BaseSerializer<T> implements Serializer<T, String> {
     private Class<T> tClass;
     boolean formatOutput;
     boolean ignoreNullFields;
+    boolean overrideJAXBPrecedence;
     private Set<ConfigFeature> enabledConfigFeatures;
     private Set<ConfigFeature> disabledConfigFeatures;
     private Set<JsonParser.Feature> enabledParserFeatures;
     private Set<JsonParser.Feature> disabledParserFeatures;
+    private Set<StdSerializer<?>> customSerializers;
+    private Map<Class, StdDeserializer> customDeserializers;
+    private Tuple<Class, Class> mixIn;
 
     BaseSerializer(Class<T> tClass) {
         this.tClass = tClass;
@@ -48,6 +65,8 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     public void setIgnoreNullFields() {
         this.ignoreNullFields = true;
     }
+
+    public void setOverrideJAXBPrecedence() { this.overrideJAXBPrecedence = true; }
 
     public void enable(ConfigFeature feature) {
         if (this.enabledConfigFeatures == null) {
@@ -89,6 +108,24 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
     }
 
+    public void addSerializer(StdSerializer<?> serializer) {
+        if (this.customSerializers == null) {
+            this.customSerializers = new HashSet<>();
+        }
+        this.customSerializers.add(serializer);
+    }
+
+    public void addDeserializer(Class clazz, StdDeserializer deserializer) {
+        if (this.customDeserializers == null) {
+            this.customDeserializers = new HashMap<>();
+        }
+        this.customDeserializers.put(clazz, deserializer);
+    }
+
+    public void addMixIn(Class forClass, Class mixInClass) {
+        this.mixIn = new Tuple<>(forClass, mixInClass);
+    }
+
     @Override
     public T deserialize(String source) throws SerializationException {
         if (source == null || "null".equalsIgnoreCase(source)) {
@@ -102,6 +139,21 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
             throw new SerializationException(e);
         }
     }
+
+    @Override
+    public T deserialize(InputStream stream) throws SerializationException {
+        if (stream == null) {
+            return null;
+        }
+        try {
+            ObjectMapper mapper = createMapper();
+            applyConfiguration(mapper);
+            return mapper.readerFor(this.tClass).readValue(stream);
+        } catch (Exception e) {
+            throw new SerializationException(e);
+        }
+    }
+
     @Override
     public List<T> deserialize(Class<T> clazz, String source) throws SerializationException {
         if (source == null || "null".equalsIgnoreCase(source)) {
@@ -188,6 +240,35 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         if (this.ignoreNullFields) {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         }
+        if (this.overrideJAXBPrecedence) {
+            AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
+            AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(mapper.getTypeFactory());
+            mapper.setAnnotationIntrospector(new AnnotationIntrospectorPair(primary, secondary));
+        }
         mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+        SimpleModule module = null;
+        if (this.customSerializers != null){
+            module = new SimpleModule();
+            for (StdSerializer<?> serializer : this.customSerializers) {
+                module.addSerializer(serializer);
+            }
+        }
+        if (this.customDeserializers != null) {
+            if (module == null) {
+                module = new SimpleModule();
+            }
+            for (Map.Entry<Class, StdDeserializer> entry : this.customDeserializers.entrySet()) {
+                module.addDeserializer(entry.getKey(), entry.getValue());
+            }
+        }
+        if (this.mixIn != null) {
+            if (module == null) {
+                module = new SimpleModule();
+            }
+            module.setMixInAnnotation(this.mixIn.getKeyOne(), this.mixIn.getKeyTwo());
+        }
+        if (module != null) {
+            mapper.registerModules(module);
+        }
     }
 }

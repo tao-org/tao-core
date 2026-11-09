@@ -33,6 +33,7 @@ import ro.cs.tao.workflow.enums.Status;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -88,9 +89,10 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Returns all the workflows visible to the given user.
      * The list consists in all the workflows of the user plus the published workflows of other users.
      * @param userId  The user identifier
+     * @param active  Flag to retrieve either active or inactive visible workflows
      * @return The workflow information list (not the full workflow structures)
      */
-    List<WorkflowInfo> getUserVisibleWorkflows(String userId);
+    List<WorkflowInfo> getUserVisibleWorkflows(String userId, boolean active);
 
     /**
      * Returns the workflows to which a user has subscribed.
@@ -234,7 +236,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      *                          for which to create nodes and links
      * @return          The temporary workflow
      */
-    WorkflowDescriptor createTemporaryWorkflow(long fromWorkflowId, String name, Map<Long, String> linksToAdd) throws PersistenceException;
+    WorkflowDescriptor createTemporaryWorkflow(long fromWorkflowId, String name, Map<Long, Map<String, String>> linksToAdd) throws PersistenceException;
 
     void deleteTemporaryWorkflow(long workflowId) throws PersistenceException;
     /**
@@ -248,14 +250,15 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
                                            WorkflowDescriptor subWorkflow,
                                            boolean keepDataSources) throws PersistenceException;
     /**
-     * Retrieve the execution history of a workflow
-     * @param workflowId         The workflow identifier
+     * Retrieves the execution history of a workflow for a specific user
+     * @param workflowId        The workflow identifier
+     * @param userId            The user identifier
      * @return  The list of workflow executions
      * @throws PersistenceException
      */
-    List<ExecutionJobInfo> getWorkflowExecutions(long workflowId) throws PersistenceException;
+    List<ExecutionJobInfo> getWorkflowExecutions(long workflowId, String userId) throws PersistenceException;
     /**
-     * Retrieve workflow nodes execution details from a workflow execution
+     * Retrieves workflow nodes execution details from a workflow execution
      * @param executionJobId         The workflow execution identifier
      * @return The list of nodes executions within a workflow execution
      * @throws PersistenceException
@@ -324,12 +327,28 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     void deleteWorkflowImage(long id);
 
     /**
+     * Permanently removes a workflow identified by the given unique ID from the system.
+     *
+     * @param id the unique identifier of the workflow to be removed
+     * @throws PersistenceException if an error occurs during the removal process
+     */
+    void removeWorkflow(long id) throws PersistenceException;
+
+    /**
      * Imports the definition of a workflow from the given input stream.
      * @param source    The input stream
      * @throws IOException
      * @throws SerializationException
      */
-    WorkflowDescriptor importWorkflow(InputStream source) throws IOException, SerializationException, PersistenceException;
+    WorkflowDescriptor importWorkflow(InputStream source, String userId) throws IOException, SerializationException, PersistenceException;
+
+    /**
+     * Attempts to convert a CWL Workflow into a TAO Workflow. If any of the CWL steps is not
+     * properly defined , the conversion will fail.
+     *
+     * @param sources  The input paths
+     */
+    WorkflowDescriptor importWorkflow(List<Path> sources, String userId) throws IOException, SerializationException, PersistenceException;
 
     /**
      * Exports the definition of a workflow in JSON
@@ -337,4 +356,18 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @throws SerializationException
      */
     String exportWorkflow(WorkflowDescriptor descriptor) throws SerializationException;
+
+    /**
+     * Creates a WorkflowDescriptor from an array of component ID pairs.
+     *
+     * @param name      The name of the workflow
+     * @param listOfPairs a two-dimensional array, where each sub-array represents
+     *                    a pair of component IDS. The first element of each sub-array is
+     *                    the source of a workflow node link, and the second element is the
+     *                    destination of the link. The system will try to match the compatible
+     *                    ports from the two components.
+     * @return a WorkflowDescriptor constructed using the provided key-value pairs.
+     * @throws PersistenceException if there is an error while persisting or loading data.
+     */
+    WorkflowDescriptor createFromPairs(String name, String[][] listOfPairs) throws PersistenceException;
 }

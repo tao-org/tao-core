@@ -22,7 +22,6 @@ import ro.cs.tao.component.enums.ParameterType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +37,7 @@ public class TargetDescriptor extends StringIdentifiable {
     private static final String DEFAULT_NAME = "Output";
     private String parentId;
     private String name;
+    private String description;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
     private int cardinality = 1;
@@ -52,7 +52,6 @@ public class TargetDescriptor extends StringIdentifiable {
     /**
      * Returns the component that owns this instance
      */
-    @XmlTransient
     public String getParentId() { return parentId; }
     /**
      * Sets the component that owns this instance
@@ -70,6 +69,19 @@ public class TargetDescriptor extends StringIdentifiable {
         return name;
     }
     public void setName(String name) { this.name = name; }
+
+    /**
+     * Retrieves the description of this instance.
+     *
+     * @return the description as a string
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     /**
      * Returns the cardinality of outputs.

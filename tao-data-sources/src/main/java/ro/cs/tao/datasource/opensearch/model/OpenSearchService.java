@@ -21,6 +21,25 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Represents an OpenSearch service that provides metadata and endpoints
+ * required for interacting with the OpenSearch Description Document (OSDD).
+ * This class encapsulates the service's short name, description, tags,
+ * and associated endpoints with their respective types.
+ *
+ * The {@code OpenSearchService} primarily acts as a container for the metadata and endpoints
+ * and provides utility methods for managing and retrieving endpoints by type.
+ *
+ * Features of the OpenSearchService:
+ * - Stores metadata such as short name, description, and tags.
+ * - Maintains a list of {@code OpenSearchEndpoint} instances for different endpoint types.
+ * - Provides methods to add endpoints and retrieve filtered lists of endpoints by type.
+ * - Supports equality and hash code operations based on the {@code shortName}.
+ *
+ * Note:
+ * - The {@code shortName} is expected to uniquely identify the service.
+ * - The endpoints list can dynamically grow as new endpoints are added.
+ */
 public class OpenSearchService {
     private String shortName;
     private String description;

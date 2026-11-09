@@ -21,11 +21,9 @@ import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
-import ro.cs.tao.utils.FileUtilities;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.awt.*;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Logger;
 
@@ -43,6 +41,13 @@ public class DataDescriptor {
     private SensorType sensorType;
     private Dimension dimension;
     private String location;
+
+    public DataDescriptor() {
+    }
+
+    public DataDescriptor(DataFormat formatType) {
+        this.formatType = formatType;
+    }
 
     /**
      * Returns the format type of the component port.
@@ -140,37 +145,18 @@ public class DataDescriptor {
 
     /**
      * Sets the location of the product described by the component port.
-     * @param value The location, either as a URL or as a relative file system path. Absolute paths are not supported.
+     * @param value The location, either as a valid URI or as a valid filesystem path
      */
     public void setLocation(String value) {
         if (value != null &&
             (DataFormat.RASTER.equals(this.formatType) || DataFormat.VECTOR.equals(this.formatType) || DataFormat.FOLDER.equals(this.formatType))) {
-            if (value.contains(",")) {
-                // On this branch, each path in the array of values must be an absolute path
-                String[] values = value.split(",");
-                for (String val : values) {
-                    try {
-                        Path path = Paths.get(val);
-                        if (!path.isAbsolute()) {
-                            throw new IllegalArgumentException(DataDescriptor.class.getSimpleName() + ": location must be absolute");
-                        }
-                    } catch (Exception other) {
-                        Logger.getLogger(getClass().getName()).finest(String.format("Value '%s' should represent a path, but appears not to [%s]",
-                                                                                     value, other.getMessage()));
-                    }
-                }
-            } else {
-                // On this branch, the path must either be a URI or a relative path
-                if (!FileUtilities.isURI(value)) {
-                    try {
-                        Path path = Paths.get(value);
-                        if (path.isAbsolute()) {
-                            throw new IllegalArgumentException(DataDescriptor.class.getSimpleName() + ": location must be relative");
-                        }
-                    } catch (Exception other) {
-                        Logger.getLogger(getClass().getName()).finest(String.format("Value '%s' should represent a path, but appears not to [%s]",
-                                                                                     value, other.getMessage()));
-                    }
+            String[] values = value.split(",");
+            for (String val : values) {
+                try {
+                    Paths.get(val);
+                } catch (Exception other) {
+                    Logger.getLogger(getClass().getName()).finest(String.format("Value '%s' should represent a path, but appears not to [%s]",
+                                                                                value, other.getMessage()));
                 }
             }
         }

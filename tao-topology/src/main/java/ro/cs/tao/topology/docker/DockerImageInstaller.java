@@ -20,7 +20,27 @@ import ro.cs.tao.docker.Container;
 
 import java.io.IOException;
 
+/**
+ * Interface representing a service for installing and managing Docker images.
+ * This interface defines the core operations required to retrieve the name of
+ * a container and install a Docker image as a container.
+ */
 public interface DockerImageInstaller {
+    /**
+     * Retrieves the name of the Docker container associated with the service.
+     *
+     * @return the name of the container as a String
+     */
     String getContainerName();
+
+    /**
+     * Installs a Docker image and creates a corresponding container representation.
+     * The implementation of this method is responsible for performing the
+     * necessary operations to fetch, initialize, and set up the image as a
+     * Docker container.
+     *
+     * @return a Container object representing the installed Docker image
+     * @throws IOException if an error occurs during the installation process
+     */
     Container installImage() throws IOException;
 }

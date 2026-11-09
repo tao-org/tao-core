@@ -9,6 +9,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Represents an item in a download queue. This class is used to manage and store
+ * information about the data source, target products, associated tiles, destination
+ * directory, local root path, and custom properties for the download process.
+ * It also extends {@link StringIdentifiable} for managing unique string-based identifiers.
+ */
 public class DownloadQueueItem extends StringIdentifiable {
     private String dataSourceName;
     private List<EOProduct> products;

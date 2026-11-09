@@ -19,11 +19,11 @@ import ro.cs.tao.component.constraints.Constraint;
 import ro.cs.tao.component.constraints.ConstraintException;
 import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
+import ro.cs.tao.eodata.enums.DataFormat;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -39,6 +39,7 @@ public class SourceDescriptor extends StringIdentifiable {
     private static final String DEFAULT_NAME = "Input";
     private String parentId;
     private String name;
+    private String description;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
     private int cardinality;
@@ -56,7 +57,7 @@ public class SourceDescriptor extends StringIdentifiable {
     /**
      * Returns the component that owns this instance
      */
-    @XmlTransient
+
     public String getParentId() { return parentId; }
     /**
      * Sets the component that owns this instance
@@ -71,6 +72,19 @@ public class SourceDescriptor extends StringIdentifiable {
         return name;
     }
     public void setName(String name) { this.name = name; }
+
+    /**
+     * Retrieves the description of the source descriptor.
+     *
+     * @return a string representing the description of the source descriptor
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     /**
      * Returns the cardinality of inputs.
@@ -112,7 +126,18 @@ public class SourceDescriptor extends StringIdentifiable {
         }
         this.constraints.add(constraint);
     }
-
+    /**
+     * Adds a constraint for the data of this instance.
+     *
+     * @param constraint    The constraint class name.
+     * @param value         The value of the constraint
+     */
+    public void addConstraint(String constraint, String value) {
+        if (this.constraints == null) {
+            this.constraints = new ArrayList<>();
+        }
+        this.constraints.add(constraint + "[" + value + "]");
+    }
     public void setConstraints(List<String> constraints) {
         this.constraints = constraints;
     }
@@ -137,7 +162,10 @@ public class SourceDescriptor extends StringIdentifiable {
      */
     public boolean isCompatibleWith(TargetDescriptor other) {
         return other != null && this.dataDescriptor != null && other.getDataDescriptor() != null &&
-                this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) &&
+                (this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) ||
+                        DataFormat.ANY.equals(this.dataDescriptor.getFormatType()) ||
+                        DataFormat.ANY.equals(other.getDataDescriptor().getFormatType())
+                ) &&
                 (this.constraints == null || this.constraints.isEmpty() || this.constraints.stream().allMatch(c -> {
                     IOConstraint constraint = ConstraintFactory.create(c);
                     return constraint == null || constraint.check(this.dataDescriptor, other.getDataDescriptor());
@@ -159,10 +187,13 @@ public class SourceDescriptor extends StringIdentifiable {
         if (other.getDataDescriptor() == null) {
             throw new ConstraintException("TargetDescriptor is empty");
         }
-        if (!this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType())) {
-            throw new ConstraintException(String.format("Incompatible formats (%s, %s)",
+        if (!DataFormat.ANY.equals(this.dataDescriptor.getFormatType()) &&
+            !DataFormat.ANY.equals(other.getDataDescriptor().getFormatType()) &&
+            !this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType())) {
+            throw new ConstraintException(String.format("Incompatible formats (%s, %s) for name = %s and parent id = %s, other name = %s, other parent id = %s",
                                                         this.dataDescriptor.getFormatType().friendlyName(),
-                                                        other.getDataDescriptor().getFormatType().friendlyName()));
+                                                        other.getDataDescriptor().getFormatType().friendlyName(),
+                                                        this.name, this.parentId, other.getName(), other.getParentId()));
         }
         if (this.constraints != null && !this.constraints.isEmpty()) {
             for (String c : this.constraints) {

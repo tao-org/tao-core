@@ -7,6 +7,11 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a template for creating repository configurations.
+ * This class includes metadata, such as name, description, type, parameters, and creation timestamp.
+ * It inherits from {@code StringIdentifiable}, allowing each instance to have a unique string ID.
+ */
 public class RepositoryTemplate  extends StringIdentifiable {
     private String name;
     private String description;

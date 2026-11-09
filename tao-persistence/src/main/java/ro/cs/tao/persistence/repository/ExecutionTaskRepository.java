@@ -3,12 +3,14 @@ package ro.cs.tao.persistence.repository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.execution.model.ExecutionTask;
 
+import javax.persistence.QueryHint;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,6 +47,11 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
             "WHERE c.id = :taskId ORDER BY p.id", nativeQuery = true)
     List<Long> findParentTaskIds(@Param("taskId") long taskId);
 
+    @Query(value = "SELECT p.* FROM execution.task p JOIN workflow.component_link l ON l.target_graph_node_id = p.graph_node_id " +
+            "JOIN execution.task c ON c.graph_node_id = l.source_graph_node_id AND c.job_id = p.job_id " +
+            "WHERE c.id = :taskId ORDER BY p.id", nativeQuery = true)
+    List<ExecutionTask> getChildrenTasks(@Param("taskId") long taskId);
+
     @Query(value = "SELECT * from execution.task where execution_status_id = 2", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getRunningTasks();
@@ -62,6 +69,10 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Transactional(readOnly = true)
     List<ExecutionTask> getWMSExecutingTasks();
 
+    @Query(value = "SELECT * FROM execution.task WHERE discriminator = 35 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Transactional(readOnly = true)
+    List<ExecutionTask> getOGCProcessesExecutingTasks();
+
     @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2, 7) AND execution_node_host_name = :host", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getTasksByHost(@Param("host") String host);
@@ -75,6 +86,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     LocalDateTime getLastRun(@Param("host") String host);
 
     @Query(value = "SELECT t.* FROM execution.task t JOIN component.data_source_component c ON c.id = t.component_id WHERE t.job_id = :jobId", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
     List<ExecutionTask> getDataSourceTasks(@Param("jobId") long jobId);
 
     @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t " +
@@ -92,7 +104,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Query(value = "with deps as (select id as jid, json_object_keys(task_dependencies) as parentId from execution.job where id = :jobId) " +
             "select count(t.id) from execution.task t where cast(t.id as text) in (" +
             "select json_array_elements_text(json_extract_path(j.task_dependencies, cast(d.parentId as text))) from execution.job j join deps d on j.id = d.jid where cast(d.parentId as integer) = :taskId) " +
-            "and not (t.execution_status_id = 4 or (t.execution_status_id = 5 and exists(select id from workflow.graph_node where id = t.graph_node_id and behavior_id = 2)))",
+            "and not (t.execution_status_id = 4 or t.execution_status_id = 7 or (t.execution_status_id = 5 and exists(select id from workflow.graph_node where id = t.graph_node_id and behavior_id = 2)))",
             nativeQuery = true)
     int getRunningParents(@Param("jobId") long jobId, @Param("taskId") long taskId);
 
@@ -111,5 +123,9 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Query(value = "SELECT COALESCE(n.behavior_id, 1) FROM execution.task t JOIN workflow.graph_node n ON n.id = t.graph_node_id WHERE t.id = :taskId",
            nativeQuery = true)
     Integer getTransitionBehavior(@Param("taskId") long taskId);
+
+    @Query(value = "SELECT * FROM execution.task WHERE actual_target LIKE CONCAT('%', CAST(:output as text), '%')", nativeQuery = true)
+    @QueryHints({ @QueryHint(name = "org.hibernate.readOnly", value = "true") })
+    ExecutionTask getTaskByOutput(@Param("output") String output);
 
 }

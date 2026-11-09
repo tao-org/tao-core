@@ -28,6 +28,7 @@ public class GDAL extends GDALBase {
     private final MethodHandle rasterizeHandle;
     private final MethodHandle rasterize2Handle;
     private final MethodHandle getLastErrorHandle;
+    private final MethodHandle translateHandle;
 
     static {
         gdalClass = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
@@ -42,6 +43,7 @@ public class GDAL extends GDALBase {
      * Creates new instance for this driver
      */
     private GDAL() throws NoSuchMethodException, IllegalAccessException {
+        super(null);
         getDataTypeNameHandle = createStaticHandle(gdalClass, "GetDataTypeName", String.class, int.class);
         getDataTypeByNameHandle = createStaticHandle(gdalClass, "GetDataTypeByName", int.class, String.class);
         final Class<?> gdalDatasetClass = GDALReflection.fetchGDALLibraryClass(Dataset.CLASS_NAME);
@@ -66,6 +68,11 @@ public class GDAL extends GDALBase {
                                              gdalDatasetClass,
                                              GDALReflection.fetchGDALLibraryClass(RasterizeOptions.CLASS_NAME));
         getLastErrorHandle = createStaticHandle(gdalClass, "GetLastErrorMsg", String.class);
+        translateHandle = createStaticHandle(gdalClass, "Translate",
+                                             gdalDatasetClass,
+                                             String.class,
+                                             gdalDatasetClass,
+                                             GDALReflection.fetchGDALLibraryClass(TranslateOptions.CLASS_NAME));
 
     }
 
@@ -167,14 +174,14 @@ public class GDAL extends GDALBase {
      * @return the JNI GDAL gdal class Warp(String dest, Dataset[] object_list_count, WarpOptions warpAppOptions) method result
      */
     public static Dataset warp(String dest, Dataset[] objectListCount, WarpOptions warpAppOptions) {
-        Object objectListCountJni = Array.newInstance(objectListCount[0].getJniDatasetInstance().getClass(), objectListCount.length);
+        Object objectListCountJni = Array.newInstance(objectListCount[0].getJniInstance().getClass(), objectListCount.length);
 
         for (int i = 0; i < objectListCount.length; i++) {
-            Array.set(objectListCountJni, i, objectListCount[i].getJniDatasetInstance());
+            Array.set(objectListCountJni, i, objectListCount[i].getJniInstance());
         }
         Object jniDatasetInstance;
         synchronized (GDAL.class) {
-            jniDatasetInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "Warp", Object.class, null, new Class[]{dest.getClass(), objectListCountJni.getClass(), warpAppOptions.getJniWarpOptionsInstance().getClass()}, new Object[]{dest, objectListCountJni, warpAppOptions.getJniWarpOptionsInstance()});
+            jniDatasetInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "Warp", Object.class, null, new Class[]{dest.getClass(), objectListCountJni.getClass(), warpAppOptions.getJniInstance().getClass()}, new Object[]{dest, objectListCountJni, warpAppOptions.getJniInstance()});
         }
         if (jniDatasetInstance != null) {
             return new Dataset(jniDatasetInstance);
@@ -191,11 +198,11 @@ public class GDAL extends GDALBase {
      * @return the JNI GDAL gdal class BuildVRT(String dest, Dataset[] object_list_count, BuildVRTOptions options) method result
      */
     public static Dataset buildVRT(String dest, Dataset[] objectListCount, BuildVRTOptions options) {
-        Object objectListCountJni = Array.newInstance(objectListCount[0].getJniDatasetInstance().getClass(), objectListCount.length);
+        Object objectListCountJni = Array.newInstance(objectListCount[0].getJniInstance().getClass(), objectListCount.length);
         for (int i = 0; i < objectListCount.length; i++) {
-            Array.set(objectListCountJni, i, objectListCount[i].getJniDatasetInstance());
+            Array.set(objectListCountJni, i, objectListCount[i].getJniInstance());
         }
-        Object jniDatasetInstance = invokeStatic(instance.buildVRTHandle, dest, objectListCountJni, options.getJniBuildVRTOptionsInstance());
+        Object jniDatasetInstance = invokeStatic(instance.buildVRTHandle, dest, objectListCountJni, options.getJniInstance());
         if (jniDatasetInstance != null) {
             return new Dataset(jniDatasetInstance);
         }
@@ -203,7 +210,7 @@ public class GDAL extends GDALBase {
     }
 
     public static Dataset rasterize(Dataset src, Dataset dst, RasterizeOptions options) {
-        Object jniDatasetInstance = invokeStatic(instance.rasterizeHandle, dst, src, options.getJniRasterizeOptionsInstance());
+        Object jniDatasetInstance = invokeStatic(instance.rasterizeHandle, dst, src, options.getJniInstance());
         if (jniDatasetInstance != null) {
             return new Dataset(jniDatasetInstance);
         }
@@ -211,7 +218,7 @@ public class GDAL extends GDALBase {
     }
 
     public static Dataset rasterize(String dst, Dataset src, RasterizeOptions options) {
-        Object jniDatasetInstance = invokeStatic(instance.rasterize2Handle, dst, src, options.getJniRasterizeOptionsInstance());
+        Object jniDatasetInstance = invokeStatic(instance.rasterize2Handle, dst, src, options.getJniInstance());
         if (jniDatasetInstance != null) {
             return new Dataset(jniDatasetInstance);
         }
@@ -227,11 +234,8 @@ public class GDAL extends GDALBase {
      * @return the JNI GDAL gdal class Translate(String dest, Dataset dataset, TranslateOptions translateOptions) method result
      */
     public static Dataset translate(String dest, Dataset dataset, TranslateOptions translateOptions) {
-        Object jniDatasetInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "Translate", Object.class, null, new Class[]{dest.getClass(), dataset.getJniDatasetInstance().getClass(), translateOptions.getJniTranslateOptionsInstance().getClass()}, new Object[]{dest, dataset.getJniDatasetInstance(), translateOptions.getJniTranslateOptionsInstance()});
-        if (jniDatasetInstance != null) {
-            return new Dataset(jniDatasetInstance);
-        }
-        return null;
+        Object objInstance = invokeStatic(instance.translateHandle, dest, dataset.getJniInstance(), translateOptions.getJniInstance());
+        return objInstance != null ? new Dataset(objInstance) : null;
     }
 
 }

@@ -1,7 +1,6 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ParameterDescriptor;
@@ -15,7 +14,7 @@ import ro.cs.tao.component.ParameterDescriptor;
 @Repository
 @Qualifier(value = "parameterDescriptorRepository")
 @Transactional
-public interface ParameterDescriptorRepository extends PagingAndSortingRepository<ParameterDescriptor, String> {
+public interface ParameterDescriptorRepository extends OptimisedPagingAndSortingRepository<ParameterDescriptor, String> {
 
     /**
      * Find ParameterDescriptor entity by its label

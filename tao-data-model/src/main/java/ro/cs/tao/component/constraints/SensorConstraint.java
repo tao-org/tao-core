@@ -39,8 +39,9 @@ public class SensorConstraint extends IOConstraint {
                         .allMatch(a -> {
                             final DataFormat sourceFormat = args[0].getFormatType();
                             final SensorType sourceSensor = args[0].getSensorType();
-                            return sourceFormat != null && sourceFormat.equals(a.getFormatType()) &&
-                                    sourceSensor != null && sourceSensor.equals(a.getSensorType());
+                            return sourceFormat != null && (DataFormat.ANY.equals(a) ||
+                                                            (sourceFormat.equals(a.getFormatType()) &&
+                                                             sourceSensor != null && sourceSensor.equals(a.getSensorType())));
                         });
     }
 }

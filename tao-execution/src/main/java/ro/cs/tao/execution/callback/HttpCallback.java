@@ -8,6 +8,17 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
+/**
+ * HttpCallback is a concrete implementation of the abstract {@link Callback} class,
+ * specifically designed for handling HTTP-based communication with an external endpoint.
+ * This class processes a list of parameters, establishes an HTTP connection,
+ * and evaluates the response status and content.
+ *
+ * Key features:
+ * - Supports HTTP request and response handling.
+ * - Evaluates HTTP response codes such as 200 and 401.
+ * - Logs error messages for unsuccessful requests.
+ */
 public class HttpCallback extends Callback {
 
     public HttpCallback(EndpointDescriptor endpointDescriptor) {

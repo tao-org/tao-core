@@ -43,7 +43,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
     @Override
     public List<SessionDuration> getAllSessions() {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(con -> con.prepareStatement("with diffs as ( " +
+        /*return jdbcTemplate.query(con -> con.prepareStatement("with diffs as ( " +
                                              "with ranges as ( " +
                                              "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                              "from common.audit " +
@@ -55,13 +55,24 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
             result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
             result.setDuration(rs.getInt(3));
             return result;
+        });*/
+        return jdbcTemplate.query(con -> con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
+                                                              "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                              "from common.audit li " +
+                                                              "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
+                                                              "where li.event = 'Login' and lo.event = 'Logout' order by li.user_id, login_on desc"), (rs, rowNum) -> {
+            SessionDuration result = new SessionDuration();
+            result.setUserId(rs.getString(1));
+            result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
+            result.setDuration(rs.getInt(3));
+            return result;
         });
     }
 
     @Override
     public List<SessionDuration> getAllSessions(LocalDateTime from, LocalDateTime to) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(con -> {
+        /*return jdbcTemplate.query(con -> {
                 final PreparedStatement statement = con.prepareStatement("with diffs as ( " +
                                                                        "with ranges as ( " +
                                                                        "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
@@ -80,13 +91,31 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                 result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
                 result.setDuration(rs.getInt(3));
                 return result;
-        });
+        });*/
+        return jdbcTemplate.query(con -> {
+                                      final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "from common.audit li " +
+                                                                                               "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
+                                                                                               "where li.event = 'Login' and lo.event = 'Logout' " +
+                                                                                               "and login_on between ? and ? order by li.user_id, login_on desc");
+                                      statement.setTimestamp(1, Timestamp.valueOf(from));
+                                      statement.setTimestamp(2, Timestamp.valueOf(to));
+                                      return statement;
+                                  },
+                                  (rs, rowNum) -> {
+                                      SessionDuration result = new SessionDuration();
+                                      result.setUserId(rs.getString(1));
+                                      result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
+                                      result.setDuration(rs.getInt(3));
+                                      return result;
+                                  });
     }
 
     @Override
     public SessionDuration getLastUserSession(String userId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(con -> {
+        /*return jdbcTemplate.query(con -> {
                                       final PreparedStatement statement = con.prepareStatement("with diffs as ( " +
                                                                                                        "with ranges as ( " +
                                                                                                        "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
@@ -108,13 +137,34 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                       } else {
                                           return null;
                                       }
+                                  });*/
+        return jdbcTemplate.query(con -> {
+                                      final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "from common.audit li " +
+                                                                                               "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
+                                                                                               "where li.event = 'Login' and lo.event = 'Logout' " +
+                                                                                               "and li.user_id = ? order by login_on desc limit 1");
+                                      statement.setString(1, userId);
+                                      return statement;
+                                  },
+                                  (rs) -> {
+                                      if (rs.next()) {
+                                          SessionDuration result = new SessionDuration();
+                                          result.setUserId(rs.getString(1));
+                                          result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
+                                          result.setDuration(rs.getInt(3));
+                                          return result;
+                                      } else {
+                                          return null;
+                                      }
                                   });
     }
 
     @Override
     public List<SessionDuration> getUserSessions(String userId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(con -> {
+        /*return jdbcTemplate.query(con -> {
               final PreparedStatement statement = con.prepareStatement("with diffs as ( " +
                                                                                "with ranges as ( " +
                                                                                "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
@@ -132,13 +182,30 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
               result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
               result.setDuration(rs.getInt(3));
               return result;
-          });
+          });*/
+        return jdbcTemplate.query(con -> {
+                                      final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "from common.audit li " +
+                                                                                               "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
+                                                                                               "where li.event = 'Login' and lo.event = 'Logout' " +
+                                                                                               "and li.user_id = ? order by login_on desc");
+                                      statement.setString(1, userId);
+                                      return statement;
+                                  },
+                                  (rs, rowNum) -> {
+                                      SessionDuration result = new SessionDuration();
+                                      result.setUserId(rs.getString(1));
+                                      result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
+                                      result.setDuration(rs.getInt(3));
+                                      return result;
+                                  });
     }
 
     @Override
     public List<SessionDuration> getUserSessions(String userId, LocalDateTime from, LocalDateTime to) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(con -> {
+        /*return jdbcTemplate.query(con -> {
               final PreparedStatement statement = con.prepareStatement("with diffs as ( " +
                                                                                "with ranges as ( " +
                                                                                "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
@@ -157,7 +224,26 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
               result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
               result.setDuration(rs.getInt(3));
               return result;
-          });
+          });*/
+        return jdbcTemplate.query(con -> {
+                                      final PreparedStatement statement = con.prepareStatement("select li.user_id, li.timestamp as login_on, " +
+                                                                                               "(extract(HOUR from (lo.timestamp-li.timestamp))*3600 + extract(MINUTE from (lo.timestamp-li.timestamp))*60 + extract(SECOND from (lo.timestamp-li.timestamp)))::integer as time_spent " +
+                                                                                               "from common.audit li " +
+                                                                                               "join common.audit lo on lo.user_id = li.user_id and lo.session_id = li.session_id " +
+                                                                                               "where li.event = 'Login' and lo.event = 'Logout' " +
+                                                                                               "and li.user_id = ? and login_on between ? and ? order by login_on desc");
+                                      statement.setString(1, userId);
+                                      statement.setTimestamp(2, Timestamp.valueOf(from));
+                                      statement.setTimestamp(3, Timestamp.valueOf(to));
+                                      return statement;
+                                  },
+                                  (rs, rowNum) -> {
+                                      SessionDuration result = new SessionDuration();
+                                      result.setUserId(rs.getString(1));
+                                      result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
+                                      result.setDuration(rs.getInt(3));
+                                      return result;
+                                  });
     }
 
     @Override

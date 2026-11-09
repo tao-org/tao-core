@@ -73,9 +73,11 @@ public class QueryManager extends EntityManager<Query, Long, QueryRepository> im
         LocalDateTime timestamp = LocalDateTime.now();
         final Query existingQuery;
         if (query.getLabel() == null) {
-            query.setLabel(String.format("Query for %s on %s - %s",
+            query.setLabel(String.format("Query for %s on %s - %s (workflow id = %s)",
                                          query.getSensor(), query.getDataSource(),
-                                         timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                                         timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                                         query.getWorkflowNodeId()
+                    ));
             existingQuery = get(query.getUserId(), query.getSensor(), query.getDataSource(), query.getWorkflowNodeId());
         } else {
             existingQuery = get(query.getUserId(), query.getLabel());
