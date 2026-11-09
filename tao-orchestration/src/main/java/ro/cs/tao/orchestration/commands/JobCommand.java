@@ -20,7 +20,6 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
@@ -51,13 +50,13 @@ public abstract class JobCommand {
 
     private JobCommand(ExecutionStatus requestedStatus) {
         this.requestedStatus = requestedStatus;
-        this.allowedStates = getAllowedStates();
+        this.allowedStates = allowedStates();
     }
 
     /**
      * Returns the set of states a job should be into when applying this command.
      */
-    protected abstract Set<ExecutionStatus> getAllowedStates();
+    protected abstract Set<ExecutionStatus> allowedStates();
 
     /**
      * The action to be performed in order to transition to the desired state.
@@ -105,7 +104,7 @@ public abstract class JobCommand {
             super(ExecutionStatus.QUEUED_ACTIVE);
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        protected Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.UNDETERMINED);
         }
         @Override
@@ -114,13 +113,11 @@ public abstract class JobCommand {
             if (tasks == null || tasks.isEmpty()) {
                 throw new ExecutionException(String.format("Job %s doesn't contain any tasks", job.getId()));
             }
-            //ExecutionTask firstTask = tasks.get(0);
             List<ExecutionTask> rootTasks = job.rootTasks();
             if (rootTasks.isEmpty()) {
                 throw new ExecutionException(String.format("Job %s doesn't contain any first level tasks", job.getId()));
             }
             for (ExecutionTask firstTask : rootTasks) {
-                firstTask.setContext(SessionStore.currentContext());
                 TaskCommand.START.applyTo(firstTask);
             }
         }
@@ -140,7 +137,7 @@ public abstract class JobCommand {
             super(ExecutionStatus.CANCELLED);
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        protected Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.UNDETERMINED, ExecutionStatus.QUEUED_ACTIVE, ExecutionStatus.RUNNING);
         }
         @Override
@@ -166,7 +163,7 @@ public abstract class JobCommand {
             super(ExecutionStatus.SUSPENDED);
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        protected Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.RUNNING);
         }
         @Override
@@ -188,7 +185,7 @@ public abstract class JobCommand {
             super(ExecutionStatus.QUEUED_ACTIVE);
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        protected Set<ExecutionStatus> allowedStates() {
             return EnumSet.of(ExecutionStatus.SUSPENDED);
         }
         @Override

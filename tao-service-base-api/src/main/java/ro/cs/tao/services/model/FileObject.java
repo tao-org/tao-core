@@ -17,6 +17,8 @@
 package ro.cs.tao.services.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -34,6 +36,8 @@ public class FileObject {
     private String displayName;
     private LocalDateTime lastModified;
     private Map<String, String> attributes;
+    private boolean selected;
+    private List<FileObject> children;
 
     public FileObject() {
     }
@@ -139,6 +143,29 @@ public class FileObject {
         this.attributes.put(key, value);
     }
 
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    public List<FileObject> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<FileObject> children) {
+        this.children = children;
+    }
+
+    public void addChild(FileObject child) {
+        if (this.children == null) {
+            this.children = new ArrayList<>();
+        }
+        this.children.add(child);
+    }
+
     @Override
     public String toString() {
         return "FileObject{" +
@@ -150,6 +177,7 @@ public class FileObject {
                 ", displayName='" + displayName + '\'' +
                 ", lastModified=" + lastModified +
                 ", attributes=" + attributes +
+                ", selected=" + selected +
                 '}';
     }
 }

@@ -71,6 +71,7 @@ CREATE TABLE common.audit
     id bigserial NOT NULL,
     "timestamp" timestamp without time zone NOT NULL,
     user_id character varying NOT NULL,
+    session_id character varying NOT NULL,
     event character varying NOT NULL
 );
 ALTER TABLE common.audit ADD CONSTRAINT PK_audit PRIMARY KEY (id);

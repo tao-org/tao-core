@@ -7,7 +7,7 @@ import java.lang.invoke.MethodHandle;
  *
  * @author Adrian Drăghici
  */
-public class GCP extends GDALBase {
+public class GCP extends InstantiableGDALBase {
 
     /**
      * The name of JNI GDAL GCP class
@@ -18,8 +18,7 @@ public class GCP extends GDALBase {
     static {
         gcpClass = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
     }
-
-    private final Object jniGCPInstance;
+    
     private final MethodHandle getGCPXHandle;
     private final MethodHandle getGCPYHandle;
     private final MethodHandle getGCPZHandle;
@@ -29,10 +28,10 @@ public class GCP extends GDALBase {
     /**
      * Creates new instance for this driver
      *
-     * @param jniGCPInstance the JNI GDAL GCP class instance
+     * @param jniInstance the JNI GDAL GCP class instance
      */
-    public GCP(Object jniGCPInstance) {
-        this.jniGCPInstance = jniGCPInstance;
+    public GCP(Object jniInstance) {
+        super(jniInstance);
         try {
             getGCPXHandle = createHandle(gcpClass, "getGCPX", double.class);
             getGCPYHandle = createHandle(gcpClass, "getGCPY", double.class);
@@ -54,7 +53,7 @@ public class GCP extends GDALBase {
      * @return the JNI GDAL GCP class getGCPX() method result
      */
     public Double getGCPX() {
-        return (Double) invoke(getGCPXHandle, this.jniGCPInstance);
+        return (Double) invoke(getGCPXHandle, this.jniInstance);
     }
 
     /**
@@ -63,7 +62,7 @@ public class GCP extends GDALBase {
      * @return the JNI GDAL GCP class getGCPY() method result
      */
     public Double getGCPY() {
-        return (Double) invoke(getGCPYHandle, this.jniGCPInstance);
+        return (Double) invoke(getGCPYHandle, this.jniInstance);
     }
 
     /**
@@ -72,7 +71,7 @@ public class GCP extends GDALBase {
      * @return the JNI GDAL GCP class getGCPZ() method result
      */
     public Double getGCPZ() {
-        return (Double) invoke(getGCPZHandle, this.jniGCPInstance);
+        return (Double) invoke(getGCPZHandle, this.jniInstance);
     }
 
     /**
@@ -81,7 +80,7 @@ public class GCP extends GDALBase {
      * @return the JNI GDAL GCP class getGCPPixel() method result
      */
     public Double getGCPPixel() {
-        return (Double) invoke(getGCPPixelHandle, this.jniGCPInstance);
+        return (Double) invoke(getGCPPixelHandle, this.jniInstance);
     }
 
     /**
@@ -90,7 +89,7 @@ public class GCP extends GDALBase {
      * @return the JNI GDAL GCP class getGCPLine() method result
      */
     public Double getGCPLine() {
-        return (Double) invoke(getGCPLineHandle, this.jniGCPInstance);
+        return (Double) invoke(getGCPLineHandle, this.jniInstance);
     }
 
 }

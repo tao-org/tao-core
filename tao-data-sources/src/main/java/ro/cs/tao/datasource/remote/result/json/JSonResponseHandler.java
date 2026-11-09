@@ -26,7 +26,36 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public interface JSonResponseHandler<T> {
+    /**
+     * Parses the provided JSON content and retrieves a list of values that match the specified filters.
+     *
+     * @param content The JSON content to be parsed.
+     * @param filters Optional filters to apply when extracting values from the JSON content.
+     *                These filters can dictate which attributes to include or exclude.
+     * @return A list of parsed values of type T. Returns an empty list or null if no values match the criteria
+     *         or an error occurs during parsing.
+     * @throws IOException If an input or output exception occurs while parsing the content.
+     */
     default List<T> readValues(String content, AttributeFilter...filters) throws IOException { return null; }
+
+    /**
+     * Counts the number of values present in the given JSON content.
+     *
+     * @param content The JSON content to analyze for counting values.
+     * @return The count of values found in the JSON content. Returns -1 if an error occurs during processing.
+     * @throws IOException If an input or output exception occurs during the operation.
+     */
     default long countValues(String content) throws IOException { return -1; }
+
+    /**
+     * Parses the provided JSON content and retrieves a single value of type T, optionally applying the specified filters.
+     *
+     * @param content The JSON content to be parsed.
+     * @param filters Optional filters to apply during parsing. These filters can determine specific attributes
+     *                to include or exclude in the resulting value.
+     * @return A parsed value of type T. Returns null if the content is invalid, no values match the criteria,
+     *         or an error occurs during parsing.
+     * @throws IOException If an input or output exception occurs while parsing the content.
+     */
     default T readValue(String content, AttributeFilter...filters) throws IOException { return null; }
 }

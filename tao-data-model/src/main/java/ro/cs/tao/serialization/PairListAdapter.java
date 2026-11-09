@@ -23,6 +23,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Adapter class for converting between a list of {@link Tuple} objects and
+ * their string representation. This class is designed for use in XML
+ * serialization and deserialization processes.
+ *
+ * The {@code unmarshal} method converts a list of {@link Tuple} instances
+ * into a string representation, where each tuple is represented as a
+ * key-value pair, and the entire list is enclosed in square brackets.
+ *
+ * The {@code marshal} method takes the aforementioned string representation
+ * and converts it back into a list of {@link Tuple} objects. The tuples
+ * within the string must follow a strict format, and exceptions are thrown
+ * if the input is malformed.
+ *
+ * Key functionalities:
+ * - Handles null inputs gracefully for both marshal and unmarshal methods.
+ * - Validates the structure of the input string during the conversion back
+ *   into a list of {@link Tuple}.
+ *
+ * Notes:
+ * - Each {@link Tuple} in the list is expected to have a valid key-value
+ *   structure enclosed in square brackets and separated by a comma.
+ * - Improperly formatted inputs will result in an
+ *   {@link IllegalArgumentException}.
+ */
 public class PairListAdapter extends XmlAdapter<List<Tuple<String, String>>, String> {
     @Override
     public String unmarshal(List<Tuple<String, String>> list) {

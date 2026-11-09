@@ -2,6 +2,10 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.eodata.enums.SensorType;
 
+/**
+ * Represents a description for a collection of data or resources, providing attributes
+ * such as mission information, type of sensor used, description, and coverage details.
+ */
 public class CollectionDescription {
     private String mission;
     private SensorType sensorType;

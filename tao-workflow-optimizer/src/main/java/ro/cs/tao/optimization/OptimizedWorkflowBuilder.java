@@ -220,7 +220,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
 
             /* Keep targets only if they are for the aggregated component. */
             for (ParameterValue param : wNode.getCustomValues()) {
-                if (isTarget(param, nodeComp)) {
+                if (isTarget(param, nodeComp) || "formatName".equals(param.getParameterName())) {
                     /* Node is last one in chain. */
                     if (node.getNodeIds().indexOf(nodeId) == node.getNodeIds().size() - 1) {
                         newNode.addCustomValue(param.getParameterName(), param.getParameterValue());

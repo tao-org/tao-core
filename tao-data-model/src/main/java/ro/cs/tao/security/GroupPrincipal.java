@@ -18,6 +18,17 @@ package ro.cs.tao.security;
 import javax.security.auth.Subject;
 import java.security.Principal;
 
+/**
+ * Represents a group-based principal in an authentication context.
+ *
+ * A GroupPrincipal is typically used to signify membership in a group
+ * or a role within a specific security domain. It implements the
+ * {@link Principal} interface, allowing it to be used in security-related
+ * APIs that rely on Java's security framework.
+ *
+ * This class is immutable and ensures thread safety by making its
+ * internal state final.
+ */
 public class GroupPrincipal implements Principal {
 
     private final String groupName;

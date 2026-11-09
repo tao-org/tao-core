@@ -3,6 +3,7 @@ package ro.cs.tao.services.model;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.services.interfaces.StorageService;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
+import ro.cs.tao.workspaces.Repository;
 import ro.cs.tao.workspaces.RepositoryType;
 
 import java.nio.file.Path;
@@ -23,6 +24,14 @@ public interface ItemAction {
      * @param repositoryType    The type of repository for which this action is intended
      */
     boolean isIntendedFor(RepositoryType repositoryType);
+
+    /**
+     * Checks if this action can be used for the given repository.
+     * Defaults to <code>true</code> unless specific implementation logic overrides it.
+     * @param repository    The repository to register the action with
+     * @return
+     */
+    default boolean canBeUsedWith(Repository repository) { return true; }
 
     /**
      * Returns an array of filters of supported files (i.e., [".tif", ".nc"]).

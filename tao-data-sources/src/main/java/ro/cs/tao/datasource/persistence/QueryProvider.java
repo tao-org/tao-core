@@ -5,6 +5,11 @@ import ro.cs.tao.persistence.EntityProvider;
 
 import java.util.List;
 
+/**
+ * The QueryProvider interface defines methods for managing Query entities.
+ * It extends the EntityProvider interface, providing additional capabilities
+ * for fetching, listing, and managing Query objects based on various filtering criteria.
+ */
 public interface QueryProvider extends EntityProvider<Query, Long> {
 
     Query get(String userId, String label);

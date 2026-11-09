@@ -10,6 +10,15 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Represents the mapping of host folder paths to container paths used in a Docker environment.
+ * This class initializes the mapping by parsing input data provided as a map and allows retrieval
+ * of predefined volume mappings (workspace, temporary, configuration, EOData) as well as additional
+ * user-defined mappings.
+ *
+ * The mappings are expected to be configured using specific keys. Missing critical mappings
+ * result in an {@link IllegalArgumentException} during construction.
+ */
 public class DockerVolumeMap {
     private static final String DOCKER_WORKSPACE_MOUNT_KEY = "workspace.mount";
     private static final String DOCKER_TEMP_MOUNT_KEY = "temp.mount";
@@ -59,8 +68,8 @@ public class DockerVolumeMap {
         }
 
         value = volumeMap.get(DOCKER_ADDITIONAL_MOUNT_KEY);
-        if (StringUtils.isNotEmpty(value)) {
-            final String[] maps = value.split(";");
+            if (StringUtils.isNotEmpty(value)) {
+            final String[] maps = value.split("\\|");
             for (String v : maps) {
                 values = safeSplit(v);
                 if (this.additionalMappings == null) {
@@ -71,38 +80,96 @@ public class DockerVolumeMap {
         }
     }
 
+    /**
+     * Retrieves the path to the host's workspace folder associated with the Docker volume map.
+     *
+     * @return the path to the host's workspace folder as a {@code String}
+     */
     public String getHostWorkspaceFolder() {
         return hostWorkspaceFolder;
     }
 
+    /**
+     * Retrieves the path to the workspace folder within the container.
+     *
+     * @return the path to the container's workspace folder as a {@code String}
+     */
     public String getContainerWorkspaceFolder() {
         return containerWorkspaceFolder;
     }
 
+    /**
+     * Retrieves the path to the host's temporary folder associated with the Docker volume map.
+     *
+     * @return the path to the host's temporary folder as a String
+     */
     public String getHostTemporaryFolder() {
         return hostTemporaryFolder;
     }
 
+    /**
+     * Retrieves the path to the temporary folder within the container.
+     *
+     * @return the path to the container's temporary folder as a String
+     */
     public String getContainerTemporaryFolder() {
         return containerTemporaryFolder;
     }
 
+    /**
+     * Retrieves the path to the host's configuration folder associated with the Docker volume map.
+     *
+     * @return the path to the host's configuration folder as a String
+     */
     public String getHostConfigurationFolder() {
         return hostConfigurationFolder;
     }
 
+    /**
+     * Retrieves the path to the configuration folder within the container.
+     *
+     * @return the path to the container's configuration folder as a String
+     */
     public String getContainerConfigurationFolder() {
         return containerConfigurationFolder;
     }
 
+    /**
+     * Retrieves the path to the host's EO (Earth Observation) data folder
+     * associated with the Docker volume map.
+     *
+     * @return the path to the host's EO data folder as a String
+     */
     public String getHostEODataFolder() { return hostEoDataFolder; }
 
+    /**
+     * Retrieves the path to the EO (Earth Observation) data folder within the container
+     * associated with the Docker volume map.
+     *
+     * @return the path to the container's EO data folder as a String
+     */
     public String getContainerEoDataFolder() { return containerEoDataFolder; }
 
+    /**
+     * Retrieves additional mappings associated with the Docker volume map. These mappings
+     * represent a set of key-value pairs that define additional configurations for Docker
+     * volumes beyond the predefined ones.
+     *
+     * @return a map of additional Docker volume mappings where each key represents a specific
+     *         volume identifier and the value represents its corresponding directory or path
+     */
     public Map<String, String> getAdditionalMappings() {
         return additionalMappings;
     }
 
+    /**
+     * Converts an absolute file system path into a relative path within the Docker container context.
+     * The method handles symbolic links, evaluates paths with respect to specific host and container
+     * mappings, and determines the most appropriate container-relative path for the given input.
+     *
+     * @param path the absolute file system path to be converted to a relative Docker container path
+     * @return a string representing the relative Docker container path equivalent of the input path
+     */
     public String relativizePath(String path) {
         if (path.startsWith(getContainerWorkspaceFolder()) &&
                 !path.startsWith(FileUtilities.asUnixPath(SystemVariable.ROOT.value(), true))) {
@@ -140,6 +207,13 @@ public class DockerVolumeMap {
         return result;
     }
 
+    /**
+     * Splits the input string into an array of two substrings based on the position of the second colon character.
+     * If there is no second colon, splits the string using all colons as delimiters.
+     *
+     * @param input the string to be split
+     * @return an array of substrings resulting from the split operation
+     */
     public String[] safeSplit(String input) {
         String[] values;
         int i = input.indexOf(':');

@@ -11,6 +11,17 @@ import java.util.Base64;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * BaseUtilityInstaller provides a foundational implementation for utility container installers.
+ * It integrates with a container provider and manages the installation process of a container.
+ * This class is designed to be extended by specific implementations that define the container
+ * descriptor and logo file.
+ *
+ * This class relies on the Spring application context to retrieve services and maintain logs
+ * through the Java logging framework. It includes methods for pulling a container image,
+ * saving container metadata, and reading additional information such as container descriptors
+ * and logos.
+ */
 public abstract class BaseUtilityInstaller implements UtilityContainerInstaller {
     protected final Logger logger;
     protected final ContainerProvider containerProvider;

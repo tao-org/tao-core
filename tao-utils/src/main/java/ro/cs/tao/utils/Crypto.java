@@ -74,6 +74,12 @@ public class Crypto {
         return null;
     }
 
+    /**
+     * Generates a hashed value using the MD5 algorithm for a list of input strings.
+     *
+     * @param inputs A list of strings to be hashed. If the list is null or empty, the method will return null.
+     * @return The Base64-encoded MD5 hash of the concatenated inputs, or null if the input list is null or empty.
+     */
     public static String hash(List<String> inputs) {
         if (inputs != null && !inputs.isEmpty()) {
             MessageDigest md5 = null;
@@ -103,5 +109,10 @@ public class Crypto {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void main(String[] args) {
+        String password = Crypto.encrypt(new String("cosmin123#"), "cudroiu");
+        System.out.println(password);
     }
 }

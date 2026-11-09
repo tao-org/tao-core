@@ -16,6 +16,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * A template engine implementation for processing JSON templates. This engine
+ * validates and transforms JSON templates by injecting dynamic parameter values
+ * into placeholder variables.
+ */
 public class JsonEngine extends TemplateEngine {
     private final ObjectMapper mapper;
     private final Function<Object, String> numericToString = String::valueOf;

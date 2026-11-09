@@ -3,6 +3,11 @@ package ro.cs.tao.configuration;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Provides operations for managing persistent configuration data, including
+ * categories and configuration items. This interface defines methods for
+ * retrieving, organizing, and saving configuration data.
+ */
 public interface PersistentConfigurationProvider {
 
     List<ConfigurationCategory> getCategories();

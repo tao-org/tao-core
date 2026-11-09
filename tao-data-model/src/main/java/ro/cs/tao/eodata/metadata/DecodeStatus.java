@@ -16,6 +16,16 @@
 
 package ro.cs.tao.eodata.metadata;
 
+/**
+ * Represents the status of a decoding process.
+ * This enum is used to indicate the result or applicability
+ * of decoding an entity or data.
+ *
+ * The possible statuses include:
+ * - INTENDED: Indicates that the decoding process is intended or expected to occur.
+ * - SUITABLE: Denotes that the decoding process is suitable and valid for the entity.
+ * - UNABLE: Suggests that decoding cannot be performed or is not applicable.
+ */
 public enum DecodeStatus {
     INTENDED,
     SUITABLE,

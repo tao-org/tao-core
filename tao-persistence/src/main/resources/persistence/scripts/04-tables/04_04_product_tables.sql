@@ -214,7 +214,7 @@ CREATE TABLE product.auxiliary_data
 (
     id character varying(1000) NOT NULL,
 	location character varying NOT NULL,
-	description character varying NOT NULL,
+	description character varying NULL,
 	user_id character varying NOT NULL,
 	visibility_id integer NULL DEFAULT 2,
 	created timestamp NULL DEFAULT now(),
