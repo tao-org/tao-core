@@ -492,7 +492,9 @@ public class DataSourceComponent extends TaoComponent {
                         // The fetch mode is needed if the listener checks quota
                         product.addAttribute("fetch", this.fetchMode.name());
                         // The userId is needed in case of async executions
-                        product.addAttribute("principal", this.principal.getName());
+                        if (this.principal != null) {
+                            product.addAttribute("principal", this.principal.getName());
+                        }
                         if (!this.productStatusListener.downloadStarted(product)) {
                             continue;
                         }

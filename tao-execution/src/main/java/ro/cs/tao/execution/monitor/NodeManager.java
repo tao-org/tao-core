@@ -380,6 +380,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     !n.getValue().getNode().getId().equals(strategy.getHostName())));
 
                 }
+                userNodes.removeIf(n-> "k8s-master".equals(n.getKey()));
                 try {
                     // check if the user has any CPU limitation
                     int availableCpu = userQuotaManager.getAvailableCpus(principal);

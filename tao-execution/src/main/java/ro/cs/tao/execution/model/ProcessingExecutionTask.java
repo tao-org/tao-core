@@ -278,13 +278,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
      * @param location  The template value of the target of this task.
      */
     public String computeTargetOutput(String descriptorName, String location) {
-        if (this.instanceTargetOutput == null) {
+        String targetOutput = getInstanceTargetOutput(descriptorName);
+        if (targetOutput == null) {
             if (location != null) {
                 setInstanceTargetOutput(descriptorName, location);
-            }
-            String targetOutput = getInstanceTargetOutput(descriptorName);
-            if (targetOutput != null) {
-                Path path = Paths.get(targetOutput);
+                Path path = Paths.get(location);
                 if (!path.isAbsolute()) {
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
                                 .resolve(getJob().getUserId()).resolve(path);

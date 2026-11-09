@@ -111,19 +111,20 @@ public class WMTSExecutionTask extends ExecutionTask {
 
     public String buildOutputPath() {
         String descriptorName = null;
-        if (this.instanceTargetOutput == null) {
-            String location = null;
-            for (TargetDescriptor descriptor : this.component.getTargets()) {
-                Variable variable = outputParameterValues.stream()
-                                                         .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
-                if (variable != null) {
-                    location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
-                    if (location != null) {
-                        descriptorName = descriptor.getName();
-                        break;
-                    }
+        String location = null;
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            Variable variable = outputParameterValues.stream()
+                                                     .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    descriptorName = descriptor.getName();
+                    break;
                 }
             }
+        }
+        String instanceTargetOutput = getInstanceTargetOutput(descriptorName);
+        if (instanceTargetOutput == null) {
             if (location != null) {
                 Path path = Paths.get(location);
                 final Path jobPath = Paths.get(getJob().getJobOutputPath());

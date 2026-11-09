@@ -82,7 +82,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
 
     private static final List<String> cifsArgs = new ArrayList<String>() {{
             add("-i"); add("--sig-proxy=true"); add("--rm");
-            add("--volume-driver"); add("cifs");
+            // add("--volume-driver"); add("cifs");
         }};
     private static final Pattern preserveQuotePattern = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
     private static String masterHost;
@@ -639,7 +639,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 setHost(jt, node.getId());
                 task.setExecutionNodeHostName(node.getId());
                 cpu = Math.min(nodeData.getCpu(), parallelism != null ? parallelism : 4);
-                mem = nodeData.getMemory();
+                mem = nodeData.getMemory() * 1024; // Node memory is expressed in GB while mem in MB
             } else {
                 // Kubernetes
                 List<NodeDescription> nodes = nodeDBProvider.getActiveNodesByRole(NodeRole.K8S.value());
@@ -744,7 +744,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
                             .collect(Collectors.toMap(SourceDescriptor::getName, d -> d.getDataDescriptor().getLocation()));
                     unit = new ContainerUnit(ContainerType.DOCKER);
-                    unit.setArguments(cifsArgs);
+                    unit.setArguments(new ArrayList<>(cifsArgs));
                     unit.setEnvironmentVariables(dbSources);
                     final DockerVolumeMap volumeMount;
                     if (isLocal) {
@@ -772,6 +772,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             unit.addVolumeMapping(entry.getKey(), entry.getValue());
                         }
                     }
+                    Path userS3MountPath = Paths.get("/mnt/tao/user_s3_mounts/", job.getUserId());
+                    if (Files.isDirectory(userS3MountPath)) {
+                        unit.addVolumeMapping(userS3MountPath.toString(), "/mnt/tao_user_s3_mount");
+                    }
+                    unit.addEnvironmentVariable("TAO_USERNAME", job.getUserId());
+                    unit.addEnvironmentVariable("TAO_JOBID", String.valueOf(job.getId()));
+                    unit.addEnvironmentVariable("TAO_USER_S3_BUCKET_MOUNT_DIR", userS3MountPath.toString());
+
                     unit.setContainerName(container.getName());
                     unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                     if (cpu > 0) {
@@ -817,8 +825,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         add("-i");              // Keep STDIN open even if not attached
                         add("--rm");            // Automatically remove the container when it exits
                         add("--sig-proxy=true");// Proxy all received signals to the process
-                        add("--volume-driver");
-                        add("cifs");
+                        // add("--volume-driver");
+                        // add("cifs");
                         //-u $(id -u ${USER}):$(id -g ${USER})
                         /*if (!masterHost.equals(node.getId())) {
                             add("-u");
@@ -895,8 +903,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
      * @param component the processing component that requires shell invocation
      * @param argsList the list of arguments to be passed to the shell command
      * @param initialCmd the initial command to run in the shell
-     * @param tempOutput the temporary output directory or file path
-     * @param finalOutput the final output directory or file path
+     * @param temporaryOutputs the temporary output directory or file path
+     * @param finalOutputs the final output directory or file path
      * @param isLocal a boolean indicating whether the execution is local
      * @return the shell executable (e.g., "/bin/bash") for the invocation
      */
@@ -909,6 +917,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 ? volumeMap.getHostWorkspaceFolder().substring(2).replace("\\", "/")
                 : volumeMap.getHostWorkspaceFolder();
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
+        argsList.add(0, initialCmd);
+
+        List<String> cpArgsList = new ArrayList<>();
+        List<String> rmArgsList = new ArrayList<>();
         for (Map.Entry<String, String> finalEntry : finalOutputs.entrySet()) {
             final String finalOutput = finalEntry.getValue();
             final String tempOutput = temporaryOutputs.get(finalEntry.getKey());
@@ -939,9 +951,25 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                         || finalOutput.endsWith(".dim");
             final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt") || initialCmd.equals("/opt/esa-snap/bin/gpt");
             final boolean recursiveCondition = !isOutputManaged || isSnapDimap || DataFormat.FOLDER == descriptor.getDataDescriptor().getFormatType();
-            argsList.add(0, initialCmd);
-            addCopyRemoveCommands(argsList, isLocal, isSnap, isOutputManaged, tmpPath, tempOutput, finalPath, recursiveCondition, isSnapDimap);
+            // addCopyRemoveCommands(argsList, isLocal, isSnap, isOutputManaged, tmpPath, tempOutput, finalPath, recursiveCondition, isSnapDimap);
+
+            addMkdirCommands(argsList, isLocal, isSnap, isOutputManaged, tmpPath, tempOutput, recursiveCondition);
+
+            List<String> cpCmd = getCopyCommand(isOutputManaged, tmpPath, finalPath, recursiveCondition, isSnapDimap);
+            if (!StringUtilities.containsSequence(cpArgsList, cpCmd.toArray(new String[cpCmd.size()]))) {
+                cpArgsList.add("&&");
+                cpArgsList.addAll(cpCmd);
+            }
+
+            List<String> rmCmd = getRemoveCommands(tmpPath);
+            if (!StringUtilities.containsSequence(rmArgsList, rmCmd.toArray(new String[rmCmd.size()]))) {
+                rmArgsList.add(";");
+                rmArgsList.addAll(rmCmd);
+            }
         }
+        argsList.addAll(cpArgsList);
+        argsList.addAll(rmArgsList);
+
         // all the existing args are merged into a single string as argument to -c
         final String quoteChar = isLocal
                 ? SystemUtils.IS_OS_WINDOWS
@@ -962,9 +990,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return "/bin/bash";
     }
 
-    private void addCopyRemoveCommands(final List<String> argsList, final boolean isLocal, final boolean isSnap, final boolean isOutputManaged,
-                                       final String tmpPath, final String tempOutput, final String finalPath, final boolean recursiveCondition,
-                                       final boolean isSnapDimap) {
+    private void addMkdirCommands(final List<String> argsList, final boolean isLocal, final boolean isSnap, final boolean isOutputManaged,
+                                       final String tmpPath, final String tempOutput, final boolean recursiveCondition) {
         if (isLocal) {
             Path p = Path.of(tmpPath);
             try {
@@ -987,11 +1014,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             argsList.add(3, "&&");
         }
         if (isSnap && isOutputManaged && tempOutput.toLowerCase().endsWith(".tif") &&
-            !StringUtilities.containsSequence(argsList, "-f", "GeoTIFF")) {
+                !StringUtilities.containsSequence(argsList, "-f", "GeoTIFF")) {
             argsList.add("-f");
             argsList.add("GeoTIFF");
         }
-        argsList.add("&&");
+    }
+
+    private List<String> getCopyCommand(final boolean isOutputManaged, final String tmpPath, final String finalPath,
+                                         final boolean recursiveCondition, final boolean isSnapDimap) {
+        final List<String> argsList = new ArrayList<>();
         argsList.add("cp");
         if (recursiveCondition) {
             argsList.add("-fR");
@@ -1008,17 +1039,21 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         argsList.add(finalPath);
+        return argsList;
+    }
+
+    private List<String> getRemoveCommands(final String tmpPath) {
+        List<String> argsList = new ArrayList<>();
+
         // Being a folder, we need to check if another rm -r with the same argument was added.
         // If so, it is not appended since it would error at runtime
         final String rmArg = tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*";
-        if (!StringUtilities.containsSequence(argsList, "rm", "-r", rmArg)) {
-            // Execute rm even if the previous failed, to clear the workdir
-            argsList.add(";");
-            argsList.add("rm");
-            //if (recursiveCondition) {
-            argsList.add("-r");
-            argsList.add(rmArg);
-        }
+        // Execute rm even if the previous failed, to clear the workdir
+        argsList.add("rm");
+        //if (recursiveCondition) {
+        argsList.add("-fr");
+        argsList.add(rmArg);
+        return argsList;
     }
 
     /**

@@ -61,8 +61,8 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private int instanceId;
     private Integer usedCPU;
     private Integer usedRAM;
-    protected Map<String, String> instanceTemporaryOutput;
-    protected Map<String, String> instanceTargetOutput;
+    protected Map<String, String> instanceTemporaryOutput = new HashMap<>();
+    protected Map<String, String> instanceTargetOutput = new HashMap<>();
     protected String internalState;
     List<Variable> inputParameterValues = new ArrayList<>();
     List<Variable> outputParameterValues = new ArrayList<>();
@@ -140,20 +140,24 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
      */
     public void setStateHandler(InternalStateHandler<?> handler) {
         this.stateHandler = handler;
-        if (this.internalState == null) {
-            try {
-                this.internalState = this.stateHandler.serializeState();
-            } catch (SerializationException e) {
-                Logger.getLogger(getClass()).warning(e.getMessage());
+        if (this.stateHandler != null) {
+            if (this.internalState == null) {
+                try {
+                    this.internalState = this.stateHandler.serializeState();
+                } catch (SerializationException e) {
+                    Logger.getLogger(getClass()).warning(e.getMessage());
+                }
+            } else {
+                try {
+                    this.stateHandler.setCurrentState(this.internalState);
+                } catch (SerializationException e) {
+                    Logger.getLogger(getClass()).warning(e.getMessage());
+                }
             }
+            this.stateHandler.assignTask(this);
         } else {
-            try {
-                this.stateHandler.setCurrentState(this.internalState);
-            } catch (SerializationException e) {
-                Logger.getLogger(getClass()).warning(e.getMessage());
-            }
+            this.internalState = null;
         }
-        this.stateHandler.assignTask(this);
     }
 
     /**
@@ -364,7 +368,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
 
     public String getInstanceTemporaryOutput(String key) {
-        return instanceTemporaryOutput != null ? instanceTemporaryOutput.get(key) : null;
+        return key != null ? instanceTemporaryOutput.get(key) : null;
     }
 
     public void setInstanceTemporaryOutput(Map<String, String> instanceTemporaryOutput) {
@@ -372,9 +376,6 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
 
     public void setInstanceTemporaryOutput(String key, String value) {
-        if (this.instanceTemporaryOutput == null) {
-            this.instanceTemporaryOutput = new HashMap<>();
-        }
         this.instanceTemporaryOutput.put(key, value);
     }
 
@@ -388,7 +389,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
 
     public String getInstanceTargetOutput(String key) {
-        return instanceTargetOutput != null && key != null ? instanceTargetOutput.get(key) : null;
+        return key != null ? instanceTargetOutput.get(key) : null;
     }
 
     public void setInstanceTargetOutput(Map<String, String> instanceTargetOutput) {
@@ -396,9 +397,6 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
 
     public void setInstanceTargetOutput(String key, String value) {
-        if (this.instanceTargetOutput == null) {
-            this.instanceTargetOutput = new HashMap<>();
-        }
         this.instanceTargetOutput.put(key, value);
     }
 
@@ -503,7 +501,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
      *         the new value (if valid and added) and optionally sorting the list.
      */
     protected String appendValueToList(String valuesAsString, String newValue, boolean sortLexicographically) {
-        List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
+        List<String> values = (valuesAsString == null || valuesAsString.isEmpty() || "[]".equals(valuesAsString)) ?
                 new ArrayList<>() :
                 getListParameterValues(valuesAsString);
         values.removeIf(v -> v.endsWith("null") || v.contains("[null]"));

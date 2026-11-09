@@ -68,8 +68,8 @@ public class DockerVolumeMap {
         }
 
         value = volumeMap.get(DOCKER_ADDITIONAL_MOUNT_KEY);
-        if (StringUtils.isNotEmpty(value)) {
-            final String[] maps = value.split(";");
+            if (StringUtils.isNotEmpty(value)) {
+            final String[] maps = value.split("\\|");
             for (String v : maps) {
                 values = safeSplit(v);
                 if (this.additionalMappings == null) {

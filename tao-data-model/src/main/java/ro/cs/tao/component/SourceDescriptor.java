@@ -190,9 +190,10 @@ public class SourceDescriptor extends StringIdentifiable {
         if (!DataFormat.ANY.equals(this.dataDescriptor.getFormatType()) &&
             !DataFormat.ANY.equals(other.getDataDescriptor().getFormatType()) &&
             !this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType())) {
-            throw new ConstraintException(String.format("Incompatible formats (%s, %s)",
+            throw new ConstraintException(String.format("Incompatible formats (%s, %s) for name = %s and parent id = %s, other name = %s, other parent id = %s",
                                                         this.dataDescriptor.getFormatType().friendlyName(),
-                                                        other.getDataDescriptor().getFormatType().friendlyName()));
+                                                        other.getDataDescriptor().getFormatType().friendlyName(),
+                                                        this.name, this.parentId, other.getName(), other.getParentId()));
         }
         if (this.constraints != null && !this.constraints.isEmpty()) {
             for (String c : this.constraints) {
